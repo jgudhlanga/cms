@@ -15,6 +15,8 @@ class ApplicationTrackSession
 
     public const INTAKE_KEY = 'application.intake_period_id';
 
+    public const TRANSFER_COLLEGE_NAME_KEY = 'application.transfer_college_name';
+
     public function get(): ?ApplicationTrackEnum
     {
         $value = Session::get(self::TRACK_KEY);
@@ -38,7 +40,7 @@ class ApplicationTrackSession
 
     public function clear(): void
     {
-        Session::forget([self::TRACK_KEY, self::LEVEL_KEY, self::INTAKE_KEY]);
+        Session::forget([self::TRACK_KEY, self::LEVEL_KEY, self::INTAKE_KEY, self::TRANSFER_COLLEGE_NAME_KEY]);
     }
 
     public function setLevel(int $levelId): void
@@ -63,5 +65,28 @@ class ApplicationTrackSession
         $id = Session::get(self::LEVEL_KEY);
 
         return $id !== null ? (int) $id : null;
+    }
+
+    public function setTransferCollegeName(?string $collegeName): void
+    {
+        if ($collegeName === null || trim($collegeName) === '') {
+            Session::forget(self::TRANSFER_COLLEGE_NAME_KEY);
+
+            return;
+        }
+
+        Session::put(self::TRANSFER_COLLEGE_NAME_KEY, trim($collegeName));
+    }
+
+    public function transferCollegeName(): ?string
+    {
+        $value = Session::get(self::TRANSFER_COLLEGE_NAME_KEY);
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    public function hasTransferCollegeName(): bool
+    {
+        return $this->transferCollegeName() !== null;
     }
 }

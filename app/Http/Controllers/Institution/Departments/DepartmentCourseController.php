@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\Institution\Departments;
 
+use App\DTO\Institution\CourseRequirementsDto;
 use App\DTO\Institution\DepartmentCourseDto;
 use App\DTO\Institution\DepartmentCourseUpdateDto;
-use App\DTO\Institution\CourseRequirementsDto;
 use App\Enums\Institution\LevelEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\CourseLevelModeRequest;
+use App\Http\Requests\Institution\CourseRequirementRequest;
 use App\Http\Requests\Institution\DepartmentCourseRequest;
 use App\Http\Requests\Institution\DepartmentCourseUpdateRequest;
-use App\Http\Requests\Institution\CourseRequirementRequest;
 use App\Http\Resources\Institution\CourseLevelModeResource;
 use App\Http\Resources\Institution\CourseRequirementResource;
 use App\Http\Resources\Institution\DepartmentCourseResource;
@@ -29,9 +29,7 @@ use Inertia\Response;
 
 class DepartmentCourseController extends Controller
 {
-    public function __construct(protected IDepartmentCourseRepository $repository)
-    {
-    }
+    public function __construct(protected IDepartmentCourseRepository $repository) {}
 
     public function syncDepartmentCourses(InstitutionDepartment $institutionDepartment, DepartmentCourseRequest $request): void
     {
@@ -49,6 +47,7 @@ class DepartmentCourseController extends Controller
         $allowedLevelIds = Level::whereIn('name', [LevelEnum::NC->name()])->pluck('id')->toArray();
         $allowedLevels = DepartmentLevel::where('institution_department_id', $departmentCourse?->institutionDepartment?->id)
             ->whereIn('level_id', $allowedLevelIds)->pluck('id')->toArray();
+
         return Inertia::render('institution/departments/courses/CourseRequirements',
             compact('departmentCourse', 'requirements', 'levels', 'institutionDepartment', 'allowedLevels'));
     }
@@ -70,6 +69,7 @@ class DepartmentCourseController extends Controller
         $departmentLevels = DepartmentLevelResource::collection($departmentCourse->institutionDepartment->departmentLevels);
         $modes = ModeOfStudy::whereNull('deleted_at')->get();
         $modesOfStudy = ModeOfStudyResource::collection($modes);
+
         return Inertia::render('institution/departments/courses/Edit',
             compact('institutionDepartment', 'departmentCourse', 'departmentLevels', 'modesOfStudy'),
         );
@@ -78,12 +78,25 @@ class DepartmentCourseController extends Controller
     public function courseLevelModes(DepartmentCourse $departmentCourse): Response
     {
         $this->authorize('viewDepartmentMetaData');
-        $departmentCourse = DepartmentCourseResource::make($departmentCourse);
+
+        $departmentCourse->loadMissing([
+            'course',
+            'institutionDepartment.department',
+            'institutionDepartment.division',
+            'institutionDepartment.departmentLevels.level',
+            'institutionDepartment.departmentLevels.requirement',
+            'departmentCourseLevels.departmentLevel.level',
+            'departmentCourseLevels.departmentCourse.course',
+            'courseLevelModes.departmentCourse.course',
+            'courseLevelModes.departmentLevel.level',
+        ]);
+
         $institutionDepartment = InstitutionDepartmentResource::make($departmentCourse->institutionDepartment);
         $departmentLevels = DepartmentLevelResource::collection($departmentCourse->institutionDepartment->departmentLevels);
         $courseLevelModes = CourseLevelModeResource::collection($departmentCourse->courseLevelModes);
-        $modes = ModeOfStudy::whereNull('deleted_at')->get();
-        $modesOfStudy = ModeOfStudyResource::collection($modes);
+        $modesOfStudy = ModeOfStudyResource::collection(ModeOfStudy::whereNull('deleted_at')->get());
+        $departmentCourse = DepartmentCourseResource::make($departmentCourse);
+
         return Inertia::render('institution/departments/courses/CourseLevelModes',
             compact('institutionDepartment', 'departmentCourse', 'departmentLevels', 'courseLevelModes', 'modesOfStudy'),
         );
@@ -97,6 +110,7 @@ class DepartmentCourseController extends Controller
                 $departmentCourse->courseLevelModes()
                     ->where('department_level_id', $levelId)
                     ->delete();
+
                 continue;
             }
             $departmentCourse->courseLevelModes()->updateOrCreate(

@@ -66,6 +66,11 @@ class StudentApplication extends Model implements HasMedia
         return $this->belongsTo(Student::class, 'student_id');
     }
 
+    public function transfer(): HasOne
+    {
+        return $this->hasOne(StudentTransfer::class, 'student_application_id');
+    }
+
     public function institutionDepartment(): BelongsTo
     {
         return $this->belongsTo(InstitutionDepartment::class, 'institution_department_id');

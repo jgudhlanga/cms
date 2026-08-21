@@ -26,6 +26,7 @@ use App\Http\Requests\Shared\ContactRequest;
 use App\Http\Requests\Shared\NextOfKinRequest;
 use App\Http\Requests\Students\CreateApplicationRequest;
 use App\Http\Requests\Students\ProgramRequest;
+use App\Http\Requests\Students\StoreTransferCollegeRequest;
 use App\Http\Requests\Students\UpdateReturningApplicationRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
 use App\Http\Requests\Users\UserRequest;
@@ -48,6 +49,7 @@ use App\Models\Shared\Status;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentApprentice;
+use App\Models\Students\StudentTransfer;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use App\Repositories\Shared\interface\IAddressRepository;
@@ -128,6 +130,9 @@ class PortalController extends Controller
             'latestApplication.modeOfStudy',
             'latestApplication.intakePeriod',
             'latestApplication.workflowStep',
+            'latestApplication.transfer',
+            'latestEnrolment.studentApplication.transfer',
+            'transfers.studentApplication',
         ]);
 
         return Inertia::render('portal/student/Index', [
@@ -270,6 +275,11 @@ class PortalController extends Controller
     public function createApplication(): Response
     {
         $this->authorize('manageStudentPersonalDetails');
+
+        if ($redirect = $this->redirectIfTransferCollegeMissing()) {
+            return $redirect;
+        }
+
         $user = request()->user();
         $applicationFee = $this->applicationFeeService->activeApplicationFee($user);
         $intakePeriod = $applicationFee?->intakePeriod
@@ -288,6 +298,7 @@ class PortalController extends Controller
             'selectedLevelName' => $this->resolveSelectedLevelName(),
             'applicationTrack' => $this->trackSession->get()?->value,
             'applicationTrackLabel' => $this->trackSession->get()?->label(),
+            'transferCollegeName' => $this->trackSession->transferCollegeName(),
             'registrationPrefill' => [
                 'id_number' => session('registration.id_number'),
                 'passport_number' => session('registration.passport_number'),
@@ -358,7 +369,47 @@ class PortalController extends Controller
             session()->forget('application.continuous_focus');
         }
 
+        if ($track !== ApplicationTrackEnum::Transfer) {
+            $this->trackSession->setTransferCollegeName(null);
+        }
+
         return $this->redirectForTrack($track);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function transferCollege(): Response|RedirectResponse
+    {
+        $this->authorize('manageStudentPersonalDetails');
+
+        $track = $this->trackSession->get();
+        if ($track !== ApplicationTrackEnum::Transfer) {
+            return to_route('portal.application.track');
+        }
+
+        if (! $this->registrationAvailability->isTransferRegistrationOpen()) {
+            return to_route('portal.application.track');
+        }
+
+        return Inertia::render('portal/application/TransferCollege', [
+            'applicationStep' => 'transfer-college',
+            'applicationTrack' => $track->value,
+            'applicationTrackLabel' => $track->label(),
+            'collegeName' => $this->trackSession->transferCollegeName(),
+        ]);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    public function storeTransferCollege(StoreTransferCollegeRequest $request): RedirectResponse
+    {
+        $this->authorize('manageStudentPersonalDetails');
+
+        $this->trackSession->setTransferCollegeName($request->string('college_name')->toString());
+
+        return to_route('portal.application.level-options');
     }
 
     /**
@@ -402,6 +453,11 @@ class PortalController extends Controller
     public function levelOptions(): Response|RedirectResponse
     {
         $this->authorizeApplicationLevelSelection();
+
+        if ($redirect = $this->redirectIfTransferCollegeMissing()) {
+            return $redirect;
+        }
+
         $track = $this->trackSession->require();
 
         $options = $this->levelOptionsService->optionsForTrack($track);
@@ -425,6 +481,11 @@ class PortalController extends Controller
     public function selectLevel(Request $request): RedirectResponse
     {
         $this->authorize('manageStudentPersonalDetails');
+
+        if ($redirect = $this->redirectIfTransferCollegeMissing()) {
+            return $redirect;
+        }
+
         $track = $this->trackSession->require();
 
         $openIntakes = $track === ApplicationTrackEnum::Continuous
@@ -469,13 +530,18 @@ class PortalController extends Controller
         return to_route('portal.application.create');
     }
 
-    public function confirmApplication(): Response
+    public function confirmApplication(): Response|RedirectResponse
     {
         $this->authorize('manageStudentPersonalDetails');
+
+        if ($redirect = $this->redirectIfTransferCollegeMissing()) {
+            return $redirect;
+        }
 
         return Inertia::render('portal/application/ConfirmApplication', [
             'applicationTrack' => $this->trackSession->get()?->value,
             'applicationTrackLabel' => $this->trackSession->get()?->label(),
+            'transferCollegeName' => $this->trackSession->transferCollegeName(),
         ]);
     }
 
@@ -527,6 +593,23 @@ class PortalController extends Controller
                 );
             }
 
+            if ($track === ApplicationTrackEnum::Transfer) {
+                $collegeName = $request->filled('college_name')
+                    ? $request->string('college_name')->toString()
+                    : ($this->trackSession->transferCollegeName() ?? '');
+
+                StudentTransfer::query()->updateOrCreate(
+                    [
+                        'student_application_id' => $application->id,
+                    ],
+                    [
+                        'tenant_id' => $student->tenant_id,
+                        'student_id' => $student->id,
+                        'college_name' => $collegeName,
+                    ],
+                );
+            }
+
             DB::commit();
             $this->trackSession->clear();
             Session::forget([
@@ -537,6 +620,7 @@ class PortalController extends Controller
                 'application.continuous_focus',
                 'application.requires_fee',
                 'application.level_id',
+                ApplicationTrackSession::TRANSFER_COLLEGE_NAME_KEY,
             ]);
             if ($stepTwo) {
                 $application->update([
@@ -1233,7 +1317,23 @@ class PortalController extends Controller
 
     private function redirectForTrack(ApplicationTrackEnum $track): RedirectResponse
     {
+        if ($track === ApplicationTrackEnum::Transfer) {
+            return to_route('portal.application.transfer-college');
+        }
+
         return to_route('portal.application.level-options');
+    }
+
+    private function redirectIfTransferCollegeMissing(): ?RedirectResponse
+    {
+        if (
+            $this->trackSession->get() === ApplicationTrackEnum::Transfer
+            && ! $this->trackSession->hasTransferCollegeName()
+        ) {
+            return to_route('portal.application.transfer-college');
+        }
+
+        return null;
     }
 
     public function errors(string $message): Response

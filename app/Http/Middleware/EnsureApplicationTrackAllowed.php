@@ -35,6 +35,16 @@ class EnsureApplicationTrackAllowed
             return $next($request);
         }
 
+        if ($request->routeIs(
+            'portal.application.transfer-college',
+            'portal.application.transfer-college.store',
+        )) {
+            $track = $this->trackSession->get();
+            if ($track === ApplicationTrackEnum::Transfer) {
+                return $next($request);
+            }
+        }
+
         if ($request->routeIs('portal.application.apprentice', 'portal.application.apprentice.store')) {
             $track = $this->trackSession->get();
             if ($track === ApplicationTrackEnum::Apprentice) {
@@ -52,6 +62,17 @@ class EnsureApplicationTrackAllowed
             $this->trackSession->clear();
 
             return to_route('portal.application.track');
+        }
+
+        if (
+            $track === ApplicationTrackEnum::Transfer
+            && ! $this->trackSession->hasTransferCollegeName()
+            && ! $request->routeIs(
+                'portal.application.transfer-college',
+                'portal.application.transfer-college.store',
+            )
+        ) {
+            return to_route('portal.application.transfer-college');
         }
 
         return $next($request);

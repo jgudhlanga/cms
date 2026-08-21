@@ -114,6 +114,7 @@ class IntakePeriodRepository extends BaseRepository implements IIntakePeriodRepo
             'description' => $dto->description,
             'status' => $dto->status,
             'is_continuous' => $dto->is_continuous,
+            'show_transfer_path' => $dto->show_transfer_path,
         ];
     }
 }

@@ -3,6 +3,7 @@ import { router } from '@inertiajs/vue3';
 export type RegistrationStepId =
     | 'read-instructions'
     | 'choose-track'
+    | 'choose-college'
     | 'choose-level'
     | 'choose-programme'
     | 'verify-identity'
@@ -22,6 +23,9 @@ export function useRegistrationStepNavigation() {
                 return;
             case 'choose-track':
                 router.visit(route('portal.register.track'));
+                return;
+            case 'choose-college':
+                router.visit(route('portal.register.college'));
                 return;
             case 'choose-level':
                 router.visit(route('portal.register.level'));

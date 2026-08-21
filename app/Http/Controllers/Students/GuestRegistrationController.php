@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Students;
 use App\Enums\Institution\LevelEnum;
 use App\Enums\Students\ApplicationTrackEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Students\StoreTransferCollegeRequest;
 use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Http\Resources\Institution\LevelResource;
 use App\Models\Institution\IntakePeriod;
@@ -92,6 +93,10 @@ class GuestRegistrationController extends Controller
         $this->intentSession->setTrack($track);
         $this->intentSession->clearLevelAndBelow();
 
+        if ($track !== ApplicationTrackEnum::Transfer) {
+            $this->intentSession->setTransferCollegeName(null);
+        }
+
         $focus = $track === ApplicationTrackEnum::Continuous
             ? ($data['continuous_focus'] ?? null)
             : null;
@@ -108,12 +113,44 @@ class GuestRegistrationController extends Controller
         return $this->redirectAfterTrack($track, $focus);
     }
 
+    public function transferCollege(): Response|RedirectResponse
+    {
+        $track = $this->intentSession->getTrack();
+
+        if ($track !== ApplicationTrackEnum::Transfer) {
+            return to_route('portal.register.track');
+        }
+
+        if (! $this->registrationAvailability->isTransferRegistrationOpen()) {
+            return to_route('portal.register.track');
+        }
+
+        return Inertia::render('portal/guest/TransferCollege', [
+            'collegeName' => $this->intentSession->transferCollegeName(),
+            'intentSummary' => $this->intentSummaryWithLabels(),
+            'stepperVariant' => $this->intentSession->stepperVariant(),
+            'requiresFee' => $this->intentSession->requiresFee(),
+            'applicationStep' => 'transfer-college',
+        ]);
+    }
+
+    public function selectTransferCollege(StoreTransferCollegeRequest $request): RedirectResponse
+    {
+        $this->intentSession->setTransferCollegeName($request->string('college_name')->toString());
+
+        return to_route('portal.register.level');
+    }
+
     public function levelOptions(): Response|RedirectResponse
     {
         $track = $this->intentSession->getTrack();
 
         if ($track === null) {
             return to_route('portal.register.track');
+        }
+
+        if ($redirect = $this->redirectIfTransferCollegeMissing()) {
+            return $redirect;
         }
 
         // SDP express already auto-bound level — skip to programme.
@@ -163,6 +200,10 @@ class GuestRegistrationController extends Controller
             return to_route('portal.register.track');
         }
 
+        if ($redirect = $this->redirectIfTransferCollegeMissing()) {
+            return $redirect;
+        }
+
         $openIntakes = $this->levelOptionsService->openIntakesForTrack($track);
 
         $rules = [
@@ -196,6 +237,10 @@ class GuestRegistrationController extends Controller
 
         if ($track === null) {
             return to_route('portal.register.track');
+        }
+
+        if ($redirect = $this->redirectIfTransferCollegeMissing()) {
+            return $redirect;
         }
 
         $levelId = $this->intentSession->levelId();
@@ -244,6 +289,10 @@ class GuestRegistrationController extends Controller
             return to_route('portal.register.track');
         }
 
+        if ($redirect = $this->redirectIfTransferCollegeMissing()) {
+            return $redirect;
+        }
+
         $levelId = $this->intentSession->levelId();
 
         if ($levelId === null) {
@@ -280,6 +329,10 @@ class GuestRegistrationController extends Controller
 
     public function account(): Response|RedirectResponse
     {
+        if ($redirect = $this->redirectIfTransferCollegeMissing()) {
+            return $redirect;
+        }
+
         if (! $this->intentSession->isCompleteForAccountCreation()) {
             if (! $this->intentSession->hasTrack()) {
                 return to_route('portal.register.track');
@@ -296,6 +349,13 @@ class GuestRegistrationController extends Controller
 
             if (! $this->intentSession->hasProgrammeSelection()) {
                 return to_route('portal.register.programme');
+            }
+
+            if (
+                $this->intentSession->getTrack() === ApplicationTrackEnum::Transfer
+                && ! $this->intentSession->hasTransferCollegeName()
+            ) {
+                return to_route('portal.register.college');
             }
         }
 
@@ -328,6 +388,10 @@ class GuestRegistrationController extends Controller
 
     private function redirectAfterTrack(ApplicationTrackEnum $track, ?string $focus): RedirectResponse
     {
+        if ($track === ApplicationTrackEnum::Transfer) {
+            return to_route('portal.register.college');
+        }
+
         if ($track === ApplicationTrackEnum::Apprentice) {
             return to_route('portal.register.level');
         }
@@ -350,6 +414,18 @@ class GuestRegistrationController extends Controller
 
         // OJET + Regular → level selection
         return to_route('portal.register.level');
+    }
+
+    private function redirectIfTransferCollegeMissing(): ?RedirectResponse
+    {
+        if (
+            $this->intentSession->getTrack() === ApplicationTrackEnum::Transfer
+            && ! $this->intentSession->hasTransferCollegeName()
+        ) {
+            return to_route('portal.register.college');
+        }
+
+        return null;
     }
 
     private function syncRequiresFee(ApplicationTrackEnum $track, Level $level): void

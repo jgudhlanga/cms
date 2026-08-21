@@ -33,6 +33,7 @@ class IntakePeriod extends Model
         'is_active',
         'status',
         'is_continuous',
+        'show_transfer_path',
     ];
 
     protected function casts(): array
@@ -40,6 +41,7 @@ class IntakePeriod extends Model
         return [
             'status' => IntakePeriodStatusEnum::class,
             'is_continuous' => 'boolean',
+            'show_transfer_path' => 'boolean',
             'is_active' => 'boolean',
         ];
     }

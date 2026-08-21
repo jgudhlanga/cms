@@ -75,7 +75,23 @@ export const useIntakePeriods = () => {
                     );
                 },
             },
-            { header: trans_choice('trans.description', 1), accessorKey: 'attributes.description' },
+            {
+                header: trans('trans.intake_period_show_transfer_path'),
+                accessorKey: 'attributes.showTransferPath',
+                cell: ({ row }: { row: { original: IntakePeriod } }) => {
+                    const showTransferPath = row.original.attributes?.showTransferPath ?? false;
+
+                    return h(
+                        'span',
+                        {
+                            class: showTransferPath
+                                ? 'inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-violet-800 dark:bg-violet-900/40 dark:text-violet-200'
+                                : 'inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground',
+                        },
+                        showTransferPath ? trans('trans.yes') : trans('trans.no'),
+                    );
+                },
+            },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',
@@ -122,6 +138,7 @@ export const useIntakePeriods = () => {
                     }),
                 status: z.enum(['open', 'suspended', 'closed']),
                 is_continuous: z.boolean().optional(),
+                show_transfer_path: z.boolean().optional(),
             })
             .refine(
                 (data) => {

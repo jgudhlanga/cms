@@ -11,7 +11,7 @@ import AppLogo from '@/components/core/image/AppLogo.vue';
             <AppLogo classes="size-14 object-contain" />
         </div>
 
-        <div class="flex items-center justify-self-end">
+        <div class="flex items-center justify-self-end lg:hidden">
             <AppearanceCycleToggle />
         </div>
     </header>

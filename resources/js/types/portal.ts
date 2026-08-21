@@ -81,6 +81,8 @@ export type CreateApplicationParams = {
     /** Apprentice track */
     employer?: string | null;
     apprentice_number?: string | null;
+    /** Transfer track */
+    college_name?: string | null;
     /** Proof of Payment */
     proof_of_payment?: string | null;
     payment_reference?: string | null;

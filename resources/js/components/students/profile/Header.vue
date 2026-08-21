@@ -101,6 +101,24 @@ const apprenticeFacts = computed<HeaderFact[]>(() => {
   return facts;
 });
 
+const transferFacts = computed<HeaderFact[]>(() => {
+  if (!props.data?.isTransferAtCurrentLevel) {
+    return [];
+  }
+
+  const collegeName = props.data?.transferCollegeName?.trim();
+  if (!collegeName) {
+    return [];
+  }
+
+  return [
+    {
+      label: trans('trans.application_transfer_college_label'),
+      value: collegeName,
+    },
+  ];
+});
+
 const sponsorName = computed(() => {
   if (!props.data?.isSponsoredThisYear) {
     return '';
@@ -111,6 +129,7 @@ const sponsorName = computed(() => {
 
 const hasProgrammeFacts = computed(() => programmeFacts.value.length > 0);
 const hasApprenticeFacts = computed(() => apprenticeFacts.value.length > 0);
+const hasTransferFacts = computed(() => transferFacts.value.length > 0);
 const hasSponsoredFacts = computed(() => sponsorName.value !== '');
 </script>
 
@@ -155,7 +174,7 @@ const hasSponsoredFacts = computed(() => sponsorName.value !== '');
       </p>
 
       <div
-        v-if="hasProgrammeFacts || hasApprenticeFacts || hasSponsoredFacts"
+        v-if="hasProgrammeFacts || hasApprenticeFacts || hasTransferFacts || hasSponsoredFacts"
         class="flex w-full min-w-0 flex-col gap-1"
       >
         <dl
@@ -188,6 +207,32 @@ const hasSponsoredFacts = computed(() => sponsorName.value !== '');
           </span>
           <dl class="flex min-w-0 flex-wrap items-baseline">
             <template v-for="(fact, index) in apprenticeFacts" :key="`apprentice-${fact.label}`">
+              <span
+                v-if="index > 0"
+                class="mx-1.5 text-muted-foreground/40"
+                aria-hidden="true"
+              >·</span>
+              <div class="inline-flex min-w-0 max-w-full items-baseline gap-1">
+                <dt class="shrink-0 text-muted-foreground">
+                  {{ fact.label }}
+                </dt>
+                <dd class="min-w-0 font-bold wrap-break-word text-foreground">
+                  {{ fact.value }}
+                </dd>
+              </div>
+            </template>
+          </dl>
+        </div>
+
+        <div
+          v-if="hasTransferFacts"
+          class="flex min-w-0 max-w-full flex-wrap items-baseline gap-x-2 gap-y-0.5 border-foreground/15 text-[10px] leading-snug sm:text-[11px]"
+        >
+          <span class="shrink-0 font-semibold tracking-wide text-primary uppercase">
+            {{ $t('trans.transfer') }}
+          </span>
+          <dl class="flex min-w-0 flex-wrap items-baseline">
+            <template v-for="(fact, index) in transferFacts" :key="`transfer-${fact.label}`">
               <span
                 v-if="index > 0"
                 class="mx-1.5 text-muted-foreground/40"

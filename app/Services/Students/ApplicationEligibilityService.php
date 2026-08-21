@@ -172,6 +172,10 @@ class ApplicationEligibilityService
             $tracks[] = ApplicationTrackEnum::Apprentice;
         }
 
+        if ($this->registrationAvailability->isTransferRegistrationOpen()) {
+            $tracks[] = ApplicationTrackEnum::Transfer;
+        }
+
         return $tracks;
     }
 }

@@ -4,10 +4,11 @@ import { Check } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 export type EnrollmentPath = 'zimbabwean' | 'returning' | 'international';
-export type StepperVariant = 'regular' | 'sdp' | 'ojet' | 'apprentice';
+export type StepperVariant = 'regular' | 'sdp' | 'ojet' | 'apprentice' | 'transfer';
 export type GuestStep =
     | 'read-instructions'
     | 'choose-track'
+    | 'choose-college'
     | 'choose-level'
     | 'choose-programme'
     | 'verify-identity'
@@ -40,6 +41,7 @@ const props = withDefaults(
 const instructionStep: StepDef = { id: 'read-instructions', labelKey: 'trans.registration_step_instructions' };
 
 const pathStep: StepDef = { id: 'choose-track', labelKey: 'trans.registration_step_path' };
+const collegeStep: StepDef = { id: 'choose-college', labelKey: 'trans.registration_step_transfer_college' };
 const levelStep: StepDef = { id: 'choose-level', labelKey: 'trans.registration_step_level' };
 const programStep: StepDef = { id: 'choose-programme', labelKey: 'trans.registration_step_program' };
 const identityStep: StepDef = { id: 'verify-identity', labelKey: 'trans.registration_step_identity' };
@@ -87,6 +89,10 @@ const steps = computed((): StepDef[] => {
 
     if (props.stepperVariant === 'apprentice') {
         return [instructionStep, pathStep, levelStep, programStep, identityStep, accountStep, finishStep];
+    }
+
+    if (props.stepperVariant === 'transfer') {
+        return withFee([instructionStep, pathStep, collegeStep, levelStep, programStep, identityStep, accountStep, finishStep]);
     }
 
     if (props.stepperVariant === 'sdp') {

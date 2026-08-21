@@ -139,6 +139,7 @@ class CreateApplicationRequest extends FormRequest
             'disability_status' => ['required', new Enum(DisabilityStatusEnum::class)],
             'employer' => ['nullable', 'string', 'max:255'],
             'apprentice_number' => ['nullable', 'string', 'max:255'],
+            'college_name' => ['nullable', 'string', 'max:255'],
             'required_level_completed' => ['nullable', 'boolean'],
             'read_write_acknowledged' => ['nullable', 'boolean'],
         ];
@@ -172,6 +173,7 @@ class CreateApplicationRequest extends FormRequest
             $this->validateApplicationTrack($validator);
             $this->validateApplicationFee($validator);
             $this->validateApprenticeDetails($validator);
+            $this->validateTransferCollege($validator);
             $this->validateLevelAcknowledgements($validator);
 
             app(ValidateOLevelResults::class)->validate($this, $validator);
@@ -253,6 +255,33 @@ class CreateApplicationRequest extends FormRequest
                 'apprentice_number',
                 __('validation.required', ['attribute' => 'apprentice number']),
             );
+        }
+    }
+
+    protected function validateTransferCollege(Validator $validator): void
+    {
+        $trackSession = app(ApplicationTrackSession::class);
+        $track = $trackSession->get();
+
+        if ($track !== ApplicationTrackEnum::Transfer) {
+            return;
+        }
+
+        $collegeName = $this->filled('college_name')
+            ? trim((string) $this->input('college_name'))
+            : $trackSession->transferCollegeName();
+
+        if ($collegeName === null || $collegeName === '') {
+            $validator->errors()->add(
+                'college_name',
+                __('trans.application_transfer_college_required'),
+            );
+
+            return;
+        }
+
+        if (! $this->filled('college_name')) {
+            $this->merge(['college_name' => $collegeName]);
         }
     }
 

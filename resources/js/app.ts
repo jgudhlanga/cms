@@ -41,14 +41,13 @@ createInertiaApp({
         if (name.startsWith('auth/')) {
             page.default.layout = (h, page) => h(GuestLayout, { showHeader: false }, () => page);
         } else if (
-            name === 'portal/guest/RegistrationUserForm' ||
-            name === 'portal/registration/RegistrationMaintenance'
+            name.startsWith('portal/guest') ||
+            name.startsWith('portal/registration')
         ) {
+            // Guest registration uses in-page toggles (brand header / guide); disable PublicShell fixed toggle.
             page.default.layout = PortalRegistrationLayout;
         } else if (
             name.startsWith('site/') ||
-            name.startsWith('portal/guest') ||
-            name.startsWith('portal/registration') ||
             name.startsWith('portal/application') ||
             name.startsWith('integrations')
         ) {

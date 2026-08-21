@@ -134,6 +134,9 @@ function guestRegistrationIntentSession(
         RegistrationIntentSession::READY_FOR_ACCOUNT_KEY => true,
         RegistrationIntentSession::INSTRUCTIONS_KEY => true,
         RegistrationIntentSession::REQUIRES_FEE_KEY => $track !== ApplicationTrackEnum::Apprentice,
+        ...($track === ApplicationTrackEnum::Transfer
+            ? [RegistrationIntentSession::TRANSFER_COLLEGE_NAME_KEY => 'Harare College of Technology']
+            : []),
     ];
 }
 
