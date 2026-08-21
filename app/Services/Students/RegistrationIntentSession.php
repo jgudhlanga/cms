@@ -31,6 +31,8 @@ class RegistrationIntentSession
 
     public const REQUIRES_FEE_KEY = 'registration.intent.requires_fee';
 
+    public const TRANSFER_COLLEGE_NAME_KEY = 'registration.intent.transfer_college_name';
+
     public function getTrack(): ?ApplicationTrackEnum
     {
         $value = Session::get(self::TRACK_KEY);
@@ -103,6 +105,29 @@ class RegistrationIntentSession
         }
 
         return (bool) Session::get(self::REQUIRES_FEE_KEY, false);
+    }
+
+    public function setTransferCollegeName(?string $collegeName): void
+    {
+        if ($collegeName === null || trim($collegeName) === '') {
+            Session::forget(self::TRANSFER_COLLEGE_NAME_KEY);
+
+            return;
+        }
+
+        Session::put(self::TRANSFER_COLLEGE_NAME_KEY, trim($collegeName));
+    }
+
+    public function transferCollegeName(): ?string
+    {
+        $value = Session::get(self::TRANSFER_COLLEGE_NAME_KEY);
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    public function hasTransferCollegeName(): bool
+    {
+        return $this->transferCollegeName() !== null;
     }
 
     public function setProgramme(
@@ -196,13 +221,21 @@ class RegistrationIntentSession
      */
     public function isCompleteForAccountCreation(): bool
     {
-        return $this->hasTrack() && $this->hasLevelSelection() && $this->hasProgrammeSelection();
+        if (! $this->hasTrack() || ! $this->hasLevelSelection() || ! $this->hasProgrammeSelection()) {
+            return false;
+        }
+
+        if ($this->getTrack() === ApplicationTrackEnum::Transfer) {
+            return $this->hasTransferCollegeName();
+        }
+
+        return true;
     }
 
     /**
      * Stepper variant for the current intent.
      *
-     * @return 'regular'|'sdp'|'ojet'|'apprentice'
+     * @return 'regular'|'sdp'|'ojet'|'apprentice'|'transfer'
      */
     public function stepperVariant(): string
     {
@@ -210,6 +243,10 @@ class RegistrationIntentSession
 
         if ($track === ApplicationTrackEnum::Apprentice) {
             return 'apprentice';
+        }
+
+        if ($track === ApplicationTrackEnum::Transfer) {
+            return 'transfer';
         }
 
         if ($track === ApplicationTrackEnum::Continuous) {
@@ -255,6 +292,7 @@ class RegistrationIntentSession
             self::INSTRUCTIONS_KEY,
             self::READY_FOR_ACCOUNT_KEY,
             self::REQUIRES_FEE_KEY,
+            self::TRANSFER_COLLEGE_NAME_KEY,
         ]);
     }
 
@@ -302,6 +340,10 @@ class RegistrationIntentSession
         if ($this->modeOfStudyId() !== null) {
             Session::put('application.mode_of_study_id', $this->modeOfStudyId());
         }
+
+        if ($this->transferCollegeName() !== null) {
+            $trackSession->setTransferCollegeName($this->transferCollegeName());
+        }
     }
 
     /**
@@ -315,6 +357,7 @@ class RegistrationIntentSession
      *     departmentLevelId: int|null,
      *     courseId: int|null,
      *     modeOfStudyId: int|null,
+     *     transferCollegeName: string|null,
      *     readyForAccount: bool,
      *     requiresFee: bool,
      *     stepperVariant: string
@@ -334,6 +377,7 @@ class RegistrationIntentSession
             'departmentLevelId' => $this->departmentLevelId(),
             'courseId' => $this->courseId(),
             'modeOfStudyId' => $this->modeOfStudyId(),
+            'transferCollegeName' => $this->transferCollegeName(),
             'readyForAccount' => $this->isReadyForAccount(),
             'requiresFee' => $this->requiresFee(),
             'stepperVariant' => $this->stepperVariant(),

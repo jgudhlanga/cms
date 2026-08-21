@@ -87,6 +87,11 @@ class AccountPurgeSnapshotBuilder
                 ->get()
                 ->map(fn ($row) => (array) $row)
                 ->all(),
+            'student_transfers' => DB::table('student_transfers')
+                ->where('student_id', $student->id)
+                ->get()
+                ->map(fn ($row) => (array) $row)
+                ->all(),
             'student_sponsors' => DB::table('student_sponsors')
                 ->where('student_id', $student->id)
                 ->get()

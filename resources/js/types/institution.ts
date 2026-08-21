@@ -218,6 +218,7 @@ export type IntakePeriod = {
         isActive: boolean | number;
         status?: IntakePeriodStatus;
         isContinuous?: boolean;
+        showTransferPath?: boolean;
         description?: string;
         calendarYear?: string | null;
         createdAt?: string;
@@ -232,6 +233,7 @@ export type IntakePeriodParams = {
     description?: string;
     status: IntakePeriodStatus;
     is_continuous?: boolean;
+    show_transfer_path?: boolean;
 };
 
 export type CourseSyllabus = {

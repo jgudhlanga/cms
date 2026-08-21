@@ -4,6 +4,7 @@ import ProgramDetails from '@/components/students/view/ProgramDetails.vue';
 import ViewContactDetails from '@/components/students/view/ViewContactDetails.vue';
 import ViewNextOfKinDetails from '@/components/students/view/ViewNextOfKinDetails.vue';
 import ViewPersonalDetails from '@/components/students/view/ViewPersonalDetails.vue';
+import ViewTransferDetails from '@/components/students/view/ViewTransferDetails.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useStudentPortal } from '@/composables/students/useStudentPortal';
 import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicationFormStore';
@@ -28,11 +29,13 @@ import { resolveEffectiveEnrolmentRequirements } from '@/lib/resolveEffectiveEnr
 interface Props {
     applicationTrack?: string | null;
     applicationTrackLabel?: string | null;
+    transferCollegeName?: string | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     applicationTrack: null,
     applicationTrackLabel: null,
+    transferCollegeName: null,
 });
 
 // Composable
@@ -42,6 +45,7 @@ const { redirectIfClosed } = useRegistrationAvailability();
 const { updateCreateForm } = useApplicationFormHelper();
 
 const isApprentice = computed(() => props.applicationTrack === 'apprentice');
+const isTransfer = computed(() => props.applicationTrack === 'transfer');
 const {
     email,
     first_name,
@@ -75,7 +79,12 @@ const {
     levelRequirements,
     courseRequirements,
     disability_status,
+    college_name,
 } = storeToRefs(useCreateApplicationFormStore());
+
+const resolvedTransferCollegeName = computed(
+    () => props.transferCollegeName || college_name?.value || null,
+);
 
 const requirements = computed(() =>
     resolveEffectiveEnrolmentRequirements(courseRequirements.value, levelRequirements.value),
@@ -174,10 +183,12 @@ const form = useForm<CreateApplicationParams>({
     o_level_other_grade_ids: null,
     o_level_other_years: null,
     o_level_other_sittings: null,
+    college_name: resolvedTransferCollegeName.value || '',
 });
 
 const save = async () => {
     updateCreateForm(form);
+    form.college_name = resolvedTransferCollegeName.value || form.college_name || '';
 
     if (isApprentice.value) {
         navigateTo(route('portal.application.apprentice'));
@@ -188,6 +199,9 @@ const save = async () => {
 };
 onMounted(() => {
     redirectIfClosed();
+    if (resolvedTransferCollegeName.value) {
+        useCreateApplicationFormStore().college_name = resolvedTransferCollegeName.value;
+    }
 });
 </script>
 <template>
@@ -195,6 +209,10 @@ onMounted(() => {
     <div class="mt-20 flex w-full flex-col bg-background px-5 text-foreground md:p-0">
         <div class="flex w-full flex-col space-y-6 md:mx-auto md:w-7/8">
             <BaseAlert :description="$t('trans.ui_before_submitting_carefully_review_your_application_details')" :type="TypeVariant.success" />
+            <ViewTransferDetails
+                v-if="isTransfer && resolvedTransferCollegeName"
+                :college-name="resolvedTransferCollegeName"
+            />
             <ViewPersonalDetails :personal="personal" :title="$t('trans.personal_details')" />
             <ViewContactDetails :contacts="contacts" :title="$t('trans.contact_details')" />
             <ViewNextOfKinDetails :next-of-kin="nextOfKin" :title="$t('trans.next_of_kin')" />

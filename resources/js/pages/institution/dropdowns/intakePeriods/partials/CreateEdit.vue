@@ -23,6 +23,7 @@ const form = useForm<IntakePeriodParams>({
     description: '',
     status: 'open',
     is_continuous: false,
+    show_transfer_path: false,
 });
 
 const { saveIntakePeriod, formSchema, statusOptions } = useIntakePeriods();
@@ -56,6 +57,7 @@ watch(modals!, () => {
     form.description = intakePeriod.value?.attributes?.description ?? '';
     form.status = intakePeriod.value?.attributes?.status ?? 'open';
     form.is_continuous = !!intakePeriod.value?.attributes?.isContinuous;
+    form.show_transfer_path = !!intakePeriod.value?.attributes?.showTransferPath;
     form.defaults();
 });
 
@@ -64,6 +66,11 @@ const onContinuousChange = (value: boolean | string | number): void => {
     form.is_continuous = isContinuous;
     clearFormErrors(form, 'is_continuous');
     applyContinuousYearDatesIfNeeded(isContinuous);
+};
+
+const onShowTransferPathChange = (value: boolean | string | number): void => {
+    form.show_transfer_path = !!value;
+    clearFormErrors(form, 'show_transfer_path');
 };
 
 const save = () => {
@@ -77,6 +84,7 @@ const save = () => {
             description: '',
             status: '',
             is_continuous: '',
+            show_transfer_path: '',
         };
 
         (Object.keys(fieldErrors) as (keyof typeof fieldErrors)[]).forEach((key) => {
@@ -144,6 +152,17 @@ const save = () => {
                 {{ $t('trans.intake_period_is_continuous_help') }}
             </p>
             <InputError v-if="form.errors.is_continuous" :message="form.errors.is_continuous" />
+
+            <BaseCheckbox
+                input-id="show_transfer_path"
+                v-model="form.show_transfer_path"
+                :label="$t('trans.intake_period_show_transfer_path')"
+                @update:model-value="onShowTransferPathChange"
+            />
+            <p class="mb-3 text-xs text-muted-foreground">
+                {{ $t('trans.intake_period_show_transfer_path_help') }}
+            </p>
+            <InputError v-if="form.errors.show_transfer_path" :message="form.errors.show_transfer_path" />
 
             <Description v-model="form.description" @input="clearFormErrors(form, 'description')" :error="form.errors.description" />
         </template>

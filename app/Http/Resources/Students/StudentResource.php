@@ -11,6 +11,7 @@ use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentApprentice;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentSponsor;
+use App\Models\Students\StudentTransfer;
 use App\Rules\ZimbabweanIdNumber;
 use App\Services\Maintenance\Students\FaultyStudentIdNumberAnalysis;
 use App\Services\Students\ReturningStudentContextService;
@@ -51,12 +52,16 @@ class StudentResource extends JsonResource
             'latestApplication.modeOfStudy',
             'latestApplication.workflowStep',
             'latestApplication.intakePeriod',
+            'latestApplication.transfer',
+            'latestEnrolment.studentApplication.transfer',
+            'transfers.studentApplication',
         ]);
 
         $profileSummary = $this->resolveProfileSummary();
         $idNumberValidation = $this->resolveIdNumberValidation($request);
         $apprenticeSummary = $this->resolveApprenticeSummary();
         $sponsorSummary = $this->resolveSponsorSummary();
+        $transferSummary = $this->resolveTransferSummary();
 
         return [
             'type' => 'student',
@@ -108,6 +113,8 @@ class StudentResource extends JsonResource
                 'apprenticeNumber' => $apprenticeSummary['apprenticeNumber'],
                 'isSponsoredThisYear' => $sponsorSummary['isSponsoredThisYear'],
                 'sponsor' => $sponsorSummary['sponsor'],
+                'isTransferAtCurrentLevel' => $transferSummary['isTransferAtCurrentLevel'],
+                'transferCollegeName' => $transferSummary['transferCollegeName'],
                 'idPhotoUrl' => $this->idPhotoUrl('card'),
                 'idPhotoThumbUrl' => $this->idPhotoUrl('thumb'),
             ],
@@ -304,6 +311,84 @@ class StudentResource extends JsonResource
         return [
             'isSponsoredThisYear' => true,
             'sponsor' => $sponsor->sponsor,
+        ];
+    }
+
+    /**
+     * Transfer for the application/enrolment level currently shown in the profile header.
+     *
+     * @return array{
+     *     isTransferAtCurrentLevel: bool,
+     *     transferCollegeName: ?string
+     * }
+     */
+    private function resolveTransferSummary(): array
+    {
+        $empty = [
+            'isTransferAtCurrentLevel' => false,
+            'transferCollegeName' => null,
+        ];
+
+        $departmentLevelId = $this->latestEnrolment?->department_level_id
+            ?? $this->latestApplication?->department_level_id;
+
+        if ($departmentLevelId === null) {
+            return $empty;
+        }
+
+        $enrolmentApplication = $this->latestEnrolment?->studentApplication;
+        $transfer = $enrolmentApplication?->transfer;
+
+        if (
+            $transfer instanceof StudentTransfer
+            && (int) $enrolmentApplication->department_level_id === (int) $departmentLevelId
+        ) {
+            return $this->transferSummaryFromModel($transfer);
+        }
+
+        $latestApplication = $this->latestApplication;
+        if (
+            $latestApplication instanceof StudentApplication
+            && (int) $latestApplication->department_level_id === (int) $departmentLevelId
+            && $latestApplication->transfer instanceof StudentTransfer
+        ) {
+            return $this->transferSummaryFromModel($latestApplication->transfer);
+        }
+
+        $transfer = $this->transfers
+            ->filter(function (StudentTransfer $candidate) use ($departmentLevelId): bool {
+                return (int) ($candidate->studentApplication?->department_level_id) === (int) $departmentLevelId;
+            })
+            ->sortByDesc('id')
+            ->first();
+
+        if (! $transfer instanceof StudentTransfer) {
+            return $empty;
+        }
+
+        return $this->transferSummaryFromModel($transfer);
+    }
+
+    /**
+     * @return array{
+     *     isTransferAtCurrentLevel: bool,
+     *     transferCollegeName: ?string
+     * }
+     */
+    private function transferSummaryFromModel(StudentTransfer $transfer): array
+    {
+        $collegeName = trim((string) $transfer->college_name);
+
+        if ($collegeName === '') {
+            return [
+                'isTransferAtCurrentLevel' => false,
+                'transferCollegeName' => null,
+            ];
+        }
+
+        return [
+            'isTransferAtCurrentLevel' => true,
+            'transferCollegeName' => $collegeName,
         ];
     }
 

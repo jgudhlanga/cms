@@ -31,6 +31,7 @@ class IntakePeriodRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'status' => ['required', Rule::enum(IntakePeriodStatusEnum::class)],
             'is_continuous' => ['sometimes', 'boolean'],
+            'show_transfer_path' => ['sometimes', 'boolean'],
         ];
     }
 

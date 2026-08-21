@@ -23,6 +23,8 @@ Route::prefix('portal')->group(function () {
         Route::prefix('register')->name('portal.register.')->group(function () {
             Route::get('track', [GuestRegistrationController::class, 'chooseTrack'])->name('track');
             Route::post('track', [GuestRegistrationController::class, 'selectTrack'])->name('select-track');
+            Route::get('college', [GuestRegistrationController::class, 'transferCollege'])->name('college');
+            Route::post('select-college', [GuestRegistrationController::class, 'selectTransferCollege'])->name('select-college');
             Route::get('level', [GuestRegistrationController::class, 'levelOptions'])->name('level');
             Route::post('select-level', [GuestRegistrationController::class, 'selectLevel'])->name('select-level');
             Route::get('programme', [GuestRegistrationController::class, 'programmeOptions'])->name('programme');
@@ -39,6 +41,8 @@ Route::prefix('portal')->group(function () {
         Route::middleware(['registration.open', 'application.track'])->group(function () {
             Route::get('application/track', [PortalController::class, 'chooseTrack'])->name('portal.application.track');
             Route::post('application/track', [PortalController::class, 'selectTrack'])->name('portal.application.select-track');
+            Route::get('application/transfer-college', [PortalController::class, 'transferCollege'])->name('portal.application.transfer-college');
+            Route::post('application/transfer-college', [PortalController::class, 'storeTransferCollege'])->name('portal.application.transfer-college.store');
             Route::get('application/apprentice', [PortalController::class, 'apprenticeApplication'])->name('portal.application.apprentice');
             Route::get('application/level', [PortalController::class, 'levelOptions'])->name('portal.application.level-options');
             Route::post('application/select-level', [PortalController::class, 'selectLevel'])->name('portal.application.select-level');

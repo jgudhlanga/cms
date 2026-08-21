@@ -5,6 +5,7 @@ type IntentSummary = {
     continuousFocus?: string | null;
     levelName?: string | null;
     intakeName?: string | null;
+    transferCollegeName?: string | null;
 };
 
 defineProps<{
@@ -14,7 +15,7 @@ defineProps<{
 
 <template>
     <div
-        v-if="summary?.trackLabel || summary?.levelName || summary?.intakeName"
+        v-if="summary?.trackLabel || summary?.levelName || summary?.intakeName || summary?.transferCollegeName"
         class="mb-4 rounded-lg border border-border bg-muted/30 px-3 py-2"
         role="status"
         aria-live="polite"
@@ -31,6 +32,12 @@ defineProps<{
                 <template v-if="summary.continuousFocus">
                     · {{ summary.continuousFocus.toUpperCase() }}
                 </template>
+            </span>
+            <span
+                v-if="summary?.transferCollegeName"
+                class="inline-flex items-center rounded-full bg-card px-2.5 py-0.5 text-xs font-medium text-foreground ring-1 ring-border"
+            >
+                {{ summary.transferCollegeName }}
             </span>
             <span
                 v-if="summary?.levelName"

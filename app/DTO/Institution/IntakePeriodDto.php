@@ -13,6 +13,7 @@ readonly class IntakePeriodDto
         public ?string $description,
         public string $status,
         public bool $is_continuous = false,
+        public bool $show_transfer_path = false,
     ) {}
 
     public static function fromIntakePeriodRequest(IntakePeriodRequest $request): IntakePeriodDto
@@ -24,6 +25,7 @@ readonly class IntakePeriodDto
             description: $request->description,
             status: $request->status,
             is_continuous: $request->boolean('is_continuous'),
+            show_transfer_path: $request->boolean('show_transfer_path'),
         );
     }
 }

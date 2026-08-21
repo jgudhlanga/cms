@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AuthBackground from '@/components/auth/AuthBackground.vue';
+import AppearanceCycleToggle from '@/components/core/util/AppearanceCycleToggle.vue';
 import type { EnrollmentPath, GuestStep, StepperVariant } from '@/components/portal/RegistrationStepper.vue';
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-vue-next';
@@ -22,6 +23,7 @@ const props = withDefaults(
 
 const instructionStep: StepDef = { id: 'read-instructions', labelKey: 'trans.registration_step_instructions' };
 const pathStep: StepDef = { id: 'choose-track', labelKey: 'trans.registration_step_path' };
+const collegeStep: StepDef = { id: 'choose-college', labelKey: 'trans.registration_step_transfer_college' };
 const levelStep: StepDef = { id: 'choose-level', labelKey: 'trans.registration_step_level' };
 const programStep: StepDef = { id: 'choose-programme', labelKey: 'trans.registration_step_program' };
 const identityStep: StepDef = { id: 'verify-identity', labelKey: 'trans.registration_step_identity' };
@@ -71,6 +73,19 @@ const steps = computed((): StepDef[] => {
         return [instructionStep, pathStep, levelStep, programStep, identityStep, accountStep, finishStep];
     }
 
+    if (props.stepperVariant === 'transfer') {
+        return withFee([
+            instructionStep,
+            pathStep,
+            collegeStep,
+            levelStep,
+            programStep,
+            identityStep,
+            accountStep,
+            finishStep,
+        ]);
+    }
+
     if (props.stepperVariant === 'sdp') {
         return withFee([instructionStep, pathStep, programStep, identityStep, accountStep, finishStep]);
     }
@@ -111,6 +126,9 @@ const headerSubtitleKey = computed(() => {
     if (props.highlightedStep === 'verify-passport') {
         return 'trans.registration_guide_identity_international_body';
     }
+    if (props.highlightedStep === 'choose-college') {
+        return 'trans.application_transfer_college_accuracy_banner';
+    }
     if (isCreateAccount.value) {
         return 'trans.registration_guide_create_account_body';
     }
@@ -144,6 +162,13 @@ const currentStepItems = computed((): GuideItem[] => {
         ];
     }
 
+    if (props.highlightedStep === 'choose-college') {
+        return [
+            { key: 'trans.application_transfer_college_helper' },
+            { key: 'trans.application_transfer_college_accuracy_banner' },
+        ];
+    }
+
     if (isCreateAccount.value) {
         return [{ key: 'trans.first_name' }, { key: 'trans.last_name' }, { key: 'trans.email' }, { key: 'trans.password' }];
     }
@@ -172,6 +197,10 @@ const instructionRequirements = computed((): GuideItem[] => {
         class="relative isolate hidden min-h-svh items-start overflow-hidden border-l border-white/10 p-4 pt-2 text-white sm:p-6 md:pt-6 lg:flex lg:flex-1 lg:p-10 xl:p-12"
     >
         <AuthBackground contained />
+
+        <div class="absolute top-4 right-4 z-20 sm:top-6 sm:right-6 lg:top-10 lg:right-10 xl:right-12">
+            <AppearanceCycleToggle variant="on-dark" />
+        </div>
 
         <div class="relative z-10 mx-auto max-w-sm space-y-6 xl:max-w-md">
             <header v-if="!isInstructions">

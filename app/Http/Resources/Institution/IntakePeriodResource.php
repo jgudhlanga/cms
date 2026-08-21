@@ -23,6 +23,7 @@ class IntakePeriodResource extends JsonResource
                 'isActive' => data_get($this->resource, 'is_active'),
                 'status' => $status,
                 'isContinuous' => (bool) data_get($this->resource, 'is_continuous', false),
+                'showTransferPath' => (bool) data_get($this->resource, 'show_transfer_path', false),
                 'description' => data_get($this->resource, 'description'),
                 'calendarYear' => data_get($this->resource, 'calendar_year'),
                 $this->mergeWhen($request->routeIs('intake-periods.*'), [

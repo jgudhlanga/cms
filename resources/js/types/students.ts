@@ -60,6 +60,8 @@ export type Student = {
         apprenticeNumber?: string | null;
         isSponsoredThisYear?: boolean;
         sponsor?: string | null;
+        isTransferAtCurrentLevel?: boolean;
+        transferCollegeName?: string | null;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -96,6 +98,8 @@ export type StudentHeader = {
     apprenticeNumber?: string;
     isSponsoredThisYear?: boolean;
     sponsor?: string;
+    isTransferAtCurrentLevel?: boolean;
+    transferCollegeName?: string;
     disabilityStatus?: 'yes' | 'no' | 'prefer_not_to_say' | null;
 };
 

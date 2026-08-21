@@ -150,6 +150,11 @@ class Student extends Model implements HasMedia
         return $this->hasMany(StudentApprentice::class, 'student_id');
     }
 
+    public function transfers(): HasMany
+    {
+        return $this->hasMany(StudentTransfer::class, 'student_id');
+    }
+
     public function studentSponsors(): HasMany
     {
         return $this->hasMany(StudentSponsor::class, 'student_id');

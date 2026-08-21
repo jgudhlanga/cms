@@ -90,7 +90,17 @@ class RegistrationAvailabilityService
             ApplicationTrackEnum::Regular => $this->isRegularRegistrationOpen(),
             ApplicationTrackEnum::Continuous => $this->isContinuousRegistrationOpen(),
             ApplicationTrackEnum::Apprentice => $this->isApprenticeRegistrationOpen(),
+            ApplicationTrackEnum::Transfer => $this->isTransferRegistrationOpen(),
         };
+    }
+
+    public function isTransferRegistrationOpen(): bool
+    {
+        return IntakePeriod::query()
+            ->where('is_active', true)
+            ->where('status', IntakePeriodStatusEnum::Open)
+            ->where('show_transfer_path', true)
+            ->exists();
     }
 
     public function blockReason(): ?IntakePeriodStatusEnum

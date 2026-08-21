@@ -507,6 +507,7 @@ declare module 'vue' {
     ViewContactDetails: typeof import('./../components/students/view/ViewContactDetails.vue')['default']
     ViewNextOfKinDetails: typeof import('./../components/students/view/ViewNextOfKinDetails.vue')['default']
     ViewPersonalDetails: typeof import('./../components/students/view/ViewPersonalDetails.vue')['default']
+    ViewTransferDetails: typeof import('./../components/students/view/ViewTransferDetails.vue')['default']
     WangEditor: typeof import('./../components/core/form/editor/WangEditor.vue')['default']
     Website: typeof import('./../components/core/form/text/Website.vue')['default']
   }
