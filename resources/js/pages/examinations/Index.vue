@@ -44,7 +44,7 @@ const breadcrumbs = computed<Link[]>(() => [
 ]);
 
 const activeFilters = ref<ExaminationSearchFiltersState>({
-    session: props.filters.session,
+    session: props.filters.session ?? [],
     discipline: props.filters.discipline,
     subject_code: props.filters.subject_code,
     surname: props.filters.surname,
@@ -54,7 +54,7 @@ const activeFilters = ref<ExaminationSearchFiltersState>({
 
 const searchUrl = computed(() =>
     mergeQueryParamsIntoRequestPath(route('examinations.index'), {
-        session: activeFilters.value.session,
+        session: activeFilters.value.session ?? [],
         discipline: activeFilters.value.discipline,
         subject_code: activeFilters.value.subject_code,
         surname: activeFilters.value.surname,
@@ -64,12 +64,15 @@ const searchUrl = computed(() =>
 );
 
 const applyFilters = (filters: ExaminationSearchFiltersState): void => {
-    activeFilters.value = filters;
+    activeFilters.value = {
+        ...filters,
+        session: filters.session ?? [],
+    };
 
     router.get(
         route('examinations.index'),
         {
-            session: filters.session ?? undefined,
+            session: filters.session?.length ? filters.session : undefined,
             discipline: filters.discipline ?? undefined,
             subject_code: filters.subject_code ?? undefined,
             surname: filters.surname ?? undefined,

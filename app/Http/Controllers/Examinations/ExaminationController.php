@@ -17,7 +17,7 @@ class ExaminationController extends Controller
 {
     public function index(ExaminationIndexRequest $request, ExaminationResultQuery $query): Response
     {
-        $filters = $query->resolveFilters($request->filters());
+        $filters = $query->resolveIndexFilters($request->filters());
 
         $paginator = $query
             ->filtered($filters)

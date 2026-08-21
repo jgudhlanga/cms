@@ -29,7 +29,7 @@ const emit = defineEmits<{
     (e: 'change', filters: ExaminationSearchFiltersState): void;
 }>();
 
-const sessionModel = ref<SelectOption | null>(null);
+const sessionModel = ref<SelectOption[]>([]);
 const disciplineModel = ref<SelectOption | null>(null);
 const subjectModel = ref<SelectOption | null>(null);
 const surname = ref('');
@@ -45,8 +45,25 @@ const toOption = (value: string | null | undefined, options: SelectOption[]): Se
     return options.find((option) => String(option.value) === String(value)) ?? null;
 };
 
+const toOptions = (values: string[] | null | undefined, options: SelectOption[]): SelectOption[] => {
+    if (!values?.length) {
+        return [];
+    }
+
+    const selected = new Set(values.map(String));
+
+    return options.filter((option) => selected.has(String(option.value)));
+};
+
+const sessionsEqual = (left: string[] | null | undefined, right: string[] | null | undefined): boolean => {
+    const a = [...(left ?? [])].map(String).sort();
+    const b = [...(right ?? [])].map(String).sort();
+
+    return a.length === b.length && a.every((value, index) => value === b[index]);
+};
+
 const filtersMatch = (left: ExaminationSearchFiltersState, right: ExaminationSearchFiltersState): boolean =>
-    (left.session ?? null) === (right.session ?? null)
+    sessionsEqual(left.session, right.session)
     && (left.discipline ?? null) === (right.discipline ?? null)
     && (left.subject_code ?? null) === (right.subject_code ?? null)
     && (left.surname ?? null) === (right.surname ?? null)
@@ -54,7 +71,7 @@ const filtersMatch = (left: ExaminationSearchFiltersState, right: ExaminationSea
     && (left.candidate_number ?? null) === (right.candidate_number ?? null);
 
 const currentFilters = (): ExaminationSearchFiltersState => ({
-    session: sessionModel.value?.value ? String(sessionModel.value.value) : null,
+    session: sessionModel.value.map((option) => String(option.value)),
     discipline: disciplineModel.value?.value ? String(disciplineModel.value.value) : null,
     subject_code: subjectModel.value?.value ? String(subjectModel.value.value) : null,
     surname: surname.value.trim() || null,
@@ -63,9 +80,7 @@ const currentFilters = (): ExaminationSearchFiltersState => ({
 });
 
 const defaultFilters = (): ExaminationSearchFiltersState => ({
-    session: props.filterOptions.sessions[0]?.value
-        ? String(props.filterOptions.sessions[0].value)
-        : null,
+    session: [],
     discipline: null,
     subject_code: null,
     surname: null,
@@ -78,7 +93,7 @@ const isDefaultState = computed(() => filtersMatch(currentFilters(), defaultFilt
 const syncFromProps = (): void => {
     isSyncingFromProps.value = true;
 
-    sessionModel.value = toOption(props.filters.session, props.filterOptions.sessions);
+    sessionModel.value = toOptions(props.filters.session, props.filterOptions.sessions);
     disciplineModel.value = toOption(props.filters.discipline, props.filterOptions.disciplines);
     subjectModel.value = toOption(props.filters.subject_code, props.filterOptions.subjects);
     surname.value = props.filters.surname ?? '';
@@ -92,7 +107,7 @@ const syncFromProps = (): void => {
 
 const applyLocalFilters = (next: ExaminationSearchFiltersState): void => {
     isSyncingFromProps.value = true;
-    sessionModel.value = toOption(next.session, props.filterOptions.sessions);
+    sessionModel.value = toOptions(next.session, props.filterOptions.sessions);
     disciplineModel.value = toOption(next.discipline, props.filterOptions.disciplines);
     subjectModel.value = toOption(next.subject_code, props.filterOptions.subjects);
     surname.value = next.surname ?? '';
@@ -124,14 +139,18 @@ const clearField = (partial: Partial<ExaminationSearchFiltersState>): void => {
 
 const activeTags = computed<ActiveTag[]>(() => {
     const tags: ActiveTag[] = [];
-    const defaults = defaultFilters();
     const current = currentFilters();
 
-    if (current.session && current.session !== defaults.session && sessionModel.value) {
+    for (const option of sessionModel.value) {
         tags.push({
-            id: 'session',
-            label: String(sessionModel.value.label),
-            clear: () => clearField({ session: defaults.session, discipline: null, subject_code: null }),
+            id: `session-${option.value}`,
+            label: String(option.label),
+            clear: () =>
+                clearField({
+                    session: current.session?.filter((value) => value !== String(option.value)) ?? [],
+                    discipline: null,
+                    subject_code: null,
+                }),
         });
     }
 
@@ -208,7 +227,7 @@ watch(sessionModel, () => {
         subjectModel.value = null;
     }
     emitFilters();
-});
+}, { deep: true });
 
 watch(disciplineModel, () => {
     if (!isSyncingFromProps.value) {
@@ -243,6 +262,7 @@ defineExpose({ resetFilters });
                 <div class="min-w-0">
                     <BaseCombobox
                         v-model="sessionModel"
+                        multiple
                         :options="filterOptions.sessions"
                         :placeholder="$t('examinations.session')"
                         width-class="w-full"
