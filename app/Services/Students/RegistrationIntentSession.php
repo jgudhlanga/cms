@@ -33,6 +33,16 @@ class RegistrationIntentSession
 
     public const TRANSFER_COLLEGE_NAME_KEY = 'registration.intent.transfer_college_name';
 
+    public const OJET_IDENTITY_TYPE_KEY = 'registration.intent.ojet_identity_type';
+
+    public const OJET_ID_NUMBER_KEY = 'registration.intent.ojet_id_number';
+
+    public const OJET_PASSPORT_NUMBER_KEY = 'registration.intent.ojet_passport_number';
+
+    public const OJET_STUDENT_NUMBER_KEY = 'registration.intent.ojet_student_number';
+
+    public const OJET_STUDENT_ID_KEY = 'registration.intent.ojet_student_id';
+
     public function getTrack(): ?ApplicationTrackEnum
     {
         $value = Session::get(self::TRACK_KEY);
@@ -142,6 +152,86 @@ class RegistrationIntentSession
         Session::put(self::MODE_KEY, $modeOfStudyId);
     }
 
+    public function setOjetFormerStudent(
+        string $identityType,
+        ?string $idNumber,
+        ?string $passportNumber,
+        string $studentNumber,
+        ?int $studentId = null,
+    ): void {
+        Session::put(self::OJET_IDENTITY_TYPE_KEY, $identityType);
+        Session::put(self::OJET_STUDENT_NUMBER_KEY, $studentNumber);
+
+        if ($idNumber !== null && $idNumber !== '') {
+            Session::put(self::OJET_ID_NUMBER_KEY, $idNumber);
+        } else {
+            Session::forget(self::OJET_ID_NUMBER_KEY);
+        }
+
+        if ($passportNumber !== null && $passportNumber !== '') {
+            Session::put(self::OJET_PASSPORT_NUMBER_KEY, $passportNumber);
+        } else {
+            Session::forget(self::OJET_PASSPORT_NUMBER_KEY);
+        }
+
+        if ($studentId !== null) {
+            Session::put(self::OJET_STUDENT_ID_KEY, $studentId);
+        } else {
+            Session::forget(self::OJET_STUDENT_ID_KEY);
+        }
+    }
+
+    public function clearOjetFormerStudent(): void
+    {
+        Session::forget([
+            self::OJET_IDENTITY_TYPE_KEY,
+            self::OJET_ID_NUMBER_KEY,
+            self::OJET_PASSPORT_NUMBER_KEY,
+            self::OJET_STUDENT_NUMBER_KEY,
+            self::OJET_STUDENT_ID_KEY,
+        ]);
+    }
+
+    public function ojetIdentityType(): ?string
+    {
+        $value = Session::get(self::OJET_IDENTITY_TYPE_KEY);
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    public function ojetIdNumber(): ?string
+    {
+        $value = Session::get(self::OJET_ID_NUMBER_KEY);
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    public function ojetPassportNumber(): ?string
+    {
+        $value = Session::get(self::OJET_PASSPORT_NUMBER_KEY);
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    public function ojetStudentNumber(): ?string
+    {
+        $value = Session::get(self::OJET_STUDENT_NUMBER_KEY);
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    public function ojetStudentId(): ?int
+    {
+        $id = Session::get(self::OJET_STUDENT_ID_KEY);
+
+        return $id !== null ? (int) $id : null;
+    }
+
+    public function hasResolvedOjetFormerStudent(): bool
+    {
+        return $this->ojetStudentNumber() !== null && $this->ojetIdentityType() !== null;
+    }
+
     public function departmentId(): ?int
     {
         $id = Session::get(self::DEPARTMENT_KEY);
@@ -229,6 +319,10 @@ class RegistrationIntentSession
             return $this->hasTransferCollegeName();
         }
 
+        if ($this->stepperVariant() === 'ojet' && ! $this->hasResolvedOjetFormerStudent()) {
+            return false;
+        }
+
         return true;
     }
 
@@ -265,6 +359,7 @@ class RegistrationIntentSession
             self::MODE_KEY,
             self::READY_FOR_ACCOUNT_KEY,
         ]);
+        $this->clearOjetFormerStudent();
     }
 
     public function clearLevelAndBelow(): void
@@ -293,6 +388,11 @@ class RegistrationIntentSession
             self::READY_FOR_ACCOUNT_KEY,
             self::REQUIRES_FEE_KEY,
             self::TRANSFER_COLLEGE_NAME_KEY,
+            self::OJET_IDENTITY_TYPE_KEY,
+            self::OJET_ID_NUMBER_KEY,
+            self::OJET_PASSPORT_NUMBER_KEY,
+            self::OJET_STUDENT_NUMBER_KEY,
+            self::OJET_STUDENT_ID_KEY,
         ]);
     }
 
@@ -343,6 +443,23 @@ class RegistrationIntentSession
 
         if ($this->transferCollegeName() !== null) {
             $trackSession->setTransferCollegeName($this->transferCollegeName());
+        }
+
+        if ($this->hasResolvedOjetFormerStudent()) {
+            Session::put('application.ojet_identity_type', $this->ojetIdentityType());
+            Session::put('application.ojet_student_number', $this->ojetStudentNumber());
+
+            if ($this->ojetIdNumber() !== null) {
+                Session::put('application.ojet_id_number', $this->ojetIdNumber());
+            }
+
+            if ($this->ojetPassportNumber() !== null) {
+                Session::put('application.ojet_passport_number', $this->ojetPassportNumber());
+            }
+
+            if ($this->ojetStudentId() !== null) {
+                Session::put('application.ojet_student_id', $this->ojetStudentId());
+            }
         }
     }
 

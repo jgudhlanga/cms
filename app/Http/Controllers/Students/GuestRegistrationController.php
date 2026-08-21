@@ -12,6 +12,8 @@ use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Http\Resources\Institution\LevelResource;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
+use App\Models\Institution\ModeOfStudy;
+use App\Rules\ZimbabweanIdNumber;
 use App\Services\Students\ApplicationEligibilityService;
 use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\IntakePeriodOrderingService;
@@ -19,8 +21,10 @@ use App\Services\Students\RegistrationAvailabilityService;
 use App\Services\Students\RegistrationIntentSession;
 use App\Services\Students\RegistrationLevelOptionsService;
 use App\Services\Students\RegistrationProgrammeAvailabilityService;
+use App\Services\Students\ResolveOjetFormerStudentNumberService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -35,6 +39,7 @@ class GuestRegistrationController extends Controller
         protected ApplicationEligibilityService $eligibility,
         protected ApplicationFeeService $applicationFeeService,
         protected IntakePeriodOrderingService $intakeOrdering,
+        protected ResolveOjetFormerStudentNumberService $ojetFormerStudentResolver,
     ) {}
 
     public function chooseTrack(): Response|RedirectResponse
@@ -278,6 +283,11 @@ class GuestRegistrationController extends Controller
                 'courseId' => $this->intentSession->courseId(),
                 'modeOfStudyId' => $this->intentSession->modeOfStudyId(),
             ],
+            'ojetIdentity' => [
+                'identityType' => $this->intentSession->ojetIdentityType(),
+                'idNumber' => $this->intentSession->ojetIdNumber(),
+                'passportNumber' => $this->intentSession->ojetPassportNumber(),
+            ],
         ]);
     }
 
@@ -304,6 +314,12 @@ class GuestRegistrationController extends Controller
             'department_level_id' => ['required', 'integer'],
             'course_id' => ['required', 'integer'],
             'mode_of_study_id' => ['required', 'integer'],
+            'identity_type' => ['nullable', 'string', Rule::in([
+                ResolveOjetFormerStudentNumberService::IDENTITY_ZIMBABWEAN,
+                ResolveOjetFormerStudentNumberService::IDENTITY_INTERNATIONAL,
+            ])],
+            'id_number' => ['nullable', 'string', 'max:20'],
+            'passport_number' => ['nullable', 'string', 'min:5', 'max:50'],
         ]);
 
         $this->programmeAvailability->assertProgrammeSelection(
@@ -316,12 +332,74 @@ class GuestRegistrationController extends Controller
             $this->intentSession->continuousFocus(),
         );
 
+        $mode = ModeOfStudy::query()->find((int) $data['mode_of_study_id']);
+        $isOjet = $mode !== null && $this->eligibility->isOjetMode($mode);
+
         $this->intentSession->setProgramme(
             (int) $data['department_id'],
             (int) $data['department_level_id'],
             (int) $data['course_id'],
             (int) $data['mode_of_study_id'],
         );
+
+        if (! $isOjet) {
+            $this->intentSession->clearOjetFormerStudent();
+            $this->intentSession->markReadyForAccount();
+
+            return to_route('portal.register.account');
+        }
+
+        $identityType = $data['identity_type']
+            ?? ResolveOjetFormerStudentNumberService::IDENTITY_ZIMBABWEAN;
+
+        if ($identityType === ResolveOjetFormerStudentNumberService::IDENTITY_ZIMBABWEAN) {
+            $request->validate([
+                'id_number' => ['required', 'string', 'max:20', new ZimbabweanIdNumber],
+            ]);
+            $identityValue = (string) $data['id_number'];
+        } else {
+            $request->validate([
+                'passport_number' => ['required', 'string', 'min:5', 'max:50'],
+            ]);
+            $identityValue = (string) $data['passport_number'];
+        }
+
+        $resolution = $this->ojetFormerStudentResolver->resolve($identityType, $identityValue);
+
+        if (! $resolution->resolved || $resolution->studentNumber === null) {
+            $this->intentSession->clearOjetFormerStudent();
+
+            $field = $identityType === ResolveOjetFormerStudentNumberService::IDENTITY_INTERNATIONAL
+                ? 'passport_number'
+                : 'id_number';
+
+            throw ValidationException::withMessages([
+                $field => __("trans.{$resolution->errorKey}"),
+            ]);
+        }
+
+        $normalizedIdentity = $this->ojetFormerStudentResolver->normalizeIdentity($identityType, $identityValue);
+
+        $this->intentSession->setOjetFormerStudent(
+            identityType: $identityType,
+            idNumber: $identityType === ResolveOjetFormerStudentNumberService::IDENTITY_ZIMBABWEAN
+                ? $normalizedIdentity
+                : null,
+            passportNumber: $identityType === ResolveOjetFormerStudentNumberService::IDENTITY_INTERNATIONAL
+                ? $normalizedIdentity
+                : null,
+            studentNumber: $resolution->studentNumber,
+            studentId: $resolution->student?->id,
+        );
+
+        // Existing CMS students already have a portal user — never create a duplicate account.
+        if ($resolution->isOnCurrentPortal()) {
+            return to_route('login')->with(
+                'status',
+                __('trans.ojet_former_student_login_required'),
+            );
+        }
+
         $this->intentSession->markReadyForAccount();
 
         return to_route('portal.register.account');
@@ -352,6 +430,13 @@ class GuestRegistrationController extends Controller
             }
 
             if (
+                $this->intentSession->stepperVariant() === 'ojet'
+                && ! $this->intentSession->hasResolvedOjetFormerStudent()
+            ) {
+                return to_route('portal.register.programme');
+            }
+
+            if (
                 $this->intentSession->getTrack() === ApplicationTrackEnum::Transfer
                 && ! $this->intentSession->hasTransferCollegeName()
             ) {
@@ -373,6 +458,13 @@ class GuestRegistrationController extends Controller
             'eligibilityComplete' => true,
             'startAtIdentity' => true,
             'requireEligibilityFirst' => false,
+            'lockedIdentity' => $this->intentSession->hasResolvedOjetFormerStudent()
+                ? [
+                    'identityType' => $this->intentSession->ojetIdentityType(),
+                    'idNumber' => $this->intentSession->ojetIdNumber(),
+                    'passportNumber' => $this->intentSession->ojetPassportNumber(),
+                ]
+                : null,
         ]);
     }
 

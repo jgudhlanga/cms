@@ -274,7 +274,8 @@ class Helper
             return ModeOfStudy::findOrFail(request()->mode_of_study_id);
         }
 
-        return ModeOfStudy::where('name', ModeOfStudyEnum::FULL_TIME->value)->first();
+        return ModeOfStudy::where('name', ModeOfStudyEnum::FULL_TIME->value)->first()
+            ?? ModeOfStudy::query()->orderBy('name')->first();
     }
 
     public static function initializeProgramWorkflow($program): void

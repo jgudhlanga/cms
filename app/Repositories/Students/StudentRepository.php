@@ -465,7 +465,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             ? EnrollmentLookupService::normalizeNationalId($dto->id_number)
             : null;
 
-        return [
+        $fields = [
             'user_id' => $dto->user_id,
             'title_id' => $dto->title_id,
             'gender_id' => $dto->gender_id,
@@ -480,6 +480,16 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             'date_of_birth' => Carbon::parse($dto->date_of_birth)->format('Y-m-d'),
             'disability_status' => $dto->disability_status,
         ];
+
+        $resolvedStudentNumber = session('registration.ojet_student_number')
+            ?? session('application.ojet_student_number');
+
+        if (is_string($resolvedStudentNumber) && $resolvedStudentNumber !== '') {
+            $fields['student_number'] = EnrollmentLookupService::normalizeStudentNumber($resolvedStudentNumber);
+            $fields['student_number_generated'] = true;
+        }
+
+        return $fields;
     }
 
     private function updateFields(UpdateStudentDto $dto): array

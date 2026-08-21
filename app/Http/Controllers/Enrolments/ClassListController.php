@@ -7,9 +7,7 @@ use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Helpers\DepartmentHelper;
-use App\Helpers\DropdownHelper;
 use App\Helpers\EnrolmentHelper;
-use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Enrolments\AddToClassListRequest;
 use App\Http\Requests\Enrolments\ClassListRequest;
@@ -387,21 +385,7 @@ class ClassListController extends Controller
     {
         Gate::any(['view:class-lists', 'manage-final:class-lists']) || abort(403);
 
-        [$intakePeriodId, $modeOfStudyId, $courseId] = $this->departmentEnrolmentService->extractFilters();
-
-        // ------------------------------------------------------------
-        // 1. Resolve static/cached data
-        // ------------------------------------------------------------
-        $intakePeriods = DropdownHelper::getIntakePeriods();
-        $modesOfStudy = DropdownHelper::getModesOfStudy();
-
-        $intakePeriod = $intakePeriodId
-            ? $intakePeriods->firstWhere('id', $intakePeriodId)
-            : Helper::resolveIntakePeriod();
-
-        $modeOfStudy = $modeOfStudyId
-            ? $modesOfStudy->firstWhere('id', $modeOfStudyId)
-            : Helper::resolveModeOfStudy();
+        [$intakePeriod, $modeOfStudy, $courseId, $intakePeriods, $modesOfStudy] = $this->departmentEnrolmentService->resolveEnrolmentContext();
 
         $departmentCourse = $courseId
             ? DepartmentCourse::with(['course'])->find($courseId)
@@ -410,7 +394,13 @@ class ClassListController extends Controller
         // ------------------------------------------------------------
         // 2. Query enrolments efficiently
         // ------------------------------------------------------------
-        $results = $this->departmentEnrolmentService->queryClassLists($institutionDepartment->id, $departmentLevel->id, $intakePeriod->id, $modeOfStudy->id, $courseId);
+        $results = $this->departmentEnrolmentService->queryClassLists(
+            $institutionDepartment->id,
+            $departmentLevel->id,
+            (int) $intakePeriod->id,
+            (int) $modeOfStudy->id,
+            $courseId
+        );
 
         // ------------------------------------------------------------
         // 3. Prepare data for Inertia

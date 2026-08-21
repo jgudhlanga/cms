@@ -10,6 +10,7 @@ use App\Models\Institution\Level;
 use App\Models\Students\ApplicationFee;
 use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\ApplicationTrackSession;
+use App\Services\Students\OjetFormerStudentIntentService;
 use App\Services\Students\ReturningStudentContextService;
 use Closure;
 use Illuminate\Http\Request;
@@ -21,6 +22,7 @@ class RedirectStudentMiddleware
         protected ApplicationFeeService $applicationFeeService,
         protected ReturningStudentContextService $returningStudentContext,
         protected ApplicationTrackSession $trackSession,
+        protected OjetFormerStudentIntentService $ojetFormerStudentIntent,
     ) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -156,6 +158,24 @@ class RedirectStudentMiddleware
 
     private function handleReturningStudentProfile(Request $request, Closure $next, $user): Response
     {
+        $student = $user->studentProfile;
+        $hasOjetIntent = $this->ojetFormerStudentIntent->hasPromotedOjetApplicationIntent()
+            || $this->ojetFormerStudentIntent->hasPendingProgrammeIntent();
+
+        if (
+            $hasOjetIntent
+            && $student !== null
+            && $this->ojetFormerStudentIntent->studentMatchesVerifiedIdentity($student)
+            && $request->routeIs(
+                'portal.application.create',
+                'portal.application.confirm',
+                'portal.store-application',
+                'portal.application.fee-payment',
+            )
+        ) {
+            return $next($request);
+        }
+
         if ($request->routeIs(
             'portal.application.create',
             'portal.application.confirm',
@@ -165,8 +185,6 @@ class RedirectStudentMiddleware
         )) {
             return to_route('portal.dashboard');
         }
-
-        $student = $user->studentProfile;
 
         if ($student !== null && $this->returningStudentContext->needsContinueInClassPage($student)) {
             if (! $request->routeIs(

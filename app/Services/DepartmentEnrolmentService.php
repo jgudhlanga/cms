@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
+use App\Helpers\DropdownHelper;
+use App\Helpers\Helper;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\AcademicLevel;
@@ -12,6 +14,7 @@ use App\Models\Shared\FeeType;
 use App\Models\Students\ApplicationFee;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class DepartmentEnrolmentService
@@ -21,7 +24,7 @@ class DepartmentEnrolmentService
         int $departmentLevelId,
         int $intakePeriodId,
         int $modeOfStudyId,
-        int $courseId,
+        ?int $courseId = null,
         ?int $perPage = null
     ): array {
         $perPage ??= (int) config('custom.system.class_list_page_size', 200);
@@ -41,8 +44,8 @@ class DepartmentEnrolmentService
                 'department_level_id' => $departmentLevelId,
                 'intake_period_id' => $intakePeriodId,
                 'mode_of_study_id' => $modeOfStudyId,
-                'department_course_id' => $courseId,
             ])
+            ->when($courseId, fn ($query) => $query->where('department_course_id', $courseId))
             ->groupBy('student_id');
 
         // ------------------------------------------------------------
@@ -257,7 +260,7 @@ class DepartmentEnrolmentService
         int $departmentLevelId,
         int $intakePeriodId,
         int $modeOfStudyId,
-        int $courseId,
+        ?int $courseId = null,
         ?int $perPage = null
     ): array {
         $perPage ??= (int) config('custom.system.class_list_page_size', 200);
@@ -272,8 +275,8 @@ class DepartmentEnrolmentService
                 'department_level_id' => $departmentLevelId,
                 'intake_period_id' => $intakePeriodId,
                 'mode_of_study_id' => $modeOfStudyId,
-                'department_course_id' => $courseId,
             ])
+            ->when($courseId, fn ($query) => $query->where('department_course_id', $courseId))
             ->groupBy('student_id');
 
         // ------------------------------------------------------------
@@ -412,6 +415,28 @@ class DepartmentEnrolmentService
         ];
     }
 
+    /**
+     * @return array{0: object, 1: object, 2: int|null, 3: Collection, 4: Collection}
+     */
+    public function resolveEnrolmentContext(): array
+    {
+        [$intakePeriodId, $modeOfStudyId, $courseId] = $this->extractFilters();
+
+        $intakePeriods = DropdownHelper::getIntakePeriods();
+        $modesOfStudy = DropdownHelper::getModesOfStudy();
+
+        $intakePeriod = $this->matchById($intakePeriods, $intakePeriodId)
+            ?? Helper::resolveIntakePeriod();
+
+        $modeOfStudy = $this->matchById($modesOfStudy, $modeOfStudyId)
+            ?? Helper::resolveModeOfStudy()
+            ?? $modesOfStudy->first();
+
+        abort_if($intakePeriod === null || $modeOfStudy === null, 404);
+
+        return [$intakePeriod, $modeOfStudy, $courseId, $intakePeriods, $modesOfStudy];
+    }
+
     public function extractFilters(): array
     {
         $intakePeriodId = request('intake_period_id') > 0 ? (int) request('intake_period_id') : null;
@@ -419,6 +444,17 @@ class DepartmentEnrolmentService
         $courseId = request('department_course_id') > 0 ? (int) request('department_course_id') : null;
 
         return [$intakePeriodId, $modeOfStudyId, $courseId];
+    }
+
+    private function matchById(Collection $rows, ?int $id): ?object
+    {
+        if ($id === null) {
+            return null;
+        }
+
+        $match = $rows->first(fn (mixed $row): bool => (int) data_get($row, 'id') === $id);
+
+        return is_object($match) ? $match : null;
     }
 
     public function getClassSize(InstitutionDepartment $institutionDepartment, $departmentLevelId, $departmentCourseId, $intakePeriodId, $modeOfStudyId): int
@@ -430,11 +466,11 @@ class DepartmentEnrolmentService
             ->where('mode_of_study_id', $modeOfStudyId)->pluck('class_size')->first() ?? 0;
     }
 
-    private function preloadApplicationFeeReceipts($userIds, int $applicationFeeId, int $intakePeriodId)
+    private function preloadApplicationFeeReceipts($userIds, ?int $applicationFeeId, int $intakePeriodId)
     {
         $userIds = collect($userIds)->filter()->unique()->values();
 
-        if ($userIds->isEmpty()) {
+        if ($userIds->isEmpty() || $applicationFeeId === null) {
             return collect();
         }
 

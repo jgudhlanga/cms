@@ -95,6 +95,7 @@ class CreateApplicationRequest extends FormRequest
     {
         $idType = IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
         $passportType = IdTypeEnum::FOREIGN_PASSPORT_NUMBER->id();
+        $existingStudentId = $this->user()?->studentProfile?->id;
 
         return [
             'first_name' => ['required', 'string', 'max:255'],
@@ -111,7 +112,7 @@ class CreateApplicationRequest extends FormRequest
                 'string',
                 'max:20',
                 new ZimbabweanIdNumber,
-                Rule::unique('students', 'id_number'),
+                Rule::unique('students', 'id_number')->ignore($existingStudentId),
             ],
             'passport_number' => [
                 'required_if:id_type_id,'.$passportType,
@@ -119,7 +120,7 @@ class CreateApplicationRequest extends FormRequest
                 'string',
                 'min:5',
                 'max:50',
-                Rule::unique('students', 'passport_number'),
+                Rule::unique('students', 'passport_number')->ignore($existingStudentId),
             ],
             'country_id' => ['required_if:id_type_id,'.$passportType, 'nullable', 'exists:countries,id'],
             'address_1' => ['required', 'string', 'max:255'],
