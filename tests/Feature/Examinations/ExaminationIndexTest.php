@@ -16,7 +16,7 @@ function createExaminationIndexUser(array $permissions = ['viewAny:examinations'
     return $user;
 }
 
-it('defaults examination index to the latest session', function (): void {
+it('defaults examination index session to empty and does not filter by session', function (): void {
     $user = createExaminationIndexUser();
 
     ExaminationResult::factory()->create([
@@ -41,10 +41,76 @@ it('defaults examination index to the latest session', function (): void {
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('examinations/Index')
-            ->where('filters.session', '45000')
+            ->where('filters.session', [])
+            ->has('results.data', 2));
+});
+
+it('filters examination index by multiple sessions', function (): void {
+    $user = createExaminationIndexUser();
+
+    ExaminationResult::factory()->create([
+        'tenant_id' => $user->tenant_id,
+        'session' => '43000',
+        'session_date' => '2020-01-01',
+        'candidate_number' => 'OLD0001',
+        'subject_code' => 'S-OLD',
+        'surname' => 'Oldman',
+    ]);
+    ExaminationResult::factory()->create([
+        'tenant_id' => $user->tenant_id,
+        'session' => '45000',
+        'session_date' => '2024-06-01',
+        'candidate_number' => 'NEW0001',
+        'subject_code' => 'S-NEW',
+        'surname' => 'Newman',
+    ]);
+    ExaminationResult::factory()->create([
+        'tenant_id' => $user->tenant_id,
+        'session' => '46000',
+        'session_date' => '2025-01-01',
+        'candidate_number' => 'SKIP0001',
+        'subject_code' => 'S-SKIP',
+        'surname' => 'Skipper',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('examinations.index', [
+            'session' => ['43000', '45000'],
+        ]))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('examinations/Index')
+            ->where('filters.session', ['43000', '45000'])
+            ->has('results.data', 2));
+});
+
+it('accepts a single session string for backward compatibility', function (): void {
+    $user = createExaminationIndexUser();
+
+    ExaminationResult::factory()->create([
+        'tenant_id' => $user->tenant_id,
+        'session' => '45000',
+        'session_date' => '2024-06-01',
+        'candidate_number' => 'NEW0001',
+        'subject_code' => 'S-NEW',
+        'surname' => 'Newman',
+    ]);
+    ExaminationResult::factory()->create([
+        'tenant_id' => $user->tenant_id,
+        'session' => '43000',
+        'session_date' => '2020-01-01',
+        'candidate_number' => 'OLD0001',
+        'subject_code' => 'S-OLD',
+        'surname' => 'Oldman',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('examinations.index', ['session' => '45000']))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.session', ['45000'])
             ->has('results.data', 1)
-            ->where('results.data.0.candidateNumber', 'NEW0001')
-            ->where('results.data.0.surname', 'Newman'));
+            ->where('results.data.0.candidateNumber', 'NEW0001'));
 });
 
 it('filters examination index by discipline surname and candidate number', function (): void {
@@ -75,7 +141,7 @@ it('filters examination index by discipline surname and candidate number', funct
 
     $this->actingAs($user)
         ->get(route('examinations.index', [
-            'session' => '45000',
+            'session' => ['45000'],
             'discipline' => 'Automotive',
             'surname' => 'Gwat',
             'candidate_number' => 'AUTO',
@@ -110,7 +176,7 @@ it('filters examination index by subject code and first names', function (): voi
 
     $this->actingAs($user)
         ->get(route('examinations.index', [
-            'session' => '45000',
+            'session' => ['45000'],
             'subject_code' => '306/13/S01',
             'first_names' => 'Sih',
         ]))
@@ -142,7 +208,7 @@ it('does not apply the legacy catch-all search parameter', function (): void {
 
     $this->actingAs($user)
         ->get(route('examinations.index', [
-            'session' => '45000',
+            'session' => ['45000'],
             'search' => 'Hidden',
         ]))
         ->assertSuccessful()
@@ -187,7 +253,7 @@ it('paginates filtered examination results', function (): void {
     ]);
 
     $this->actingAs($user)
-        ->get(route('examinations.index', ['page_size' => 2, 'session' => '44287']))
+        ->get(route('examinations.index', ['page_size' => 2, 'session' => ['44287']]))
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('examinations/Index')

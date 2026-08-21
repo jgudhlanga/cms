@@ -16,7 +16,7 @@ class ExaminationResultQuery
 {
     /**
      * @param  array{
-     *     session?: string|null,
+     *     session?: string|list<string>|null,
      *     discipline?: string|null,
      *     subject_code?: string|null,
      *     surname?: string|null,
@@ -26,10 +26,12 @@ class ExaminationResultQuery
      */
     public function filtered(array $filters): Builder
     {
+        $sessions = $this->sessionsFromFilters($filters);
+
         return ExaminationResult::query()
             ->when(
-                filled($filters['session'] ?? null),
-                fn (Builder $query): Builder => $query->where('session', $filters['session']),
+                $sessions !== [],
+                fn (Builder $query): Builder => $query->whereIn('session', $sessions),
             )
             ->when(
                 filled($filters['discipline'] ?? null),
@@ -119,7 +121,9 @@ class ExaminationResultQuery
      */
     public function onlineViewedCount(array $filters): int
     {
-        if (! filled($filters['session'] ?? null)) {
+        $sessions = $this->sessionsFromFilters($filters);
+
+        if ($sessions === []) {
             return 0;
         }
 
@@ -128,7 +132,7 @@ class ExaminationResultQuery
             ->distinct();
 
         return StudentExamResult::query()
-            ->where('session', $filters['session'])
+            ->whereIn('session', $sessions)
             ->whereIn('candidate_number', $candidateNumbers)
             ->count();
     }
@@ -171,17 +175,20 @@ class ExaminationResultQuery
     }
 
     /**
+     * @param  string|list<string>|null  $session
      * @return list<array{value: string, label: string}>
      */
-    public function disciplineOptions(?string $session): array
+    public function disciplineOptions(string|array|null $session): array
     {
+        $sessions = $this->normalizeSessions($session);
+
         return ExaminationResult::query()
             ->select('discipline')
             ->whereNotNull('discipline')
             ->where('discipline', '!=', '')
             ->when(
-                filled($session),
-                fn (Builder $query): Builder => $query->where('session', $session),
+                $sessions !== [],
+                fn (Builder $query): Builder => $query->whereIn('session', $sessions),
             )
             ->distinct()
             ->orderBy('discipline')
@@ -195,17 +202,20 @@ class ExaminationResultQuery
     }
 
     /**
+     * @param  string|list<string>|null  $session
      * @return list<array{value: string, label: string}>
      */
-    public function subjectOptions(?string $session, ?string $discipline): array
+    public function subjectOptions(string|array|null $session, ?string $discipline): array
     {
+        $sessions = $this->normalizeSessions($session);
+
         return ExaminationResult::query()
             ->selectRaw('subject_code, MAX(subject) as subject')
             ->whereNotNull('subject_code')
             ->where('subject_code', '!=', '')
             ->when(
-                filled($session),
-                fn (Builder $query): Builder => $query->where('session', $session),
+                $sessions !== [],
+                fn (Builder $query): Builder => $query->whereIn('session', $sessions),
             )
             ->when(
                 filled($discipline),
@@ -245,7 +255,60 @@ class ExaminationResultQuery
     }
 
     /**
-     * Resolve filters for the search index: default session to latest when absent.
+     * Resolve filters for the search index. Session is multi-select and defaults to none.
+     *
+     * @param  array{
+     *     session?: string|list<string>|null,
+     *     discipline?: string|null,
+     *     subject_code?: string|null,
+     *     surname?: string|null,
+     *     first_names?: string|null,
+     *     candidate_number?: string|null,
+     * }  $input
+     * @return array{
+     *     session: list<string>,
+     *     discipline: string|null,
+     *     subject_code: string|null,
+     *     surname: string|null,
+     *     first_names: string|null,
+     *     candidate_number: string|null,
+     *     compare_session: null,
+     * }
+     */
+    public function resolveIndexFilters(array $input): array
+    {
+        $sessions = $this->normalizeSessions($input['session'] ?? null);
+        $validSessionValues = Collection::make($this->sessionOptions())->pluck('value');
+        $sessions = array_values(array_filter(
+            $sessions,
+            fn (string $session): bool => $validSessionValues->contains($session),
+        ));
+
+        $discipline = $this->nullableString($input['discipline'] ?? null);
+        $subjectCode = $this->nullableString($input['subject_code'] ?? null);
+
+        if ($discipline !== null && ! $this->disciplineExists($sessions, $discipline)) {
+            $discipline = null;
+            $subjectCode = null;
+        }
+
+        if ($subjectCode !== null && ! $this->subjectExists($sessions, $discipline, $subjectCode)) {
+            $subjectCode = null;
+        }
+
+        return [
+            'session' => $sessions,
+            'discipline' => $discipline,
+            'subject_code' => $subjectCode,
+            'surname' => $this->nullableString($input['surname'] ?? null),
+            'first_names' => $this->nullableString($input['first_names'] ?? null),
+            'candidate_number' => $this->nullableString($input['candidate_number'] ?? null),
+            'compare_session' => null,
+        ];
+    }
+
+    /**
+     * Resolve filters for the dashboard: default session to latest when absent.
      *
      * @param  array{
      *     session?: string|null,
@@ -302,24 +365,79 @@ class ExaminationResultQuery
         ];
     }
 
-    private function disciplineExists(?string $session, string $discipline): bool
+    /**
+     * @param  array{session?: string|list<string>|null}  $filters
+     * @return list<string>
+     */
+    private function sessionsFromFilters(array $filters): array
     {
+        return $this->normalizeSessions($filters['session'] ?? null);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function normalizeSessions(mixed $value): array
+    {
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+
+            return $trimmed !== '' ? [$trimmed] : [];
+        }
+
+        if (! is_array($value)) {
+            return [];
+        }
+
+        $sessions = [];
+
+        foreach ($value as $session) {
+            if (! is_scalar($session)) {
+                continue;
+            }
+
+            $trimmed = trim((string) $session);
+
+            if ($trimmed !== '') {
+                $sessions[] = $trimmed;
+            }
+        }
+
+        return array_values(array_unique($sessions));
+    }
+
+    /**
+     * @param  string|list<string>|null  $session
+     */
+    private function disciplineExists(string|array|null $session, string $discipline): bool
+    {
+        $sessions = $this->normalizeSessions($session);
+
         return ExaminationResult::query()
             ->where('discipline', $discipline)
             ->when(
-                filled($session),
-                fn (Builder $query): Builder => $query->where('session', $session),
+                $sessions !== [],
+                fn (Builder $query): Builder => $query->whereIn('session', $sessions),
             )
             ->exists();
     }
 
-    private function subjectExists(?string $session, ?string $discipline, string $subjectCode): bool
+    /**
+     * @param  string|list<string>|null  $session
+     */
+    private function subjectExists(string|array|null $session, ?string $discipline, string $subjectCode): bool
     {
+        $sessions = $this->normalizeSessions($session);
+
         return ExaminationResult::query()
             ->where('subject_code', $subjectCode)
             ->when(
-                filled($session),
-                fn (Builder $query): Builder => $query->where('session', $session),
+                $sessions !== [],
+                fn (Builder $query): Builder => $query->whereIn('session', $sessions),
             )
             ->when(
                 filled($discipline),

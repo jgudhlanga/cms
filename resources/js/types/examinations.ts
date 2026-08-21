@@ -4,7 +4,7 @@ export type ExaminationFilterOption = {
 };
 
 export type ExaminationSearchFiltersState = {
-    session?: string | null;
+    session?: string[] | null;
     discipline?: string | null;
     subject_code?: string | null;
     surname?: string | null;

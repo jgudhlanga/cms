@@ -20,7 +20,8 @@ class ExaminationIndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'session' => ['nullable', 'string', 'max:100'],
+            'session' => ['nullable', 'array'],
+            'session.*' => ['string', 'max:100'],
             'discipline' => ['nullable', 'string', 'max:255'],
             'subject_code' => ['nullable', 'string', 'max:100'],
             'surname' => ['nullable', 'string', 'max:255'],
@@ -29,9 +30,24 @@ class ExaminationIndexRequest extends FormRequest
         ];
     }
 
+    protected function prepareForValidation(): void
+    {
+        $session = $this->input('session');
+
+        if ($session === null || $session === '') {
+            $this->merge(['session' => []]);
+
+            return;
+        }
+
+        if (is_string($session)) {
+            $this->merge(['session' => [trim($session)]]);
+        }
+    }
+
     /**
      * @return array{
-     *     session?: string|null,
+     *     session?: list<string>,
      *     discipline?: string|null,
      *     subject_code?: string|null,
      *     surname?: string|null,
@@ -42,7 +58,7 @@ class ExaminationIndexRequest extends FormRequest
     public function filters(): array
     {
         /** @var array{
-         *     session?: string|null,
+         *     session?: list<string>,
          *     discipline?: string|null,
          *     subject_code?: string|null,
          *     surname?: string|null,
