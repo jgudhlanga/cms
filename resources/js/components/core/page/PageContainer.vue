@@ -48,7 +48,7 @@ const backNavigationRowJustifyClass = computed((): string => {
         return 'justify-between';
     }
 
-    if (showBackNavigation.value) {
+    if (showBackNavigation.value || hasBackNavigationTrailing.value) {
         return 'justify-end';
     }
 

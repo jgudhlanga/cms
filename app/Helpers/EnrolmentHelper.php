@@ -9,6 +9,7 @@ use App\Models\Enrolments\ClassList;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
+use App\Models\Users\User;
 
 class EnrolmentHelper
 {
@@ -60,6 +61,27 @@ class EnrolmentHelper
             ClassListTypeEnum::FINAL->value => 'manage-final:class-lists',
             default => null,
         };
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function classListBrowseTypesForUser(?User $user): array
+    {
+        if ($user === null) {
+            return [];
+        }
+
+        $types = [];
+
+        foreach (self::classListBrowseTypes() as $type) {
+            $permission = self::classListBrowsePermissionForType($type);
+            if ($permission !== null && $user->can($permission)) {
+                $types[] = $type;
+            }
+        }
+
+        return $types;
     }
 
     public static function rejectOtherApplications(Student $student, StudentApplication $currentProgram): void

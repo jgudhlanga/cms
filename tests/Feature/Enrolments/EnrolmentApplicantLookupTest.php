@@ -6,14 +6,16 @@ use App\Models\Enrolments\ClassList;
 use App\Models\Rbac\Permission;
 use App\Models\Users\User;
 
-function lookupActingAsClassListStaff(?int $tenantId = null): User
+function lookupActingAsClassListStaff(?int $tenantId = null, array $permissions = ['verify:class-lists', 'confirm:class-lists']): User
 {
     $user = User::factory()->create(array_filter([
         'tenant_id' => $tenantId,
     ]));
-    Permission::findOrCreate('verify:class-lists', 'web');
-    Permission::findOrCreate('confirm:class-lists', 'web');
-    $user->givePermissionTo(['verify:class-lists', 'confirm:class-lists']);
+
+    foreach ($permissions as $permission) {
+        Permission::findOrCreate($permission, 'web');
+        $user->givePermissionTo($permission);
+    }
 
     return $user;
 }
@@ -138,6 +140,8 @@ test('applicant lookup returns applications scoped to type and intake', function
 
     expect($applicationIds)->toContain((int) $application->id)
         ->and($applicationIds)->not->toContain((int) $otherIntakeApplication->id);
+
+    $response->assertJsonPath('0.classListType', ClassListTypeEnum::PROVISIONAL->value);
 });
 
 test('applicant lookup finds applicants across departments without department filter', function () {
@@ -220,6 +224,114 @@ test('applicant lookup matches tracking number and excludes verified type', func
         ]))
         ->assertOk()
         ->assertJsonCount(0);
+});
+
+test('untyped applicant lookup requires at least one class list browse permission', function () {
+    $application = createVerifiedStudentApplication('LOOKUP-UNTYPED-AUTH-01');
+    ClassList::query()->where('student_application_id', $application->id)->update([
+        'type' => ClassListTypeEnum::PROVISIONAL->value,
+    ]);
+
+    $user = User::factory()->create(['tenant_id' => $application->tenant_id]);
+
+    $this->actingAs($user)
+        ->getJson(route('enrolments.applicant-lookup', [
+            'intake_period_id' => $application->intake_period_id,
+            'q' => 'LOOKUP',
+        ]))
+        ->assertForbidden();
+});
+
+test('untyped applicant lookup requires a search query or a course', function () {
+    $application = createVerifiedStudentApplication('LOOKUP-UNTYPED-QUERY-01');
+    ClassList::query()->where('student_application_id', $application->id)->update([
+        'type' => ClassListTypeEnum::PROVISIONAL->value,
+    ]);
+
+    $user = lookupActingAsClassListStaff((int) $application->tenant_id);
+
+    $this->actingAs($user)
+        ->getJson(route('enrolments.applicant-lookup', [
+            'intake_period_id' => $application->intake_period_id,
+        ]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['q', 'department_course_id']);
+});
+
+test('untyped applicant lookup is scoped to statuses the user can open', function () {
+    $provisional = createVerifiedStudentApplication('LOOKUP-UNTYPED-P');
+    $verified = createVerifiedStudentApplication('LOOKUP-UNTYPED-V');
+    $final = createVerifiedStudentApplication('LOOKUP-UNTYPED-F');
+
+    $verified->update(['intake_period_id' => $provisional->intake_period_id]);
+    $final->update(['intake_period_id' => $provisional->intake_period_id]);
+
+    ClassList::query()->where('student_application_id', $provisional->id)->update([
+        'type' => ClassListTypeEnum::PROVISIONAL->value,
+    ]);
+    ClassList::query()->where('student_application_id', $verified->id)->update([
+        'type' => ClassListTypeEnum::VERIFIED->value,
+    ]);
+    ClassList::query()->where('student_application_id', $final->id)->update([
+        'type' => ClassListTypeEnum::FINAL->value,
+    ]);
+
+    foreach ([$provisional, $verified, $final] as $application) {
+        $application->student->user->update([
+            'first_name' => 'ZimbaLookup',
+            'last_name' => 'CrossType',
+        ]);
+    }
+
+    $tenantId = (int) $provisional->tenant_id;
+    $query = [
+        'intake_period_id' => $provisional->intake_period_id,
+        'q' => 'ZimbaLookup',
+    ];
+
+    $verifyIds = collect($this->actingAs(lookupActingAsClassListStaff($tenantId, ['verify:class-lists']))
+        ->getJson(route('enrolments.applicant-lookup', $query))
+        ->assertOk()
+        ->json())->pluck('applicationId')->map(fn ($id) => (int) $id);
+
+    expect($verifyIds)->toContain((int) $provisional->id)
+        ->and($verifyIds)->not->toContain((int) $verified->id)
+        ->and($verifyIds)->not->toContain((int) $final->id);
+
+    $confirmIds = collect($this->actingAs(lookupActingAsClassListStaff($tenantId, ['confirm:class-lists']))
+        ->getJson(route('enrolments.applicant-lookup', $query))
+        ->assertOk()
+        ->json())->pluck('applicationId')->map(fn ($id) => (int) $id);
+
+    expect($confirmIds)->toContain((int) $verified->id)
+        ->and($confirmIds)->not->toContain((int) $provisional->id)
+        ->and($confirmIds)->not->toContain((int) $final->id);
+
+    $finalIds = collect($this->actingAs(lookupActingAsClassListStaff($tenantId, ['manage-final:class-lists']))
+        ->getJson(route('enrolments.applicant-lookup', $query))
+        ->assertOk()
+        ->json())->pluck('applicationId')->map(fn ($id) => (int) $id);
+
+    expect($finalIds)->toContain((int) $final->id)
+        ->and($finalIds)->not->toContain((int) $provisional->id)
+        ->and($finalIds)->not->toContain((int) $verified->id);
+
+    $allTypes = collect($this->actingAs(lookupActingAsClassListStaff($tenantId, [
+        'verify:class-lists',
+        'confirm:class-lists',
+        'manage-final:class-lists',
+    ]))->getJson(route('enrolments.applicant-lookup', $query))
+        ->assertOk()
+        ->json());
+
+    expect($allTypes->pluck('applicationId')->map(fn ($id) => (int) $id)->all())
+        ->toContain((int) $provisional->id, (int) $verified->id, (int) $final->id)
+        ->and($allTypes->pluck('classListType')->all())
+        ->toContain(
+            ClassListTypeEnum::PROVISIONAL->value,
+            ClassListTypeEnum::VERIFIED->value,
+            ClassListTypeEnum::FINAL->value,
+        );
 });
 
 test('verify page exposes invalid id flag', function () {

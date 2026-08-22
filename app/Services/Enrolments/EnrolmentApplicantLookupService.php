@@ -17,7 +17,7 @@ class EnrolmentApplicantLookupService
 
     /**
      * @param  array{
-     *     type: string,
+     *     types: list<string>,
      *     intake_period_id: int,
      *     institution_department_id?: int|null,
      *     department_level_id?: int|null,
@@ -28,6 +28,12 @@ class EnrolmentApplicantLookupService
      */
     public function search(array $filters): Collection
     {
+        $types = $filters['types'];
+
+        if ($types === []) {
+            return collect();
+        }
+
         $query = StudentApplication::query()
             ->join('class_lists', 'class_lists.student_application_id', '=', 'student_applications.id')
             ->join('students', 'students.id', '=', 'student_applications.student_id')
@@ -38,7 +44,7 @@ class EnrolmentApplicantLookupService
                 'departmentLevel.level',
                 'departmentCourse.course',
             ])
-            ->where('class_lists.type', $filters['type'])
+            ->whereIn('class_lists.type', $types)
             ->where('student_applications.intake_period_id', $filters['intake_period_id'])
             ->when(
                 filled($filters['institution_department_id'] ?? null),
@@ -64,6 +70,7 @@ class EnrolmentApplicantLookupService
             ->select([
                 'student_applications.*',
             ])
+            ->addSelect('class_lists.type as class_list_type')
             ->orderBy('users.last_name')
             ->orderBy('users.first_name');
 

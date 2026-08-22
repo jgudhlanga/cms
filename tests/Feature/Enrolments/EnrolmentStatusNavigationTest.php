@@ -59,6 +59,23 @@ test('class list browse permission is mapped per status type', function () {
         ->and(EnrolmentHelper::classListBrowseTypes())->toBe(['provisional', 'verified', 'final']);
 });
 
+test('class list browse types for a user follow status click permissions', function () {
+    $verifyUser = makeEnrolmentStatusNavigationUser(['verify:class-lists']);
+    $confirmUser = makeEnrolmentStatusNavigationUser(['confirm:class-lists']);
+    $finalUser = makeEnrolmentStatusNavigationUser(['manage-final:class-lists']);
+    $allUser = makeEnrolmentStatusNavigationUser([
+        'verify:class-lists',
+        'confirm:class-lists',
+        'manage-final:class-lists',
+    ]);
+
+    expect(EnrolmentHelper::classListBrowseTypesForUser($verifyUser))->toBe(['provisional'])
+        ->and(EnrolmentHelper::classListBrowseTypesForUser($confirmUser))->toBe(['verified'])
+        ->and(EnrolmentHelper::classListBrowseTypesForUser($finalUser))->toBe(['final'])
+        ->and(EnrolmentHelper::classListBrowseTypesForUser($allUser))->toBe(['provisional', 'verified', 'final'])
+        ->and(EnrolmentHelper::classListBrowseTypesForUser(null))->toBe([]);
+});
+
 test('application view permissions cannot open class list or verification pages', function () {
     $application = createVerifiedStudentApplication('STATUS-NAV-VIEW-01');
     ClassList::query()->where('student_application_id', $application->id)->update([
@@ -245,7 +262,10 @@ test('department applications origin query does not change authorization', funct
     $this->actingAs($user)
         ->get(enrolmentDepartmentApplicationsUrl($application, 'provisional', ['from' => 'dashboard']))
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->component('enrolments/DepartmentEnrolments'));
+        ->assertInertia(fn ($page) => $page
+            ->component('enrolments/DepartmentEnrolments')
+            ->has('intakePeriod')
+            ->where('intakePeriod.id', $application->intake_period_id));
 });
 
 test('class lists without a browseable type are forbidden', function () {

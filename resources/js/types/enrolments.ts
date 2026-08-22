@@ -264,9 +264,11 @@ export type EnrolmentApplicantLookupResult = {
     level: string;
     course: string;
     applicationTrackingNumber: string;
+    classListType: string;
     institutionDepartmentId: number;
     departmentLevelId: number;
     departmentCourseId: number;
+    modeOfStudyId: number;
 };
 
 export type OtherApplication = {

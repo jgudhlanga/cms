@@ -123,7 +123,7 @@ const isModeLoaded = (modeId: string): boolean => {
         return false;
     }
 
-    return Boolean(loadedModes.value[`${props.intakePeriodId}:${modeId}`]);
+    return Boolean(loadedModes.value[`${props.departmentId}:${props.intakePeriodId}:${modeId}`]);
 };
 
 const totalEnrolments = computed(() => orderedModes.value.reduce((sum, mode) => sum + modeCount(mode), 0));
@@ -189,7 +189,7 @@ const loadModePanel = async (modeId: string, force = false) => {
         return;
     }
 
-    const cacheKey = `${props.intakePeriodId}:${modeId}`;
+    const cacheKey = `${props.departmentId}:${props.intakePeriodId}:${modeId}`;
     if (!force && loadedModes.value[cacheKey]) {
         return;
     }
@@ -248,9 +248,12 @@ onMounted(async () => {
 });
 
 watch(
-    () => props.intakePeriodId,
-    async (next, previous) => {
-        if (!isReady.value || next === previous) {
+    () => [props.intakePeriodId, props.departmentId],
+    async ([nextIntakePeriodId, nextDepartmentId], [previousIntakePeriodId, previousDepartmentId]) => {
+        if (
+            !isReady.value ||
+            (nextIntakePeriodId === previousIntakePeriodId && nextDepartmentId === previousDepartmentId)
+        ) {
             return;
         }
         await resetAndReload();

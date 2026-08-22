@@ -18,7 +18,6 @@ Route::prefix('enrolments')->middleware('auth')->group(function () {
     Route::put('reject-application/{student_application}', [ClassListController::class, 'rejectApplication'])->name('enrolments.reject-application');
     Route::post('add-to-class-list/{student_application}', [ClassListController::class, 'addToClassList'])->name('enrolments.add-to-class-list');
     Route::get('applicant-lookup', EnrolmentApplicantLookupController::class)
-        ->middleware('class-list.type')
         ->name('enrolments.applicant-lookup');
     Route::get('{institution_department}/class-lists/{department_level}', [ClassListController::class, 'classLists'])
         ->middleware('class-list.type')

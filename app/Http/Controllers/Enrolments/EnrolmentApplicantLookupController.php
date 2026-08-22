@@ -20,7 +20,7 @@ class EnrolmentApplicantLookupController extends Controller
         $validated = $request->validated();
 
         $results = $this->lookupService->search([
-            'type' => (string) $validated['type'],
+            'types' => $request->browseTypes(),
             'intake_period_id' => (int) $validated['intake_period_id'],
             'institution_department_id' => isset($validated['institution_department_id'])
                 ? (int) $validated['institution_department_id']

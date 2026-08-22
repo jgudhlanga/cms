@@ -3,6 +3,7 @@ import { BaseSelect } from '@/components/core/form';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useInstitutionDepartments } from '@/composables/institution/useInstitutionDepartments';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
+import { enrolmentApplicantLookupAction } from '@/lib/enrolmentStatusNavigation';
 import { enrolmentStatusFromQuery } from '@/lib/enrolmentStatusOrigin';
 import { toTitleCase } from '@/lib/enrolmentClassListPresentation';
 import HttpService from '@/services/http.service';
@@ -20,7 +21,7 @@ import { computed, ref, watch } from 'vue';
 
 const props = defineProps<{
     open: boolean;
-    listType: ClassListType | string;
+    listType?: ClassListType | string | null;
     intakePeriodId: string | number;
     intakePeriodName: string;
     from?: string | null;
@@ -89,11 +90,29 @@ const courseOptions = computed((): SelectOption[] =>
     })),
 );
 
+const lockedListType = computed(() => {
+    const type = String(props.listType ?? '').trim();
+
+    return type === '' ? null : type;
+});
+
+const isCrossTypeSearch = computed(() => lockedListType.value === null);
+
 const lockedContextLabel = computed(() =>
-    trans('enrolments.lookup_locked_context', {
-        type: toTitleCase(String(props.listType)),
-        intake: props.intakePeriodName,
-    }),
+    lockedListType.value === null
+        ? trans('enrolments.lookup_locked_context_intake', {
+            intake: props.intakePeriodName,
+        })
+        : trans('enrolments.lookup_locked_context', {
+            type: toTitleCase(lockedListType.value),
+            intake: props.intakePeriodName,
+        }),
+);
+
+const description = computed(() =>
+    isCrossTypeSearch.value
+        ? trans('enrolments.find_applicant_description_intake')
+        : trans('enrolments.find_applicant_description'),
 );
 
 const originQuery = computed(() =>
@@ -125,19 +144,41 @@ const emptyStateMessage = computed(() => {
     return trans('enrolments.lookup_start_typing');
 });
 
-const resolveDestination = (applicationId: number): string => {
-    const type = String(props.listType);
-    const baseParams = {
-        student_application: String(applicationId),
-        type,
-        ...originQuery.value,
-    };
+const resolveDestination = (row: EnrolmentApplicantLookupResult): string | null => {
+    const type = lockedListType.value ?? String(row.classListType ?? '');
+    const action = enrolmentApplicantLookupAction(type);
+    const origin = originQuery.value;
+    const applicationId = String(row.applicationId);
 
-    if (type === 'verified' || type === 'final') {
-        return route('enrolments.confirm', { ...baseParams, type: 'verified' });
+    if (action === 'confirm') {
+        return route('enrolments.confirm', {
+            student_application: applicationId,
+            type: 'verified',
+            ...origin,
+        });
     }
 
-    return route('enrolments.verify', baseParams);
+    if (action === 'class-lists') {
+        return route('enrolments.class-lists', {
+            institution_department: String(row.institutionDepartmentId),
+            department_level: String(row.departmentLevelId),
+            intake_period_id: String(props.intakePeriodId),
+            mode_of_study_id: String(row.modeOfStudyId ?? ''),
+            department_course_id: String(row.departmentCourseId),
+            type: 'final',
+            ...origin,
+        });
+    }
+
+    if (action === 'verify') {
+        return route('enrolments.verify', {
+            student_application: applicationId,
+            type: type || 'provisional',
+            ...origin,
+        });
+    }
+
+    return null;
 };
 
 const resetLookupState = () => {
@@ -169,9 +210,12 @@ const runSearch = async () => {
 
     try {
         const params: Record<string, string | number> = {
-            type: String(props.listType),
             intake_period_id: Number(props.intakePeriodId),
         };
+
+        if (lockedListType.value != null) {
+            params.type = lockedListType.value;
+        }
 
         if (hasTypedSearch.value) {
             params.q = trimmedQuery.value;
@@ -254,8 +298,11 @@ const onInteractOutside = (event: { preventDefault: () => void }) => {
     event.preventDefault();
 };
 
-const navigateToApplicant = (applicationId: number) => {
-    router.visit(resolveDestination(applicationId));
+const navigateToApplicant = (row: EnrolmentApplicantLookupResult) => {
+    const href = resolveDestination(row);
+    if (href) {
+        router.visit(href);
+    }
 };
 
 const loadFilterOptions = async () => {
@@ -372,7 +419,7 @@ watch(selectedCourseId, () => scheduleSearchIfReady(true));
             <SheetHeader class="border-b bg-muted/30 px-5 py-4">
                 <SheetTitle>{{ $t('enrolments.find_applicant') }}</SheetTitle>
                 <SheetDescription class="text-sm">
-                    {{ $t('enrolments.find_applicant_description') }}
+                    {{ description }}
                 </SheetDescription>
                 <p class="mt-1 text-xs font-medium text-muted-foreground">{{ lockedContextLabel }}</p>
             </SheetHeader>
@@ -448,16 +495,18 @@ watch(selectedCourseId, () => scheduleSearchIfReady(true));
                         :key="row.applicationId"
                         type="button"
                         class="flex cursor-pointer flex-col rounded-lg border border-border bg-card px-3 py-2.5 text-left transition-colors hover:bg-muted"
-                        @click.stop="navigateToApplicant(row.applicationId)"
+                        @click.stop="navigateToApplicant(row)"
                     >
                         <div class="flex items-start justify-between gap-2">
                             <span class="text-sm font-semibold text-foreground">{{ row.studentName }}</span>
                             <span class="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-primary">
-                                {{ row.level }}
+                                {{ isCrossTypeSearch ? toTitleCase(row.classListType) : row.level }}
                             </span>
                         </div>
                         <span class="mt-0.5 text-xs text-muted-foreground">{{ row.course }}</span>
-                        <span class="text-xs text-muted-foreground">{{ row.department }}</span>
+                        <span class="text-xs text-muted-foreground">
+                            {{ isCrossTypeSearch ? `${row.department} · ${row.level}` : row.department }}
+                        </span>
                         <span class="mt-1 font-mono text-[10px] text-muted-foreground">{{ row.applicationTrackingNumber }}</span>
                     </button>
                 </div>

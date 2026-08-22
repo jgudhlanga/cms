@@ -2,6 +2,7 @@
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { DepartmentDistributionSortKey } from '@/lib/departmentDistributionPresentation';
+import { resolveUiLabel } from '@/lib/uiLabel';
 import { Search } from 'lucide-vue-next';
 import { computed } from 'vue';
 
@@ -22,6 +23,10 @@ const sortOptions: Array<{ value: DepartmentDistributionSortKey; labelKey: strin
     { value: 'final_desc', labelKey: 'trans.ui_sort_final_high_low' },
     { value: 'rejection_desc', labelKey: 'trans.ui_sort_rejection_high_low' },
 ];
+
+const currentSortLabelKey = computed(
+    () => sortOptions.find((option) => option.value === props.sortKey)?.labelKey ?? sortOptions[0].labelKey,
+);
 
 const legendItems = [
     { key: 'provisional', labelKey: 'trans.provisional', dotClass: 'bg-amber-400' },
@@ -67,11 +72,18 @@ const onSortChange = (value: string | number | bigint | Record<string, unknown> 
                 <span class="shrink-0 text-[10px] font-medium text-muted-foreground">{{ $t('trans.ui_sort_by') }}</span>
                 <Select :model-value="sortKey" @update:model-value="onSortChange">
                     <SelectTrigger class="h-8 w-[180px] text-xs">
-                        <SelectValue />
+                        <SelectValue>
+                            {{ resolveUiLabel(currentSortLabelKey, $t) }}
+                        </SelectValue>
                     </SelectTrigger>
                     <SelectContent position="popper" :side-offset="4">
-                        <SelectItem v-for="option in sortOptions" :key="option.value" :value="option.value">
-                            {{ $t(option.labelKey) }}
+                        <SelectItem
+                            v-for="option in sortOptions"
+                            :key="option.value"
+                            :value="option.value"
+                            :text-value="resolveUiLabel(option.labelKey, $t)"
+                        >
+                            {{ resolveUiLabel(option.labelKey, $t) }}
                         </SelectItem>
                     </SelectContent>
                 </Select>
