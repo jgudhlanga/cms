@@ -1,11 +1,22 @@
 <script setup lang="ts">
+import { BaseButton } from '@/components/core/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
+import { hasAbility } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
 import { DepartmentLevel } from '@/types/department-meta-data';
 import { EnrolmentApplication } from '@/types/enrolments';
-import { ChevronDown, Search } from 'lucide-vue-next';
+import { ChevronDown, Lock, MoreHorizontal, Search } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 
 interface Props {
@@ -16,18 +27,37 @@ interface Props {
     slotSize: number;
     isOLevel: boolean;
     classListCreated: boolean;
+    listedCount?: number;
     selectedIds?: Set<number>;
     isSelected?: (applicationId: number) => boolean;
+    selectedCount?: number;
+    bulkTransitionActions?: Array<{ to: string; label: string }>;
+    canBulkAdd?: boolean;
+    canBulkPurge?: boolean;
+    actionProcessing?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     selectedIds: () => new Set(),
     isSelected: () => false,
+    listedCount: 0,
+    selectedCount: 0,
+    bulkTransitionActions: () => [],
+    canBulkAdd: false,
+    canBulkPurge: false,
+    actionProcessing: false,
 });
 
 const emit = defineEmits<{
     toggle: [applicationId: number, checked: boolean];
     selectGroup: [applications: EnrolmentApplication[], checked: boolean];
+    addOne: [application: EnrolmentApplication, bypassRanking: boolean];
+    transitionOne: [application: EnrolmentApplication, toType: string];
+    purgeOne: [application: EnrolmentApplication];
+    clearSelection: [];
+    bulkAdd: [];
+    bulkTransition: [toType: string];
+    bulkPurge: [];
 }>();
 
 const STATUS_ORDER = ['final', 'verified', 'waiting', 'provisional', 'failed', 'others'] as const;
@@ -57,9 +87,6 @@ const {
     getOtherSubjectGrades,
     getClassListTypeDescription,
     getRowClassList,
-    showAddToClassListBtn,
-    getClassListType,
-    addToClassList,
 } = useEnrolments();
 const { formatDate, isItTrue } = useUtils();
 
@@ -149,14 +176,15 @@ const groupedForDisplay = computed(() => {
     return { applications: source } as Record<string, EnrolmentApplication[]>;
 });
 
-const selectableInView = computed(() => {
-    const apps = Object.values(groupedForDisplay.value).flat();
-    if (props.classListCreated) {
-        return apps.filter((app) => app.inClassList);
-    }
+const selectableInView = computed(() =>
+    Object.values(groupedForDisplay.value)
+        .flat()
+        .filter((app) => app.classListType !== 'final'),
+);
 
-    return apps.filter((app) => !app.inClassList);
-});
+const selectedInThisGroup = computed(
+    () => props.applications.filter((app) => props.isSelected(Number(app.applicationId))).length,
+);
 
 const allSelectableSelected = computed(
     () => selectableInView.value.length > 0 && selectableInView.value.every((app) => props.isSelected(app.applicationId)),
@@ -238,6 +266,50 @@ const sittingBadgeClass = (count: number): string =>
     count > 1 ? 'bg-amber-100 text-amber-900' : 'bg-muted text-muted-foreground';
 
 const sectionTitle = (key: string): string => (key === 'applications' ? 'Applications' : key);
+
+const canCreate = computed(() => hasAbility('create:class-lists'));
+const canVerify = computed(() => hasAbility('verify:class-lists'));
+const canManageFinal = computed(() => hasAbility('manage-final:class-lists'));
+const canDelete = computed(() => hasAbility('delete:class-lists'));
+
+const transitionOptions = (app: EnrolmentApplication): Array<{ to: string; label: string; show: boolean }> => {
+    const type = app.classListType ?? '';
+    if (type === 'final') {
+        return [];
+    }
+
+    return [
+        {
+            to: 'provisional',
+            label: 'To provisional',
+            show: ((type === 'waiting' || type === 'failed') && canCreate.value) || (type === 'verified' && canVerify.value),
+        },
+        { to: 'waiting', label: 'To waiting', show: type === 'provisional' && canCreate.value },
+        {
+            to: 'verified',
+            label: 'To verified',
+            show: (type === 'provisional' || type === 'waiting') && canVerify.value,
+        },
+        { to: 'final', label: 'To final', show: type === 'verified' && canManageFinal.value },
+        {
+            to: 'failed',
+            label: 'Fail',
+            show: ['provisional', 'waiting', 'verified'].includes(type) && canCreate.value,
+        },
+    ].filter((row) => row.show);
+};
+
+const isFinalLocked = (app: EnrolmentApplication): boolean => app.classListType === 'final';
+
+const addBypassNeeded = (app: EnrolmentApplication): boolean => {
+    if (props.classListCreated) {
+        return true;
+    }
+    if (props.classSize > 0 && props.listedCount + 1 > props.classSize) {
+        return true;
+    }
+    return !app.classListType || app.classListType === 'others';
+};
 </script>
 
 <template>
@@ -285,12 +357,63 @@ const sectionTitle = (key: string): string => (key === 'applications' ? 'Applica
             </button>
             <div class="ml-auto flex items-center gap-2">
                 <Checkbox
-                    :model-value="allSelectableSelected"
+                    :checked="allSelectableSelected"
                     :disabled="selectableInView.length === 0"
                     :aria-label="$t('trans.ui_select_all_eligible')"
-                    @update:model-value="onSelectAll"
+                    @update:checked="onSelectAll"
                 />
                 <span class="text-[11px] text-muted-foreground">Select visible</span>
+            </div>
+        </div>
+
+        <div
+            v-if="selectedInThisGroup > 0"
+            class="flex flex-col gap-2 rounded-lg border border-primary/30 bg-primary/5 p-2.5 sm:flex-row sm:items-center sm:justify-between"
+        >
+            <p class="text-xs">
+                <span class="font-semibold">{{ selectedCount }}</span>
+                selected
+            </p>
+            <div class="flex flex-wrap items-center gap-1.5">
+                <BaseButton
+                    type="button"
+                    :variant="ColorVariant.shade"
+                    :size="ButtonSize.xs"
+                    title="Clear"
+                    classes="rounded-full"
+                    @click="emit('clearSelection')"
+                />
+                <BaseButton
+                    v-if="canBulkAdd"
+                    type="button"
+                    :variant="ColorVariant.primary"
+                    :size="ButtonSize.xs"
+                    :title="$t('trans.ui_add_to_class_list')"
+                    classes="rounded-full"
+                    :disabled="actionProcessing"
+                    @click="emit('bulkAdd')"
+                />
+                <BaseButton
+                    v-for="action in bulkTransitionActions"
+                    :key="action.to"
+                    type="button"
+                    :variant="action.to === 'failed' ? ColorVariant.danger : ColorVariant.primary"
+                    :size="ButtonSize.xs"
+                    :title="action.label"
+                    classes="rounded-full"
+                    :disabled="actionProcessing"
+                    @click="emit('bulkTransition', action.to)"
+                />
+                <BaseButton
+                    v-if="canBulkPurge"
+                    type="button"
+                    :variant="ColorVariant.danger"
+                    :size="ButtonSize.xs"
+                    :title="$t('trans.ui_remove_from_class_list')"
+                    classes="rounded-full"
+                    :disabled="actionProcessing"
+                    @click="emit('bulkPurge')"
+                />
             </div>
         </div>
 
@@ -403,11 +526,19 @@ const sectionTitle = (key: string): string => (key === 'applications' ? 'Applica
                                 >
                                     <td class="px-2 py-1.5 text-center">
                                         <Checkbox
-                                            v-if="classListCreated ? application.inClassList : !application.inClassList"
-                                            :model-value="isSelected(application.applicationId)"
+                                            v-if="!isFinalLocked(application)"
+                                            :checked="isSelected(application.applicationId)"
                                             :aria-label="application.studentName"
-                                            @update:model-value="(checked) => emit('toggle', application.applicationId, checked === true)"
+                                            @update:checked="(checked) => emit('toggle', application.applicationId, checked === true)"
                                         />
+                                        <span
+                                            v-else
+                                            class="inline-flex items-center justify-center text-emerald-700"
+                                            title="Final class list entries are locked"
+                                        >
+                                            <Lock class="h-3.5 w-3.5" aria-hidden="true" />
+                                            <span class="sr-only">Locked</span>
+                                        </span>
                                     </td>
                                     <td class="px-1 py-1.5 tabular-nums text-muted-foreground">{{ index + 1 }}</td>
                                     <td class="px-2 py-1.5">
@@ -492,13 +623,51 @@ const sectionTitle = (key: string): string => (key === 'applications' ? 'Applica
                                     </template>
                                     <td class="px-2 py-1.5 text-center">
                                         <button
-                                            v-if="!classListCreated && !application.inClassList && showAddToClassListBtn(index, classSize)"
+                                            v-if="!application.inClassList && canCreate"
                                             type="button"
                                             class="text-[10px] font-semibold text-primary hover:underline"
-                                            @click="addToClassList(String(application.applicationId), getClassListType(index, classSize))"
+                                            @click="emit('addOne', application, addBypassNeeded(application))"
                                         >
                                             Add
                                         </button>
+                                        <span
+                                            v-else-if="isFinalLocked(application)"
+                                            class="inline-flex items-center justify-center text-emerald-700"
+                                            title="Final class list entries are locked"
+                                        >
+                                            <Lock class="h-3.5 w-3.5" aria-hidden="true" />
+                                            <span class="sr-only">Final</span>
+                                        </span>
+                                        <DropdownMenu v-else-if="application.inClassList">
+                                            <DropdownMenuTrigger as-child>
+                                                <button
+                                                    type="button"
+                                                    class="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                    aria-label="Class list actions"
+                                                >
+                                                    <MoreHorizontal class="h-4 w-4" />
+                                                </button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" class="min-w-40">
+                                                <DropdownMenuGroup>
+                                                    <DropdownMenuItem
+                                                        v-for="option in transitionOptions(application)"
+                                                        :key="option.to"
+                                                        class="cursor-pointer text-xs"
+                                                        @click="emit('transitionOne', application, option.to)"
+                                                    >
+                                                        {{ option.label }}
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        v-if="canDelete"
+                                                        class="cursor-pointer text-xs text-destructive"
+                                                        @click="emit('purgeOne', application)"
+                                                    >
+                                                        Remove permanently
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuGroup>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </td>
                                 </tr>
                             </tbody>

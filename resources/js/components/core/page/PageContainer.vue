@@ -35,12 +35,16 @@ const hasBackNavigationLeading = computed((): boolean => {
     return Boolean(slots.backNavigationLeading);
 });
 
+const hasBackNavigationTrailing = computed((): boolean => {
+    return Boolean(slots.backNavigationTrailing);
+});
+
 const showBackNavigationRow = computed((): boolean => {
-    return showBackNavigation.value || hasBackNavigationLeading.value;
+    return showBackNavigation.value || hasBackNavigationLeading.value || hasBackNavigationTrailing.value;
 });
 
 const backNavigationRowJustifyClass = computed((): string => {
-    if (hasBackNavigationLeading.value && showBackNavigation.value) {
+    if (hasBackNavigationLeading.value && (showBackNavigation.value || hasBackNavigationTrailing.value)) {
         return 'justify-between';
     }
 
@@ -78,8 +82,9 @@ const backNavigationRowJustifyClass = computed((): string => {
             <div v-if="hasBackNavigationLeading" class="min-w-0 flex-1">
                 <slot name="backNavigationLeading" />
             </div>
-            <div v-if="showBackNavigation" class="shrink-0">
-                <BackNavigationButton :url="backNavigationUrl" />
+            <div v-if="hasBackNavigationTrailing || showBackNavigation" class="flex shrink-0 items-center gap-2">
+                <slot v-if="hasBackNavigationTrailing" name="backNavigationTrailing" />
+                <BackNavigationButton v-if="showBackNavigation" :url="backNavigationUrl" pill />
             </div>
         </div>
         <slot />

@@ -445,6 +445,8 @@ class DepartmentEnrolmentService
     /**
      * COUNT-based enrolment summaries for the department enrolments tab.
      *
+     * When $type is set, counts are limited to class-list rows of that type.
+     *
      * @return array{
      *     data: list<array{type: string, id: string, attributes: array<string, mixed>}>,
      *     meta: array{modeTotals: list<array{modeOfStudyId: int, count: int}>}
@@ -454,10 +456,20 @@ class DepartmentEnrolmentService
         InstitutionDepartment $institutionDepartment,
         ?int $intakePeriodId,
         ?int $modeOfStudyId = null,
+        ?string $type = null,
     ): array {
+        $classListType = is_string($type) && $type !== '' ? $type : null;
+
         $base = StudentApplication::query()
             ->where('institution_department_id', $institutionDepartment->id)
-            ->when($intakePeriodId, fn ($q) => $q->where('intake_period_id', $intakePeriodId));
+            ->when($intakePeriodId, fn ($q) => $q->where('intake_period_id', $intakePeriodId))
+            ->when(
+                $classListType !== null,
+                fn ($q) => $q->whereHas(
+                    'classList',
+                    fn ($classList) => $classList->where('type', $classListType),
+                ),
+            );
 
         $modeTotals = (clone $base)
             ->select('mode_of_study_id', DB::raw('COUNT(*) as aggregate'))

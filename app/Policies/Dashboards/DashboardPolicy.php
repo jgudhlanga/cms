@@ -31,10 +31,15 @@ class DashboardPolicy
             return false;
         }
 
-        if ($dashboardTab === DashboardTab::Activity) {
+        if ($user->can('viewAny:dashboards')) {
             return true;
         }
 
-        return $user->can('viewAny:dashboards') || $user->can($dashboardTab->permission());
+        if ($dashboardTab === DashboardTab::Academic) {
+            return $user->can('view-academic:dashboards')
+                || $user->can('view:lecturer-dashboard');
+        }
+
+        return $user->can($dashboardTab->permission());
     }
 }

@@ -9,6 +9,7 @@ export type Audit = {
         causerType: string | null;
         causer: string | null;
         properties: Record<string, any>;
+        oldProperties?: Record<string, any>;
         batchUuid: string | null;
         createdAt: string;
         updatedAt: string;

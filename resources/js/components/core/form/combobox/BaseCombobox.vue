@@ -17,9 +17,9 @@ import {
     ComboboxViewport,
 } from '@/components/ui/combobox';
 import { Label } from '@/components/ui/label';
+import { resolveUiLabel, type TranslateFn } from '@/lib/uiLabel';
 import { cn } from '@/lib/utils';
-import { SelectOption, GroupedSelectOption } from '@/types/utils';
-import { trans } from 'laravel-vue-i18n';
+import { GroupedSelectOption, SelectOption } from '@/types/utils';
 import { Check, ChevronsUpDown, Search } from 'lucide-vue-next';
 import { computed } from 'vue';
 
@@ -38,6 +38,8 @@ interface Props {
     widthClass?: string;
     /** When true, v-model is bound as SelectOption[] (empty array when nothing selected). */
     multiple?: boolean;
+    /** Extra classes for the portaled dropdown list (e.g. z-index above modals). */
+    listClass?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -49,6 +51,7 @@ const props = withDefaults(defineProps<Props>(), {
     isRequired: false,
     widthClass: 'w-full',
     multiple: false,
+    listClass: '',
 });
 
 type ComboboxModelValue = SelectOption | SelectOption[] | null | undefined;
@@ -56,12 +59,7 @@ type ComboboxModelValue = SelectOption | SelectOption[] | null | undefined;
 const valueModel = defineModel<ComboboxModelValue>();
 
 const isValidOption = (o: SelectOption | null | undefined): o is SelectOption =>
-    !!o &&
-    o.value != null &&
-    o.value !== '' &&
-    o.value !== '0' &&
-    o.label != '---' &&
-    o.label != '--';
+    !!o && o.value != null && o.value !== '' && o.value !== '0' && o.label != '---' && o.label != '--';
 
 const rootModel = computed<SelectOption | SelectOption[] | null | undefined>({
     get() {
@@ -85,36 +83,35 @@ const rootModel = computed<SelectOption | SelectOption[] | null | undefined>({
         if (props.multiple) {
             valueModel.value = Array.isArray(v) ? v : [];
         } else {
-            valueModel.value = Array.isArray(v) ? v[0] ?? null : v ?? null;
+            valueModel.value = Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
         }
     },
 });
 
-const fieldPlaceHolder = computed(() => {
+const fieldPlaceHolder = (translate: TranslateFn): string => {
     if (props.multiple) {
         const arr = Array.isArray(valueModel.value) ? valueModel.value : [];
         const valid = arr.filter(isValidOption);
+
         if (valid.length === 0) {
-            return props.placeholder ?? trans('trans.select_one');
+            return resolveUiLabel(props.placeholder || 'trans.select_one', translate);
         }
+
         if (valid.length <= 2) {
-            return valid.map((o) => o.label).join(', ');
+            return valid.map((option) => resolveUiLabel(String(option.label), translate)).join(', ');
         }
-        return trans('students.filters_n_selected', { count: String(valid.length) });
+
+        return resolveUiLabel('students.filters_n_selected', translate, { count: String(valid.length) });
     }
 
     const selected = Array.isArray(valueModel.value) ? valueModel.value[0] : valueModel.value;
 
     if (isValidOption(selected)) {
-        return selected.label;
+        return resolveUiLabel(String(selected.label), translate);
     }
 
-    if (props.placeholder) {
-        return props.placeholder;
-    }
-
-    return trans('trans.select_one');
-});
+    return resolveUiLabel(props.placeholder || 'trans.select_one', translate);
+};
 
 const hasVisibleOptions = computed(() => {
     if (props.groupedOptions.length > 0) {
@@ -127,24 +124,33 @@ const hasVisibleOptions = computed(() => {
 
 <template>
     <div class="flex w-full min-w-0 flex-col" v-bind="$attrs">
-        <div :class="cn('flex w-full min-w-0 space-x-3', verticalLayout && 'flex-col space-y-2')">
-            <Label :class="cn(error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'flex w-1/4 items-center')" v-if="label">
+        <div :class="cn('flex w-full min-w-0', verticalLayout ? 'flex-col space-y-2' : 'items-center gap-3')">
+            <Label
+                v-if="label"
+                :class="cn(error && 'text-destructive', labelUppercase && 'uppercase', !verticalLayout && 'shrink-0 whitespace-nowrap')"
+            >
                 {{ label }}<RequiredIndicator v-if="isRequired" />
             </Label>
-            <Combobox v-model="rootModel" by="value" :multiple="props.multiple" :class="cn('', widthClass)" :disabled="disabled">
+            <Combobox
+                v-model="rootModel"
+                by="value"
+                :multiple="props.multiple"
+                :class="cn(widthClass, !verticalLayout && 'min-w-0 flex-1')"
+                :disabled="disabled"
+            >
                 <ComboboxAnchor as-child class="relative">
                     <ComboboxTrigger as-child>
                         <Button variant="outline" class="w-full justify-between text-left font-normal">
-                            <span class="line-clamp-2 flex-1">{{ fieldPlaceHolder }}</span>
+                            <span class="line-clamp-2 flex-1">{{ fieldPlaceHolder($t) }}</span>
                             <SpinnerComponent v-if="isLoading" />
                             <ChevronsUpDown v-else class="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </ComboboxTrigger>
                 </ComboboxAnchor>
-                <ComboboxList :class="cn('', widthClass)">
+                <ComboboxList :class="cn('z-60', listClass, widthClass)">
                     <div class="relative items-center">
                         <ComboboxInput
-                            :placeholder="placeholder ?? $t('trans.select_one')"
+                            :placeholder="resolveUiLabel(placeholder || 'trans.select_one', $t)"
                             :class="cn('h-10 rounded-none border-0 border-b pl-9 focus-visible:ring-0', '')"
                             @update:modelValue="onSearch ? onSearch($event) : null"
                         />
@@ -154,12 +160,12 @@ const hasVisibleOptions = computed(() => {
                     </div>
                     <ComboboxViewport>
                         <ComboboxEmpty v-if="!isLoading && !hasVisibleOptions">
-                            <Empty :message="$t('trans.no_options_found')" />
+                            <Empty :message="resolveUiLabel('trans.no_options_found', $t)" />
                         </ComboboxEmpty>
                         <template v-if="groupedOptions.length > 0">
                             <ComboboxGroup v-for="group in groupedOptions" :key="group.heading" :heading="group.heading">
                                 <ComboboxItem v-for="option in group.options" :key="String(option.value)" :value="option">
-                                    {{ option.label }}
+                                    {{ resolveUiLabel(option.label, $t) }}
                                     <ComboboxItemIndicator>
                                         <Check :class="cn('ml-auto h-4 w-4')" />
                                     </ComboboxItemIndicator>
@@ -168,7 +174,7 @@ const hasVisibleOptions = computed(() => {
                         </template>
                         <ComboboxGroup v-else>
                             <ComboboxItem v-for="option in options" :key="String(option.value)" :value="option">
-                                {{ option.label }}
+                                {{ resolveUiLabel(option.label, $t) }}
                                 <ComboboxItemIndicator>
                                     <Check :class="cn('ml-auto h-4 w-4')" />
                                 </ComboboxItemIndicator>

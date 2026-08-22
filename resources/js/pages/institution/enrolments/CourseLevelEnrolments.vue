@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import BaseAccordion from '@/components/core/accordion/BaseAccordion.vue';
-import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
-import { errorAlert, forbiddenAlert } from '@/lib/alerts';
+import { closeModal, errorAlert, forbiddenAlert, openModal } from '@/lib/alerts';
+import { APP_MODULE_KEYS } from '@/lib/constants';
 import { hasAbility } from '@/lib/permissions';
+import ClassListActionDialog from '@/pages/institution/enrolments/partials/ClassListActionDialog.vue';
+import type { ClassListActionPayload } from '@/pages/institution/enrolments/partials/ClassListActionDialog.vue';
 import ClassSize from '@/pages/institution/enrolments/partials/ClassSize.vue';
 import DeficitInClassSize from '@/pages/institution/enrolments/partials/DeficitInClassSize.vue';
 import EnrolmentApplicationsBrowser from '@/pages/institution/enrolments/partials/EnrolmentApplicationsBrowser.vue';
 import GenderEnrolmentAccordionItem from '@/pages/institution/enrolments/partials/GenderEnrolmentAccordionItem.vue';
-import PurgeClassListDialog from '@/pages/institution/enrolments/partials/PurgeClassListDialog.vue';
 import ScoringFormula from '@/pages/institution/enrolments/partials/ScoringFormula.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentLevel } from '@/types/department-meta-data';
@@ -53,9 +54,10 @@ watch(
 );
 
 const selectedIds = ref<Set<number>>(new Set());
-const selectionBarRef = ref<HTMLElement | null>(null);
-const showPurgeDialog = ref(false);
-const purgeProcessing = ref(false);
+const actionProcessing = ref(false);
+const pendingAction = ref<ClassListActionPayload | null>(null);
+
+type SelectionMode = 'add' | 'remove' | 'any';
 
 const genderGroups = ['disabled', 'females', 'males'] as const;
 
@@ -98,12 +100,69 @@ const alreadyInClassCount = computed(() => allApplications.value.filter((app) =>
 const selectedCount = computed(() => selectedIds.value.size);
 
 const selectedForAdd = computed(() =>
-    allApplications.value.filter((app) => selectedIds.value.has(app.applicationId) && !app.inClassList),
+    allApplications.value.filter((app) => selectedIds.value.has(Number(app.applicationId)) && !app.inClassList),
 );
 
 const selectedForRemove = computed(() =>
-    allApplications.value.filter((app) => selectedIds.value.has(app.applicationId) && app.inClassList),
+    allApplications.value.filter(
+        (app) =>
+            selectedIds.value.has(Number(app.applicationId)) && app.inClassList && app.classListType !== 'final',
+    ),
 );
+
+/** Same transition choices as the row ⋯ menu, intersected across the current selection. */
+const bulkTransitionActions = computed(() => {
+    const apps = selectedForRemove.value;
+    if (apps.length === 0) {
+        return [] as Array<{ to: string; label: string }>;
+    }
+
+    const optionsFor = (type: string): Array<{ to: string; label: string }> => {
+        if (type === 'final') {
+            return [];
+        }
+
+        return [
+            {
+                to: 'provisional',
+                label: 'To provisional',
+                show:
+                    ((type === 'waiting' || type === 'failed') && hasAbility('create:class-lists')) ||
+                    (type === 'verified' && hasAbility('verify:class-lists')),
+            },
+            {
+                to: 'waiting',
+                label: 'To waiting',
+                show: type === 'provisional' && hasAbility('create:class-lists'),
+            },
+            {
+                to: 'verified',
+                label: 'To verified',
+                show: (type === 'provisional' || type === 'waiting') && hasAbility('verify:class-lists'),
+            },
+            {
+                to: 'final',
+                label: 'To final',
+                show: type === 'verified' && hasAbility('manage-final:class-lists'),
+            },
+            {
+                to: 'failed',
+                label: 'Fail',
+                show: ['provisional', 'waiting', 'verified'].includes(type) && hasAbility('create:class-lists'),
+            },
+        ]
+            .filter((row) => row.show)
+            .map(({ to, label }) => ({ to, label }));
+    };
+
+    const sets = apps.map((app) => new Set(optionsFor(app.classListType ?? '').map((row) => row.to)));
+    const shared = [...sets[0]].filter((to) => sets.every((set) => set.has(to)));
+    const labelByTo = new Map(
+        apps.flatMap((app) => optionsFor(app.classListType ?? '').map((row) => [row.to, row.label] as const)),
+    );
+
+    return shared.map((to) => ({ to, label: labelByTo.get(to) ?? `To ${to}` }));
+});
 
 const remainingSeats = computed(() => Math.max(intakeLimit.value - alreadyInClassCount.value, 0));
 
@@ -141,29 +200,42 @@ const getGroupSlot = (group: EnrolmentGroup): number => {
     return groups[group]?.length ?? 0;
 };
 
-const isSelected = (applicationId: number): boolean => selectedIds.value.has(applicationId);
+const isSelected = (applicationId: number): boolean => selectedIds.value.has(Number(applicationId));
 
 const toggleSelection = (applicationId: number, checked: boolean) => {
+    const id = Number(applicationId);
     const next = new Set(selectedIds.value);
     if (checked) {
-        next.add(applicationId);
+        next.add(id);
     } else {
-        next.delete(applicationId);
+        next.delete(id);
     }
     selectedIds.value = next;
 };
 
-const setGroupSelection = (applications: EnrolmentApplication[], checked: boolean) => {
+const setGroupSelection = (applications: EnrolmentApplication[], checked: boolean, mode: SelectionMode = 'any') => {
     const next = new Set(selectedIds.value);
-    applications
-        .filter((app) => !app.inClassList)
-        .forEach((app) => {
-            if (checked) {
-                next.add(app.applicationId);
-            } else {
-                next.delete(app.applicationId);
-            }
-        });
+    const filtered = applications.filter((app) => {
+        if (app.classListType === 'final') {
+            return false;
+        }
+        if (mode === 'add') {
+            return !app.inClassList;
+        }
+        if (mode === 'remove') {
+            return app.inClassList;
+        }
+        return true;
+    });
+
+    filtered.forEach((app) => {
+        const id = Number(app.applicationId);
+        if (checked) {
+            next.add(id);
+        } else {
+            next.delete(id);
+        }
+    });
     selectedIds.value = next;
 };
 
@@ -179,99 +251,221 @@ const onIntakeLimitSaved = (value: number) => {
     intakeLimit.value = value;
 };
 
-const bulkAddForm = useForm<{ application_ids: number[]; type: string }>({
-    application_ids: [],
+const mutationContext = () => ({
+    institution_department_id: Number(department.id),
+    department_level_id: Number(level.id),
+    department_course_id: Number(course?.department_course_id ?? 0) || undefined,
+    intake_period_id: Number(intakePeriod.id),
+    mode_of_study_id: Number(modeOfStudy.id),
+});
+
+const bulkAddForm = useForm({
+    application_ids: [] as number[],
     type: 'provisional',
+    note: '' as string | undefined,
+    bypass_ranking: false,
+    ...mutationContext(),
 });
 
-const purgeForm = useForm<{ application_ids: number[]; note: string }>({
-    application_ids: [],
+const transitionForm = useForm({
+    application_ids: [] as number[],
+    to_type: 'provisional',
+    note: '' as string | undefined,
+    bypass_ranking: false,
+    ...mutationContext(),
+});
+
+const purgeForm = useForm({
+    application_ids: [] as number[],
     note: '',
+    ...mutationContext(),
 });
 
-async function bulkAddSelected() {
+const openActionDialog = (action: ClassListActionPayload) => {
+    pendingAction.value = action;
+    openModal({ name: APP_MODULE_KEYS.class_list_action, edit: action });
+};
+
+const queueAdd = (applicationIds: number[], bypassRanking: boolean) => {
     if (!hasAbility('create:class-lists')) {
         forbiddenAlert();
         return;
     }
-
-    const ids = selectedForAdd.value.map((app) => app.applicationId);
-    if (ids.length === 0) {
+    if (applicationIds.length === 0) {
         errorAlert(trans('trans.ui_select_all_eligible'));
         return;
     }
 
-    let message = `Add ${ids.length} application(s) to the provisional class list?`;
-    if (exceedsClassSize.value) {
-        message += ` Intake limit is ${intakeLimit.value} with ${alreadyInClassCount.value} already listed — this exceeds remaining seats (guidance only).`;
-    }
+    const overLimit = alreadyInClassCount.value + applicationIds.length > intakeLimit.value && intakeLimit.value > 0;
+    const needsBypass = bypassRanking || overLimit;
+    const count = applicationIds.length;
 
-    const confirmed = await useCustomConfirmDialog().open({
+    openActionDialog({
+        kind: 'add',
+        applicationIds,
+        bypassRanking: needsBypass,
         title: trans('trans.ui_add_to_class_list'),
-        message,
-        confirmText: 'Please continue',
-        note: exceedsClassSize.value ? trans('trans.ui_class_size_guidance_exceeded') : undefined,
+        description: `Add ${count} application${count === 1 ? '' : 's'} to the provisional class list.`,
+        confirmLabel: trans('trans.ui_add_to_class_list'),
+        requireNote: needsBypass,
+        bypassWarning: needsBypass
+            ? 'This add bypasses ranking and/or exceeds the intake limit. A reason is required for the audit trail.'
+            : null,
+        confirmVariant: ColorVariant.primary,
     });
+};
 
-    if (!confirmed) {
+const queueTransition = (applicationIds: number[], toType: string) => {
+    const permission =
+        toType === 'final' ? 'manage-final:class-lists' : toType === 'verified' ? 'verify:class-lists' : 'create:class-lists';
+    if (!hasAbility(permission)) {
+        forbiddenAlert();
         return;
     }
 
-    bulkAddForm.application_ids = ids;
-    bulkAddForm.post(route('enrolments.bulk-add-to-class-list'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            clearSelection();
-        },
-        onError: (errors) => {
-            const messageText = Object.keys(errors).length
-                ? Object.values(errors).join('\n')
-                : 'Could not add applications to the class list';
-            errorAlert(messageText);
-        },
-    });
-}
+    const mutableIds = allApplications.value
+        .filter((app) => applicationIds.includes(app.applicationId) && app.classListType !== 'final')
+        .map((app) => app.applicationId);
 
-function openPurgeDialog() {
+    if (mutableIds.length === 0) {
+        errorAlert('Final class list entries are locked and cannot be edited.');
+        return;
+    }
+
+    const count = mutableIds.length;
+
+    openActionDialog({
+        kind: 'transition',
+        applicationIds: mutableIds,
+        toType,
+        bypassRanking: false,
+        title: `Move to ${toType}`,
+        description: `Update ${count} class list entr${count === 1 ? 'y' : 'ies'} to ${toType}.`,
+        confirmLabel: `Confirm ${toType}`,
+        requireNote: true,
+        bypassWarning: null,
+        confirmVariant: toType === 'failed' ? ColorVariant.danger : ColorVariant.primary,
+    });
+};
+
+const queuePurge = (applicationIds: number[]) => {
     if (!hasAbility('delete:class-lists')) {
         forbiddenAlert();
         return;
     }
-    if (selectedForRemove.value.length === 0) {
-        errorAlert(trans('trans.ui_remove_from_class_list'));
+
+    const mutableIds = allApplications.value
+        .filter((app) => applicationIds.includes(app.applicationId) && app.classListType !== 'final')
+        .map((app) => app.applicationId);
+
+    if (mutableIds.length === 0) {
+        errorAlert('Final class list entries are locked and cannot be removed from this page.');
         return;
     }
-    showPurgeDialog.value = true;
+
+    const count = mutableIds.length;
+
+    openActionDialog({
+        kind: 'purge',
+        applicationIds: mutableIds,
+        bypassRanking: false,
+        title: trans('trans.ui_remove_from_class_list'),
+        description: trans('trans.ui_purge_class_list_confirm'),
+        confirmLabel: trans('trans.ui_remove_from_class_list'),
+        requireNote: true,
+        bypassWarning: null,
+        confirmVariant: ColorVariant.danger,
+    });
+};
+
+async function bulkAddSelected() {
+    const overLimit = exceedsClassSize.value;
+    queueAdd(
+        selectedForAdd.value.map((app) => app.applicationId),
+        overLimit || classListIsCreated(enrolments),
+    );
 }
 
-function confirmPurge(note: string) {
-    const ids = selectedForRemove.value.map((app) => app.applicationId);
-    purgeProcessing.value = true;
-    purgeForm.application_ids = ids;
+function openPurgeDialog() {
+    queuePurge(selectedForRemove.value.map((app) => app.applicationId));
+}
+
+function confirmPendingAction(note: string) {
+    const action = pendingAction.value;
+    if (!action) {
+        return;
+    }
+
+    actionProcessing.value = true;
+    const onDone = () => {
+        actionProcessing.value = false;
+        pendingAction.value = null;
+        closeModal(APP_MODULE_KEYS.class_list_action);
+        clearSelection();
+    };
+    const onError = (errors: Record<string, string>) => {
+        const messageText = Object.keys(errors).length ? Object.values(errors).join('\n') : 'Action failed';
+        errorAlert(messageText);
+    };
+
+    if (action.kind === 'add') {
+        bulkAddForm.application_ids = action.applicationIds;
+        bulkAddForm.type = 'provisional';
+        bulkAddForm.note = note || undefined;
+        bulkAddForm.bypass_ranking = action.bypassRanking;
+        Object.assign(bulkAddForm, mutationContext());
+        bulkAddForm.post(route('enrolments.bulk-add-to-class-list'), {
+            preserveScroll: true,
+            onSuccess: onDone,
+            onError,
+            onFinish: () => {
+                actionProcessing.value = false;
+            },
+        });
+        return;
+    }
+
+    if (action.kind === 'transition') {
+        transitionForm.application_ids = action.applicationIds;
+        transitionForm.to_type = action.toType ?? 'provisional';
+        transitionForm.note = note;
+        transitionForm.bypass_ranking = action.bypassRanking;
+        Object.assign(transitionForm, mutationContext());
+        transitionForm.post(route('enrolments.transition-class-list'), {
+            preserveScroll: true,
+            onSuccess: onDone,
+            onError,
+            onFinish: () => {
+                actionProcessing.value = false;
+            },
+        });
+        return;
+    }
+
+    purgeForm.application_ids = action.applicationIds;
     purgeForm.note = note;
+    Object.assign(purgeForm, mutationContext());
     purgeForm.post(route('enrolments.purge-class-list'), {
         preserveScroll: true,
-        onSuccess: () => {
-            showPurgeDialog.value = false;
-            clearSelection();
-        },
-        onError: (errors) => {
-            const messageText = Object.keys(errors).length
-                ? Object.values(errors).join('\n')
-                : 'Could not purge class list entries';
-            errorAlert(messageText);
-        },
+        onSuccess: onDone,
+        onError,
         onFinish: () => {
-            purgeProcessing.value = false;
+            actionProcessing.value = false;
         },
     });
 }
 
-watch(selectedCount, (count, previous) => {
-    if (count > 0 && previous === 0) {
-        selectionBarRef.value?.focus();
-    }
-});
+const onAddOne = (application: EnrolmentApplication, bypassRanking: boolean) => {
+    queueAdd([application.applicationId], bypassRanking || application.inClassList === false);
+};
+
+const onRowTransition = (application: EnrolmentApplication, toType: string) => {
+    queueTransition([application.applicationId], toType);
+};
+
+const onRowPurge = (application: EnrolmentApplication) => {
+    queuePurge([application.applicationId]);
+};
 </script>
 
 <template>
@@ -316,63 +510,11 @@ watch(selectedCount, (count, previous) => {
                 <ScoringFormula v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)" />
             </template>
 
-            <div
-                v-if="selectedCount > 0"
-                ref="selectionBarRef"
-                tabindex="-1"
-                class="sticky top-2 z-20 flex flex-col gap-2 rounded-lg border border-primary/30 bg-card p-3 shadow-md sm:flex-row sm:items-center sm:justify-between"
-            >
-                <div class="text-sm">
-                    <span class="font-semibold">{{ selectedCount }}</span>
-                    {{ $t('trans.ui_selected') }}
-                    <span class="text-muted-foreground">
-                        · {{ $tChoice('trans.class_list', 1) }} {{ alreadyInClassCount }}/{{ intakeLimit }}
-                        <template v-if="exceedsClassSize">
-                            · <span class="font-medium text-amber-700">{{ $t('trans.ui_class_size_guidance_exceeded') }}</span>
-                        </template>
-                    </span>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <BaseButton
-                        type="button"
-                        :variant="ColorVariant.shade"
-                        :title="$t('trans.ui_select_all_eligible')"
-                        classes="rounded-full"
-                        @click="selectAllEligible"
-                    />
-                    <BaseButton
-                        type="button"
-                        :variant="ColorVariant.shade"
-                        :title="$t('trans.ui_clear_selection')"
-                        classes="rounded-full"
-                        @click="clearSelection"
-                    />
-                    <BaseButton
-                        v-if="selectedForAdd.length > 0"
-                        type="button"
-                        :variant="ColorVariant.primary"
-                        :title="$t('trans.ui_add_to_class_list')"
-                        classes="rounded-full"
-                        :disabled="bulkAddForm.processing"
-                        @click="bulkAddSelected"
-                    />
-                    <BaseButton
-                        v-if="selectedForRemove.length > 0"
-                        type="button"
-                        :variant="ColorVariant.warning"
-                        :title="$t('trans.ui_remove_from_class_list')"
-                        classes="rounded-full"
-                        @click="openPurgeDialog"
-                    />
-                </div>
-            </div>
-
-            <PurgeClassListDialog
-                :open="showPurgeDialog"
-                :count="selectedForRemove.length"
-                :processing="purgeProcessing"
-                @closed="showPurgeDialog = false"
-                @confirm="confirmPurge"
+            <ClassListActionDialog
+                :processing="actionProcessing"
+                :form="pendingAction?.kind === 'add' ? bulkAddForm : pendingAction?.kind === 'transition' ? transitionForm : purgeForm"
+                @closed="pendingAction = null"
+                @confirm="confirmPendingAction"
             />
 
             <BaseAccordion v-if="!noData" v-model="openGenderGroup" type="single" :collapsible="true" class="w-full gap-3">
@@ -393,10 +535,23 @@ watch(selectedCount, (count, previous) => {
                         :slot-size="getGroupSlot(group)"
                         :is-o-level="isItTrue(levelRequirements?.attributes?.isOLevelRequired)"
                         :class-list-created="classListIsCreated(enrolments)"
+                        :listed-count="alreadyInClassCount"
                         :selected-ids="selectedIds"
                         :is-selected="isSelected"
+                        :selected-count="selectedCount"
+                        :bulk-transition-actions="bulkTransitionActions"
+                        :can-bulk-add="selectedForAdd.length > 0"
+                        :can-bulk-purge="selectedForRemove.length > 0 && hasAbility('delete:class-lists')"
+                        :action-processing="actionProcessing || bulkAddForm.processing"
                         @toggle="toggleSelection"
-                        @select-group="setGroupSelection"
+                        @select-group="(apps, checked) => setGroupSelection(apps, checked, 'any')"
+                        @add-one="onAddOne"
+                        @transition-one="onRowTransition"
+                        @purge-one="onRowPurge"
+                        @clear-selection="clearSelection"
+                        @bulk-add="bulkAddSelected"
+                        @bulk-transition="(toType) => queueTransition(selectedForRemove.map((a) => a.applicationId), toType)"
+                        @bulk-purge="openPurgeDialog"
                     />
                 </GenderEnrolmentAccordionItem>
             </BaseAccordion>

@@ -20,7 +20,7 @@ const DASHBOARD_TAB_OPTIONS = [
     { key: 'staff', labelKey: 'trans.staff' },
     { key: 'finance', labelKey: 'trans.finance', choice: 2 },
     { key: 'hostel', labelKey: 'dashboard.hostel' },
-    { key: 'activity', labelKey: 'dashboard.activity' },
+    { key: 'examinations', labelKey: 'dashboard.exams' },
 ] as const;
 
 export const useModules = () => {

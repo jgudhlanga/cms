@@ -1,7 +1,6 @@
 import { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
 import { Ledger } from '@/types/integrations';
 import { WorkflowStep } from '@/types/settings';
-import { User } from '@/types/users';
 
 export type Enrolment = {
     type: string;
@@ -13,6 +12,11 @@ export type Enrolment = {
         modeOfStudyId: string | number;
         modeOfStudy: string;
         idNumber?: string;
+        idNumberValid?: boolean | null;
+        suggestedIdNumber?: string | null;
+        idNumberRectificationStatus?: string | null;
+        idNumberConflict?: Record<string, unknown> | null;
+        idPhotoThumbUrl?: string | null;
         passportNumber?: string;
         idType?: string;
         idTypeId?: string | number;
@@ -137,18 +141,6 @@ export type EnrolmentSearchParams = {
     mode_of_study_id: string;
 };
 
-export type EnrolmentLookup = {
-    user?: User;
-    studentId?: string | number;
-    hasPaidApplicationFee: boolean;
-    hasAdminRole: boolean;
-    eligibleForEnrolment: boolean;
-    currentLevel: string | null;
-    currentProgramCount: number | null;
-    statusCode: number | null;
-    message?: string | null;
-};
-
 export interface OLeveResult {
     resultId: number;
     subjectId: number;
@@ -258,6 +250,23 @@ export type ClassListAttributeParams = {
 export type ClassListTopNext = {
     applicationId: string | number;
     name: string;
+};
+
+export type EnrolmentQueuePosition = {
+    position: number;
+    total: number;
+};
+
+export type EnrolmentApplicantLookupResult = {
+    applicationId: number;
+    studentName: string;
+    department: string;
+    level: string;
+    course: string;
+    applicationTrackingNumber: string;
+    institutionDepartmentId: number;
+    departmentLevelId: number;
+    departmentCourseId: number;
 };
 
 export type OtherApplication = {

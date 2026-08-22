@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Shared\ClassListTypeEnum;
+use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Jobs\Enrolments\SendOfferLetterJob;
 use App\Models\AcademicCalendars\AcademicCalendar;
@@ -54,8 +55,9 @@ function actingAsClassListStaff(?int $tenantId = null): User
         'tenant_id' => $tenantId,
     ]));
     Permission::findOrCreate('manage-final:class-lists', 'web');
+    Permission::findOrCreate('confirm:class-lists', 'web');
     Permission::findOrCreate('verify:class-lists', 'web');
-    $user->givePermissionTo(['manage-final:class-lists', 'verify:class-lists']);
+    $user->givePermissionTo(['manage-final:class-lists', 'confirm:class-lists', 'verify:class-lists']);
 
     return $user;
 }
@@ -130,6 +132,27 @@ it('elevates a verified student to final class even when verification flags are 
         ->and($classList?->attributes['original_education_certificates_confirmed'])->toBeTrue();
 });
 
+it('rejects verified confirmation when proof of payment is missing', function () {
+    $studentApplication = createVerifiedStudentApplication('CL-CONFIRM-POP-01');
+    $user = actingAsClassListStaff((int) $studentApplication->tenant_id);
+    $acceptedStepId = $studentApplication->workflow_step_id;
+
+    $this->actingAs($user)
+        ->from(route('enrolments.confirm', $studentApplication))
+        ->put(route('enrolments.update-class-list', $studentApplication), confirmationPayload([
+            'proof_of_payment_confirmed' => false,
+        ]))
+        ->assertRedirect(route('enrolments.confirm', $studentApplication))
+        ->assertSessionHas('error')
+        ->assertSessionMissing('success');
+
+    $classList = ClassList::query()->where('student_application_id', $studentApplication->id)->first();
+
+    expect($classList?->type)->toBe(ClassListTypeEnum::VERIFIED)
+        ->and($studentApplication->fresh()->workflow_step_id)->toBe($acceptedStepId)
+        ->and(StudentEnrolment::query()->where('student_application_id', $studentApplication->id)->exists())->toBeFalse();
+});
+
 it('rejects verified confirmation when document flags are missing', function () {
     $studentApplication = createVerifiedStudentApplication('CL-CONFIRM-002');
     $user = actingAsClassListStaff((int) $studentApplication->tenant_id);
@@ -180,6 +203,30 @@ it('still requires identity names and disability for provisional verification', 
         ->toBe(ClassListTypeEnum::PROVISIONAL);
 
     Queue::assertNothingPushed();
+});
+
+it('rejects verification when zimbabwean id number is invalid', function () {
+    $studentApplication = createVerifiedStudentApplication('CL-VERIFY-INVALID-ID');
+    $user = actingAsClassListStaff((int) $studentApplication->tenant_id);
+
+    ClassList::query()->where('student_application_id', $studentApplication->id)->update([
+        'type' => ClassListTypeEnum::PROVISIONAL->value,
+    ]);
+
+    $studentApplication->student->update([
+        'id_number' => 'invalid-id',
+        'id_type_id' => IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id(),
+    ]);
+
+    $this->actingAs($user)
+        ->from(route('enrolments.verify', $studentApplication))
+        ->put(route('enrolments.update-class-list', $studentApplication), verificationPayload())
+        ->assertRedirect(route('enrolments.verify', $studentApplication))
+        ->assertSessionHas('error')
+        ->assertSessionMissing('success');
+
+    expect(ClassList::query()->where('student_application_id', $studentApplication->id)->value('type'))
+        ->toBe(ClassListTypeEnum::PROVISIONAL);
 });
 
 it('verifies a provisional student when identity names and disability are confirmed', function () {

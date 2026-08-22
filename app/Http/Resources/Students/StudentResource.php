@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\Students;
 
-use App\Enums\Shared\IdTypeEnum;
 use App\Http\Resources\Shared\AddressResource;
 use App\Http\Resources\Shared\ContactResource;
 use App\Http\Resources\Shared\NextOfKinResource;
@@ -12,9 +11,8 @@ use App\Models\Students\StudentApprentice;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentSponsor;
 use App\Models\Students\StudentTransfer;
-use App\Rules\ZimbabweanIdNumber;
-use App\Services\Maintenance\Students\FaultyStudentIdNumberAnalysis;
 use App\Services\Students\ReturningStudentContextService;
+use App\Services\Students\StudentIdNumberValidationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -58,7 +56,7 @@ class StudentResource extends JsonResource
         ]);
 
         $profileSummary = $this->resolveProfileSummary();
-        $idNumberValidation = $this->resolveIdNumberValidation($request);
+        $idNumberValidation = app(StudentIdNumberValidationService::class)->resolve($this->resource, $request->user());
         $apprenticeSummary = $this->resolveApprenticeSummary();
         $sponsorSummary = $this->resolveSponsorSummary();
         $transferSummary = $this->resolveTransferSummary();
@@ -127,63 +125,6 @@ class StudentResource extends JsonResource
                 'nextOfKin' => NextOfKinResource::make($this->nextOfKins->first()),
             ],
         ];
-    }
-
-    /**
-     * @return array{
-     *     idNumberValid: bool|null,
-     *     suggestedIdNumber: string|null,
-     *     idNumberRectificationStatus: string|null,
-     *     idNumberConflict: array<string, mixed>|null
-     * }
-     */
-    private function resolveIdNumberValidation(Request $request): array
-    {
-        if (! $this->isZimbabweanIdType()) {
-            return [
-                'idNumberValid' => null,
-                'suggestedIdNumber' => null,
-                'idNumberRectificationStatus' => null,
-                'idNumberConflict' => null,
-            ];
-        }
-
-        $idNumber = (string) ($this->id_number ?? '');
-        $isValid = ZimbabweanIdNumber::isValid($idNumber);
-
-        if ($isValid) {
-            return [
-                'idNumberValid' => true,
-                'suggestedIdNumber' => null,
-                'idNumberRectificationStatus' => null,
-                'idNumberConflict' => null,
-            ];
-        }
-
-        $analysis = app(FaultyStudentIdNumberAnalysis::class)->analyze($this->resource);
-        $conflict = $analysis['conflict'] ?? null;
-
-        if (is_array($conflict) && ! $request->user()?->can('root:manage')) {
-            unset($conflict['mergePreviewUrl']);
-        }
-
-        return [
-            'idNumberValid' => false,
-            'suggestedIdNumber' => $analysis['suggestedIdNumber'] ?? null,
-            'idNumberRectificationStatus' => $analysis['rectificationStatus'] ?? null,
-            'idNumberConflict' => $conflict,
-        ];
-    }
-
-    private function isZimbabweanIdType(): bool
-    {
-        $idTypeName = $this->idType?->name;
-
-        if ($idTypeName !== null) {
-            return strcasecmp((string) $idTypeName, IdTypeEnum::ZIMBABWEAN_ID_NUMBER->value) === 0;
-        }
-
-        return (int) $this->id_type_id === IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id();
     }
 
     /**

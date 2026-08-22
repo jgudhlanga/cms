@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import StudentPaymentAmountCell from '@/components/finance/StudentPaymentAmountCell.vue';
 import StudentPaymentTypeBadge from '@/components/finance/StudentPaymentTypeBadge.vue';
-import Empty from '@/components/core/util/Empty.vue';
 import DataLoadingSpinner from '@/components/core/loader/DataLoadingSpinner.vue';
 import type { ParsedStudentPaymentReceipt } from '@/types/finance';
 
@@ -29,7 +28,7 @@ withDefaults(defineProps<Props>(), {
                 <div
                     v-for="receipt in receipts"
                     :key="receipt.id"
-                    class="rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm"
+                    class="rounded-lg border border-border bg-card px-3 py-2 text-xs"
                 >
                     <div class="flex items-center justify-between gap-3">
                         <div class="font-medium text-accent-foreground">
@@ -57,6 +56,8 @@ withDefaults(defineProps<Props>(), {
                 </div>
             </div>
         </template>
-        <Empty v-else :message="$t('finance.no_receipts_found')" />
+        <p v-else class="text-xs text-muted-foreground">
+            {{ $t('finance.no_receipts_found') }}
+        </p>
     </template>
 </template>

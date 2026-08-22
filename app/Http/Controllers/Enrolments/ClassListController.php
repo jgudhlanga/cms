@@ -13,6 +13,7 @@ use App\Http\Requests\Enrolments\AddToClassListRequest;
 use App\Http\Requests\Enrolments\BulkAddToClassListRequest;
 use App\Http\Requests\Enrolments\ClassListRequest;
 use App\Http\Requests\Enrolments\PurgeClassListRequest;
+use App\Http\Requests\Enrolments\TransitionClassListRequest;
 use App\Http\Requests\Enrolments\UpdateClassEntryRequest;
 use App\Http\Resources\Enrolments\ClassListNextTopResource;
 use App\Http\Resources\Enrolments\EnrolmentGroupResource;
@@ -35,11 +36,14 @@ use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Services\DepartmentEnrolmentService;
+use App\Services\Enrolments\ClassListTransitionService;
 use App\Services\Students\ResolveStudentEnrolmentAttributesService;
+use App\Services\Students\StudentIdNumberValidationService;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Throwable;
@@ -50,6 +54,8 @@ class ClassListController extends Controller
         protected IClassListRepository $repository,
         protected DepartmentEnrolmentService $departmentEnrolmentService,
         protected ResolveStudentEnrolmentAttributesService $resolveStudentEnrolmentAttributes,
+        protected ClassListTransitionService $classListTransitionService,
+        protected StudentIdNumberValidationService $studentIdNumberValidationService,
     ) {}
 
     public function store(ClassListRequest $request)
@@ -68,111 +74,91 @@ class ClassListController extends Controller
         }
     }
 
-    public function addToClassList(StudentApplication $studentApplication, AddToClassListRequest $request)
+    public function addToClassList(StudentApplication $studentApplication, AddToClassListRequest $request): RedirectResponse
     {
         try {
-            $defaultAttributes = [
-                'identity_confirmed' => false,
-                'disability_confirmed' => false,
-                'names_confirmed' => false,
-                'o_level_confirmed' => false,
-                'previous_level_confirmed' => false,
-                'read_write_confirmed' => false,
-                'application_fee_confirmed' => false,
-                'proof_of_payment_confirmed' => false,
-                'passport_photos_confirmed' => false,
-                'original_birth_certificate_confirmed' => false,
-                'original_national_identity_confirmed' => false,
-                'original_education_certificates_confirmed' => false,
-            ];
-            $dto = new ClassListDto(
-                student_application_id: $studentApplication->id,
-                type: $request->input('type'),
-                attributes: $defaultAttributes
+            $result = $this->classListTransitionService->add(
+                applicationIds: [$studentApplication->id],
+                type: (string) $request->input('type'),
+                actor: $request->user(),
+                note: $request->input('note'),
+                bypassRanking: $request->boolean('bypass_ranking'),
+                context: $request->context(),
             );
-            $classEntry = $this->repository->create($dto);
-            $details = $this->getClassEntryDetails($classEntry->id);
-            SendEnrolmentProgressJob::dispatch(
-                $classEntry->id,
-                $dto->type,
-                $details->institution_department_id,
-                $details->department,
-                $details->level,
-                $details->course)->withoutDelay();
 
-            return back()->with('success', 'Class lists created successfully.');
+            if ($result['added'] === 0) {
+                return back()->with('success', 'Application is already on a class list.');
+            }
+
+            return back()->with('success', 'Application added to the class list.');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             return back()->with('error', 'An error occurred while creating class lists. All changes have been rolled back.');
         }
     }
 
-    public function bulkAdd(BulkAddToClassListRequest $request)
+    public function bulkAdd(BulkAddToClassListRequest $request): RedirectResponse
     {
         try {
-            $applicationIds = collect($request->input('application_ids', []))
-                ->map(fn ($id) => (int) $id)
-                ->unique()
-                ->values();
+            $result = $this->classListTransitionService->add(
+                applicationIds: $request->input('application_ids', []),
+                type: (string) $request->input('type', ClassListTypeEnum::PROVISIONAL->value),
+                actor: $request->user(),
+                note: $request->input('note'),
+                bypassRanking: $request->boolean('bypass_ranking'),
+                context: $request->context(),
+            );
 
-            $alreadyListed = ClassList::query()
-                ->whereIn('student_application_id', $applicationIds)
-                ->pluck('student_application_id');
-
-            $toAdd = $applicationIds->diff($alreadyListed)->values()->all();
-
-            if ($toAdd === []) {
+            if ($result['added'] === 0) {
                 return back()->with('success', 'No new applications to add; selected rows are already on a class list.');
             }
 
-            $classLists = $this->buildClassListDto($toAdd, $request->input('type', 'provisional'));
-            $this->createClassLists($classLists);
-
-            return back()->with('success', count($toAdd).' application(s) added to the class list.');
+            return back()->with('success', $result['added'].' application(s) added to the class list.');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             return back()->with('error', 'An error occurred while adding applications to the class list.');
         }
     }
 
-    public function purge(PurgeClassListRequest $request)
+    public function transition(TransitionClassListRequest $request): RedirectResponse
     {
         try {
-            $applicationIds = collect($request->input('application_ids', []))
-                ->map(fn ($id) => (int) $id)
-                ->unique()
-                ->values();
-            $note = (string) $request->input('note');
-            $actor = $request->user();
+            $changed = $this->classListTransitionService->transition(
+                applicationIds: $request->input('application_ids', []),
+                toType: (string) $request->input('to_type'),
+                actor: $request->user(),
+                note: $request->input('note'),
+                bypassRanking: $request->boolean('bypass_ranking'),
+                context: $request->context(),
+            );
 
-            $purged = 0;
+            return back()->with('success', $changed.' class list entr'.($changed === 1 ? 'y' : 'ies').' updated.');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            return back()->with('error', 'An error occurred while updating class list status.');
+        }
+    }
 
-            DB::transaction(function () use ($applicationIds, $note, $actor, &$purged): void {
-                $entries = ClassList::query()
-                    ->whereIn('student_application_id', $applicationIds)
-                    ->get();
-
-                foreach ($entries as $entry) {
-                    activity('ClassList')
-                        ->performedOn($entry)
-                        ->causedBy($actor)
-                        ->event('purged')
-                        ->withProperties([
-                            'note' => $note,
-                            'type' => $entry->type?->value ?? $entry->type,
-                            'student_application_id' => $entry->student_application_id,
-                            'class_list_id' => $entry->id,
-                        ])
-                        ->log('Class list entry permanently purged');
-
-                    $entry->forceDelete();
-                    $purged++;
-                }
-            });
+    public function purge(PurgeClassListRequest $request): RedirectResponse
+    {
+        try {
+            $purged = $this->classListTransitionService->purge(
+                applicationIds: $request->input('application_ids', []),
+                actor: $request->user(),
+                note: (string) $request->input('note'),
+                context: $request->context(),
+            );
 
             if ($purged === 0) {
                 return back()->with('error', 'No class list entries found for the selected applications.');
             }
 
             return back()->with('success', $purged.' class list entr'.($purged === 1 ? 'y' : 'ies').' permanently removed.');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (Throwable $e) {
             return back()->with('error', 'An error occurred while purging class list entries.');
         }
@@ -284,6 +270,11 @@ class ClassListController extends Controller
             $entry->save();
 
             if ($isVerification) {
+                $student = $studentApplication->student;
+                if ($student !== null && ! $this->studentIdNumberValidationService->hasValidZimbabweanId($student)) {
+                    return back()->with('error', __('trans.enrollment_invalid_national_id'));
+                }
+
                 if (
                     ! $attributes['identity_confirmed']
                     || ! $attributes['disability_confirmed']
@@ -296,14 +287,15 @@ class ClassListController extends Controller
                 }
             } elseif ($isConfirmation) {
                 if (
-                    ! $attributes['passport_photos_confirmed']
+                    ! $attributes['proof_of_payment_confirmed']
+                    || ! $attributes['passport_photos_confirmed']
                     || ! $attributes['original_birth_certificate_confirmed']
                     || ! $attributes['original_national_identity_confirmed']
                     || ! $attributes['original_education_certificates_confirmed']
                 ) {
                     return back()->with(
                         'error',
-                        'Passport photos, birth certificate, national identity, and education certificates must be confirmed before elevating this student to the final class list.'
+                        'Proof of payment, passport photos, birth certificate, national identity, and education certificates must be confirmed before elevating this student to the final class list.'
                     );
                 }
             } else {
@@ -426,18 +418,29 @@ class ClassListController extends Controller
 
     public function confirm(StudentApplication $studentApplication)
     {
-        $this->authorize('manage-final:class-lists');
+        $this->authorize('confirm:class-lists');
         $nextTop = $this->getStudent($studentApplication);
+        $queue = $this->resolveQueuePosition($studentApplication);
+        $student = $studentApplication->student;
+        $otherApplications = $student === null
+            ? collect()
+            : $student->applications()
+                ->where('id', '!=', $studentApplication->id)
+                ->with(['institutionDepartment.department', 'departmentLevel.level', 'departmentCourse.course', 'intakePeriod', 'modeOfStudy', 'classList'])
+                ->get();
         $department = $studentApplication->institutionDepartment->department->name ?? '';
         $modeOfStudy = $studentApplication->modeOfStudy->name ?? '';
 
         // Tuition Lookup
         $tuitionFeeType = FeeType::where('name', FeeTypeEnum::TUITION_FEE->name())->first();
-        $feeStructure = FeeStructure::query()
-            ->where('tenant_id', $studentApplication->tenant_id)
-            ->where('level_id', $studentApplication->departmentLevel->level->id ?? null)
-            ->where('mode_of_study_id', $studentApplication->modeOfStudy->id ?? null)
-            ->where('fee_type_id', $tuitionFeeType->id)->first();
+        $feeStructure = $tuitionFeeType === null
+            ? null
+            : FeeStructure::query()
+                ->where('tenant_id', $studentApplication->tenant_id)
+                ->where('level_id', $studentApplication->departmentLevel->level->id ?? null)
+                ->where('mode_of_study_id', $studentApplication->modeOfStudy->id ?? null)
+                ->where('fee_type_id', $tuitionFeeType->id)
+                ->first();
 
         $tuition = $feeStructure->local_fca_amount ?? 0;
         $autoCardFee = DepartmentHelper::requiredAutoCardFee($department);
@@ -446,9 +449,11 @@ class ClassListController extends Controller
         return Inertia::render('enrolments/ApplicationConfirmation', [
             'application' => EnrolmentResource::make($studentApplication),
             'nextTop' => ClassListNextTopResource::collection($nextTop),
+            'otherApplications' => OtherApplicationResource::collection($otherApplications),
             'tuition' => $tuition,
             'autoCardFee' => $autoCardFee,
             'partTimeLevy' => $partTimeLevy,
+            'queue' => $queue,
         ]);
     }
 
@@ -457,7 +462,7 @@ class ClassListController extends Controller
      */
     public function classLists(InstitutionDepartment $institutionDepartment, DepartmentLevel $departmentLevel): Response
     {
-        Gate::any(['view:class-lists', 'manage-final:class-lists']) || abort(403);
+        $this->authorizeClassListBrowse(request()->string('type')->toString() ?: null);
 
         [$intakePeriod, $modeOfStudy, $courseId, $intakePeriods, $modesOfStudy] = $this->departmentEnrolmentService->resolveEnrolmentContext();
 
@@ -494,6 +499,16 @@ class ClassListController extends Controller
         ]);
     }
 
+    private function authorizeClassListBrowse(?string $type = null): void
+    {
+        $typedPermission = EnrolmentHelper::classListBrowsePermissionForType($type);
+        if ($typedPermission === null) {
+            abort(403);
+        }
+
+        $this->authorize($typedPermission);
+    }
+
     public function getStudent(StudentApplication $studentApplication): Collection
     {
         $studentApplication->load([
@@ -527,5 +542,38 @@ class ClassListController extends Controller
             ->where('cl.type', $studentApplication->classList->type)
             ->take(5)
             ->get();
+    }
+
+    /**
+     * @return array{position: int, total: int}
+     */
+    private function resolveQueuePosition(StudentApplication $studentApplication): array
+    {
+        $studentApplication->loadMissing('classList');
+
+        $classListType = $studentApplication->classList?->type;
+        if ($classListType === null) {
+            return ['position' => 1, 'total' => 1];
+        }
+
+        $applicationIds = DB::table('student_applications as sp')
+            ->join('class_lists as cl', 'cl.student_application_id', '=', 'sp.id')
+            ->where('sp.institution_department_id', $studentApplication->institution_department_id)
+            ->where('sp.department_level_id', $studentApplication->department_level_id)
+            ->where('sp.department_course_id', $studentApplication->department_course_id)
+            ->where('sp.intake_period_id', $studentApplication->intake_period_id)
+            ->where('sp.mode_of_study_id', $studentApplication->mode_of_study_id)
+            ->where('cl.type', $classListType)
+            ->orderBy('cl.created_at')
+            ->orderBy('sp.id')
+            ->pluck('sp.id');
+
+        $total = $applicationIds->count();
+        $position = $applicationIds->search($studentApplication->id);
+
+        return [
+            'position' => $position === false ? 1 : ((int) $position + 1),
+            'total' => max($total, 1),
+        ];
     }
 }

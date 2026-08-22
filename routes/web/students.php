@@ -59,4 +59,6 @@ Route::prefix('students')->middleware('auth')->group(function () {
     Route::get('program/{student_application}/edit', [UserStudentController::class, 'edit'])->name('students.program-edit');
     Route::put('program/{student_application}/update', [UserStudentController::class, 'updateProgram'])->name('students.program-update');
 });
-Route::middleware('auth')->resource('students', StudentController::class)->names('students');
+Route::middleware('auth')->resource('students', StudentController::class)
+    ->except(['create', 'store'])
+    ->names('students');

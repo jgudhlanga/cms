@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Rbac\RoleEnum;
+use App\Http\Middleware\AuthorizeClassListType;
 use App\Http\Middleware\EnsureApplicationTrackAllowed;
 use App\Http\Middleware\EnsureRegistrationOpen;
 use App\Http\Middleware\HandleAppearance;
@@ -46,6 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'redirect.student' => RedirectStudentMiddleware::class,
             'registration.open' => EnsureRegistrationOpen::class,
             'application.track' => EnsureApplicationTrackAllowed::class,
+            'class-list.type' => AuthorizeClassListType::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

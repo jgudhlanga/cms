@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import BaseCard from '@/components/core/card/BaseCard.vue';
 import StudentPaymentLedgerCardList from '@/components/finance/StudentPaymentLedgerCardList.vue';
 import {
     useParsedStudentPaymentReceipts,
@@ -40,7 +39,10 @@ onMounted(async () => {
 </script>
 
 <template>
-    <BaseCard :title="$t('finance.receipt')" color-variant="green-500">
+    <div class="flex flex-col gap-2">
+        <h3 class="text-[0.65rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+            {{ $t('finance.receipt') }}
+        </h3>
         <StudentPaymentLedgerCardList
             :receipts="parsedReceipts"
             :is-loading="isLoading"
@@ -51,5 +53,5 @@ onMounted(async () => {
             :original-amount-near-reference="originalAmountNearReference"
             :is-usd-amount="isUsdAmount"
         />
-    </BaseCard>
+    </div>
 </template>

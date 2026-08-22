@@ -20,7 +20,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('departments/{institution_department}/staff', [DepartmentMetaDataController::class, 'staff'])->name('v1.department-metadata.staff');
     Route::get('departments/{institution_department}/class-sizes', [DepartmentMetaDataController::class, 'classSizes'])->name('v1.department-metadata.class-sizes');
     Route::get('departments/{institution_department}/enrolments', [DepartmentMetaDataController::class, 'departmentEnrolments'])->name('v1.department-metadata.enrolments');
-    Route::get('departments/{institution_department}/class-lists', [DepartmentMetaDataController::class, 'departmentClassLists'])->name('v1.department-metadata.class-lists');
+    Route::get('departments/{institution_department}/class-lists', [DepartmentMetaDataController::class, 'departmentClassLists'])
+        ->middleware('class-list.type')
+        ->name('v1.department-metadata.class-lists');
     Route::get('departments/{institution_department}/class-config-course-syllabuses', [DepartmentMetaDataController::class, 'classConfigCourseSyllabuses'])->name('v1.department-metadata.class-config-course-syllabuses');
     Route::post('institution/dashboard/metrics', [DashboardController::class, 'index'])->name('v1.institution.dashboard.metrics');
     // ========================================= ACADEMIC CALENDARS =====================================================

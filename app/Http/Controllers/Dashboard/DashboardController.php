@@ -10,6 +10,7 @@ use App\Http\Resources\Enrolments\DailyDistributionResource;
 use App\Http\Resources\Enrolments\DepartmentDistributionResource;
 use App\Http\Resources\Enrolments\LevelDistributionResource;
 use App\Http\Resources\Institution\IntakePeriodResource;
+use App\Models\Examinations\ExaminationResult;
 use App\Services\ApplicationMetricsService;
 use App\Services\Dashboard\AcademicDashboardMetricsService;
 use App\Services\Dashboard\DashboardModuleService;
@@ -18,7 +19,9 @@ use App\Services\Dashboard\HostelDashboardMetricsService;
 use App\Services\Dashboard\LecturerDashboardMetricsService;
 use App\Services\Dashboard\OverviewDashboardMetricsService;
 use App\Services\Dashboard\StaffDashboardMetricsService;
+use App\Services\Examinations\ExaminationDashboardService;
 use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,7 +29,7 @@ class DashboardController extends Controller
 {
     public function __construct(protected ApplicationMetricsService $metricsService) {}
 
-    public function __invoke(): Response
+    public function __invoke(Request $request): Response
     {
         $this->authorize('viewDashboard');
 
@@ -48,6 +51,16 @@ class DashboardController extends Controller
         $enrolmentSummary = $this->metricsService->enrolmentSummaryMetrics();
         $visibleTabs = $dashboardModuleService->visibleTabsFor($user);
         $academicTabVisible = in_array('academic', $visibleTabs, true);
+        $examinationsTabVisible = in_array('examinations', $visibleTabs, true);
+        $canLoadExaminations = $examinationsTabVisible && (
+            $user->can('viewAny:dashboards')
+            || $user->can('view-examinations:dashboards')
+            || $user->can('viewAny', ExaminationResult::class)
+        );
+
+        $examinationDashboard = $canLoadExaminations
+            ? app(ExaminationDashboardService::class)->pagePayload($this->examinationFilters($request))
+            : null;
 
         return Inertia::render('dashboard/Index', [
             'departmentDistribution' => $departmentDistribution,
@@ -75,11 +88,41 @@ class DashboardController extends Controller
             'teachingDashboard' => $academicTabVisible && $user->can('view:lecturer-dashboard')
                 ? app(LecturerDashboardMetricsService::class)->build($user)
                 : null,
+            'filters' => $examinationDashboard['filters'] ?? null,
+            'filterOptions' => $examinationDashboard['filterOptions'] ?? null,
+            'statusCounts' => $examinationDashboard['statusCounts'] ?? null,
+            'statusLabels' => $examinationDashboard['statusLabels'] ?? null,
+            'chartLabels' => $examinationDashboard['chartLabels'] ?? null,
+            'totalCandidates' => $examinationDashboard['totalCandidates'] ?? null,
+            'passRate' => $examinationDashboard['passRate'] ?? null,
+            'onlineViewedCount' => $examinationDashboard['onlineViewedCount'] ?? null,
+            'onlineViewedRate' => $examinationDashboard['onlineViewedRate'] ?? null,
+            'comparison' => $examinationDashboard['comparison'] ?? null,
             'intakePeriod' => $intakePeriod,
             'intakePeriods' => $intakePeriods,
             'visibleTabs' => $visibleTabs,
             'dashboardTitle' => $dashboardModuleService->dashboardTitleFor($user),
             'moduleEnabled' => $dashboardModuleService->isEnabled(),
         ]);
+    }
+
+    /**
+     * @return array{
+     *     session?: string|null,
+     *     discipline?: string|null,
+     *     subject_code?: string|null,
+     *     compare_session?: string|null,
+     * }
+     */
+    private function examinationFilters(Request $request): array
+    {
+        $validated = $request->validate([
+            'session' => ['nullable', 'string', 'max:100'],
+            'discipline' => ['nullable', 'string', 'max:255'],
+            'subject_code' => ['nullable', 'string', 'max:100'],
+            'compare_session' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        return $validated;
     }
 }

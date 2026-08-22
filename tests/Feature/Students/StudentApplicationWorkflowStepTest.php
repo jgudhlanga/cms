@@ -115,8 +115,9 @@ function actingAsWorkflowClassListStaff(?int $tenantId = null): User
         'tenant_id' => $tenantId,
     ]));
     Permission::findOrCreate('manage-final:class-lists', 'web');
+    Permission::findOrCreate('confirm:class-lists', 'web');
     Permission::findOrCreate('verify:class-lists', 'web');
-    $user->givePermissionTo(['manage-final:class-lists', 'verify:class-lists']);
+    $user->givePermissionTo(['manage-final:class-lists', 'confirm:class-lists', 'verify:class-lists']);
 
     return $user;
 }

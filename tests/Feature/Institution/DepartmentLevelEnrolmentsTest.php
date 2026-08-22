@@ -75,7 +75,7 @@ it('loads course level enrolments when intake and mode filters are omitted', fun
 
 it('loads class lists for an intake period missing from the admin dropdown', function () {
     $seeded = seedGuestRegistrationProgramme();
-    $user = makeDepartmentLevelEnrolmentsUser(['view:department-metadata', 'view:class-lists']);
+    $user = makeDepartmentLevelEnrolmentsUser(['view:department-metadata', 'verify:class-lists']);
     $inactive = makeInactiveIntakePeriod();
     cache()->forget('all_intake_periods');
     cache()->forget('all_modes_of_study');
@@ -87,6 +87,7 @@ it('loads class lists for an intake period missing from the admin dropdown', fun
             'intake_period_id' => $inactive->id,
             'mode_of_study_id' => $seeded['modeId'],
             'department_course_id' => $seeded['courseId'],
+            'type' => 'provisional',
         ]))
         ->assertOk()
         ->assertInertia(fn ($page) => $page

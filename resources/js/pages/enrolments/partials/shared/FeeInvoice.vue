@@ -35,29 +35,28 @@ const invoiceItems = computed(() =>
 </script>
 
 <template>
-    <BaseCard :title="$t('finance.invoice')" color-variant="purple-500">
-        <div class="flex flex-col gap-3">
-            <template v-if="invoiceItems.length > 0">
-                <div class="max-h-72 space-y-2 overflow-y-auto pr-1">
-                    <div
-                        v-for="invoiceItem in invoiceItems"
-                        :key="invoiceItem.key"
-                        class="rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm"
-                    >
-                        <div class="flex items-center justify-between gap-3">
-                            <div class="text-accent-foreground font-medium">
-                                {{ $t(invoiceItem.label) }}
-                            </div>
-                            <div class="text-accent-foreground font-semibold">
-                                {{ formatMoney(invoiceItem.value as string | number) }}
-                            </div>
-                        </div>
-                    </div>
+    <div class="flex flex-col gap-2">
+        <h3 class="text-[0.65rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+            {{ $t('finance.invoice') }}
+        </h3>
+        <div v-if="invoiceItems.length > 0" class="flex flex-col gap-1.5">
+            <div
+                v-for="invoiceItem in invoiceItems"
+                :key="invoiceItem.key"
+                class="rounded-lg border border-border bg-card px-3 py-2 text-xs"
+            >
+                <div class="flex items-center justify-between gap-3">
+                    <span class="font-medium text-foreground">
+                        {{ $t(invoiceItem.label) }}
+                    </span>
+                    <span class="font-semibold text-foreground">
+                        {{ formatMoney(invoiceItem.value as string | number) }}
+                    </span>
                 </div>
-            </template>
-            <template v-else>
-                <Empty :message="$t('finance.no_invoice_items_found')" />
-            </template>
+            </div>
         </div>
-    </BaseCard>
+        <p v-else class="text-xs text-muted-foreground">
+            {{ $t('finance.no_invoice_items_found') }}
+        </p>
+    </div>
 </template>

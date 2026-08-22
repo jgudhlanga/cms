@@ -8,9 +8,11 @@ use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
 use App\Http\Resources\Integrations\LedgerResource;
 use App\Http\Resources\Shared\WorkflowStepResource;
 use App\Http\Resources\Students\AcademicLevelResource;
+use App\Services\Students\StudentIdNumberValidationService;
 use App\Services\Students\StudentOfferLetterService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class EnrolmentResource extends JsonResource
 {
@@ -37,6 +39,14 @@ class EnrolmentResource extends JsonResource
 
         $contact = $this->student?->contacts?->first();
         $offerLetterService = app(StudentOfferLetterService::class);
+        $idNumberValidation = $this->student
+            ? app(StudentIdNumberValidationService::class)->resolve($this->student, $request->user())
+            : [
+                'idNumberValid' => null,
+                'suggestedIdNumber' => null,
+                'idNumberRectificationStatus' => null,
+                'idNumberConflict' => null,
+            ];
 
         return [
             'type' => 'enrolments',
@@ -46,7 +56,12 @@ class EnrolmentResource extends JsonResource
                 'studentName' => $this->student?->user?->full_name,
                 'studentNumber' => $this->student?->student_number,
                 'idNumber' => $this->student?->id_number,
+                'idNumberValid' => $idNumberValidation['idNumberValid'],
+                'suggestedIdNumber' => $idNumberValidation['suggestedIdNumber'],
+                'idNumberRectificationStatus' => $idNumberValidation['idNumberRectificationStatus'],
+                'idNumberConflict' => $idNumberValidation['idNumberConflict'],
                 'passportNumber' => $this->student?->passport_number,
+                'idPhotoThumbUrl' => $this->idPhotoThumbUrl(),
                 'idType' => $this->student->idType?->name,
                 'idTypeId' => $this->student->id_type_id,
                 'country' => $this->student?->country?->name,
@@ -97,5 +112,20 @@ class EnrolmentResource extends JsonResource
                 'courseRequirements' => $this->departmentCourse?->requirement ? CourseRequirementResource::make($this->departmentCourse->requirement) : null,
             ],
         ];
+    }
+
+    private function idPhotoThumbUrl(): ?string
+    {
+        $student = $this->student;
+        if ($student === null) {
+            return null;
+        }
+
+        $photo = $student->latestIdPhoto();
+        if (! $photo instanceof Media) {
+            return null;
+        }
+
+        return $photo->getFullUrl('thumb') ?: $photo->getFullUrl();
     }
 }

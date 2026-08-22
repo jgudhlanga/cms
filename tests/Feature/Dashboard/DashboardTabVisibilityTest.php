@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Rbac\RoleEnum;
+use App\Helpers\PermissionHelper;
 use App\Models\Rbac\Role;
 use App\Models\Users\User;
 use App\Services\Dashboard\DashboardModuleService;
@@ -20,17 +21,13 @@ test('dashboard returns forbidden when module is disabled', function () {
         ->assertForbidden();
 });
 
-test('dashboard is accessible with activity tab when user has no other tab permissions', function () {
+test('dashboard returns forbidden when user has no tab permissions', function () {
     $user = User::factory()->create();
     seedDashboardIntakePeriod($user->tenant_id);
 
     $this->actingAs($user)
         ->get(dashboardUrlFor($user))
-        ->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->component('dashboard/Index')
-            ->where('visibleTabs', ['activity'])
-        );
+        ->assertForbidden();
 });
 
 test('dashboard is accessible with academic tab permission only', function () {
@@ -39,6 +36,7 @@ test('dashboard is accessible with academic tab permission only', function () {
     enableDashboardModule([
         'overview' => false,
         'academic' => true,
+        'examinations' => false,
     ]);
 
     $this->actingAs($user)
@@ -46,7 +44,56 @@ test('dashboard is accessible with academic tab permission only', function () {
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
-            ->where('visibleTabs', ['academic', 'activity'])
+            ->where('visibleTabs', ['academic'])
+        );
+});
+
+test('dashboard shows examinations tab with view-examinations permission', function () {
+    $user = userWithDashboardPermission('view-examinations:dashboards');
+
+    enableDashboardModule([
+        'overview' => false,
+        'academic' => false,
+        'enrolments' => false,
+        'attendance' => false,
+        'staff' => false,
+        'finance' => false,
+        'hostel' => false,
+        'examinations' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->get(dashboardUrlFor($user))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/Index')
+            ->where('visibleTabs', ['examinations'])
+            ->has('filters')
+            ->has('filterOptions')
+            ->has('statusCounts')
+        );
+});
+
+test('dashboard examinations filters are accepted on the main dashboard', function () {
+    $user = userWithDashboardPermission('view-examinations:dashboards');
+
+    enableDashboardModule([
+        'overview' => false,
+        'academic' => false,
+        'enrolments' => false,
+        'attendance' => false,
+        'staff' => false,
+        'finance' => false,
+        'hostel' => false,
+        'examinations' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->get(dashboardUrlFor($user).'&session=45000')
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/Index')
+            ->where('filters.session', '45000')
         );
 });
 
@@ -60,7 +107,7 @@ test('dashboard hides tabs disabled in module settings', function () {
         'staff' => false,
         'finance' => false,
         'hostel' => false,
-        'activity' => false,
+        'examinations' => false,
     ]);
 
     $this->actingAs($user)
@@ -85,4 +132,13 @@ test('dashboard title reflects highest priority user role', function () {
         ->assertInertia(fn ($page) => $page
             ->where('dashboardTitle', "Harare Polytechnic — Principal's Dashboard")
         );
+});
+
+test('leadership packs include examinations dashboard permission and hod does not', function () {
+    expect(PermissionHelper::vpAcademicsPermissions())->toContain('view-examinations:dashboards')
+        ->and(PermissionHelper::vpAdminPermissions())->toContain('view-examinations:dashboards')
+        ->and(PermissionHelper::principalPermissions())->toContain('view-examinations:dashboards')
+        ->and(PermissionHelper::hodPermissions())->not->toContain('view-examinations:dashboards');
+
+    expect(config('permissions.groups.dashboards'))->toContain('view-examinations:dashboards');
 });

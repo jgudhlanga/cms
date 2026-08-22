@@ -40,6 +40,28 @@ class EnrolmentHelper
         return in_array($levelName, $entryLevels, true);
     }
 
+    /**
+     * @return list<string>
+     */
+    public static function classListBrowseTypes(): array
+    {
+        return [
+            ClassListTypeEnum::PROVISIONAL->value,
+            ClassListTypeEnum::VERIFIED->value,
+            ClassListTypeEnum::FINAL->value,
+        ];
+    }
+
+    public static function classListBrowsePermissionForType(?string $type): ?string
+    {
+        return match ($type) {
+            ClassListTypeEnum::PROVISIONAL->value => 'verify:class-lists',
+            ClassListTypeEnum::VERIFIED->value => 'confirm:class-lists',
+            ClassListTypeEnum::FINAL->value => 'manage-final:class-lists',
+            default => null,
+        };
+    }
+
     public static function rejectOtherApplications(Student $student, StudentApplication $currentProgram): void
     {
         $rejectedStepId = WorkflowStep::where('slug', WorkflowStepEnum::REJECTED->slug())->value('id');

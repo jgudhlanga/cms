@@ -2,8 +2,6 @@
 
 namespace App\Support\Dashboard;
 
-use LogicException;
-
 enum DashboardTab: string
 {
     case Overview = 'overview';
@@ -13,7 +11,7 @@ enum DashboardTab: string
     case Staff = 'staff';
     case Finance = 'finance';
     case Hostel = 'hostel';
-    case Activity = 'activity';
+    case Examinations = 'examinations';
 
     public function permission(): string
     {
@@ -25,13 +23,13 @@ enum DashboardTab: string
             self::Staff => 'view-staff:dashboards',
             self::Finance => 'view-finance:dashboards',
             self::Hostel => 'view-hostel:dashboards',
-            self::Activity => throw new LogicException('Activity tab has no permission.'),
+            self::Examinations => 'view-examinations:dashboards',
         };
     }
 
     public function requiresPermission(): bool
     {
-        return $this !== self::Activity;
+        return true;
     }
 
     /**
@@ -42,10 +40,6 @@ enum DashboardTab: string
         $map = [];
 
         foreach (self::cases() as $tab) {
-            if (! $tab->requiresPermission()) {
-                continue;
-            }
-
             $map[$tab->value] = $tab->permission();
         }
 

@@ -60,10 +60,6 @@ class DashboardModuleService
 
     private function userCanViewTab(User $user, DashboardTab $tab): bool
     {
-        if ($tab === DashboardTab::Activity) {
-            return true;
-        }
-
         if ($user->can('viewAny:dashboards')) {
             return true;
         }

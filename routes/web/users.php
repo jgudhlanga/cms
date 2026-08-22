@@ -3,6 +3,10 @@
 use App\Http\Controllers\Users\UserController;
 use Illuminate\Support\Facades\Route;
 
+Route::middleware(['auth', 'verified', 'redirect.student'])->group(function () {
+    Route::get('users/audit-trail', [UserController::class, 'auditTrail'])->name('users.audit-trail');
+});
+
 Route::middleware('auth')->group(function () {
     Route::put('users/{user}/restore', [UserController::class, 'restore'])->name('users.restore');
     Route::delete('users/{user}/force-delete', [UserController::class, 'forceDelete'])->name('users.force-delete');

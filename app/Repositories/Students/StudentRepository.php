@@ -6,7 +6,6 @@ use App\DTO\Shared\AddressDto;
 use App\DTO\Shared\ContactDto;
 use App\DTO\Shared\NextOfKinDto;
 use App\DTO\Students\CreateApplicationDto;
-use App\DTO\Students\CreateStudentApplicationDto;
 use App\DTO\Students\StudentApplicationDto;
 use App\DTO\Students\UpdateStudentDto;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
@@ -381,7 +380,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         }
     }
 
-    public function create(CreateApplicationDto|CreateStudentApplicationDto $dto): Model
+    public function create(CreateApplicationDto $dto): Model
     {
         $student = $this->student->create($this->createFields($dto))->refresh();
         $this->saveProgram($student, $dto);
@@ -459,7 +458,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             ->withQueryString();
     }
 
-    private function createFields(CreateApplicationDto|CreateStudentApplicationDto $dto): array
+    private function createFields(CreateApplicationDto $dto): array
     {
         $cleanIdNumber = $dto->id_number
             ? EnrollmentLookupService::normalizeNationalId($dto->id_number)
@@ -513,7 +512,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         ];
     }
 
-    private function saveProgram(Student $student, CreateApplicationDto|CreateStudentApplicationDto $dto): void
+    private function saveProgram(Student $student, CreateApplicationDto $dto): void
     {
         $programDto = new StudentApplicationDto(
             student_id: $student->id,
@@ -528,7 +527,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $this->studentApplicationRepository->create($programDto);
     }
 
-    private function saveContact(Student $student, CreateApplicationDto|CreateStudentApplicationDto $dto): void
+    private function saveContact(Student $student, CreateApplicationDto $dto): void
     {
         $nameParts = array_filter([
             $dto->first_name,
@@ -546,7 +545,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $this->contactRepository->create($student, $contactDto);
     }
 
-    private function saveAddress(Student $student, CreateApplicationDto|CreateStudentApplicationDto $dto): void
+    private function saveAddress(Student $student, CreateApplicationDto $dto): void
     {
         $addressDto = new AddressDto(
             address_1: $dto->address_1,
@@ -560,7 +559,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $this->addressRepository->create($student, $addressDto);
     }
 
-    private function saveNextOfKin(Student $student, CreateApplicationDto|CreateStudentApplicationDto $dto): void
+    private function saveNextOfKin(Student $student, CreateApplicationDto $dto): void
     {
         $nextOfKinDto = new NextOfKinDto(
             name: $dto->next_of_kin_name,
@@ -574,7 +573,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $this->nextOfKinRepository->create($student, $nextOfKinDto);
     }
 
-    private function saveAcademicResults(Student $student, CreateApplicationDto|CreateStudentApplicationDto $dto): void
+    private function saveAcademicResults(Student $student, CreateApplicationDto $dto): void
     {
         $this->syncAcademicResults($student, $dto, creating: true);
     }
@@ -643,7 +642,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
 
     private function syncAcademicResults(
         Student $student,
-        CreateApplicationDto|CreateStudentApplicationDto $dto,
+        CreateApplicationDto $dto,
         bool $creating = false,
     ): void {
         $mainSubjects = $dto->o_level_subject_ids;

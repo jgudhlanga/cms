@@ -6,6 +6,7 @@ interface Props {
     value?: string;
     labelClasses?: string;
     valueClasses?: string;
+    highlighted?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -16,7 +17,15 @@ const props = defineProps<Props>();
         <span :class="twMerge('text-[0.65rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase', props.labelClasses)">
             {{ label }}
         </span>
-        <span :class="twMerge('text-[0.85rem] font-bold tracking-[-0.01em] text-foreground', props.valueClasses)">
+        <span
+            :class="
+                twMerge(
+                    'text-[0.85rem] font-bold tracking-[-0.01em] text-foreground',
+                    highlighted && 'underline decoration-emerald-600 decoration-2 underline-offset-2',
+                    props.valueClasses,
+                )
+            "
+        >
             {{ !value ? '---' : value }}
         </span>
     </div>

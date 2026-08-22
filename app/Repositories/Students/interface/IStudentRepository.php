@@ -3,7 +3,6 @@
 namespace App\Repositories\Students\interface;
 
 use App\DTO\Students\CreateApplicationDto;
-use App\DTO\Students\CreateStudentApplicationDto;
 use App\DTO\Students\UpdateStudentDto;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Students\Student;
@@ -14,7 +13,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 interface IStudentRepository extends IBaseRepository
 {
-    public function create(CreateApplicationDto|CreateStudentApplicationDto $dto);
+    public function create(CreateApplicationDto $dto);
 
     public function applyReturningApplication(Student $student, CreateApplicationDto $dto): StudentApplication;
 
