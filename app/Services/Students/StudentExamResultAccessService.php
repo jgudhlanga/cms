@@ -81,7 +81,7 @@ class StudentExamResultAccessService
                 'idValidation' => $idValidation,
                 'academicCalendarId' => $enrolment->academic_calendar_id,
                 'calendarYear' => $calendarYear,
-                'semesterId' => $enrolment->semester_id,
+                'semesterId' => $this->resolveSemesterId($enrolment),
                 'calendarType' => $calendarType,
             ];
         }
@@ -96,7 +96,7 @@ class StudentExamResultAccessService
                 'idValidation' => $idValidation,
                 'academicCalendarId' => $enrolment->academic_calendar_id,
                 'calendarYear' => $calendarYear,
-                'semesterId' => $enrolment->semester_id,
+                'semesterId' => $this->resolveSemesterId($enrolment),
                 'calendarType' => $calendarType,
             ];
         }
@@ -111,7 +111,7 @@ class StudentExamResultAccessService
                 'idValidation' => $idValidation,
                 'academicCalendarId' => $enrolment->academic_calendar_id,
                 'calendarYear' => $calendarYear,
-                'semesterId' => $enrolment->semester_id,
+                'semesterId' => $this->resolveSemesterId($enrolment),
                 'calendarType' => $calendarType,
             ];
         }
@@ -126,7 +126,7 @@ class StudentExamResultAccessService
                 'idValidation' => $idValidation,
                 'academicCalendarId' => $enrolment->academic_calendar_id,
                 'calendarYear' => $calendarYear,
-                'semesterId' => $enrolment->semester_id,
+                'semesterId' => $this->resolveSemesterId($enrolment),
                 'calendarType' => $calendarType,
             ];
         }
@@ -141,7 +141,7 @@ class StudentExamResultAccessService
                 'idValidation' => $idValidation,
                 'academicCalendarId' => $enrolment->academic_calendar_id,
                 'calendarYear' => $calendarYear,
-                'semesterId' => $enrolment->semester_id,
+                'semesterId' => $this->resolveSemesterId($enrolment),
                 'calendarType' => $calendarType,
             ];
         }
@@ -157,7 +157,7 @@ class StudentExamResultAccessService
             'idValidation' => $idValidation,
             'academicCalendarId' => $enrolment->academic_calendar_id,
             'calendarYear' => $calendarYear,
-            'semesterId' => $enrolment->semester_id,
+            'semesterId' => $this->resolveSemesterId($enrolment),
             'calendarType' => $calendarType,
         ];
     }
@@ -231,7 +231,9 @@ class StudentExamResultAccessService
             ];
         }
 
-        if ($enrolment === null || $calendarYear === null || $enrolment->semester_id === null) {
+        $semesterId = $this->resolveSemesterId($enrolment);
+
+        if ($enrolment === null || $calendarYear === null || $semesterId === null) {
             return [
                 'isFullyCleared' => false,
                 'accountsCleared' => false,
@@ -246,7 +248,7 @@ class StudentExamResultAccessService
         $clearance = StudentClearance::query()
             ->where('student_id', $student->id)
             ->where('calendar_year', $calendarYear)
-            ->where('semester_id', $enrolment->semester_id)
+            ->where('semester_id', $semesterId)
             ->first();
 
         if ($clearance === null) {
@@ -257,7 +259,7 @@ class StudentExamResultAccessService
                 'sections' => $sections,
                 'recordId' => null,
                 'calendarYear' => $calendarYear,
-                'semesterId' => $enrolment->semester_id,
+                'semesterId' => $this->resolveSemesterId($enrolment),
             ];
         }
 
@@ -277,7 +279,7 @@ class StudentExamResultAccessService
             'sections' => $sections,
             'recordId' => $clearance->id,
             'calendarYear' => $calendarYear,
-            'semesterId' => $enrolment->semester_id,
+            'semesterId' => $this->resolveSemesterId($enrolment),
         ];
     }
 
@@ -316,6 +318,7 @@ class StudentExamResultAccessService
                 'academicCalendar',
                 'semester',
                 'studentEnrolmentStatus',
+                'studentSemesters.semester',
             ])
             ->get();
 
@@ -434,6 +437,17 @@ class StudentExamResultAccessService
         ));
 
         return $clearanceStatus;
+    }
+
+    private function resolveSemesterId(?StudentEnrolment $enrolment): ?int
+    {
+        if ($enrolment === null) {
+            return null;
+        }
+
+        $current = $enrolment->currentStudentSemester();
+
+        return $current?->semester_id ?? $enrolment->semester_id;
     }
 
     /**

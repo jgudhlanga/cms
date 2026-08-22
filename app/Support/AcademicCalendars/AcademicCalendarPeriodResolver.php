@@ -53,9 +53,12 @@ final class AcademicCalendarPeriodResolver
     /**
      * Programme-phase slug that is current inside the selected calendar year (never another year).
      */
-    public static function currentSemesterSlugForYear(string $calendarYear, AcademicCalendarTypeEnum $type): string
-    {
-        $current = AcademicCalendar::resolveCurrentPeriodForDate($calendarYear, $type);
+    public static function currentSemesterSlugForYear(
+        string $calendarYear,
+        AcademicCalendarTypeEnum $type,
+        ?CarbonInterface $asOf = null,
+    ): string {
+        $current = AcademicCalendar::resolveCurrentPeriodForDate($calendarYear, $type, $asOf);
 
         if (! $current instanceof AcademicCalendar) {
             return $type->fallbackSemesterSlug();

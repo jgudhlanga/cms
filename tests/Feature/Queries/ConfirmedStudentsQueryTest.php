@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__.'/../../Support/AcademicCalendarClassTestHelpers.php';
+
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
@@ -30,6 +32,7 @@ beforeEach(function () {
 });
 
 test('countsByCourseLevel excludes soft deleted final class lists', function () {
+    $this->travelTo('2026-05-15');
     $tenant = Tenant::query()->firstOrFail();
 
     $department = Department::factory()->create();
@@ -47,7 +50,7 @@ test('countsByCourseLevel excludes soft deleted final class lists', function () 
         'course_id' => $course->id,
     ]);
 
-    $level = Level::factory()->create();
+    $level = Level::factory()->create(['calendar_type' => 'semester']);
     $departmentLevel = DepartmentLevel::query()->create([
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -100,6 +103,32 @@ test('countsByCourseLevel excludes soft deleted final class lists', function () 
         'attributes' => [],
     ]);
 
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'opening_date' => '2026-01-15',
+        'closing_date' => '2026-06-30',
+    ]);
+    $semester = Semester::query()->firstOrCreate(
+        ['slug' => 'q-count-soft-option'],
+        ['name' => 'Q Count Soft', 'description' => null],
+    );
+    $status = StudentEnrolmentStatus::query()->firstOrCreate(
+        ['name' => 'Active'],
+        ['description' => 'Test'],
+    );
+    $enrolment = StudentEnrolment::query()->create([
+        'student_id' => $student->id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'department_level_id' => $departmentLevel->id,
+        'department_course_id' => $departmentCourse->id,
+        'semester_id' => $semester->id,
+        'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $modeOfStudy->id,
+        'student_enrolment_status_id' => $status->id,
+    ]);
+    ensureStudentSemesterPhaseForEnrolment($enrolment);
+
     $key = "{$departmentCourse->id}_{$departmentLevel->id}";
 
     expect($this->query->countsByCourseLevel((int) $institutionDepartment->id, $modeOfStudy->id, '2026'))->toHaveKey($key)
@@ -111,6 +140,7 @@ test('countsByCourseLevel excludes soft deleted final class lists', function () 
 });
 
 test('countsByCourseLevel is isolated by mode of study', function () {
+    $this->travelTo('2026-05-15');
     $tenant = Tenant::query()->firstOrFail();
 
     $department = Department::factory()->create();
@@ -128,7 +158,7 @@ test('countsByCourseLevel is isolated by mode of study', function () {
         'course_id' => $course->id,
     ]);
 
-    $level = Level::factory()->create();
+    $level = Level::factory()->create(['calendar_type' => 'semester']);
     $departmentLevel = DepartmentLevel::query()->create([
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -182,6 +212,32 @@ test('countsByCourseLevel is isolated by mode of study', function () {
         'attributes' => [],
     ]);
 
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'opening_date' => '2026-01-15',
+        'closing_date' => '2026-06-30',
+    ]);
+    $semester = Semester::query()->firstOrCreate(
+        ['slug' => 'q-count-mode-option'],
+        ['name' => 'Q Count Mode', 'description' => null],
+    );
+    $status = StudentEnrolmentStatus::query()->firstOrCreate(
+        ['name' => 'Active'],
+        ['description' => 'Test'],
+    );
+    $enrolment = StudentEnrolment::query()->create([
+        'student_id' => $student->id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'department_level_id' => $departmentLevel->id,
+        'department_course_id' => $departmentCourse->id,
+        'semester_id' => $semester->id,
+        'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $modeA->id,
+        'student_enrolment_status_id' => $status->id,
+    ]);
+    ensureStudentSemesterPhaseForEnrolment($enrolment);
+
     $key = "{$departmentCourse->id}_{$departmentLevel->id}";
 
     expect($this->query->countsByCourseLevel((int) $institutionDepartment->id, $modeA->id, '2026'))->toHaveKey($key)
@@ -206,7 +262,7 @@ test('listForClassAllocation returns empty without matching student enrolment', 
         'course_id' => $course->id,
     ]);
 
-    $level = Level::factory()->create();
+    $level = Level::factory()->create(['calendar_type' => 'semester']);
     $departmentLevel = DepartmentLevel::query()->create([
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -294,7 +350,7 @@ test('listForClassAllocation returns row when final list and enrolment exist', f
         'course_id' => $course->id,
     ]);
 
-    $level = Level::factory()->create();
+    $level = Level::factory()->create(['calendar_type' => 'semester']);
     $departmentLevel = DepartmentLevel::query()->create([
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -373,6 +429,7 @@ test('listForClassAllocation returns row when final list and enrolment exist', f
         'mode_of_study_id' => $modeOfStudy->id,
         'student_enrolment_status_id' => $activeEnrolmentStatus->id,
     ]);
+    ensureStudentSemesterPhaseForEnrolment($enrolment);
 
     $rows = $this->query->listForClassAllocation(
         (int) $institutionDepartment->id,
@@ -404,7 +461,7 @@ test('listForClassAllocation returns empty when no academic calendar ids are pro
         'course_id' => $course->id,
     ]);
 
-    $level = Level::factory()->create();
+    $level = Level::factory()->create(['calendar_type' => 'semester']);
     $departmentLevel = DepartmentLevel::query()->create([
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -447,7 +504,7 @@ test('listForClassAllocation matches student enrolment when any calendar id in t
         'course_id' => $course->id,
     ]);
 
-    $level = Level::factory()->create();
+    $level = Level::factory()->create(['calendar_type' => 'semester']);
     $departmentLevel = DepartmentLevel::query()->create([
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -532,6 +589,7 @@ test('listForClassAllocation matches student enrolment when any calendar id in t
         'mode_of_study_id' => $modeOfStudy->id,
         'student_enrolment_status_id' => $activeEnrolmentStatus->id,
     ]);
+    ensureStudentSemesterPhaseForEnrolment($enrolment);
 
     $onlyCanonical = $this->query->listForClassAllocation(
         (int) $institutionDepartment->id,
@@ -575,4 +633,136 @@ test('listForClassAllocation matches student enrolment when any calendar id in t
     );
 
     expect($matchingSemester)->toHaveCount(1);
+});
+
+test('listForClassAllocation returns one row when an application has two matching enrolments', function () {
+    $this->travelTo('2026-05-15');
+    $tenant = Tenant::query()->firstOrFail();
+
+    $department = Department::factory()->create();
+    $institutionDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $tenant->id,
+        'department_id' => $department->id,
+        'department_code' => 'q-list-dedupe',
+        'description' => 'listForClassAllocation distinct enrolments',
+    ]);
+
+    $course = Course::factory()->create();
+    $departmentCourse = DepartmentCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'course_id' => $course->id,
+    ]);
+
+    $level = Level::factory()->create(['calendar_type' => 'semester']);
+    $departmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'level_id' => $level->id,
+    ]);
+
+    DepartmentLevelCourse::query()->create([
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
+    ]);
+
+    $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Query Mode Dedupe']);
+    $intakePeriod = IntakePeriod::query()->create([
+        'tenant_id' => $tenant->id,
+        'name' => 'Query intake dedupe',
+        'calendar_year' => '2026',
+        'start_date' => now()->startOfMonth()->toDateString(),
+        'end_date' => now()->endOfMonth()->toDateString(),
+    ]);
+
+    $calendarOlder = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'opening_date' => '2026-01-15',
+        'closing_date' => '2026-06-30',
+    ]);
+    $calendarNewer = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'opening_date' => '2026-02-15',
+        'closing_date' => '2026-07-30',
+    ]);
+
+    $semester = Semester::query()->firstOrCreate(
+        ['slug' => 'q-list-dedupe-option'],
+        ['name' => 'Q List Dedupe', 'description' => null],
+    );
+    $status = StudentEnrolmentStatus::query()->firstOrCreate(
+        ['name' => 'Active'],
+        ['description' => 'Test'],
+    );
+
+    $title = Title::query()->create(['name' => 'Dr Q']);
+    $gender = Gender::query()->create(['title' => 'Dedupe']);
+    $maritalStatus = MaritalStatus::query()->create(['title' => 'S-dedupe']);
+    $idType = IdType::query()->create(['name' => 'ID-dedupe']);
+    $studentUser = User::factory()->create(['tenant_id' => $tenant->id]);
+    $student = Student::query()->create([
+        'tenant_id' => $tenant->id,
+        'user_id' => $studentUser->id,
+        'title_id' => $title->id,
+        'gender_id' => $gender->id,
+        'marital_status_id' => $maritalStatus->id,
+        'id_type_id' => $idType->id,
+        'date_of_birth' => '2004-01-01',
+    ]);
+    $studentApplication = StudentApplication::query()->create([
+        'tenant_id' => $tenant->id,
+        'student_id' => $student->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'department_level_id' => $departmentLevel->id,
+        'department_course_id' => $departmentCourse->id,
+        'intake_period_id' => $intakePeriod->id,
+        'mode_of_study_id' => $modeOfStudy->id,
+        'application_tracking_number' => 'APP-Q-DEDUPE',
+    ]);
+
+    ClassList::query()->create([
+        'tenant_id' => $tenant->id,
+        'student_application_id' => $studentApplication->id,
+        'type' => ClassListTypeEnum::FINAL->value,
+        'attributes' => [],
+    ]);
+
+    $olderEnrolment = StudentEnrolment::query()->create([
+        'student_id' => $student->id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'department_level_id' => $departmentLevel->id,
+        'department_course_id' => $departmentCourse->id,
+        'semester_id' => $semester->id,
+        'academic_calendar_id' => $calendarOlder->id,
+        'mode_of_study_id' => $modeOfStudy->id,
+        'student_enrolment_status_id' => $status->id,
+    ]);
+    ensureStudentSemesterPhaseForEnrolment($olderEnrolment);
+    $newerEnrolment = StudentEnrolment::query()->create([
+        'student_id' => $student->id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'department_level_id' => $departmentLevel->id,
+        'department_course_id' => $departmentCourse->id,
+        'semester_id' => $semester->id,
+        'academic_calendar_id' => $calendarNewer->id,
+        'mode_of_study_id' => $modeOfStudy->id,
+        'student_enrolment_status_id' => $status->id,
+    ]);
+    ensureStudentSemesterPhaseForEnrolment($newerEnrolment);
+
+    $rows = $this->query->listForClassAllocation(
+        (int) $institutionDepartment->id,
+        $departmentLevel->id,
+        $departmentCourse->id,
+        $modeOfStudy->id,
+        [$calendarOlder->id, $calendarNewer->id],
+    );
+
+    $key = "{$departmentCourse->id}_{$departmentLevel->id}";
+
+    expect($rows)->toHaveCount(1)
+        ->and((int) $rows->first()->student_enrolment_id)->toBe((int) $newerEnrolment->id)
+        ->and($this->query->countsByCourseLevel((int) $institutionDepartment->id, $modeOfStudy->id, '2026')[$key])->toBe(1);
 });

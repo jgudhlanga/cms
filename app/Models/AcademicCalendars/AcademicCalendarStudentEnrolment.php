@@ -3,6 +3,7 @@
 namespace App\Models\AcademicCalendars;
 
 use App\Models\Students\StudentEnrolment;
+use App\Models\Students\StudentSemester;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -23,16 +24,21 @@ class AcademicCalendarStudentEnrolment extends Model
 
     protected $table = 'academic_calendar_student_enrolments';
 
-    protected $fillable = ['tenant_id', 'student_enrolment_id', 'academic_calendar_class_id'];
+    protected $fillable = ['tenant_id', 'student_enrolment_id', 'student_semesters_id', 'academic_calendar_class_id'];
 
     public function academicCalendarClass(): BelongsTo
     {
         return $this->belongsTo(AcademicCalendarClass::class, 'academic_calendar_class_id');
     }
 
-    public function studentEnrolment(): BelongsTo 
+    public function studentEnrolment(): BelongsTo
     {
         return $this->belongsTo(StudentEnrolment::class, 'student_enrolment_id');
+    }
+
+    public function studentSemester(): BelongsTo
+    {
+        return $this->belongsTo(StudentSemester::class, 'student_semesters_id');
     }
 
     public function getActivitylogOptions(): LogOptions

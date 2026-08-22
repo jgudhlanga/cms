@@ -68,6 +68,8 @@ return [
     'semester_gpa' => 'Semester GPA',
     'duration_this_semester' => 'Duration in hours',
     'modules_count' => 'Modules',
+    'select_status' => 'Select status',
+    'collect_exam_results_hint' => 'No exam results recorded yet. Collect results for this semester.',
     'lecturer' => 'Lecturer',
     'module_type' => 'Type',
     'assessment' => 'Assessment',

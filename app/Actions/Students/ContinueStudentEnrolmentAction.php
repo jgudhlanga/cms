@@ -10,13 +10,11 @@ use App\Models\Enrolments\ClassList;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
-use App\Services\Students\ResolveStudentEnrolmentAttributesService;
-use App\Services\Students\StudentEnrolmentProgressionService;
 
 class ContinueStudentEnrolmentAction
 {
     public function __construct(
-        protected ResolveStudentEnrolmentAttributesService $resolveStudentEnrolmentAttributes,
+        protected UpsertYearStudentEnrolmentAction $upsertYearStudentEnrolment,
     ) {}
 
     public function execute(StudentApplication $studentApplication): StudentEnrolment
@@ -50,31 +48,6 @@ class ContinueStudentEnrolmentAction
             ]);
         }
 
-        $enrolmentAttributes = $this->resolveStudentEnrolmentAttributes->resolve(
-            (int) $studentApplication->student_id,
-            (int) $studentApplication->id,
-        );
-
-        $enrolment = StudentEnrolment::query()->updateOrCreate(
-            [
-                'student_id' => $studentApplication->student_id,
-                'student_application_id' => $studentApplication->id,
-                'institution_department_id' => $studentApplication->institution_department_id,
-                'department_level_id' => $studentApplication->department_level_id,
-                'department_course_id' => $studentApplication->department_course_id,
-                'semester_id' => $enrolmentAttributes['semester_id'],
-                'academic_calendar_id' => $enrolmentAttributes['academic_calendar_id'],
-                'mode_of_study_id' => $studentApplication->mode_of_study_id,
-            ],
-            [
-                'student_application_id' => $studentApplication->id,
-                'student_enrolment_status_id' => $enrolmentAttributes['student_enrolment_status_id'],
-                'mode_of_study_id' => $studentApplication->mode_of_study_id,
-            ],
-        );
-
-        app(StudentEnrolmentProgressionService::class)->pinSyllabusFromMatchingClassConfig($enrolment);
-
-        return $enrolment;
+        return $this->upsertYearStudentEnrolment->execute($studentApplication);
     }
 }

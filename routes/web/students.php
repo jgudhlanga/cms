@@ -32,6 +32,8 @@ Route::prefix('students')->middleware('auth')->group(function () {
         ->name('students.id-number.update');
     Route::patch('{student}/enrolments/{student_enrolment}/status', [StudentEnrolmentProgressController::class, 'updateStatus'])
         ->name('students.enrolments.status.update');
+    Route::patch('{student}/student-semesters/{student_semester}/status', [StudentEnrolmentProgressController::class, 'updateSemesterStatus'])
+        ->name('students.student-semesters.status.update');
     Route::post('{student}/id-photo', [StudentController::class, 'uploadIdPhoto'])
         ->name('students.id-photo.store');
     Route::delete('{student}/purge', [StudentController::class, 'purge'])

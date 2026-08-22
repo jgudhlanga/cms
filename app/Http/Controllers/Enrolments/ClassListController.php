@@ -37,7 +37,7 @@ use App\Models\Students\StudentEnrolment;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Services\DepartmentEnrolmentService;
 use App\Services\Enrolments\ClassListTransitionService;
-use App\Services\Students\ResolveStudentEnrolmentAttributesService;
+use App\Actions\Students\UpsertYearStudentEnrolmentAction;
 use App\Services\Students\StudentIdNumberValidationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
@@ -53,7 +53,7 @@ class ClassListController extends Controller
     public function __construct(
         protected IClassListRepository $repository,
         protected DepartmentEnrolmentService $departmentEnrolmentService,
-        protected ResolveStudentEnrolmentAttributesService $resolveStudentEnrolmentAttributes,
+        protected UpsertYearStudentEnrolmentAction $upsertYearStudentEnrolment,
         protected ClassListTransitionService $classListTransitionService,
         protected StudentIdNumberValidationService $studentIdNumberValidationService,
     ) {}
@@ -355,28 +355,7 @@ class ClassListController extends Controller
 
     private function createStudentEnrolment(StudentApplication $studentApplication): void
     {
-        $enrolmentAttributes = $this->resolveStudentEnrolmentAttributes->resolve(
-            (int) $studentApplication->student_id,
-            (int) $studentApplication->id,
-        );
-
-        StudentEnrolment::query()->updateOrCreate(
-            [
-                'student_id' => $studentApplication->student_id,
-                'student_application_id' => $studentApplication->id,
-                'institution_department_id' => $studentApplication->institution_department_id,
-                'department_level_id' => $studentApplication->department_level_id,
-                'department_course_id' => $studentApplication->department_course_id,
-                'semester_id' => $enrolmentAttributes['semester_id'],
-                'academic_calendar_id' => $enrolmentAttributes['academic_calendar_id'],
-                'mode_of_study_id' => $studentApplication->mode_of_study_id,
-            ],
-            [
-                'student_application_id' => $studentApplication->id,
-                'student_enrolment_status_id' => $enrolmentAttributes['student_enrolment_status_id'],
-                'mode_of_study_id' => $studentApplication->mode_of_study_id,
-            ],
-        );
+        $this->upsertYearStudentEnrolment->execute($studentApplication);
     }
 
     public function rejectApplication(StudentApplication $studentApplication)

@@ -16,7 +16,7 @@ use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
-use App\Models\Students\StudentEnrolmentStatus;
+use App\Models\Students\StudentSemester;
 use App\Services\AcademicCalendars\CourseWorkAggregationService;
 use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
 use App\Support\Institution\CourseSyllabusModulePeriod;
@@ -30,6 +30,7 @@ class StudentProgrammeDataService
         protected CourseSyllabusCodeResolver $courseSyllabusCodeResolver,
         protected StudentEnrolmentProgressionService $progression,
         protected ExamResultEnrolmentStatusResolver $examResultResolver,
+        protected SyncStudentSemesterStatusesFromExamResultsService $syncSemesterStatusesFromExamResults,
     ) {}
 
     /**
@@ -44,6 +45,8 @@ class StudentProgrammeDataService
             'enrolments.semester',
             'enrolments.academicCalendar',
             'enrolments.studentEnrolmentStatus',
+            'enrolments.studentSemesters.semester',
+            'enrolments.studentSemesters.studentEnrolmentStatus',
             'enrolments.academicCalendarStudentEnrolment.academicCalendarClass.classConfig',
         ]);
 
@@ -149,7 +152,9 @@ class StudentProgrammeDataService
                 ->all();
         }
 
-        $enrolmentsBySemesterId = $programmeEnrolments->keyBy('semester_id');
+        $enrolmentsBySemesterId = $programmeEnrolments
+            ->flatMap(fn (StudentEnrolment $enrolment): Collection => $enrolment->studentSemesters)
+            ->keyBy('semester_id');
         $phaseOptions = $this->progression->phaseOptions($calendarType);
 
         return $phaseOptions
@@ -159,15 +164,12 @@ class StudentProgrammeDataService
                 $studentApplication,
                 $calendarYear,
             ): array {
-                $enrolment = $enrolmentsBySemesterId->get((int) $phase->id);
+                $studentSemester = $enrolmentsBySemesterId->get((int) $phase->id);
 
-                if ($enrolment instanceof StudentEnrolment) {
-                    return $this->courseSyllabusCodeResolver->resolveSyllabusIds($enrolment);
-                }
-
-                return $this->resolveSyllabusIdsForPhase(
+                return $this->resolveSyllabusIdsForProgrammePhase(
                     $latestEnrolment,
                     $studentApplication,
+                    $studentSemester instanceof StudentSemester ? $studentSemester : null,
                     (int) $phase->id,
                     $calendarYear,
                 );
@@ -175,6 +177,37 @@ class StudentProgrammeDataService
             ->unique()
             ->values()
             ->all();
+    }
+
+    /**
+     * Prefer pinned syllabi on the student_semester row; otherwise resolve from class config or programme syllabuses.
+     *
+     * @return list<int>
+     */
+    private function resolveSyllabusIdsForProgrammePhase(
+        StudentEnrolment $enrolment,
+        ?StudentApplication $studentApplication,
+        ?StudentSemester $studentSemester,
+        int $semesterId,
+        string $calendarYear,
+    ): array {
+        if ($studentSemester instanceof StudentSemester) {
+            $pinned = array_values(array_filter(array_map(
+                'intval',
+                $studentSemester->course_syllabus_ids ?? [],
+            )));
+
+            if ($pinned !== []) {
+                return $pinned;
+            }
+        }
+
+        return $this->resolveSyllabusIdsForPhase(
+            $enrolment,
+            $studentApplication,
+            $semesterId,
+            $calendarYear,
+        );
     }
 
     /**
@@ -193,6 +226,7 @@ class StudentProgrammeDataService
         $latestEnrolment = $sortedEnrolments
             ->sortByDesc(fn (StudentEnrolment $enrolment) => $enrolment->academicCalendar?->opening_date ?? '')
             ->first();
+        $latestEnrolment?->loadMissing('studentSemesters.semester', 'studentSemesters.studentEnrolmentStatus');
         $calendarType = $latestEnrolment?->departmentLevel?->level?->calendar_type;
         $calendarYear = $latestEnrolment?->academicCalendar?->calendar_year;
 
@@ -222,7 +256,6 @@ class StudentProgrammeDataService
             ]
         );
         $currentSlug = AcademicCalendarPeriodResolver::currentSemesterSlugForYear($calendarYear, $calendarType);
-        $enrolmentsBySemesterId = $sortedEnrolments->keyBy('semester_id');
         $modeOfStudyId = (int) $latestEnrolment->mode_of_study_id;
         $assessmentTypes = $assessmentTypesByModeId->get($modeOfStudyId, collect())->all();
 
@@ -238,7 +271,20 @@ class StudentProgrammeDataService
             $calendarType,
         );
 
-        $availableStatuses = $this->progression->availableStatuses();
+        $this->syncSemesterStatusesFromExamResults->sync(
+            $latestEnrolment,
+            $examMetadataBySlug,
+            $currentSlug,
+            $phaseOptions,
+        );
+
+        $latestEnrolment->load(['studentSemesters.semester', 'studentSemesters.studentEnrolmentStatus']);
+        $enrolmentsBySemesterId = $latestEnrolment->studentSemesters->keyBy('semester_id');
+
+        $availableStatuses = array_values(array_filter(
+            $this->progression->availableStatuses(),
+            fn (array $status): bool => $status['slug'] !== StudentEnrolmentProgressionService::STATUS_UNKNOWN,
+        ));
         $isLastPhaseSlug = $phaseOptions->last()?->slug;
 
         // Build phase data in order (ascending) so we can track previous status for progression
@@ -248,7 +294,8 @@ class StudentProgrammeDataService
         foreach ($phaseOptions as $phase) {
             $phaseSlug = (string) $phase->slug;
             $semesterId = (int) $phase->id;
-            $enrolment = $enrolmentsBySemesterId->get($semesterId);
+            $studentSemester = $enrolmentsBySemesterId->get($semesterId);
+            $enrolment = $latestEnrolment;
             $calendar = $slugToCalendar->first(
                 fn (AcademicCalendar $calendar, string $slug): bool => $slug === $phaseSlug
             );
@@ -259,35 +306,38 @@ class StudentProgrammeDataService
             $hasExamResult = $examComment !== null;
             $examResultStatus = $hasExamResult ? $examComment->value : null;
 
-            $enrolmentSlug = $enrolment instanceof StudentEnrolment
-                ? $this->progression->statusSlug($enrolment)
+            $enrolmentSlug = $studentSemester instanceof StudentSemester
+                ? $this->progression->statusSlugForSemester($studentSemester)
                 : null;
 
             $resolvedSlug = $hasExamResult
                 ? strtolower($examComment->value)
-                : ($isCurrent ? StudentEnrolmentProgressionService::STATUS_ACTIVE : $enrolmentSlug);
+                : (
+                    $isCurrent && $previousResolvedSlug === StudentEnrolmentProgressionService::STATUS_PROCEED
+                        ? StudentEnrolmentProgressionService::STATUS_ACTIVE
+                        : StudentEnrolmentProgressionService::STATUS_UNKNOWN
+                );
 
             $isDisabled = $previousResolvedSlug !== null
                 && StudentEnrolmentProgressionService::isBlockingStatus($previousResolvedSlug);
 
             $displayStatus = $this->resolveExamDrivenDisplayStatus(
-                $isCurrent,
                 $hasExamResult,
                 $examComment,
-                $enrolmentSlug,
                 $isDisabled,
+                $resolvedSlug,
             );
 
-            $syllabusIds = $enrolment instanceof StudentEnrolment
-                ? $this->courseSyllabusCodeResolver->resolveSyllabusIds($enrolment)
-                : $this->resolveSyllabusIdsForPhase(
-                    $latestEnrolment,
-                    $studentApplication,
-                    $semesterId,
-                    $calendarYear,
-                );
+            $syllabusIds = $this->resolveSyllabusIdsForProgrammePhase(
+                $enrolment,
+                $studentApplication,
+                $studentSemester instanceof StudentSemester ? $studentSemester : null,
+                $semesterId,
+                $calendarYear,
+            );
 
             $studentEnrolmentId = $enrolment instanceof StudentEnrolment ? (int) $enrolment->id : 0;
+            $studentSemesterId = $studentSemester instanceof StudentSemester ? (int) $studentSemester->id : null;
 
             $phaseSession = is_array($examMetadata) ? ($examMetadata['session'] ?? null) : null;
             $phaseCandidateNumber = is_array($examMetadata) ? ($examMetadata['candidateNumber'] ?? null) : null;
@@ -318,17 +368,26 @@ class StudentProgrammeDataService
 
             $isLastPhase = $phaseSlug === $isLastPhaseSlug;
 
+            $statusSlugForSelect = $hasExamResult
+                ? null
+                : ($resolvedSlug === StudentEnrolmentProgressionService::STATUS_ACTIVE
+                    ? StudentEnrolmentProgressionService::STATUS_ACTIVE
+                    : null);
+
             $orderedPhases[] = [
                 'id' => sprintf('%s-%s', $studentApplication?->id ?? '', Str::slug($phaseSlug)),
                 'label' => $phase->name,
                 'year' => $calendarYear,
                 'status' => $displayStatus,
+                'statusSlug' => $statusSlugForSelect,
                 'isCurrent' => $isCurrent,
                 'isDisabled' => $isDisabled,
                 'hasExamResult' => $hasExamResult,
+                'needsResultsCollection' => ! $hasExamResult && ! $isDisabled && ! $isCurrent,
                 'examResultStatus' => $examResultStatus,
                 'availableStatuses' => $hasExamResult ? [] : $availableStatuses,
-                'studentEnrolmentId' => $enrolment instanceof StudentEnrolment ? (int) $enrolment->id : null,
+                'studentEnrolmentId' => $studentEnrolmentId > 0 ? $studentEnrolmentId : null,
+                'studentSemesterId' => $studentSemesterId,
                 'canAdvanceToNextPhase' => ! $isLastPhase && $resolvedSlug === StudentEnrolmentProgressionService::STATUS_PROCEED,
                 'canCompleteLevel' => $isLastPhase && $resolvedSlug === StudentEnrolmentProgressionService::STATUS_AWARD,
                 'canApplyToNextLevel' => $isLastPhase
@@ -393,11 +452,10 @@ class StudentProgrammeDataService
     }
 
     private function resolveExamDrivenDisplayStatus(
-        bool $isCurrent,
         bool $hasExamResult,
         ?StudentExamResultComment $examComment,
-        ?string $enrolmentSlug,
         bool $isDisabled,
+        string $resolvedSlug,
     ): ?string {
         if ($hasExamResult && $examComment !== null) {
             return ucfirst(strtolower($examComment->value));
@@ -407,17 +465,11 @@ class StudentProgrammeDataService
             return null;
         }
 
-        if ($isCurrent) {
+        if ($resolvedSlug === StudentEnrolmentProgressionService::STATUS_ACTIVE) {
             return 'Active';
         }
 
-        if ($enrolmentSlug !== null && $enrolmentSlug !== StudentEnrolmentProgressionService::STATUS_ACTIVE) {
-            $status = StudentEnrolmentStatus::query()->where('slug', $enrolmentSlug)->value('name');
-
-            return $status !== null ? (string) $status : null;
-        }
-
-        return null;
+        return 'Unknown';
     }
 
     private function phaseNumberFromSlug(string $slug): int
@@ -470,6 +522,7 @@ class StudentProgrammeDataService
             'label' => $enrolment->semester?->name,
             'year' => $enrolment->academicCalendar?->calendar_year,
             'status' => $enrolment->studentEnrolmentStatus?->name,
+            'statusSlug' => $enrolment->studentEnrolmentStatus?->slug,
             'isCurrent' => false,
             'isDisabled' => false,
             'hasExamResult' => false,

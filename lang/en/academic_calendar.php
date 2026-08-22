@@ -14,6 +14,7 @@ return [
     'academic_calendar_class_not_found' => 'No classes has been found for this academic calendar, make sure all is configured and try again.',
     'class_unit_size' => 'Per class|Per classes',
     'class_config' => 'Class Config',
+    'class_config_saved' => 'Class config successfully saved.',
     'confirmed_student' => 'Confirmed students|Confirmed students',
     'setup' => 'Setup',
     'config' => 'Config',
@@ -210,4 +211,5 @@ return [
     'syllabus_defaults_hint' => 'Syllabus defaults: :names',
     'save_module_lecturers' => 'Save lecturers',
     'view_classes' => 'View Classes (:count)',
+    'view_classes_for_period' => ':period — View Classes (:count)',
 ];

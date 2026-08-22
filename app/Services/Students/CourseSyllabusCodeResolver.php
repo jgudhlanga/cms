@@ -71,11 +71,17 @@ class CourseSyllabusCodeResolver
     /**
      * @return list<int>
      */
-    public function resolveSyllabusIds(StudentEnrolment $enrolment): array
+    public function resolveSyllabusIds(StudentEnrolment $enrolment, ?int $semesterId = null): array
     {
+        $semesterId ??= $enrolment->semester_id;
+
+        $studentSemester = $semesterId !== null
+            ? $enrolment->studentSemesterFor((int) $semesterId)
+            : $enrolment->currentStudentSemester();
+
         $fromPinned = array_values(array_map(
             'intval',
-            array_filter($enrolment->course_syllabus_ids ?? []),
+            array_filter($studentSemester?->course_syllabus_ids ?? $enrolment->course_syllabus_ids ?? []),
         ));
 
         if ($fromPinned !== []) {
@@ -97,7 +103,7 @@ class CourseSyllabusCodeResolver
         $classConfig = ClassConfig::query()
             ->where('department_level_id', $enrolment->department_level_id)
             ->where('department_course_id', $enrolment->department_course_id)
-            ->where('semester_id', $enrolment->semester_id)
+            ->where('semester_id', $semesterId ?? $enrolment->semester_id)
             ->where('mode_of_study_id', $enrolment->mode_of_study_id)
             ->when(
                 $enrolment->academicCalendar?->calendar_year,

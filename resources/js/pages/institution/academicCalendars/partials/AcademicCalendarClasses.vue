@@ -2,8 +2,12 @@
 import { useAcademicCalendars } from '@/composables/academicCalendars/useAcademicCalendars';
 import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { useServerSide } from '@/composables/shared/useServerSide';
+import BaseButton from '@/components/core/button/BaseButton.vue';
+import BaseIcon from '@/components/core/icon/BaseIcon.vue';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 import { openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import HttpService from '@/services/http.service';
@@ -182,9 +186,73 @@ const getDisplayedTotalFinalList = (totalFinalList: string | number | null): num
 const getViewClassesLabel = (config: ClassLevelConfigSummary): string =>
     trans('academic_calendar.view_classes', { count: Number(config.classesCount ?? 0) });
 
+const getViewClassesMenuLabel = (config: ClassLevelConfigSummary): string =>
+    trans('academic_calendar.view_classes_for_period', {
+        period: config.semester ?? '',
+        count: Number(config.classesCount ?? 0),
+    });
+
 const getClassConfigTagTitle = (config: ClassLevelConfigSummary): string => {
     return `${trans_choice('academic_calendar.class_unit_size', 1)}: ${Number(config.studentsPerClass ?? 0)} - ${config.semester ?? ''}`;
 };
+
+const configsForDisplay = (level: ClassLevelSummary): ClassLevelConfigSummary[] => {
+    const configs = [...(level.configs ?? [])];
+    const currentId = level.currentSemesterId != null ? String(level.currentSemesterId) : null;
+    if (currentId === null) {
+        return configs;
+    }
+
+    return configs.sort((left, right) => {
+        const leftCurrent = String(left.semesterId ?? '') === currentId ? 0 : 1;
+        const rightCurrent = String(right.semesterId ?? '') === currentId ? 0 : 1;
+
+        return leftCurrent - rightCurrent;
+    });
+};
+
+const primaryConfig = (level: ClassLevelSummary): ClassLevelConfigSummary | undefined => configsForDisplay(level)[0];
+
+const editPrimaryConfig = (stats: DepartmentCourseClassCount, level: ClassLevelSummary): void => {
+    const config = primaryConfig(level);
+    if (config == null) {
+        return;
+    }
+
+    openEditConfigModal(stats, level, config);
+};
+
+const primaryConfigTitle = (level: ClassLevelSummary): string => {
+    const config = primaryConfig(level);
+
+    return config == null ? '' : getClassConfigTagTitle(config);
+};
+
+const primaryViewClassesLabel = (level: ClassLevelSummary): string => {
+    const config = primaryConfig(level);
+
+    return config == null ? '' : getViewClassesLabel(config);
+};
+
+const primaryClassesHref = (stats: DepartmentCourseClassCount, level: ClassLevelSummary): string => {
+    const config = primaryConfig(level);
+    if (config == null) {
+        return '#';
+    }
+
+    return classesHref(stats, level, config);
+};
+
+const classesHref = (stats: DepartmentCourseClassCount, level: ClassLevelSummary, config: ClassLevelConfigSummary): string =>
+    route('academic-calendars.department-classes', {
+        institution_department: institutionDepartmentId,
+        calendar_year: String(academicYear.value?.value ?? ''),
+        mode_of_study_id: String(modeOfStudy.value?.value),
+        department_course_id: stats.departmentCourseId,
+        department_level_id: String(level.departmentLevelId),
+        class_config_id: String(config.classConfigId),
+        ...(config.semesterId != null ? { semester_id: String(config.semesterId) } : {}),
+    });
 
 const codesLabel = (level: ClassLevelSummary): string => {
     const codes = (level.configs ?? []).flatMap((config) => config.courseSyllabusCodes ?? []).filter((code) => String(code).trim() !== '');
@@ -291,15 +359,37 @@ const openEditConfigModal = (stats: DepartmentCourseClassCount, level: ClassLeve
                                 <td class="j-td text-center">{{ getDisplayedTotalFinalList(level.totalFinalList) }} </td>
                                 <td class="j-td text-center">
                                     <div class="flex flex-wrap items-center justify-center gap-1.5">
-                                        <button
-                                            v-for="config in level.configs"
-                                            :key="String(config.classConfigId)"
-                                            type="button"
-                                            class="text-primary decoration-persian-200 cursor-pointer underline-offset-4 transition-colors duration-300 ease-out hover:text-accent-foreground"
-                                            @click="openEditConfigModal(stats, level, config)"
-                                        >
-                                            <BaseTag :title="getClassConfigTagTitle(config)" :variant="ColorVariant.info" />
-                                        </button>
+                                        <template v-if="(level.configs ?? []).length === 1 && primaryConfig(level)">
+                                            <button
+                                                type="button"
+                                                class="text-primary decoration-persian-200 cursor-pointer underline-offset-4 transition-colors duration-300 ease-out hover:text-accent-foreground"
+                                                @click="editPrimaryConfig(stats, level)"
+                                            >
+                                                <BaseTag :title="primaryConfigTitle(level)" :variant="ColorVariant.info" />
+                                            </button>
+                                        </template>
+                                        <DropdownMenu v-else-if="(level.configs ?? []).length > 1 && primaryConfig(level)">
+                                            <DropdownMenuTrigger as-child>
+                                                <button
+                                                    type="button"
+                                                    class="inline-flex items-center gap-1 text-primary decoration-persian-200 cursor-pointer underline-offset-4 transition-colors duration-300 ease-out hover:text-accent-foreground"
+                                                >
+                                                    <BaseTag :title="primaryConfigTitle(level)" :variant="ColorVariant.info" />
+                                                    <BaseIcon :name="IconName.chevron_down" class="h-3 w-3 text-current" />
+                                                </button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuGroup>
+                                                    <DropdownMenuItem
+                                                        v-for="config in configsForDisplay(level)"
+                                                        :key="String(config.classConfigId)"
+                                                        @select="openEditConfigModal(stats, level, config)"
+                                                    >
+                                                        {{ getClassConfigTagTitle(config) }}
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuGroup>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                         <ClassConfigCreateControl
                                             v-if="(level.remainingPeriods ?? []).length > 0"
                                             :remaining-periods="level.remainingPeriods ?? []"
@@ -309,32 +399,37 @@ const openEditConfigModal = (stats: DepartmentCourseClassCount, level: ClassLeve
                                 </td>
                                 <td class="j-td text-center">{{ codesLabel(level) }}</td>
                                 <td class="j-td text-center">
-                                    <div v-if="(level.configs ?? []).length > 0" class="flex flex-wrap items-center justify-center gap-1.5">
-                                        <InertiaLink
-                                            v-for="config in level.configs"
-                                            :key="`classes-${config.classConfigId}`"
-                                            :href="
-                                                route('academic-calendars.department-classes', {
-                                                    institution_department: institutionDepartmentId,
-                                                    calendar_year: String(academicYear?.value ?? ''),
-                                                    mode_of_study_id: String(modeOfStudy?.value),
-                                                    department_course_id: stats.departmentCourseId,
-                                                    department_level_id: String(level.departmentLevelId),
-                                                    class_config_id: String(config.classConfigId),
-                                                    ...(config.semesterId != null
-                                                        ? { semester_id: String(config.semesterId) }
-                                                        : {}),
-                                                })
-                                            "
-                                        >
+                                    <div v-if="(level.configs ?? []).length === 1 && primaryConfig(level)" class="flex flex-wrap items-center justify-center gap-1.5">
+                                        <InertiaLink :href="primaryClassesHref(stats, level)">
                                             <BaseButton
-                                                :title="getViewClassesLabel(config)"
+                                                :title="primaryViewClassesLabel(level)"
                                                 classes="rounded-full"
                                                 :size="ButtonSize.xs"
                                                 :variant="ColorVariant.success_outline"
                                             />
                                         </InertiaLink>
                                     </div>
+                                    <DropdownMenu v-else-if="(level.configs ?? []).length > 1 && primaryConfig(level)">
+                                        <DropdownMenuTrigger as-child>
+                                            <BaseButton
+                                                :title="primaryViewClassesLabel(level)"
+                                                classes="rounded-full"
+                                                :size="ButtonSize.xs"
+                                                :variant="ColorVariant.success_outline"
+                                            >
+                                                <BaseIcon :name="IconName.chevron_down" class="ml-1 h-3 w-3 text-current" />
+                                            </BaseButton>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuGroup>
+                                                <DropdownMenuItem v-for="config in configsForDisplay(level)" :key="`classes-${config.classConfigId}`" as-child>
+                                                    <InertiaLink :href="classesHref(stats, level, config)" class="flex w-full items-center">
+                                                        {{ getViewClassesMenuLabel(config) }}
+                                                    </InertiaLink>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuGroup>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                     <span v-else>---</span>
                                 </td>
                             </tr>

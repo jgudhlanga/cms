@@ -31,6 +31,30 @@ use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Laravel\Sanctum\Sanctum;
 
+function attachDepartmentCalendarApiEnrolment(Student $student, StudentApplication $studentApplication, AcademicCalendar $calendar): void
+{
+    $semester = Semester::query()->firstOrCreate(
+        ['slug' => 'dept-cal-api-enrolment-option'],
+        ['name' => 'Dept Cal API Enrolment', 'description' => null],
+    );
+    $status = StudentEnrolmentStatus::query()->firstOrCreate(
+        ['name' => 'Active'],
+        ['description' => 'Test'],
+    );
+
+    StudentEnrolment::query()->create([
+        'student_id' => $student->id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $studentApplication->institution_department_id,
+        'department_level_id' => $studentApplication->department_level_id,
+        'department_course_id' => $studentApplication->department_course_id,
+        'semester_id' => $semester->id,
+        'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        'student_enrolment_status_id' => $status->id,
+    ]);
+}
+
 test('department academic calendar resolves course levels when department level is soft deleted', function () {
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
@@ -350,6 +374,7 @@ test('department academic calendar does not auto seed class config on get', func
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
+    attachDepartmentCalendarApiEnrolment($student, $studentApplication, $calendar);
 
     Sanctum::actingAs($user);
 
@@ -469,6 +494,7 @@ test('department academic calendar does not overwrite existing class config stud
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
+    attachDepartmentCalendarApiEnrolment($student, $studentApplication, $calendar);
 
     Sanctum::actingAs($user);
 
@@ -587,6 +613,7 @@ test('department academic calendar does not replace existing class config when s
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
+    attachDepartmentCalendarApiEnrolment($student, $studentApplication, $calendar);
 
     Sanctum::actingAs($user);
 
@@ -708,6 +735,7 @@ test('department academic calendar does not violate class config unique index wh
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
+    attachDepartmentCalendarApiEnrolment($student, $studentApplication, $calendar);
 
     Sanctum::actingAs($user);
 

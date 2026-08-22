@@ -27,7 +27,7 @@ class AdvanceEnrolmentPhaseCommand extends Command
     /**
      * @var string
      */
-    protected $description = 'Create the next-phase enrolment row for Active students who are not on the last phase.';
+    protected $description = 'Create the next-phase student_semester row for Active students who are not on the last phase.';
 
     public function handle(
         AdvanceToNextSemesterAction $advanceToNextSemester,
@@ -74,7 +74,7 @@ class AdvanceEnrolmentPhaseCommand extends Command
     private function matchingEnrolments()
     {
         return StudentEnrolment::query()
-            ->with(['studentApplication', 'studentEnrolmentStatus', 'departmentLevel.level', 'academicCalendar'])
+            ->with(['studentApplication', 'studentEnrolmentStatus', 'departmentLevel.level', 'academicCalendar', 'studentSemesters.semester'])
             ->whereNull('deleted_at')
             ->when($this->intOption('department'), function (Builder $query, int $departmentId): void {
                 $query->where('institution_department_id', $departmentId);
@@ -83,7 +83,9 @@ class AdvanceEnrolmentPhaseCommand extends Command
                 $query->where('academic_calendar_id', $calendarId);
             })
             ->when($this->intOption('semester-id'), function (Builder $query, int $semesterId): void {
-                $query->where('semester_id', $semesterId);
+                $query->whereHas('studentSemesters', fn (Builder $inner) => $inner
+                    ->where('semester_id', $semesterId)
+                    ->whereNull('deleted_at'));
             })
             ->when($this->intOption('mode-of-study-id'), function (Builder $query, int $modeId): void {
                 $query->where('mode_of_study_id', $modeId);

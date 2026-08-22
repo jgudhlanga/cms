@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Enrolments;
 
+use App\Actions\Students\UpsertYearStudentEnrolmentAction;
 use App\DataTransferObjects\Enrolments\BulkFinaliseEnrolmentsResult;
 use App\Enums\Enrolments\BulkFinaliseEnrolmentAuditEventEnum;
 use App\Enums\Rbac\RoleEnum;
@@ -44,6 +45,7 @@ class BulkFinaliseEnrolmentsService
         protected VerifiedStudentsForFinalEnrolmentQuery $verifiedStudentsQuery,
         protected StudentBankPaymentMatcher $paymentMatcher,
         protected ResolveStudentEnrolmentAttributesService $resolveStudentEnrolmentAttributes,
+        protected UpsertYearStudentEnrolmentAction $upsertYearStudentEnrolment,
         protected BulkFinaliseEnrolmentAuditLogger $auditLogger,
     ) {}
 
@@ -458,7 +460,7 @@ class BulkFinaliseEnrolmentsService
         if (! $dryRun) {
             $this->finaliseClassList($studentApplication);
             $this->updateWorkflowStep($studentApplication, $step);
-            $this->upsertStudentEnrolment($studentApplication, $enrolmentAttributes);
+            $this->upsertYearStudentEnrolment->execute($studentApplication);
 
             $this->logStudentFinalised(
                 $runId,
@@ -544,23 +546,7 @@ class BulkFinaliseEnrolmentsService
      */
     private function upsertStudentEnrolment(StudentApplication $studentApplication, array $enrolmentAttributes): void
     {
-        StudentEnrolment::query()->updateOrCreate(
-            [
-                'student_id' => $studentApplication->student_id,
-                'student_application_id' => $studentApplication->id,
-                'institution_department_id' => $studentApplication->institution_department_id,
-                'department_level_id' => $studentApplication->department_level_id,
-                'department_course_id' => $studentApplication->department_course_id,
-                'semester_id' => $enrolmentAttributes['semester_id'],
-                'academic_calendar_id' => $enrolmentAttributes['academic_calendar_id'],
-                'mode_of_study_id' => $studentApplication->mode_of_study_id,
-            ],
-            [
-                'student_application_id' => $studentApplication->id,
-                'student_enrolment_status_id' => $enrolmentAttributes['student_enrolment_status_id'],
-                'mode_of_study_id' => $studentApplication->mode_of_study_id,
-            ],
-        );
+        $this->upsertYearStudentEnrolment->execute($studentApplication);
     }
 
     /**

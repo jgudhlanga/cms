@@ -12,6 +12,7 @@ use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Students\StudentExamResult;
+use App\Models\Students\StudentSemester;
 use App\Services\Students\StudentProgrammeDataService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -36,7 +37,7 @@ beforeEach(function (): void {
         );
     }
 
-    foreach (['Active', 'Award', 'Absent', 'Deferred', 'Disqualified', 'Proceed', 'Referred'] as $name) {
+    foreach (['Active', 'Award', 'Absent', 'Deferred', 'Disqualified', 'Proceed', 'Referred', 'Unknown'] as $name) {
         StudentEnrolmentStatus::query()->firstOrCreate(
             ['name' => $name],
             ['description' => 'Test'],
@@ -157,7 +158,44 @@ it('lists all semester phases with modules even when only semester one is enroll
         ->and(collect($semesters)->firstWhere('label', 'Semester 2')['module'][0]['code'])->toBe('S2-M01');
 });
 
-it('marks only the calendar-current semester as active in august', function (): void {
+it('loads modules from programme syllabuses when student_semesters have no pinned course_syllabus_ids', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-09-15', config('app.timezone')));
+
+    $context = createProgrammeTestContext('PROG-PIVOT-MODULES', AcademicCalendarTypeEnum::SEMESTER, 'semester-2');
+    $enrolment = StudentEnrolment::query()->where('student_id', $context['student']->id)->firstOrFail();
+    $activeId = (int) StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
+    $proceedId = (int) StudentEnrolmentStatus::query()->where('slug', 'proceed')->value('id');
+
+    StudentEnrolment::withoutEvents(function () use ($enrolment): void {
+        $enrolment->update(['course_syllabus_ids' => null]);
+    });
+
+    StudentSemester::query()
+        ->where('student_enrolment_id', $enrolment->id)
+        ->where('semester_id', $context['semesterOneId'])
+        ->update([
+            'student_enrolment_status_id' => $proceedId,
+            'course_syllabus_ids' => null,
+        ]);
+
+    StudentSemester::query()
+        ->where('student_enrolment_id', $enrolment->id)
+        ->where('semester_id', $context['semesterTwoId'])
+        ->update([
+            'student_enrolment_status_id' => $activeId,
+            'course_syllabus_ids' => null,
+        ]);
+
+    $programmes = app(StudentProgrammeDataService::class)->buildProgrammesForStudent($context['student']);
+    $semesters = $programmes[0]['semesters'];
+
+    expect(collect($semesters)->firstWhere('label', 'Semester 1')['module'])->toHaveCount(1)
+        ->and(collect($semesters)->firstWhere('label', 'Semester 1')['module'][0]['code'])->toBe('S1-M01')
+        ->and(collect($semesters)->firstWhere('label', 'Semester 2')['module'])->toHaveCount(1)
+        ->and(collect($semesters)->firstWhere('label', 'Semester 2')['module'][0]['code'])->toBe('S2-M01');
+});
+
+it('marks calendar-current semester as unknown without exam results in august', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-08-15', config('app.timezone')));
 
     $context = createProgrammeTestContext('PROG-AUG');
@@ -169,12 +207,14 @@ it('marks only the calendar-current semester as active in august', function (): 
 
     expect($semesters[0]['label'])->toBe('Semester 2')
         ->and($semesterTwo['isCurrent'])->toBeTrue()
-        ->and($semesterTwo['status'])->toBe('Active')
+        ->and($semesterTwo['status'])->toBe('Unknown')
+        ->and($semesterTwo['needsResultsCollection'])->toBeFalse()
         ->and($semesterOne['isCurrent'])->toBeFalse()
-        ->and($semesterOne['status'])->toBeNull();
+        ->and($semesterOne['status'])->toBe('Unknown')
+        ->and($semesterOne['needsResultsCollection'])->toBeTrue();
 });
 
-it('keeps semester two first but marks semester one active in march', function (): void {
+it('keeps semester two first but marks semester one unknown in march without exam results', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-03-15', config('app.timezone')));
 
     $context = createProgrammeTestContext('PROG-MAR');
@@ -186,9 +226,11 @@ it('keeps semester two first but marks semester one active in march', function (
 
     expect($semesters[0]['label'])->toBe('Semester 2')
         ->and($semesterOne['isCurrent'])->toBeTrue()
-        ->and($semesterOne['status'])->toBe('Active')
+        ->and($semesterOne['status'])->toBe('Unknown')
+        ->and($semesterOne['needsResultsCollection'])->toBeFalse()
         ->and($semesterTwo['isCurrent'])->toBeFalse()
-        ->and($semesterTwo['status'])->toBeNull();
+        ->and($semesterTwo['status'])->toBe('Unknown')
+        ->and($semesterTwo['needsResultsCollection'])->toBeTrue();
 });
 
 it('lists three term phases for term calendar types', function (): void {
@@ -284,7 +326,7 @@ it('lists four abma phases for abma calendar types', function (): void {
         ->and(collect($programmes[0]['semesters'])->pluck('label')->all())->toBe(['ABMA 4', 'ABMA 3', 'ABMA 2', 'ABMA 1']);
 });
 
-it('shows exam result PROCEED on semester 1 and makes semester 2 active', function (): void {
+it('shows exam result PROCEED on semester 1 and marks semester 2 active', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-08-15', config('app.timezone')));
 
     $context = createProgrammeTestContext('PROG-PROCEED');
@@ -308,12 +350,24 @@ it('shows exam result PROCEED on semester 1 and makes semester 2 active', functi
     $semesterOne = collect($semesters)->firstWhere('label', 'Semester 1');
     $semesterTwo = collect($semesters)->firstWhere('label', 'Semester 2');
 
+    $proceedId = (int) StudentEnrolmentStatus::query()->where('slug', 'proceed')->value('id');
+    $activeId = (int) StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
+
     expect($semesterOne['hasExamResult'])->toBeTrue()
         ->and($semesterOne['examResultStatus'])->toBe('PROCEED')
         ->and($semesterOne['status'])->toBe('Proceed')
         ->and($semesterOne['isDisabled'])->toBeFalse()
         ->and($semesterTwo['isDisabled'])->toBeFalse()
-        ->and($semesterTwo['status'])->toBe('Active');
+        ->and($semesterTwo['status'])->toBe('Active')
+        ->and($semesterTwo['statusSlug'])->toBe('active')
+        ->and((int) StudentSemester::query()
+            ->where('student_enrolment_id', $enrolment->id)
+            ->where('semester_id', $context['semesterOneId'])
+            ->value('student_enrolment_status_id'))->toBe($proceedId)
+        ->and((int) StudentSemester::query()
+            ->where('student_enrolment_id', $enrolment->id)
+            ->where('semester_id', $context['semesterTwoId'])
+            ->value('student_enrolment_status_id'))->toBe($activeId);
 });
 
 it('shows exam result AWARD on last semester and marks level completable', function (): void {

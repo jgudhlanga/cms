@@ -13,6 +13,7 @@ use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Students\StudentEnrolment;
+use App\Models\Students\StudentSemester;
 use App\Queries\Enrolments\ConfirmedStudentsQuery;
 use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
 use Illuminate\Http\JsonResponse;
@@ -114,10 +115,10 @@ class DepartmentAcademicCalendarController extends Controller
      */
     private function buildLookups(InstitutionDepartment $department, array $context): array
     {
-        $confirmedCounts = app(ConfirmedStudentsQuery::class)->countsByCourseLevel(
+        $confirmedCounts = app(ConfirmedStudentsQuery::class)->countsByCourseLevelForCalendars(
             (int) $department->id,
             $context['modeOfStudyId'],
-            $context['calendarYear'],
+            $context['calendarIdsForYear'],
         );
 
         $configs = ClassConfig::query()
@@ -295,13 +296,15 @@ class DepartmentAcademicCalendarController extends Controller
             return [];
         }
 
-        $rows = StudentEnrolment::query()
-            ->whereIn('academic_calendar_id', $academicCalendarIds)
-            ->where('institution_department_id', $departmentId)
-            ->where('mode_of_study_id', $modeOfStudyId)
-            ->whereNull('deleted_at')
-            ->selectRaw('department_course_id, department_level_id, semester_id, COUNT(*) as total')
-            ->groupBy('department_course_id', 'department_level_id', 'semester_id')
+        $rows = StudentSemester::query()
+            ->join('student_enrolments', 'student_enrolments.id', '=', 'student_semesters.student_enrolment_id')
+            ->whereIn('student_enrolments.academic_calendar_id', $academicCalendarIds)
+            ->where('student_enrolments.institution_department_id', $departmentId)
+            ->where('student_enrolments.mode_of_study_id', $modeOfStudyId)
+            ->whereNull('student_semesters.deleted_at')
+            ->whereNull('student_enrolments.deleted_at')
+            ->selectRaw('student_enrolments.department_course_id, student_enrolments.department_level_id, student_semesters.semester_id, COUNT(*) as total')
+            ->groupBy('student_enrolments.department_course_id', 'student_enrolments.department_level_id', 'student_semesters.semester_id')
             ->get();
 
         $lookup = [];
@@ -427,9 +430,17 @@ class DepartmentAcademicCalendarController extends Controller
             $order[(int) $period['id']] = $index;
         }
 
-        usort($rows, static function (array $left, array $right) use ($order): int {
+        $currentSemesterId = $lookups['currentSemesterIdByType'][$calendarType->value] ?? null;
+
+        usort($rows, static function (array $left, array $right) use ($order, $currentSemesterId): int {
             $leftId = (int) ($left['semesterId'] ?? 0);
             $rightId = (int) ($right['semesterId'] ?? 0);
+            $leftCurrent = $currentSemesterId !== null && $leftId === (int) $currentSemesterId ? 0 : 1;
+            $rightCurrent = $currentSemesterId !== null && $rightId === (int) $currentSemesterId ? 0 : 1;
+
+            if ($leftCurrent !== $rightCurrent) {
+                return $leftCurrent <=> $rightCurrent;
+            }
 
             return ($order[$leftId] ?? 999) <=> ($order[$rightId] ?? 999);
         });

@@ -18,7 +18,7 @@ import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { errorAlert, successAlert } from '@/lib/alerts';
+import { errorAlert } from '@/lib/alerts';
 import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { Head, Link as InertiaLink, router, useForm } from '@inertiajs/vue3';
 import { UserIcon, UserRoundIcon } from 'lucide-vue-next';
@@ -184,7 +184,6 @@ const saveClasses = () => {
         }),
         {
             onSuccess: () => {
-                successAlert(trans('enrolment.classes_generated_successfully'));
                 syncFormDefaultsFromGenerationContext();
             },
             onError: (errors) => {

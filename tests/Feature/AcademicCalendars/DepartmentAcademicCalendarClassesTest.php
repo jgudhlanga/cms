@@ -4,6 +4,7 @@ use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\ClassConfig;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\Department;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
@@ -172,7 +173,7 @@ test('department academic calendar api returns assigned and ready class counts',
         ->assertJsonPath('data.0.levels.0.totalFinalList', 3);
 });
 
-test('department academic calendar api total final list is scoped by intake calendar year', function () {
+test('department academic calendar api total final list is scoped by academic calendar year', function () {
     $context = buildDepartmentClassContext();
 
     $intakeB = IntakePeriod::query()->create([
@@ -201,7 +202,10 @@ test('department academic calendar api total final list is scoped by intake cale
     createFinalStudentApplication($context, 'intake-a-one@example.com');
     createFinalStudentApplication($context, 'intake-a-two@example.com');
 
-    $contextForIntakeB = array_merge($context, ['intakePeriod' => $intakeB]);
+    $contextForIntakeB = array_merge($context, [
+        'intakePeriod' => $intakeB,
+        'calendar' => $calendar2027,
+    ]);
     createFinalStudentApplication($contextForIntakeB, 'intake-b-one@example.com');
 
     $this->actingAs($context['user']);
@@ -970,4 +974,70 @@ test('updating class validates name is required', function () {
     $academicCalendarClass->refresh();
 
     expect($academicCalendarClass->name)->toBe($originalName);
+});
+
+test('department classes preview is scoped to the class config semester', function () {
+    $context = buildDepartmentClassContext();
+    $semesterOne = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $semesterTwo = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-2'],
+        ['name' => 'Semester 2', 'description' => null],
+    );
+
+    $context['classConfig']->update(['semester_id' => $semesterOne->id]);
+    createFinalStudentApplication($context, 'semester-one-student@example.com');
+
+    $context['classConfig']->update(['semester_id' => $semesterTwo->id]);
+    createFinalStudentApplication($context, 'semester-two-a@example.com');
+    createFinalStudentApplication($context, 'semester-two-b@example.com');
+
+    $this->actingAs($context['user']);
+    $response = $this->get(route('academic-calendars.department-classes', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'class_config_id' => $context['classConfig']->id,
+        'semester_id' => $semesterTwo->id,
+    ]));
+
+    $response->assertSuccessful();
+    $page = $response->viewData('page');
+
+    expect(data_get($page, 'props.generationContext.finalStudentCount'))->toBe(2)
+        ->and(data_get($page, 'props.generationContext.newFinalStudentCount'))->toBe(2);
+});
+
+test('generating classes flashes an error when no enrolments match the class config semester', function () {
+    $context = buildDepartmentClassContext();
+    $semesterOne = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $semesterTwo = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-2'],
+        ['name' => 'Semester 2', 'description' => null],
+    );
+
+    $context['classConfig']->update(['semester_id' => $semesterOne->id]);
+    createFinalStudentApplication($context, 'wrong-semester-student@example.com');
+    $context['classConfig']->update(['semester_id' => $semesterTwo->id]);
+
+    $this->actingAs($context['user']);
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 20,
+    ])->assertSessionHas('error', __('enrolment.classes_generation_empty'));
+
+    expect(AcademicCalendarClass::query()->where('class_config_id', $context['classConfig']->id)->count())->toBe(0);
 });

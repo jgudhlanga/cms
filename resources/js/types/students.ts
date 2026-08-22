@@ -144,12 +144,15 @@ export type StudentProgrammeSemester = {
     label: string | null;
     year: string | null;
     status: string | null;
+    statusSlug?: string | null;
     isCurrent?: boolean;
     isDisabled?: boolean;
     hasExamResult?: boolean;
+    needsResultsCollection?: boolean;
     examResultStatus?: string | null;
     availableStatuses?: Array<{ slug: string; name: string }>;
     studentEnrolmentId?: number | null;
+    studentSemesterId?: number | null;
     canAdvanceToNextPhase?: boolean;
     canCompleteLevel?: boolean;
     canApplyToNextLevel?: boolean;
