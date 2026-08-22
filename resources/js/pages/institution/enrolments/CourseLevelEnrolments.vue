@@ -1,278 +1,405 @@
 <script setup lang="ts">
+import BaseAccordion from '@/components/core/accordion/BaseAccordion.vue';
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
 import { ColorVariant } from '@/enums/colors';
-import { errorAlert, forbiddenAlert, successAlert } from '@/lib/alerts';
+import { IconName } from '@/enums/icons';
+import { errorAlert, forbiddenAlert } from '@/lib/alerts';
 import { hasAbility } from '@/lib/permissions';
-import { getIdParams } from '@/lib/utils';
-import ByAcademicLevelResults from '@/pages/institution/enrolments/partials/ByAcademicLevelResults.vue';
 import ClassSize from '@/pages/institution/enrolments/partials/ClassSize.vue';
 import DeficitInClassSize from '@/pages/institution/enrolments/partials/DeficitInClassSize.vue';
-import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
-import GeneralEnrolmentClassList from '@/pages/institution/enrolments/partials/GeneralEnrolmentClassList.vue';
-import GeneralEnrolments from '@/pages/institution/enrolments/partials/GeneralEnrolments.vue';
-import OLevelClassList from '@/pages/institution/enrolments/partials/OLevelClassList.vue';
+import EnrolmentApplicationsBrowser from '@/pages/institution/enrolments/partials/EnrolmentApplicationsBrowser.vue';
+import GenderEnrolmentAccordionItem from '@/pages/institution/enrolments/partials/GenderEnrolmentAccordionItem.vue';
+import PurgeClassListDialog from '@/pages/institution/enrolments/partials/PurgeClassListDialog.vue';
 import ScoringFormula from '@/pages/institution/enrolments/partials/ScoringFormula.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentLevel } from '@/types/department-meta-data';
-import { WorkflowStep } from '@/types/settings';
-import { ClassListParams, EnrolmentGroup, EnrolmentGroupResponse } from '@/types/enrolments';
+import { EnrolmentApplication, EnrolmentGroup, EnrolmentGroupResponse } from '@/types/enrolments';
 import { InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
-import { Link } from '@/types/ui';
-import { SelectOption } from '@/types/utils';
-import { Head, router, useForm } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
+import { WorkflowStep } from '@/types/settings';
+import { Link as BreadcrumbLink } from '@/types/ui';
+import { Head, useForm } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
+import { trans } from 'laravel-vue-i18n';
 
 interface Props {
     department: InstitutionDepartment;
     level: DepartmentLevel;
-    course: object;
+    course: { name?: string; department_course_id?: number | string } | null;
     workflowSteps: WorkflowStep[];
     intakePeriod: IntakePeriod;
     modeOfStudy: ModeOfStudy;
     auth: AuthObject;
     errors: object;
-    intakePeriods: IntakePeriod[];
-    modesOfStudy: ModeOfStudy[];
+    intakePeriods?: IntakePeriod[];
+    modesOfStudy?: ModeOfStudy[];
     enrolments: EnrolmentGroupResponse;
     classSize: string | number;
 }
 
 const props = defineProps<Props>();
 
-const { department, level, enrolments, intakePeriod, modeOfStudy, course, classSize } = props;
+const { department, level, enrolments, intakePeriod, modeOfStudy, course } = props;
 const { isItTrue } = useUtils();
-const { allocateClassSlots, applyPolicyAlgorithmToApplications, classListIsCreated } = useEnrolments();
+const { allocateClassSlots, classListIsCreated } = useEnrolments();
 
-const intakePeriodModel = ref<SelectOption | null>(null);
-const modeOfStudyModel = ref<SelectOption | null>(null);
+const intakeLimit = ref(Number(props.classSize) || 0);
+watch(
+    () => props.classSize,
+    (value) => {
+        intakeLimit.value = Number(value) || 0;
+    },
+);
 
-onMounted(async () => {
-    intakePeriodModel.value = intakePeriod ? { value: Number(intakePeriod.id), label: intakePeriod.attributes.name } : null;
-    modeOfStudyModel.value = modeOfStudy ? { value: Number(modeOfStudy.id), label: modeOfStudy.attributes.name } : null;
-});
+const selectedIds = ref<Set<number>>(new Set());
+const selectionBarRef = ref<HTMLElement | null>(null);
+const showPurgeDialog = ref(false);
+const purgeProcessing = ref(false);
 
-const breadcrumbs: Array<Link> = [
-    { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
-    { transChoiceKey: 'department', href: route('institution-departments.index', { is_academic: department.attributes?.isAcademic }) },
-    { title: department.attributes.department, href: route('institution-departments.show', getIdParams(String(department?.id))) },
-    { title: level.attributes.level, href: route('institution-departments.show', getIdParams(String(department?.id))) },
-    { title: course?.name, href: route('institution-departments.show', getIdParams(String(department?.id))) },
-    { transChoiceKey: 'enrolment' },
-];
+const genderGroups = ['disabled', 'females', 'males'] as const;
 
-const levelRequirements = computed(() => {
-    return level?.relationships?.requirement;
-});
-
-const handleFilterChange = () => {
-    const intakePeriodId = intakePeriodModel.value?.value ?? null;
-    const modeOfStudyId = modeOfStudyModel.value?.value ?? null;
-    router.get(
-        route('department-levels.enrolments', {
-            institution_department: String(department.id),
-            department_level: String(level.id),
-            intake_period_id: intakePeriodId,
-            mode_of_study_id: modeOfStudyId,
-            department_course_id: String(course?.department_course_id),
-        }),
-    );
+const GROUP_ICONS: Record<(typeof genderGroups)[number], IconName> = {
+    disabled: IconName.accessibility,
+    females: IconName.venus,
+    males: IconName.mars,
 };
 
+const firstNonEmptyGroup = genderGroups.find((group) => (enrolments.groups?.[group]?.length ?? 0) > 0) ?? '';
+const openGenderGroup = ref(firstNonEmptyGroup);
+
+const backUrl = computed(() =>
+    route('institution-departments.show', {
+        department: String(department.id),
+        intake_period_id: String(intakePeriod.id),
+        mode_of_study_id: String(modeOfStudy.id),
+    }),
+);
+
+const breadcrumbs: Array<BreadcrumbLink> = [
+    { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
+    { transChoiceKey: 'department', href: route('institution-departments.index', { is_academic: department.attributes?.isAcademic }) },
+    { title: department.attributes.department, href: backUrl.value },
+    { title: level.attributes.level, href: backUrl.value },
+    { title: course?.name ?? '', href: backUrl.value },
+    { transChoiceKey: 'application' },
+];
+
+const levelRequirements = computed(() => level?.relationships?.requirement);
+
+const allApplications = computed((): EnrolmentApplication[] =>
+    genderGroups.flatMap((group) => enrolments.groups?.[group] ?? []),
+);
+
+const eligibleApplications = computed(() => allApplications.value.filter((app) => !app.inClassList));
+
+const alreadyInClassCount = computed(() => allApplications.value.filter((app) => app.inClassList).length);
+
+const selectedCount = computed(() => selectedIds.value.size);
+
+const selectedForAdd = computed(() =>
+    allApplications.value.filter((app) => selectedIds.value.has(app.applicationId) && !app.inClassList),
+);
+
+const selectedForRemove = computed(() =>
+    allApplications.value.filter((app) => selectedIds.value.has(app.applicationId) && app.inClassList),
+);
+
+const remainingSeats = computed(() => Math.max(intakeLimit.value - alreadyInClassCount.value, 0));
+
+const deficit = computed(() => remainingSeats.value);
+
+const exceedsClassSize = computed(() => selectedForAdd.value.length > remainingSeats.value);
+
 const noData = computed(
-    () => enrolments.groups.disabled.length === 0 && enrolments.groups.females.length === 0 && enrolments.groups.males.length === 0,
+    () =>
+        (enrolments.groups?.disabled?.length ?? 0) === 0 &&
+        (enrolments.groups?.females?.length ?? 0) === 0 &&
+        (enrolments.groups?.males?.length ?? 0) === 0,
 );
 
 const totalApplications = computed(() => {
-    return enrolments.groups.disabled.length + enrolments.groups.females.length + enrolments.groups.males.length;
+    return (enrolments.groups?.disabled?.length ?? 0) + (enrolments.groups?.females?.length ?? 0) + (enrolments.groups?.males?.length ?? 0);
 });
+
+const groupCount = (group: EnrolmentGroup): number => enrolments.groups?.[group]?.length ?? 0;
+
 const getGroupSlot = (group: EnrolmentGroup): number => {
     const groups = enrolments?.groups ?? { disabled: [], females: [], males: [] };
-    if (totalApplications.value > Number(classSize)) {
+    if (totalApplications.value > intakeLimit.value) {
         const { disabled, females, males } = allocateClassSlots(
-            Number(classSize),
+            intakeLimit.value,
             groups.disabled.length,
             groups.females.length,
             groups.males.length,
         );
         const slots = { disabled, females, males };
+
         return slots[group] ?? 0;
-    } else {
-        // If total applications are less than or equal to class size, allocate all to class list
-        return groups[group]?.length ?? 0;
     }
+
+    return groups[group]?.length ?? 0;
 };
 
-const form = useForm<ClassListParams>({
-    class_list: null,
-    waiting_list: null,
+const isSelected = (applicationId: number): boolean => selectedIds.value.has(applicationId);
+
+const toggleSelection = (applicationId: number, checked: boolean) => {
+    const next = new Set(selectedIds.value);
+    if (checked) {
+        next.add(applicationId);
+    } else {
+        next.delete(applicationId);
+    }
+    selectedIds.value = next;
+};
+
+const setGroupSelection = (applications: EnrolmentApplication[], checked: boolean) => {
+    const next = new Set(selectedIds.value);
+    applications
+        .filter((app) => !app.inClassList)
+        .forEach((app) => {
+            if (checked) {
+                next.add(app.applicationId);
+            } else {
+                next.delete(app.applicationId);
+            }
+        });
+    selectedIds.value = next;
+};
+
+const clearSelection = () => {
+    selectedIds.value = new Set();
+};
+
+const selectAllEligible = () => {
+    selectedIds.value = new Set(eligibleApplications.value.map((app) => app.applicationId));
+};
+
+const onIntakeLimitSaved = (value: number) => {
+    intakeLimit.value = value;
+};
+
+const bulkAddForm = useForm<{ application_ids: number[]; type: string }>({
+    application_ids: [],
     type: 'provisional',
 });
 
-const otherGenderHasWaitingList = (group: EnrolmentGroup) => {
-    const groups = enrolments?.groups ?? { disabled: [], females: [], males: [] };
-    const { females, males } = allocateClassSlots(Number(classSize), groups.disabled.length, groups.females.length, groups.males.length);
-    if (group === 'males') {
-        return enrolments.groups.females.length > females;
-    } else if (group === 'females') {
-        return enrolments.groups.males.length > males;
-    } else {
-        return false;
-    }
-};
-async function createProvisionalClass() {
+const purgeForm = useForm<{ application_ids: number[]; note: string }>({
+    application_ids: [],
+    note: '',
+});
+
+async function bulkAddSelected() {
     if (!hasAbility('create:class-lists')) {
         forbiddenAlert();
         return;
     }
-    const confirmed = await useCustomConfirmDialog().open({
-        title: 'Create Class',
-        message: 'Are you sure you want to create class list and its waiting list?',
-        confirmText: 'Please continue',
-    });
-    if (confirmed) {
-        const groups = ['disabled', 'females', 'males'] as const;
 
-        const classList: string[] = [];
-        const waitingList: string[] = [];
-
-        groups.forEach((group) => {
-            const enrolmentsGroup = enrolments.groups?.[group] ?? [];
-            const processedEnrolments = applyPolicyAlgorithmToApplications(enrolmentsGroup, level);
-            const slot = getGroupSlot(group);
-
-            // Add to class list
-            const toClass = processedEnrolments.slice(0, slot).map((e) => String(e.applicationId));
-            classList.push(...toClass);
-
-            // Add to waiting list (next 'slot' after class list)
-            const toWaiting = processedEnrolments.slice(slot, slot * 2).map((e) => String(e.applicationId));
-            waitingList.push(...toWaiting);
-        });
-
-        // Assign to form
-        form.class_list = classList;
-        form.waiting_list = waitingList;
-
-        // Submit form
-        try {
-            form.post(route('enrolments.store-class-list'), {
-                onSuccess: () => {
-                    successAlert('Provisional class and waiting list created successfully');
-                    router.visit(window.location.href, { replace: true, preserveScroll: true });
-                },
-                onError: (errors: Record<string, any>) => {
-                    const message = Object.keys(errors).length
-                        ? Object.values(errors).join('\n')
-                        : 'Provisional class and waiting list creation failed';
-                    errorAlert(message);
-                },
-            });
-        } catch {
-            errorAlert('An unexpected error occurred while creating provisional class and waiting list');
-        }
+    const ids = selectedForAdd.value.map((app) => app.applicationId);
+    if (ids.length === 0) {
+        errorAlert(trans('trans.ui_select_all_eligible'));
+        return;
     }
+
+    let message = `Add ${ids.length} application(s) to the provisional class list?`;
+    if (exceedsClassSize.value) {
+        message += ` Intake limit is ${intakeLimit.value} with ${alreadyInClassCount.value} already listed — this exceeds remaining seats (guidance only).`;
+    }
+
+    const confirmed = await useCustomConfirmDialog().open({
+        title: trans('trans.ui_add_to_class_list'),
+        message,
+        confirmText: 'Please continue',
+        note: exceedsClassSize.value ? trans('trans.ui_class_size_guidance_exceeded') : undefined,
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    bulkAddForm.application_ids = ids;
+    bulkAddForm.post(route('enrolments.bulk-add-to-class-list'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            clearSelection();
+        },
+        onError: (errors) => {
+            const messageText = Object.keys(errors).length
+                ? Object.values(errors).join('\n')
+                : 'Could not add applications to the class list';
+            errorAlert(messageText);
+        },
+    });
 }
+
+function openPurgeDialog() {
+    if (!hasAbility('delete:class-lists')) {
+        forbiddenAlert();
+        return;
+    }
+    if (selectedForRemove.value.length === 0) {
+        errorAlert(trans('trans.ui_remove_from_class_list'));
+        return;
+    }
+    showPurgeDialog.value = true;
+}
+
+function confirmPurge(note: string) {
+    const ids = selectedForRemove.value.map((app) => app.applicationId);
+    purgeProcessing.value = true;
+    purgeForm.application_ids = ids;
+    purgeForm.note = note;
+    purgeForm.post(route('enrolments.purge-class-list'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showPurgeDialog.value = false;
+            clearSelection();
+        },
+        onError: (errors) => {
+            const messageText = Object.keys(errors).length
+                ? Object.values(errors).join('\n')
+                : 'Could not purge class list entries';
+            errorAlert(messageText);
+        },
+        onFinish: () => {
+            purgeProcessing.value = false;
+        },
+    });
+}
+
+watch(selectedCount, (count, previous) => {
+    if (count > 0 && previous === 0) {
+        selectionBarRef.value?.focus();
+    }
+});
 </script>
 
 <template>
-    <Head :title="$tChoice('trans.enrolment', 2)" />
-    <PageContainer :breadcrumbs="breadcrumbs">
-        <EnrolmentFilters
-            v-model:intakePeriodModel="intakePeriodModel"
-            v-model:modeOfStudyModel="modeOfStudyModel"
-            :intake-periods="intakePeriods"
-            :modes-of-study="modesOfStudy"
-            :handle-filter-change="handleFilterChange"
-        />
-        <div class="my-6 flex flex-col">
-            <!-- ============ SHOW ALERT IF NO DATA FOUND -->
+    <Head :title="$tChoice('trans.application', 2)" />
+    <PageContainer :breadcrumbs="breadcrumbs" :back-url="backUrl">
+        <template #backNavigationLeading>
+            <div class="min-w-0">
+                <h2 class="truncate text-base font-semibold uppercase leading-tight sm:text-lg">{{ course?.name }}</h2>
+                <p class="truncate text-xs text-muted-foreground sm:text-sm">
+                    {{ level.attributes.level }} · {{ modeOfStudy.attributes.name }}
+                    <span class="text-muted-foreground/80"> · {{ intakePeriod.attributes.name }}</span>
+                </p>
+            </div>
+        </template>
+
+        <div class="my-3 flex flex-col gap-3">
             <BaseAlert
                 v-if="noData"
                 :title="$t('trans.no_data')"
                 :description="
                     $t('trans.no_data_found_description', {
-                        data: `${$tChoice('trans.enrolment', 2)} for ${intakePeriodModel?.label} - ${modeOfStudyModel?.label}`,
+                        data: `${$tChoice('trans.application', 2)} for ${intakePeriod.attributes.name} - ${modeOfStudy.attributes.name}`,
                     })
                 "
             />
-            <!-- ============ SHOW APPLICATIONS BY GROUPS -->
-            <template v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired) && !noData">
-                <ScoringFormula :class-size="classSize" v-if="!classListIsCreated(enrolments)" />
-                <div class="flex justify-between" v-else>
-                    <div class="flex items-center space-x-2"></div>
-                    <div class="flex items-center space-x-2">
-                        <ClassSize :class-size="classSize" />
-                        <DeficitInClassSize :deficit="classSize" />
-                    </div>
+
+            <template v-if="!noData">
+                <div class="flex flex-wrap items-center justify-end gap-2">
+                    <ClassSize
+                        :class-size="intakeLimit"
+                        :editable="true"
+                        :department-id="String(department.id)"
+                        :intake-period-id="intakePeriod.id"
+                        :mode-of-study-id="modeOfStudy.id"
+                        :department-course-id="course?.department_course_id"
+                        :department-level-id="level.id"
+                        @saved="onIntakeLimitSaved"
+                    />
+                    <DeficitInClassSize :deficit="deficit" />
                 </div>
+
+                <ScoringFormula v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)" />
             </template>
-            <template v-else-if="!noData && !isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
-                <div class="flex justify-between">
-                    <div class="flex items-center space-x-2"></div>
-                    <div class="flex items-center space-x-2">
-                        <ClassSize :class-size="classSize" />
-                        <DeficitInClassSize :deficit="classSize" />
-                    </div>
+
+            <div
+                v-if="selectedCount > 0"
+                ref="selectionBarRef"
+                tabindex="-1"
+                class="sticky top-2 z-20 flex flex-col gap-2 rounded-lg border border-primary/30 bg-card p-3 shadow-md sm:flex-row sm:items-center sm:justify-between"
+            >
+                <div class="text-sm">
+                    <span class="font-semibold">{{ selectedCount }}</span>
+                    {{ $t('trans.ui_selected') }}
+                    <span class="text-muted-foreground">
+                        · {{ $tChoice('trans.class_list', 1) }} {{ alreadyInClassCount }}/{{ intakeLimit }}
+                        <template v-if="exceedsClassSize">
+                            · <span class="font-medium text-amber-700">{{ $t('trans.ui_class_size_guidance_exceeded') }}</span>
+                        </template>
+                    </span>
                 </div>
-            </template>
-            <div class="mt-6 flex items-center justify-end space-x-2">
-                <BaseButton
-                    v-if="!noData && Number(classSize) > 0 && !classListIsCreated(enrolments)"
-                    type="button"
-                    :variant="ColorVariant.primary"
-                    :title="$t('trans.ui_create_provisional_class')"
-                    classes="rounded-full normalize"
-                    @click="createProvisionalClass"
-                    :disabled="classListIsCreated(enrolments)"
-                />
-            </div>
-            <div v-for="(enrolmentsInGroup, group) in enrolments.groups" :key="group" class="flex flex-col">
-                <div class="flex flex-col">
-                    <HeadingSmall :title="`${group} (${getGroupSlot(group.toLowerCase() as EnrolmentGroup)})`" class="mt-6" />
-                    <template v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)">
-                        <OLevelClassList
-                            v-if="classListIsCreated(enrolments)"
-                            :level="level"
-                            :department-id="String(department?.id)"
-                            :applications="enrolmentsInGroup"
-                            :class-size="Number(classSize)"
-                            :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
-                            :other-gender-has-waiting-list="otherGenderHasWaitingList(group.toLowerCase() as EnrolmentGroup)"
-                        />
-                        <ByAcademicLevelResults
-                            v-else
-                            :level="level"
-                            :department-id="String(department?.id)"
-                            :applications="enrolmentsInGroup"
-                            :class-size="Number(classSize)"
-                            :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
-                            :other-gender-has-waiting-list="otherGenderHasWaitingList(group.toLowerCase() as EnrolmentGroup)"
-                        />
-                    </template>
-                    <template v-else>
-                        <GeneralEnrolmentClassList
-                            v-if="classListIsCreated(enrolments)"
-                            :level="level"
-                            :department-id="String(department?.id)"
-                            :applications="enrolmentsInGroup"
-                            :class-size="Number(classSize)"
-                            :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
-                            :class-size-is-created="classListIsCreated(enrolments)"
-                        />
-                        <GeneralEnrolments
-                            v-else
-                            :level="level"
-                            :department-id="String(department?.id)"
-                            :applications="enrolmentsInGroup"
-                            :class-size="Number(classSize)"
-                            :slot-size="getGroupSlot(group.toLowerCase() as EnrolmentGroup)"
-                            :class-size-is-created="classListIsCreated(enrolments)"
-                        />
-                    </template>
+                <div class="flex flex-wrap items-center gap-2">
+                    <BaseButton
+                        type="button"
+                        :variant="ColorVariant.shade"
+                        :title="$t('trans.ui_select_all_eligible')"
+                        classes="rounded-full"
+                        @click="selectAllEligible"
+                    />
+                    <BaseButton
+                        type="button"
+                        :variant="ColorVariant.shade"
+                        :title="$t('trans.ui_clear_selection')"
+                        classes="rounded-full"
+                        @click="clearSelection"
+                    />
+                    <BaseButton
+                        v-if="selectedForAdd.length > 0"
+                        type="button"
+                        :variant="ColorVariant.primary"
+                        :title="$t('trans.ui_add_to_class_list')"
+                        classes="rounded-full"
+                        :disabled="bulkAddForm.processing"
+                        @click="bulkAddSelected"
+                    />
+                    <BaseButton
+                        v-if="selectedForRemove.length > 0"
+                        type="button"
+                        :variant="ColorVariant.warning"
+                        :title="$t('trans.ui_remove_from_class_list')"
+                        classes="rounded-full"
+                        @click="openPurgeDialog"
+                    />
                 </div>
             </div>
+
+            <PurgeClassListDialog
+                :open="showPurgeDialog"
+                :count="selectedForRemove.length"
+                :processing="purgeProcessing"
+                @closed="showPurgeDialog = false"
+                @confirm="confirmPurge"
+            />
+
+            <BaseAccordion v-if="!noData" v-model="openGenderGroup" type="single" :collapsible="true" class="w-full gap-3">
+                <GenderEnrolmentAccordionItem
+                    v-for="group in genderGroups"
+                    :key="group"
+                    :value="group"
+                    :title="group"
+                    :count="groupCount(group)"
+                    :icon="GROUP_ICONS[group]"
+                    :is-open="openGenderGroup === group"
+                >
+                    <EnrolmentApplicationsBrowser
+                        :level="level"
+                        :department-id="String(department?.id)"
+                        :applications="enrolments.groups[group]"
+                        :class-size="intakeLimit"
+                        :slot-size="getGroupSlot(group)"
+                        :is-o-level="isItTrue(levelRequirements?.attributes?.isOLevelRequired)"
+                        :class-list-created="classListIsCreated(enrolments)"
+                        :selected-ids="selectedIds"
+                        :is-selected="isSelected"
+                        @toggle="toggleSelection"
+                        @select-group="setGroupSelection"
+                    />
+                </GenderEnrolmentAccordionItem>
+            </BaseAccordion>
         </div>
     </PageContainer>
 </template>

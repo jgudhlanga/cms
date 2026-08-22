@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Checkbox } from '@/components/ui/checkbox';
 import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
 import { IconName } from '@/enums/icons';
@@ -13,9 +14,20 @@ interface Props {
     classSize: number;
     slotSize: number;
     otherGenderHasWaitingList: boolean;
+    selectedIds?: Set<number>;
+    isSelected?: (applicationId: number) => boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    selectedIds: () => new Set(),
+    isSelected: () => false,
+});
+
+const emit = defineEmits<{
+    toggle: [applicationId: number, checked: boolean];
+    selectGroup: [applications: EnrolmentApplication[], checked: boolean];
+}>();
+
 const { level, applications } = props;
 const levelRequirements = computed(() => level?.relationships?.requirement);
 const requirementSubjects = computed(() => level?.relationships?.requirement?.relationships?.subjects);
@@ -32,8 +44,16 @@ const {
     showAddToClassListBtn,
 } = useEnrolments();
 const { formatDate } = useUtils();
-const sortedApplications = applyPolicyAlgorithmToApplications(applications, level);
-const faultyApplications = getFaultyApplications(applications, level);
+const sortedApplications = computed(() => applyPolicyAlgorithmToApplications(applications, level));
+const faultyApplications = computed(() => getFaultyApplications(applications, level));
+const eligibleForAdd = computed(() => sortedApplications.value.filter((app) => !app.inClassList));
+const allEligibleSelected = computed(
+    () => eligibleForAdd.value.length > 0 && eligibleForAdd.value.every((app) => props.isSelected(app.applicationId)),
+);
+
+const onSelectAllEligible = (checked: boolean | 'indeterminate') => {
+    emit('selectGroup', eligibleForAdd.value, checked === true);
+};
 </script>
 
 <template>
@@ -41,6 +61,14 @@ const faultyApplications = getFaultyApplications(applications, level);
         <table class="j-table">
             <thead class="j-thead">
                 <tr class="j-th">
+                    <th class="j-th w-10 text-center">
+                        <Checkbox
+                            :model-value="allEligibleSelected"
+                            :disabled="eligibleForAdd.length === 0"
+                            :aria-label="$t('trans.ui_select_all_eligible')"
+                            @update:model-value="onSelectAllEligible"
+                        />
+                    </th>
                     <th class="j-th text-left">#</th>
                     <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
                     <th class="j-th text-left">{{ $tChoice('trans.phone', 1) }}</th>
@@ -57,6 +85,14 @@ const faultyApplications = getFaultyApplications(applications, level);
             </thead>
             <tbody class="j-tbody">
                 <tr :class="getRowClassList(index, classSize)" v-for="(application, index) in sortedApplications" :key="application.applicationId">
+                    <td class="j-td text-center">
+                        <Checkbox
+                            v-if="!application.inClassList"
+                            :model-value="isSelected(application.applicationId)"
+                            :aria-label="application.studentName"
+                            @update:model-value="(checked) => emit('toggle', application.applicationId, checked === true)"
+                        />
+                    </td>
                     <td class="j-td">{{ index + 1 }}</td>
                     <td class="j-td">{{ application.studentName }}</td>
                     <td class="j-td">{{ application.phoneNumber }}</td>
@@ -98,6 +134,7 @@ const faultyApplications = getFaultyApplications(applications, level);
                 </tr>
                 <template v-if="faultyApplications.length > 0">
                     <tr class="bg-red-100" v-for="application in faultyApplications" :key="application.applicationId">
+                        <td class="j-td"></td>
                         <td class="j-td">{{ application.studentId }}</td>
                         <td class="j-td">{{ application.studentName }}</td>
                         <td class="j-td">{{ application.phoneNumber }}</td>

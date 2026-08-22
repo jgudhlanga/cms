@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Institution\Departments;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\IntakePeriodClassSizeRequest;
+use App\Http\Requests\Institution\UpdateIntakeClassSizeRequest;
 use App\Models\Institution\InstitutionDepartment;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -70,9 +70,31 @@ class DepartmentClassSizeController extends Controller
     }
 
 
-    public function update(Request $request, string $id)
+    public function update(InstitutionDepartment $institutionDepartment, UpdateIntakeClassSizeRequest $request): RedirectResponse
     {
-        //
+        try {
+            $institutionDepartment->intakeClassSizes()->updateOrCreate(
+                [
+                    'tenant_id' => auth()->user()->tenant_id,
+                    'institution_department_id' => $institutionDepartment->id,
+                    'intake_period_id' => $request->integer('intake_period_id'),
+                    'mode_of_study_id' => $request->integer('mode_of_study_id'),
+                    'department_course_id' => $request->integer('department_course_id'),
+                    'department_level_id' => $request->integer('department_level_id'),
+                ],
+                [
+                    'class_size' => $request->integer('class_size'),
+                ]
+            );
+
+            return back()->with('success', 'Intake limit saved successfully.');
+        } catch (Throwable $e) {
+            Log::error('Intake limit update failed', ['exception' => $e]);
+
+            return back()->withErrors([
+                'error' => 'An error occurred while saving the intake limit. Please try again.',
+            ]);
+        }
     }
 
 

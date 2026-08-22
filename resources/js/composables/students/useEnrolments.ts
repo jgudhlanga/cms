@@ -184,6 +184,24 @@ export const useEnrolments = () => {
         }
     };
 
+    /**
+     * Class-list selection ranking (frontend; backend sort deferred).
+     *
+     * Slot allocation (`allocateClassSlots`):
+     * - Disability applicants take seats first (all of them).
+     * - Remaining seats split 50/50 male/female; odd remainder goes to the larger pool.
+     * - Unused seats from an under-populated gender transfer to the other.
+     *
+     * O-level ranking (`applyPolicyAlgorithmToApplications`):
+     * - Score required subjects + top-N other subjects (lower is better).
+     * - Drop invalid applications (any required score ≥ 9 / missing grades).
+     * - Sort by totalScore → examSittingsCount → mainSubjectsScore → applicationDate.
+     *
+     * Known gaps for a future backend sort:
+     * - Non-O-level tables stay name-ordered from the API.
+     * - Disabled count can exceed class size (guidance, not a hard cap).
+     * - Previously, gender "others" was unused in slot math (now removed).
+     */
     function applyPolicyAlgorithmToApplications(
         applications: EnrolmentApplication[],
         level: DepartmentLevel | null | undefined,
@@ -402,7 +420,7 @@ export const useEnrolments = () => {
     };
 
     function groupByClassListType(applicants: EnrolmentApplication[]) {
-        const order = ['final', 'verified', 'provisional', 'waiting', 'failed', 'others'];
+        const order = ['final', 'verified', 'waiting', 'provisional', 'failed', 'others'];
 
         const groups = applicants.reduce((groups: Record<string, EnrolmentApplication[]>, applicant) => {
             const key = applicant.classListType && order.includes(applicant.classListType) ? applicant.classListType : 'others';
@@ -429,9 +447,9 @@ export const useEnrolments = () => {
     const getClassListTypeClasses = (classListType: string) => {
         switch (classListType.toLowerCase()) {
             case 'final':
-                return 'bg-green-100 text-green-800 border-green-800';
+                return 'bg-emerald-100 text-emerald-800 border-emerald-800';
             case 'verified':
-                return 'bg-blue-100 text-blue-800 border-blue-800';
+                return 'bg-primary/15 text-primary border-primary';
             case 'provisional':
                 return 'bg-yellow-100 text-yellow-800 border-yellow-800';
             case 'waiting':

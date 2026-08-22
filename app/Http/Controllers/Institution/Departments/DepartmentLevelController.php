@@ -102,6 +102,9 @@ class DepartmentLevelController extends Controller
             ? DepartmentCourse::with(['course'])->find($courseId)
             : null;
 
+        $departmentLevel->loadMissing('requirement');
+        $includeOLevelResults = (bool) ($departmentLevel->requirement?->is_o_level_required);
+
         // ------------------------------------------------------------
         // 2. Query enrolments efficiently
         // ------------------------------------------------------------
@@ -110,7 +113,9 @@ class DepartmentLevelController extends Controller
             $departmentLevel->id,
             (int) $intakePeriod->id,
             (int) $modeOfStudy->id,
-            $courseId
+            $courseId,
+            null,
+            $includeOLevelResults,
         );
 
         // ------------------------------------------------------------

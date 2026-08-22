@@ -10,7 +10,9 @@ use App\Helpers\DepartmentHelper;
 use App\Helpers\EnrolmentHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Enrolments\AddToClassListRequest;
+use App\Http\Requests\Enrolments\BulkAddToClassListRequest;
 use App\Http\Requests\Enrolments\ClassListRequest;
+use App\Http\Requests\Enrolments\PurgeClassListRequest;
 use App\Http\Requests\Enrolments\UpdateClassEntryRequest;
 use App\Http\Resources\Enrolments\ClassListNextTopResource;
 use App\Http\Resources\Enrolments\EnrolmentGroupResource;
@@ -101,6 +103,78 @@ class ClassListController extends Controller
             return back()->with('success', 'Class lists created successfully.');
         } catch (Throwable $e) {
             return back()->with('error', 'An error occurred while creating class lists. All changes have been rolled back.');
+        }
+    }
+
+    public function bulkAdd(BulkAddToClassListRequest $request)
+    {
+        try {
+            $applicationIds = collect($request->input('application_ids', []))
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values();
+
+            $alreadyListed = ClassList::query()
+                ->whereIn('student_application_id', $applicationIds)
+                ->pluck('student_application_id');
+
+            $toAdd = $applicationIds->diff($alreadyListed)->values()->all();
+
+            if ($toAdd === []) {
+                return back()->with('success', 'No new applications to add; selected rows are already on a class list.');
+            }
+
+            $classLists = $this->buildClassListDto($toAdd, $request->input('type', 'provisional'));
+            $this->createClassLists($classLists);
+
+            return back()->with('success', count($toAdd).' application(s) added to the class list.');
+        } catch (Throwable $e) {
+            return back()->with('error', 'An error occurred while adding applications to the class list.');
+        }
+    }
+
+    public function purge(PurgeClassListRequest $request)
+    {
+        try {
+            $applicationIds = collect($request->input('application_ids', []))
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values();
+            $note = (string) $request->input('note');
+            $actor = $request->user();
+
+            $purged = 0;
+
+            DB::transaction(function () use ($applicationIds, $note, $actor, &$purged): void {
+                $entries = ClassList::query()
+                    ->whereIn('student_application_id', $applicationIds)
+                    ->get();
+
+                foreach ($entries as $entry) {
+                    activity('ClassList')
+                        ->performedOn($entry)
+                        ->causedBy($actor)
+                        ->event('purged')
+                        ->withProperties([
+                            'note' => $note,
+                            'type' => $entry->type?->value ?? $entry->type,
+                            'student_application_id' => $entry->student_application_id,
+                            'class_list_id' => $entry->id,
+                        ])
+                        ->log('Class list entry permanently purged');
+
+                    $entry->forceDelete();
+                    $purged++;
+                }
+            });
+
+            if ($purged === 0) {
+                return back()->with('error', 'No class list entries found for the selected applications.');
+            }
+
+            return back()->with('success', $purged.' class list entr'.($purged === 1 ? 'y' : 'ies').' permanently removed.');
+        } catch (Throwable $e) {
+            return back()->with('error', 'An error occurred while purging class list entries.');
         }
     }
 

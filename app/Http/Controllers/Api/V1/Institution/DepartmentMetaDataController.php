@@ -15,12 +15,16 @@ use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Repositories\Institution\interface\IStaffRepository;
+use App\Services\DepartmentEnrolmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class DepartmentMetaDataController extends Controller
 {
-    public function __construct(protected IStaffRepository $staffRepository) {}
+    public function __construct(
+        protected IStaffRepository $staffRepository,
+        protected DepartmentEnrolmentService $departmentEnrolmentService,
+    ) {}
 
     public function courses(InstitutionDepartment $institutionDepartment): JsonResponse
     {
@@ -66,43 +70,16 @@ class DepartmentMetaDataController extends Controller
 
     public function departmentEnrolments(InstitutionDepartment $institutionDepartment): JsonResponse
     {
-        $intakePeriodId = request('intake_period_id');
-        $modeOfStudyId = request('mode_of_study_id');
+        $intakePeriodId = request('intake_period_id') > 0 ? (int) request('intake_period_id') : null;
+        $modeOfStudyId = request('mode_of_study_id') > 0 ? (int) request('mode_of_study_id') : null;
 
-        // Eager-load relationships to avoid N+1
-        $enrolments = $institutionDepartment->studentApplications()
-            ->with(['departmentCourse.course', 'departmentLevel.level'])
-            ->when($intakePeriodId, fn ($q) => $q->where('intake_period_id', $intakePeriodId))
-            ->when($modeOfStudyId, fn ($q) => $q->where('mode_of_study_id', $modeOfStudyId))
-            ->get();
+        $document = $this->departmentEnrolmentService->summariseDepartmentEnrolments(
+            $institutionDepartment,
+            $intakePeriodId,
+            $modeOfStudyId,
+        );
 
-        // Group by department_course_id
-        $grouped = $enrolments->groupBy('department_course_id')->map(function ($courseGroup) use ($institutionDepartment) {
-            $course = $courseGroup->first()->departmentCourse;
-
-            // Group within each course by department_level_id
-            $levels = $courseGroup->groupBy('department_level_id')->map(function ($levelGroup) {
-                $level = $levelGroup->first()->departmentLevel;
-                if (! $level) {
-                    return null;
-                }
-
-                return [
-                    'departmentLevelId' => $level->id,
-                    'levelName' => $level->level->name ?? null,
-                    'enrolmentsCount' => $levelGroup->count(),
-                ];
-            })->values(); // reset numeric keys
-
-            return [
-                'institutionDepartmentId' => $institutionDepartment->id,
-                'departmentCourseId' => $course->id,
-                'courseName' => $course?->course?->name,
-                'levels' => $levels,
-            ];
-        })->values(); // reset numeric key
-
-        return response()->json($grouped);
+        return response()->json($document);
     }
 
     public function departmentClassLists(InstitutionDepartment $institutionDepartment): JsonResponse

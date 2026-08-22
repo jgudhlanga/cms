@@ -25,11 +25,13 @@ class DepartmentEnrolmentService
         int $intakePeriodId,
         int $modeOfStudyId,
         ?int $courseId = null,
-        ?int $perPage = null
+        ?int $perPage = null,
+        bool $includeOLevelResults = true,
     ): array {
         $perPage ??= (int) config('custom.system.class_list_page_size', 200);
-        $oLevelId = cache()->rememberForever('o_level_id', fn () => AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->value('id')
-        );
+        $oLevelId = $includeOLevelResults
+            ? cache()->rememberForever('o_level_id', fn () => AcademicLevel::where('name', AcademicLevelEnum::SECONDARY_SCHOOL->value)->value('id'))
+            : null;
 
         $applicationFeeId = cache()->rememberForever('application_fee_id', fn () => FeeType::where('slug', FeeTypeEnum::APPLICATION_FEE->slug())->value('id')
         );
@@ -49,9 +51,9 @@ class DepartmentEnrolmentService
             ->groupBy('student_id');
 
         // ------------------------------------------------------------
-        // 3. Eager load all necessary relations
+        // 3. Eager load all necessary relations (single coherent set for grouping)
         // ------------------------------------------------------------
-        $paginator = StudentApplication::query()
+        $studentApplications = StudentApplication::query()
             ->with([
                 'student.user:id,first_name,last_name,email',
                 'student.gender:id,title',
@@ -69,47 +71,53 @@ class DepartmentEnrolmentService
                 'read_write_acknowledged',
                 'offer_accepted',
             ])
-            ->paginate($perPage);
+            ->orderBy('created_at')
+            ->limit($perPage)
+            ->get();
 
-        $studentApplications = $paginator->getCollection();
+        $total = StudentApplication::query()->whereIn('id', $subQuery)->count();
 
         $studentIds = $studentApplications->pluck('student_id')->unique();
         $userIds = $studentApplications->pluck('student.user_id')->unique();
         $studentApplicationIds = $studentApplications->pluck('application_id')->unique();
 
         // ------------------------------------------------------------
-        // 4. Preload academic stats & results in bulk
+        // 4. Preload academic stats & results in bulk (O-level only when required)
         // ------------------------------------------------------------
-        $academicStats = DB::table('student_academic_results')
-            ->select('student_id', DB::raw('COUNT(DISTINCT exam_year) as exam_sittings_count'), DB::raw('MIN(exam_year) as first_exam_year'))
-            ->whereIn('student_id', $studentIds)
-            ->where('academic_level_id', $oLevelId)
-            ->whereNull('deleted_at')
-            ->groupBy('student_id')
-            ->get()
-            ->keyBy('student_id');
+        $academicStats = collect();
+        $academicResults = collect();
 
-        $academicResults = DB::table('student_academic_results as sar')
-            ->join('subjects as s', 'sar.subject_id', '=', 's.id')
-            ->join('grades as g', 'sar.grade_id', '=', 'g.id')
-            ->whereIn('sar.student_id', $studentIds)
-            ->where('sar.academic_level_id', $oLevelId)
-            ->whereNull('sar.deleted_at')
-            ->select(
-                'sar.id as result_id',
-                'sar.student_id',
-                'sar.subject_id',
-                'sar.exam_year',
-                'sar.exam_sitting',
-                'sar.grade_id',
-                's.name as subject',
-                'g.name as grade'
-            )
-            ->orderBy('sar.exam_year')
-            ->orderBy('g.name')
-            ->get()
-            ->groupBy('student_id');
+        if ($includeOLevelResults && $oLevelId && $studentIds->isNotEmpty()) {
+            $academicStats = DB::table('student_academic_results')
+                ->select('student_id', DB::raw('COUNT(DISTINCT exam_year) as exam_sittings_count'), DB::raw('MIN(exam_year) as first_exam_year'))
+                ->whereIn('student_id', $studentIds)
+                ->where('academic_level_id', $oLevelId)
+                ->whereNull('deleted_at')
+                ->groupBy('student_id')
+                ->get()
+                ->keyBy('student_id');
 
+            $academicResults = DB::table('student_academic_results as sar')
+                ->join('subjects as s', 'sar.subject_id', '=', 's.id')
+                ->join('grades as g', 'sar.grade_id', '=', 'g.id')
+                ->whereIn('sar.student_id', $studentIds)
+                ->where('sar.academic_level_id', $oLevelId)
+                ->whereNull('sar.deleted_at')
+                ->select(
+                    'sar.id as result_id',
+                    'sar.student_id',
+                    'sar.subject_id',
+                    'sar.exam_year',
+                    'sar.exam_sitting',
+                    'sar.grade_id',
+                    's.name as subject',
+                    'g.name as grade'
+                )
+                ->orderBy('sar.exam_year')
+                ->orderBy('g.name')
+                ->get()
+                ->groupBy('student_id');
+        }
         // ------------------------------------------------------------
         // 5. Preload receipts in bulk
         // ------------------------------------------------------------
@@ -217,25 +225,19 @@ class DepartmentEnrolmentService
         // ------------------------------------------------------------
         $grouped = [
             'disabled' => $studentApplications
-                ->filter(fn ($sp) => strtolower($sp->disability_status) === 'yes')
+                ->filter(fn ($sp) => strtolower((string) $sp->disability_status) === 'yes')
                 ->sortBy('student_name')
                 ->values(),
 
             'females' => $studentApplications
-                ->filter(fn ($sp) => strtolower($sp->disability_status) !== 'yes' &&
-                    strtolower($sp->gender) === 'female')
+                ->filter(fn ($sp) => strtolower((string) $sp->disability_status) !== 'yes' &&
+                    strtolower((string) $sp->gender) === 'female')
                 ->sortBy('student_name')
                 ->values(),
 
             'males' => $studentApplications
-                ->filter(fn ($sp) => strtolower($sp->disability_status) !== 'yes' &&
-                    strtolower($sp->gender) === 'male')
-                ->sortBy('student_name')
-                ->values(),
-
-            'others' => $studentApplications
-                ->filter(fn ($sp) => strtolower($sp->disability_status) !== 'yes' &&
-                    ! in_array(strtolower($sp->gender), ['male', 'female']))
+                ->filter(fn ($sp) => strtolower((string) $sp->disability_status) !== 'yes' &&
+                    strtolower((string) $sp->gender) === 'male')
                 ->sortBy('student_name')
                 ->values(),
         ];
@@ -245,11 +247,11 @@ class DepartmentEnrolmentService
         // ------------------------------------------------------------
         return [
             'pagination' => [
-                'current_page' => $paginator->currentPage(),
-                'last_page' => $paginator->lastPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-                'links' => $paginator->linkCollection(),
+                'current_page' => 1,
+                'last_page' => max((int) ceil($total / max($perPage, 1)), 1),
+                'per_page' => $perPage,
+                'total' => $total,
+                'links' => [],
             ],
             'groups' => $grouped,
         ];
@@ -377,25 +379,19 @@ class DepartmentEnrolmentService
         // ------------------------------------------------------------
         $grouped = [
             'disabled' => $studentApplications
-                ->filter(fn ($sp) => strtolower($sp->disability_status) === 'yes')
+                ->filter(fn ($sp) => strtolower((string) $sp->disability_status) === 'yes')
                 ->sortBy('student_name')
                 ->values(),
 
             'females' => $studentApplications
-                ->filter(fn ($sp) => strtolower($sp->disability_status) !== 'yes' &&
-                    strtolower($sp->gender) === 'female')
+                ->filter(fn ($sp) => strtolower((string) $sp->disability_status) !== 'yes' &&
+                    strtolower((string) $sp->gender) === 'female')
                 ->sortBy('student_name')
                 ->values(),
 
             'males' => $studentApplications
-                ->filter(fn ($sp) => strtolower($sp->disability_status) !== 'yes' &&
-                    strtolower($sp->gender) === 'male')
-                ->sortBy('student_name')
-                ->values(),
-
-            'others' => $studentApplications
-                ->filter(fn ($sp) => strtolower($sp->disability_status) !== 'yes' &&
-                    ! in_array(strtolower($sp->gender), ['male', 'female']))
+                ->filter(fn ($sp) => strtolower((string) $sp->disability_status) !== 'yes' &&
+                    strtolower((string) $sp->gender) === 'male')
                 ->sortBy('student_name')
                 ->values(),
         ];
@@ -444,6 +440,95 @@ class DepartmentEnrolmentService
         $courseId = request('department_course_id') > 0 ? (int) request('department_course_id') : null;
 
         return [$intakePeriodId, $modeOfStudyId, $courseId];
+    }
+
+    /**
+     * COUNT-based enrolment summaries for the department enrolments tab.
+     *
+     * @return array{
+     *     data: list<array{type: string, id: string, attributes: array<string, mixed>}>,
+     *     meta: array{modeTotals: list<array{modeOfStudyId: int, count: int}>}
+     * }
+     */
+    public function summariseDepartmentEnrolments(
+        InstitutionDepartment $institutionDepartment,
+        ?int $intakePeriodId,
+        ?int $modeOfStudyId = null,
+    ): array {
+        $base = StudentApplication::query()
+            ->where('institution_department_id', $institutionDepartment->id)
+            ->when($intakePeriodId, fn ($q) => $q->where('intake_period_id', $intakePeriodId));
+
+        $modeTotals = (clone $base)
+            ->select('mode_of_study_id', DB::raw('COUNT(*) as aggregate'))
+            ->whereNotNull('mode_of_study_id')
+            ->groupBy('mode_of_study_id')
+            ->get()
+            ->map(fn ($row): array => [
+                'modeOfStudyId' => (int) $row->mode_of_study_id,
+                'count' => (int) $row->aggregate,
+            ])
+            ->values()
+            ->all();
+
+        $data = [];
+
+        if ($modeOfStudyId !== null) {
+            $rows = (clone $base)
+                ->where('mode_of_study_id', $modeOfStudyId)
+                ->whereNotNull('department_course_id')
+                ->whereNotNull('department_level_id')
+                ->select([
+                    'department_course_id',
+                    'department_level_id',
+                    DB::raw('COUNT(*) as enrolments_count'),
+                ])
+                ->groupBy('department_course_id', 'department_level_id')
+                ->get();
+
+            $courseIds = $rows->pluck('department_course_id')->unique()->filter()->values();
+            $levelIds = $rows->pluck('department_level_id')->unique()->filter()->values();
+
+            $courses = DB::table('department_courses as dc')
+                ->join('courses as c', 'c.id', '=', 'dc.course_id')
+                ->whereIn('dc.id', $courseIds)
+                ->select('dc.id', 'c.name')
+                ->get()
+                ->keyBy('id');
+
+            $levels = DB::table('department_levels as dl')
+                ->join('levels as l', 'l.id', '=', 'dl.level_id')
+                ->whereIn('dl.id', $levelIds)
+                ->select('dl.id', 'l.name')
+                ->get()
+                ->keyBy('id');
+
+            $data = $rows->map(function ($row) use ($institutionDepartment, $modeOfStudyId, $courses, $levels): array {
+                $courseId = (int) $row->department_course_id;
+                $levelId = (int) $row->department_level_id;
+
+                return [
+                    'type' => 'department-enrolment-summaries',
+                    'id' => "{$institutionDepartment->id}-{$courseId}-{$levelId}-{$modeOfStudyId}",
+                    'attributes' => [
+                        'institutionDepartmentId' => $institutionDepartment->id,
+                        'departmentCourseId' => $courseId,
+                        'courseName' => $courses->get($courseId)?->name,
+                        'departmentLevelId' => $levelId,
+                        'levelName' => $levels->get($levelId)?->name,
+                        'enrolmentsCount' => (int) $row->enrolments_count,
+                        'modeOfStudyId' => $modeOfStudyId,
+                    ],
+                ];
+            })->values()->all();
+        }
+
+        return [
+            'data' => $data,
+            'meta' => [
+                'modeTotals' => $modeTotals,
+            ],
+        ];
     }
 
     private function matchById(Collection $rows, ?int $id): ?object

@@ -190,7 +190,6 @@ export interface EnrolmentApplicationGroup {
     disabled: EnrolmentApplication[];
     females: EnrolmentApplication[];
     males: EnrolmentApplication[];
-    others: EnrolmentApplication[];
 }
 
 export interface Pagination {

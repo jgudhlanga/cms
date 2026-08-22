@@ -7,10 +7,14 @@ import { SelectOption } from '@/types/utils';
 
 interface Props {
     intakePeriods: IntakePeriod[];
-    modesOfStudy: ModeOfStudy[];
+    modesOfStudy?: ModeOfStudy[];
     handleFilterChange: () => void;
+    showModeOfStudy?: boolean;
 }
-defineProps<Props>();
+withDefaults(defineProps<Props>(), {
+    modesOfStudy: () => [],
+    showModeOfStudy: true,
+});
 
 const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
 const modeOfStudyModel = defineModel<SelectOption | null>('modeOfStudyModel');
@@ -36,7 +40,7 @@ const modeOfStudyModel = defineModel<SelectOption | null>('modeOfStudyModel');
                 @update:modelValue="handleFilterChange"
             />
         </div>
-        <div class="flex min-w-0 flex-1 items-center gap-2 sm:min-w-[220px] sm:max-w-sm">
+        <div v-if="showModeOfStudy" class="flex min-w-0 flex-1 items-center gap-2 sm:min-w-[220px] sm:max-w-sm">
             <component :is="icons[IconName.graduation_cape]" class="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             <span class="shrink-0 text-sm font-medium text-muted-foreground">{{ $tChoice('trans.mode_of_study', 1) }}</span>
             <ModeOfStudyComboSelect

@@ -104,6 +104,7 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::resource('departments.staff', StaffController::class)->names('staff');
     // ====================================== DEPARTMENT COURSE & CLASS CONFIG =====================================================
     Route::post('{institution_department}/class-sizes', [DepartmentClassSizeController::class, 'store'])->name('class-sizes.store');
+    Route::put('{institution_department}/class-sizes', [DepartmentClassSizeController::class, 'update'])->name('class-sizes.update');
     // ============================================= INSTITUTION SETUP =======================================================
     Route::prefix('config')->group(function () {
         Route::get('/', [InstitutionConfigController::class, 'index'])->name('institution.setup');

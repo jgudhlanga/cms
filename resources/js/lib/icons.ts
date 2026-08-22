@@ -102,7 +102,7 @@ import {
     Printer,
     Accessibility,
 } from 'lucide-vue-next';
-import { MonitorCog as Scheme } from '@lucide/vue';
+import { MonitorCog as Scheme, Mars, Venus } from '@lucide/vue';
 import type { Component } from 'vue';
 
 const icons: Record<IconName, Component> = {
@@ -216,6 +216,8 @@ const icons: Record<IconName, Component> = {
     [IconName.windows]: Grid2x2,
     [IconName.printer]: Printer,
     [IconName.accessibility]: Accessibility,
+    [IconName.venus]: Venus,
+    [IconName.mars]: Mars,
 };
 
 export { IconName, icons };

@@ -13,8 +13,9 @@ import type { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { hasAbility } from '@/lib/permissions';
+import { useUtils } from '@/composables/core/useUtils';
 
 interface Props {
     department: InstitutionDepartment;
@@ -43,6 +44,7 @@ const breadcrumbs: Array<Link> = [
 
 const { departmentTabs } = useInstitution();
 const { activeTab } = storeToRefs(useDepartmentMetaStore());
+const { getQueryParams } = useUtils();
 const canViewAnyDepartmentMetaData = hasAbility('viewAny:department-metadata');
 const switchDepartmentForm = useForm({
     department: null,
@@ -50,6 +52,13 @@ const switchDepartmentForm = useForm({
 const selectedDepartment = ref<SelectOption>({
     value: Number(department.id ?? 0),
     label: department.attributes?.department ?? '',
+});
+
+onMounted(() => {
+    const query = getQueryParams();
+    if (query.intake_period_id || query.mode_of_study_id) {
+        activeTab.value = 'enrolments';
+    }
 });
 
 watch(selectedDepartment, (nextDepartment) => {

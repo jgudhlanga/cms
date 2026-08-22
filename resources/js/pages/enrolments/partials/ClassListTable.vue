@@ -8,14 +8,18 @@ import { ClassListType, EnrolmentApplication } from '@/types/enrolments';
 interface Props {
     departmentId: string;
     applications: EnrolmentApplication[];
-    classListType: ClassListType;
+    classListType?: ClassListType | string;
 }
 
 const props = defineProps<Props>();
 const { applications } = props;
 const { navigateTo } = useUtils();
 
-const getButtonTitle = (type: ClassListType) => {
+const resolveType = (application: EnrolmentApplication): ClassListType | string => {
+    return (props.classListType || application.classListType || '') as ClassListType | string;
+};
+
+const getButtonTitle = (type: ClassListType | string) => {
     switch (type) {
         case 'provisional':
             return 'Verify';
@@ -27,7 +31,8 @@ const getButtonTitle = (type: ClassListType) => {
             return 'View';
     }
 };
-const getRouteName = (type: ClassListType, applicationId: string) => {
+
+const getRouteName = (type: ClassListType | string, applicationId: string) => {
     switch (type) {
         case 'provisional':
             return route('enrolments.verify', { student_application: applicationId, type: 'provisional' });
@@ -35,8 +40,10 @@ const getRouteName = (type: ClassListType, applicationId: string) => {
             return route('enrolments.verify', { student_application: applicationId, type: 'waiting' });
         case 'verified':
             return route('enrolments.confirm', { student_application: applicationId, type: 'verified' });
+        case 'final':
+            return route('enrolments.confirm', { student_application: applicationId, type: 'verified' });
         default:
-            return '';
+            return route('enrolments.verify', { student_application: applicationId, type: 'provisional' });
     }
 };
 </script>
@@ -66,11 +73,11 @@ const getRouteName = (type: ClassListType, applicationId: string) => {
                     <td class="j-td text-right">
                         <BaseButton
                             v-if="hasAbility('view:student-applications')"
-                            :title="getButtonTitle(classListType as ClassListType)"
+                            :title="getButtonTitle(resolveType(application))"
                             :size="ButtonSize.xs"
                             classes="rounded-full"
                             :variant="ColorVariant.primary_outline"
-                            @click="navigateTo(getRouteName(classListType as ClassListType, String(application.applicationId)))"
+                            @click="navigateTo(getRouteName(resolveType(application), String(application.applicationId)))"
                         />
                     </td>
                 </tr>

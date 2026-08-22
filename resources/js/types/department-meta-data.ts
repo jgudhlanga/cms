@@ -181,13 +181,26 @@ export type DepartmentEnrolmentCount = {
     institutionDepartmentId: string | number;
     departmentCourseId: string | number;
     courseName: string;
-    levels: [
-        {
-            departmentLevelId: string | number;
-            levelName: string;
-            enrolmentsCount: string | number | null;
-        },
-    ];
+    levels: Array<{
+        departmentLevelId: string | number;
+        levelName: string;
+        enrolmentsCount: string | number | null;
+    }>;
+};
+
+export type DepartmentEnrolmentModeTotal = {
+    modeOfStudyId: number;
+    count: number;
+};
+
+export type DepartmentEnrolmentSummaryAttributes = {
+    institutionDepartmentId: number;
+    departmentCourseId: number;
+    courseName: string | null;
+    departmentLevelId: number;
+    levelName: string | null;
+    enrolmentsCount: number;
+    modeOfStudyId: number;
 };
 
 export type CourseLevelMode = {

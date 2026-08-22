@@ -109,4 +109,6 @@ export enum IconName {
     windows = "windows",
     printer = "printer",
     accessibility = "accessibility",
+    venus = "venus",
+    mars = "mars",
 }

@@ -94,3 +94,68 @@ it('loads class lists for an intake period missing from the admin dropdown', fun
             ->where('intakePeriod.id', $inactive->id)
         );
 });
+
+it('loads course level enrolments without others gender group', function () {
+    $seeded = seedGuestRegistrationProgramme();
+    $user = makeDepartmentLevelEnrolmentsUser();
+    cache()->forget('all_intake_periods');
+    cache()->forget('all_modes_of_study');
+
+    $this->actingAs($user)
+        ->get(route('department-levels.enrolments', [
+            'institution_department' => $seeded['departmentId'],
+            'department_level' => $seeded['departmentLevelId'],
+            'intake_period_id' => $seeded['intakeId'],
+            'mode_of_study_id' => $seeded['modeId'],
+            'department_course_id' => $seeded['courseId'],
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('institution/enrolments/CourseLevelEnrolments')
+            ->has('enrolments.groups.disabled')
+            ->has('enrolments.groups.females')
+            ->has('enrolments.groups.males')
+            ->missing('enrolments.groups.others')
+            ->has('intakePeriod.id')
+            ->has('modeOfStudy.id')
+        );
+});
+
+it('updates intake limit for authorized users', function () {
+    $seeded = seedGuestRegistrationProgramme();
+    $user = makeDepartmentLevelEnrolmentsUser(['view:department-metadata', 'department-setup:class-sizes']);
+
+    $this->actingAs($user)
+        ->put(route('class-sizes.update', $seeded['departmentId']), [
+            'intake_period_id' => $seeded['intakeId'],
+            'mode_of_study_id' => $seeded['modeId'],
+            'department_course_id' => $seeded['courseId'],
+            'department_level_id' => $seeded['departmentLevelId'],
+            'class_size' => 35,
+        ])
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('department_intake_class_sizes', [
+        'institution_department_id' => $seeded['departmentId'],
+        'department_course_id' => $seeded['courseId'],
+        'department_level_id' => $seeded['departmentLevelId'],
+        'intake_period_id' => $seeded['intakeId'],
+        'mode_of_study_id' => $seeded['modeId'],
+        'class_size' => 35,
+    ]);
+});
+
+it('forbids intake limit updates without department-setup:class-sizes', function () {
+    $seeded = seedGuestRegistrationProgramme();
+    $user = makeDepartmentLevelEnrolmentsUser(['view:department-metadata']);
+
+    $this->actingAs($user)
+        ->put(route('class-sizes.update', $seeded['departmentId']), [
+            'intake_period_id' => $seeded['intakeId'],
+            'mode_of_study_id' => $seeded['modeId'],
+            'department_course_id' => $seeded['courseId'],
+            'department_level_id' => $seeded['departmentLevelId'],
+            'class_size' => 40,
+        ])
+        ->assertForbidden();
+});

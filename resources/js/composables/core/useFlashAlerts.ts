@@ -10,6 +10,9 @@ type FlashProps = {
 
 export function useFlashAlerts(): void {
     const page = usePage();
+    let lastSuccess: string | null = null;
+    let lastError: string | null = null;
+    let lastWarning: string | null = null;
 
     watch(
         () => page.props.flash as FlashProps | undefined,
@@ -19,15 +22,30 @@ export function useFlashAlerts(): void {
             }
 
             if (typeof flash.success === 'string' && flash.success.length > 0) {
-                successAlert(flash.success);
+                if (flash.success !== lastSuccess) {
+                    lastSuccess = flash.success;
+                    successAlert(flash.success);
+                }
+            } else {
+                lastSuccess = null;
             }
 
             if (typeof flash.error === 'string' && flash.error.length > 0) {
-                errorAlert(flash.error);
+                if (flash.error !== lastError) {
+                    lastError = flash.error;
+                    errorAlert(flash.error);
+                }
+            } else {
+                lastError = null;
             }
 
             if (typeof flash.warning === 'string' && flash.warning.length > 0) {
-                warningAlert(flash.warning);
+                if (flash.warning !== lastWarning) {
+                    lastWarning = flash.warning;
+                    warningAlert(flash.warning);
+                }
+            } else {
+                lastWarning = null;
             }
         },
         { immediate: true, deep: true },
