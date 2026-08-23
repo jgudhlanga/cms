@@ -19,7 +19,7 @@ defineProps<{ table: Table<any>; toggleColumnVisibility: Function }>();
         </DropdownMenuTrigger>
         <DropdownMenuContent>
             <DropdownMenuGroup>
-                <DropdownMenuItem v-for="column in table.getAllLeafColumns()" :key="column.id">
+                <DropdownMenuItem v-for="column in table.getAllLeafColumns().filter((column) => Boolean(column.columnDef.header))" :key="column.id">
                     <button class="flex w-full items-center" @click="toggleColumnVisibility(column)">
                         <ColumnName
                             :title="column?.columnDef?.header ?? ''"

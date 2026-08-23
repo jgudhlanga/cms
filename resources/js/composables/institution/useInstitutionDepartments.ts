@@ -7,9 +7,8 @@ import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { ApiFilterResponse } from '@/types/data-pagination';
 import { InstitutionDepartment } from '@/types/institution';
-import BaseTag from '@/components/core/util/BaseTag.vue';
+import TableRowExpandToggle from '@/components/core/table/TableRowExpandToggle.vue';
 import InstitutionDepartmentNameCell from '@/components/institution/InstitutionDepartmentNameCell.vue';
-import { ColorVariant } from '@/enums/colors';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { Ref, h, ref } from 'vue';
@@ -24,19 +23,15 @@ export const useInstitutionDepartments = () => {
 
     const institutionDepartmentRowKey = (department: InstitutionDepartment): string => String(department.id ?? '');
 
-    const createInstitutionDepartmentColumns = (isAcademic = false, options: InstitutionDepartmentColumnOptions = {}) => {
-        const columns: any[] = [
+    const createInstitutionDepartmentColumns = (options: InstitutionDepartmentColumnOptions = {}) => {
+        return [
             {
                 header: trans_choice('trans.department', 1),
                 accessorKey: 'department',
                 cell: ({ row }: { row: { original: InstitutionDepartment } }) => {
-                    const id = institutionDepartmentRowKey(row.original);
-
                     return h(InstitutionDepartmentNameCell, {
                         departmentName: row.original.attributes?.department ?? '',
                         colorCode: row.original.attributes?.colorCode,
-                        expanded: options.expandedRowId?.value === id,
-                        onToggle: () => options.onToggleExpand?.(id),
                     });
                 },
             },
@@ -47,27 +42,22 @@ export const useInstitutionDepartments = () => {
                     return row.original?.attributes?.departmentCode ?? '';
                 },
             },
-        ];
-
-        if (isAcademic) {
-            columns.push({
-                header: trans('trans.apprentice_course'),
-                accessorKey: 'hasApprenticeCourses',
-                meta: { align: 'center' },
+            {
+                id: 'expand',
+                header: '',
+                enableSorting: false,
+                enableHiding: false,
+                meta: { align: 'right' },
                 cell: ({ row }: { row: { original: InstitutionDepartment } }) => {
-                    if (!row.original.attributes?.hasApprenticeCourses) {
-                        return '';
-                    }
+                    const id = institutionDepartmentRowKey(row.original);
 
-                    return h(BaseTag, {
-                        title: trans('trans.yes'),
-                        variant: ColorVariant.success_outline,
+                    return h(TableRowExpandToggle, {
+                        expanded: options.expandedRowId?.value === id,
+                        onToggle: () => options.onToggleExpand?.(id),
                     });
                 },
-            });
-        }
-
-        return columns;
+            },
+        ];
     };
 
     const openDepartmentDivisionModal = (department: InstitutionDepartment) => {

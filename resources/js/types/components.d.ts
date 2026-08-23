@@ -485,6 +485,7 @@ declare module 'vue' {
     TableBody: typeof import('./../components/core/table/TableBody.vue')['default']
     TableHead: typeof import('./../components/core/table/TableHead.vue')['default']
     TableLoading: typeof import('./../components/core/loader/TableLoading.vue')['default']
+    TableRowExpandToggle: typeof import('./../components/core/table/TableRowExpandToggle.vue')['default']
     Tabs: typeof import('./../components/ui/tabs/Tabs.vue')['default']
     TabsAddNewButton: typeof import('./../components/students/tabs/TabsAddNewButton.vue')['default']
     TabsContent: typeof import('./../components/ui/tabs/TabsContent.vue')['default']

@@ -1015,6 +1015,8 @@ return [
     'ui_courses_offered' => 'Courses offered',
     'ui_levels_offered' => 'Levels offered',
     'ui_staff_count' => 'Staff count',
+    'ui_expand_row' => 'Expand row',
+    'ui_collapse_row' => 'Collapse row',
     'ui_department_distribution_click_hint' => 'Click a department name to see gender, disability, and enrollment-type detail. Click any status count to open that application list.',
     'ui_distribution_by_department' => 'Distribution by Department',
     'ui_distribution_by_level' => 'Distribution by Level',

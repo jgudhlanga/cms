@@ -33,6 +33,7 @@ interface Props {
     showColumnFilters?: boolean;
     createLabel?: string;
     expandedRowId?: string | null;
+    onRowClick?: (row: any) => void;
 }
 
 defineOptions({ inheritAttrs: false });
@@ -173,6 +174,7 @@ const showToolBar = computed(() => {
                     :drag-items="dragItems"
                     :draggable-update-url="draggableUpdateUrl"
                     :expanded-row-id="expandedRowId"
+                    :on-row-click="onRowClick"
                 >
                     <template v-if="$slots['expanded-row']" #expanded-row="slotProps">
                         <slot name="expanded-row" v-bind="slotProps" />

@@ -11,6 +11,7 @@ interface Props {
     dragItems?: boolean;
     draggableUpdateUrl?: string;
     expandedRowId?: string | null;
+    onRowClick?: (row: any) => void;
 }
 
 const props = defineProps<Props>();
@@ -31,6 +32,10 @@ const getRowByOriginal = (original: any) => {
 const rowKey = (original: any): string => String(original?.id ?? '');
 
 const isExpanded = (original: any): boolean => props.expandedRowId != null && props.expandedRowId === rowKey(original);
+
+const handleRowClick = (original: any) => {
+    props.onRowClick?.(original);
+};
 
 const onMove = (evt: any) => {
     const draggedElement = evt.draggedContext?.element;
@@ -75,7 +80,10 @@ const onChange = (evt: any) => {
     </draggable>
     <tbody class="hava-tbody" v-else>
         <template v-for="row in table.getRowModel().rows" :key="row.id">
-            <tr :class="`hava-tr ${row.original?.attributes?.deletedAt && 'hava-tr-highlight-archived'} ${isExpanded(row.original) && 'bg-muted/25'}`">
+            <tr
+                :class="`hava-tr ${row.original?.attributes?.deletedAt && 'hava-tr-highlight-archived'} ${isExpanded(row.original) && 'bg-muted/25'} ${onRowClick && 'cursor-pointer hover:bg-muted/40'}`"
+                @click="handleRowClick(row.original)"
+            >
                 <td v-for="cell in row.getVisibleCells()" :key="cell.id" :align="cell.column.columnDef.meta?.align ?? 'left'" class="hava-td">
                     <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
                 </td>

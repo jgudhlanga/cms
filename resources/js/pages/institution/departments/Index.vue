@@ -54,11 +54,15 @@ const breadcrumbs: Array<Link> = [
 ];
 
 const columns = computed(() =>
-    createInstitutionDepartmentColumns(isAcademic, {
+    createInstitutionDepartmentColumns({
         expandedRowId,
         onToggleExpand: toggleRow,
     }),
 );
+
+const handleDepartmentRowClick = (row: InstitutionDepartment) => {
+    toggleRow(institutionDepartmentRowKey(row));
+};
 
 const canViewDepartment = computed(() => hasAbility('view:department-metadata'));
 const canEditDepartment = computed(() => hasAbility('update:department-metadata'));
@@ -76,6 +80,7 @@ const canEditDepartment = computed(() => hasAbility('update:department-metadata'
             :pagination="{ ...departments.links, ...departments.meta }"
             :columns="columns"
             :expanded-row-id="expandedRowId"
+            :on-row-click="handleDepartmentRowClick"
         >
             <template #head-right v-if="hasAbility('create:department-metadata')">
                 <GenericButton
