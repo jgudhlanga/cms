@@ -2,6 +2,7 @@
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
+use App\Models\AcademicCalendars\Semester;
 use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -186,4 +187,36 @@ test('currentSemesterSlugForYear stays inside the selected calendar year', funct
 
     expect(AcademicCalendarPeriodResolver::currentSemesterSlugForYear('2026', AcademicCalendarTypeEnum::SEMESTER))->toBe('semester-2')
         ->and(AcademicCalendarPeriodResolver::currentSemesterSlugForYear('2025', AcademicCalendarTypeEnum::SEMESTER))->toBe('semester-1');
+});
+
+test('currentSemesterIdForYear maps the current slug to the matching semester row', function (): void {
+    $semesterOne = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $semesterTwo = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-2'],
+        ['name' => 'Semester 2', 'description' => null],
+    );
+
+    AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-01-15',
+        'closing_date' => '2026-06-30',
+    ]);
+    AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-07-01',
+        'closing_date' => '2026-12-15',
+    ]);
+
+    Carbon::setTestNow(Carbon::parse('2026-09-15', config('app.timezone')));
+
+    expect(AcademicCalendarPeriodResolver::currentSemesterIdForYear('2026', AcademicCalendarTypeEnum::SEMESTER))->toBe($semesterTwo->id);
+
+    Carbon::setTestNow(Carbon::parse('2026-03-01', config('app.timezone')));
+
+    expect(AcademicCalendarPeriodResolver::currentSemesterIdForYear('2026', AcademicCalendarTypeEnum::SEMESTER))->toBe($semesterOne->id);
 });

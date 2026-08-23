@@ -9,6 +9,7 @@ export type DepartmentLevel = {
         levelId: string | number;
         level: string;
         levelPosition: number;
+        calendarType?: 'semester' | 'term' | 'abma';
         description?: string;
         showOnCurrentApplicationPeriod?: boolean;
         createdAt?: string;

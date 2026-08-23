@@ -54,5 +54,8 @@ const modeOfStudyModel = defineModel<SelectOption | null>('modeOfStudyModel');
                 @update:modelValue="handleFilterChange"
             />
         </div>
+        <div class="flex min-w-0 w-full sm:ml-auto sm:w-auto sm:flex-1 sm:justify-end">
+            <slot name="end" />
+        </div>
     </div>
 </template>

@@ -21,6 +21,7 @@ function makeRow(overrides: Partial<DepartmentDistribution> = {}): DepartmentDis
         institutionDepartmentId: 1,
         departmentId: 10,
         departmentName: 'Applied Arts',
+        colorCode: '#2563EB',
         applicationCount: 100,
         fullTimeCount: 50,
         partTimeCount: 20,
@@ -146,6 +147,7 @@ describe('enrich / filter / sort', () => {
         ]);
 
         expect(rows[0].percentage).toBe('75.0');
+        expect(rows[0].color).toBe('rgba(37, 99, 235, 0.7)');
         expect(rows[0].isRejectionFlagged).toBe(true);
         expect(rows[1].percentage).toBe('25.0');
         expect(rows[1].isRejectionFlagged).toBe(false);

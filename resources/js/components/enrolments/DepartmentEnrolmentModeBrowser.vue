@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import BaseAccordion from '@/components/core/accordion/BaseAccordion.vue';
+import DepartmentModeTotalsStrip from '@/components/institution/DepartmentModeTotalsStrip.vue';
 import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { IconName } from '@/enums/icons';
 import { errorAlert } from '@/lib/alerts';
@@ -37,11 +38,13 @@ interface Props {
     initialModeOfStudyId?: string | null;
     summariesRouteName: string;
     resolveLevelHref: (context: DepartmentEnrolmentLevelHrefContext) => string;
+    totalsTarget?: string | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     type: null,
     initialModeOfStudyId: null,
+    totalsTarget: null,
 });
 
 const emit = defineEmits<{
@@ -72,10 +75,9 @@ const coursesByMode = ref<Record<string, CourseEnrolmentSummary[]>>({});
 const loadedModes = ref<Record<string, boolean>>({});
 const loadingPanel = ref(false);
 const loadingMeta = ref(false);
-const lastUpdatedLabel = ref('Updated just now');
 const isReady = ref(false);
 
-const { isLoading: modesOfStudyLoading, listModesOfStudy, modesOfStudy } = useModeOfStudy();
+const { isLoading: modesOfStudyLoading, listDepartmentModesOfStudy, modesOfStudy } = useModeOfStudy();
 
 const summariesParams = (modeId?: string): Record<string, string> => {
     const params: Record<string, string> = {
@@ -176,7 +178,6 @@ const fetchModeTotals = async () => {
             totals[row.modeOfStudyId] = row.count;
         });
         modeTotals.value = totals;
-        lastUpdatedLabel.value = 'Updated just now';
     } catch {
         errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.application', 2) }));
     } finally {
@@ -231,7 +232,7 @@ const resetAndReload = async () => {
 };
 
 onMounted(async () => {
-    await listModesOfStudy();
+    await listDepartmentModesOfStudy(props.departmentId);
 
     const preferredMode =
         orderedModes.value.find((row) => String(row.id) === String(props.initialModeOfStudyId)) ??
@@ -267,9 +268,20 @@ watch(openModeId, async (modeId, previous) => {
     await loadModePanel(modeId);
     emit('update:modeOfStudyId', modeId);
 });
+
+const totalsTeleportTo = computed(() => (props.totalsTarget ? `#${props.totalsTarget}` : 'body'));
 </script>
 
 <template>
+    <Teleport :to="totalsTeleportTo" :disabled="!totalsTarget">
+        <DepartmentModeTotalsStrip
+            v-if="orderedModes.length > 0"
+            :total="totalEnrolments"
+            :total-label="$tChoice('trans.application', totalEnrolments)"
+            :items="legendItems"
+        />
+    </Teleport>
+
     <DataLoadingSpinner v-if="modesOfStudyLoading || loadingMeta" />
 
     <template v-else>
@@ -286,50 +298,6 @@ watch(openModeId, async (modeId, previous) => {
         />
 
         <div v-else class="flex flex-col gap-3">
-            <section class="rounded-xl border border-border/70 bg-card px-4 py-3 shadow-sm">
-                <div class="mb-2 flex items-center justify-between gap-3">
-                    <div class="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                        <span class="text-2xl font-bold tabular-nums tracking-tight text-foreground sm:text-3xl">
-                            {{ totalEnrolments }}
-                        </span>
-                        <span class="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                            {{ $tChoice('trans.application', 2) }}
-                        </span>
-                    </div>
-                    <span class="shrink-0 text-[11px] text-muted-foreground">{{ lastUpdatedLabel }}</span>
-                </div>
-
-                <div
-                    class="mb-2 flex h-1.5 w-full overflow-hidden rounded-full bg-muted"
-                    role="img"
-                    :aria-label="`${totalEnrolments} ${$tChoice('trans.application', 2)}`"
-                >
-                    <template v-if="totalEnrolments > 0">
-                        <div
-                            v-for="item in legendItems"
-                            :key="`bar-${item.id}`"
-                            :class="item.colorClass"
-                            :style="{ width: `${Math.max(item.share, item.count > 0 ? 2 : 0)}%` }"
-                            class="h-full transition-[width]"
-                        />
-                    </template>
-                </div>
-
-                <ul class="flex flex-wrap gap-x-4 gap-y-1">
-                    <li
-                        v-for="item in legendItems"
-                        :key="`legend-${item.id}`"
-                        class="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground"
-                    >
-                        <span class="h-1.5 w-1.5 shrink-0 rounded-full" :class="item.colorClass" aria-hidden="true" />
-                        <span>
-                            <span class="font-medium text-foreground">{{ item.label }}</span>
-                            <span class="text-muted-foreground"> · {{ item.count }}</span>
-                        </span>
-                    </li>
-                </ul>
-            </section>
-
             <BaseAccordion v-model="openModeId" type="single" :collapsible="true" class="w-full gap-3">
                 <EnrolmentModeAccordionItem
                     v-for="mode in orderedModes"
@@ -371,16 +339,21 @@ watch(openModeId, async (modeId, previous) => {
                                                 levelName: level.levelName,
                                             })
                                         "
-                                        class="group flex items-center gap-3 rounded-xl bg-primary/5 px-3 py-3 transition-colors hover:bg-primary/10"
+                                        class="group flex items-center gap-2 rounded-lg bg-primary/5 px-2.5 py-1.5 transition-colors hover:bg-primary/10"
                                     >
                                         <span
-                                            class="inline-flex min-w-10 items-center justify-center rounded-md border border-primary/20 bg-card px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-primary"
+                                            class="inline-flex h-7 min-w-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-card px-1.5 text-[11px] font-bold uppercase tracking-wide text-primary"
+                                            :title="level.levelName"
                                         >
                                             {{ levelBadge(level.levelName) }}
                                         </span>
-                                        <span class="min-w-0 flex-1 truncate text-sm font-medium text-foreground group-hover:text-primary">
+                                        <span
+                                            v-if="level.levelName.trim().toUpperCase() !== levelBadge(level.levelName)"
+                                            class="min-w-0 flex-1 truncate text-sm font-medium text-foreground group-hover:text-primary"
+                                        >
                                             {{ level.levelName }}
                                         </span>
+                                        <span v-else class="min-w-0 flex-1" />
                                         <span class="shrink-0 text-sm font-bold tabular-nums text-foreground">
                                             {{ level.enrolmentsCount }}
                                         </span>

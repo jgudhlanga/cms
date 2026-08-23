@@ -9,10 +9,13 @@ use App\Http\Resources\Institution\CourseSyllabusResource;
 use App\Http\Resources\Institution\DepartmentCourseResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\IntakePeriodClassSizeResource;
+use App\Http\Resources\Institution\ModeOfStudyResource;
 use App\Http\Resources\Institution\StaffResource;
+use App\Models\Institution\CourseLevelMode;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\ModeOfStudy;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Repositories\Institution\interface\IStaffRepository;
 use App\Services\DepartmentEnrolmentService;
@@ -53,6 +56,34 @@ class DepartmentMetaDataController extends Controller
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->staffRepository->allTrashed()->count(),
         ]);
+    }
+
+    public function modes(InstitutionDepartment $institutionDepartment): AnonymousResourceCollection
+    {
+        $courseIds = $institutionDepartment->departmentCourses()->pluck('id');
+
+        if ($courseIds->isEmpty()) {
+            return ModeOfStudyResource::collection(collect());
+        }
+
+        $modeIds = CourseLevelMode::query()
+            ->whereIn('department_course_id', $courseIds)
+            ->get()
+            ->pluck('modes')
+            ->flatten()
+            ->map(fn (mixed $id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($modeIds === []) {
+            return ModeOfStudyResource::collection(collect());
+        }
+
+        return ModeOfStudyResource::collection(
+            ModeOfStudy::query()->whereIn('id', $modeIds)->orderBy('name')->get(),
+        );
     }
 
     public function classSizes(InstitutionDepartment $institutionDepartment): AnonymousResourceCollection

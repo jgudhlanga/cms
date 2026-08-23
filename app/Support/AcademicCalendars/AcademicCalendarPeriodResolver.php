@@ -4,6 +4,7 @@ namespace App\Support\AcademicCalendars;
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
+use App\Models\AcademicCalendars\Semester;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 
@@ -71,6 +72,17 @@ final class AcademicCalendarPeriodResolver
         }
 
         return $slug;
+    }
+
+    public static function currentSemesterIdForYear(
+        string $calendarYear,
+        AcademicCalendarTypeEnum $type,
+        ?CarbonInterface $asOf = null,
+    ): ?int {
+        $slug = self::currentSemesterSlugForYear($calendarYear, $type, $asOf);
+        $id = Semester::query()->where('slug', $slug)->value('id');
+
+        return $id !== null ? (int) $id : null;
     }
 
     public static function displayPeriodLabel(AcademicCalendar $row): string

@@ -13,26 +13,36 @@ interface Props {
     loaded?: boolean;
     icon?: IconName;
     isOpen?: boolean;
+    emptySubtitle?: string;
+    countSingular?: string;
+    countPlural?: string;
+    groupSingular?: string;
+    groupPlural?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     icon: IconName.graduation_cape,
     isOpen: false,
     loaded: false,
+    emptySubtitle: 'No applications recorded',
+    countSingular: 'application',
+    countPlural: 'applications',
+    groupSingular: 'programme',
+    groupPlural: 'programmes',
 });
 
 const isEmpty = computed(() => props.count === 0);
 
 const subtitle = computed(() => {
     if (isEmpty.value) {
-        return 'No applications recorded';
+        return props.emptySubtitle;
     }
 
     if (!props.loaded) {
-        return props.count === 1 ? '1 application' : `${props.count} applications`;
+        return props.count === 1 ? `1 ${props.countSingular}` : `${props.count} ${props.countPlural}`;
     }
 
-    const label = props.programmeCount === 1 ? 'programme' : 'programmes';
+    const label = props.programmeCount === 1 ? props.groupSingular : props.groupPlural;
 
     return `${props.programmeCount} ${label}`;
 });

@@ -78,7 +78,11 @@ onMounted(async () => {
             :intake-periods="intakePeriods?.data ?? []"
             :show-mode-of-study="false"
             :handle-filter-change="handleIntakeChange"
-        />
+        >
+            <template #end>
+                <div id="department-enrolment-mode-totals" class="min-w-0" />
+            </template>
+        </EnrolmentFilters>
 
         <DataLoadingSpinner v-if="intakePeriodsLoading" />
         <DepartmentEnrolmentModeBrowser
@@ -87,6 +91,7 @@ onMounted(async () => {
             :intake-period-id="String(intakePeriod.value)"
             :initial-mode-of-study-id="openModeId || null"
             summaries-route-name="v1.department-metadata.enrolments"
+            totals-target="department-enrolment-mode-totals"
             :resolve-level-href="resolveLevelHref"
             @update:mode-of-study-id="onModeChange"
         />

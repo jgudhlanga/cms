@@ -34,6 +34,7 @@ use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Students\StudentEnrolment;
+use App\Queries\AcademicCalendars\UnassignedClassConfigStudentsQuery;
 use App\Queries\Enrolments\ConfirmedStudentsQuery;
 use App\Services\AcademicCalendars\AcademicCalendarClassNameFormatter;
 use App\Services\AcademicCalendars\ClassListDataService;
@@ -45,6 +46,7 @@ use App\Services\AcademicCalendars\CourseWorkMarksheetDataService;
 use App\Services\AcademicCalendars\CourseWorkMarksheetPdfService;
 use App\Services\Lecturer\LecturerCourseWorkAccess;
 use App\Services\Students\StudentEnrolmentProgressionService;
+use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -119,9 +121,10 @@ class AcademicCalendarController extends Controller
         $level = DepartmentLevel::find($departmentLevelId);
         $mode = ModeOfStudy::find($modeOfStudyId);
         $level?->loadMissing('level');
-        $selectedSemesterId = request()->filled('semester_id')
-            ? (int) request()->query('semester_id')
-            : null;
+        $selectedSemesterId = $this->resolveSelectedSemesterId(
+            $level,
+            (string) $academicCalendar->calendar_year,
+        );
         $classConfigId = request()->query('class_config_id');
         $classConfig = ClassConfig::query()
             ->when($classConfigId, fn ($query) => $query->where('id', $classConfigId))
@@ -443,7 +446,8 @@ class AcademicCalendarController extends Controller
     public function showDepartmentAcademicCalendarClass(
         InstitutionDepartment $institutionDepartment,
         string $calendar_year,
-        AcademicCalendarClass $academicCalendarClass
+        AcademicCalendarClass $academicCalendarClass,
+        UnassignedClassConfigStudentsQuery $unassignedStudentsQuery,
     ): Response {
         $this->authorize('viewAny', AcademicCalendar::class);
 
@@ -471,11 +475,11 @@ class AcademicCalendarController extends Controller
 
         $students = $this->studentsPayloadForAcademicCalendarClass($academicCalendarClass);
 
-        $selectedSemesterId = request()->filled('semester_id')
-            ? (int) request()->query('semester_id')
-            : null;
-
         $level?->loadMissing('level');
+        $selectedSemesterId = $this->resolveSelectedSemesterId(
+            $level,
+            (string) $academicCalendar->calendar_year,
+        );
         $staffingContext = $this->buildStaffingContextForClass(
             $academicCalendarClass,
             $classConfig,
@@ -531,6 +535,11 @@ class AcademicCalendarController extends Controller
             'semesterConfigHasSyllabi' => $staffingContext['semesterConfigHasSyllabi'],
             'canAssignStaffing' => auth()->user()?->can('update', $academicCalendar) ?? false,
             'isLastProgrammePhase' => $this->isLastProgrammePhase($classConfig, $level),
+            'unassignedStudents' => $unassignedStudentsQuery->list(
+                $institutionDepartment,
+                $classConfig,
+                (string) $academicCalendar->calendar_year,
+            ),
         ]);
     }
 
@@ -764,15 +773,32 @@ class AcademicCalendarController extends Controller
 
     private function isLastProgrammePhase(ClassConfig $classConfig, ?DepartmentLevel $level): bool
     {
-        $calendarType = $level?->level?->calendar_type;
-
-        if (! $calendarType instanceof AcademicCalendarTypeEnum) {
-            $calendarType = AcademicCalendarTypeEnum::tryFrom((string) $calendarType) ?? AcademicCalendarTypeEnum::SEMESTER;
-        }
-
         return $this->enrolmentProgression->isLastPhaseSemesterId(
             $classConfig->semester_id !== null ? (int) $classConfig->semester_id : null,
-            $calendarType,
+            $this->calendarTypeForLevel($level),
+        );
+    }
+
+    private function calendarTypeForLevel(?DepartmentLevel $level): AcademicCalendarTypeEnum
+    {
+        $calendarType = $level?->level?->calendar_type;
+
+        if ($calendarType instanceof AcademicCalendarTypeEnum) {
+            return $calendarType;
+        }
+
+        return AcademicCalendarTypeEnum::tryFrom((string) $calendarType) ?? AcademicCalendarTypeEnum::SEMESTER;
+    }
+
+    private function resolveSelectedSemesterId(?DepartmentLevel $level, string $calendarYear): ?int
+    {
+        if (request()->filled('semester_id')) {
+            return (int) request()->query('semester_id');
+        }
+
+        return AcademicCalendarPeriodResolver::currentSemesterIdForYear(
+            $calendarYear,
+            $this->calendarTypeForLevel($level),
         );
     }
 

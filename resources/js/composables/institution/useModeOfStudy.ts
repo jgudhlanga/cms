@@ -104,6 +104,20 @@ export const useModeOfStudy = () => {
         isLoading.value = false;
     };
 
+    const listDepartmentModesOfStudy = async (departmentId: string) => {
+        isLoading.value = true;
+        try {
+            const document = await HttpService.get(
+                route('v1.department-metadata.modes', { institution_department: departmentId }),
+            );
+            modesOfStudy.value = Array.isArray(document) ? document : (document?.data ?? []);
+        } catch {
+            modesOfStudy.value = [];
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
     return {
         createModeOfStudyColumns,
         breadcrumbs,
@@ -111,6 +125,7 @@ export const useModeOfStudy = () => {
         saveModeOfStudy,
         listModesOfStudy,
         listCourseModesOfStudy,
+        listDepartmentModesOfStudy,
         modesOfStudy,
         isLoading,
         courseModesOfStudy,

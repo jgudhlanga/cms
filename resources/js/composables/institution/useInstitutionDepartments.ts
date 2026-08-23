@@ -7,20 +7,37 @@ import { getIdParams } from '@/lib/utils';
 import HttpService from '@/services/http.service';
 import { ApiFilterResponse } from '@/types/data-pagination';
 import { InstitutionDepartment } from '@/types/institution';
+import BaseTag from '@/components/core/util/BaseTag.vue';
+import InstitutionDepartmentNameCell from '@/components/institution/InstitutionDepartmentNameCell.vue';
+import { ColorVariant } from '@/enums/colors';
 import { InertiaForm } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { ref } from 'vue';
+import { Ref, h, ref } from 'vue';
+
+type InstitutionDepartmentColumnOptions = {
+    expandedRowId?: Ref<string | null>;
+    onToggleExpand?: (id: string) => void;
+};
 
 export const useInstitutionDepartments = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore, onView, textLink, textEditLink, checkStatusIcon } = useDataTables();
-    const createInstitutionDepartmentColumns = (isAcademic = false) => {
+    const { onDelete, onForceDelete, onRestore, onView } = useDataTables();
+
+    const institutionDepartmentRowKey = (department: InstitutionDepartment): string => String(department.id ?? '');
+
+    const createInstitutionDepartmentColumns = (isAcademic = false, options: InstitutionDepartmentColumnOptions = {}) => {
         const columns: any[] = [
             {
                 header: trans_choice('trans.department', 1),
                 accessorKey: 'department',
                 cell: ({ row }: { row: { original: InstitutionDepartment } }) => {
-                    const id = getIdParams(row.original.id?.toString() ?? '');
-                    return textLink(route('institution-departments.show', id), row.original.attributes?.department);
+                    const id = institutionDepartmentRowKey(row.original);
+
+                    return h(InstitutionDepartmentNameCell, {
+                        departmentName: row.original.attributes?.department ?? '',
+                        colorCode: row.original.attributes?.colorCode,
+                        expanded: options.expandedRowId?.value === id,
+                        onToggle: () => options.onToggleExpand?.(id),
+                    });
                 },
             },
             {
@@ -30,45 +47,25 @@ export const useInstitutionDepartments = () => {
                     return row.original?.attributes?.departmentCode ?? '';
                 },
             },
-            {
-                header: trans_choice('trans.division', 1),
-                accessorKey: 'division',
-                cell: ({ row }: { row: { original: InstitutionDepartment } }) => {
-                    return row.original?.attributes?.division ?? '—';
-                },
-            },
         ];
 
         if (isAcademic) {
             columns.push({
-                header: trans('trans.has_apprentice_courses'),
+                header: trans('trans.apprentice_course'),
                 accessorKey: 'hasApprenticeCourses',
                 meta: { align: 'center' },
                 cell: ({ row }: { row: { original: InstitutionDepartment } }) => {
-                    return checkStatusIcon(row.original.attributes?.hasApprenticeCourses);
+                    if (!row.original.attributes?.hasApprenticeCourses) {
+                        return '';
+                    }
+
+                    return h(BaseTag, {
+                        title: trans('trans.yes'),
+                        variant: ColorVariant.success_outline,
+                    });
                 },
             });
         }
-
-        columns.push({
-            header: trans_choice('trans.action', 2),
-            accessorKey: 'actions',
-            enableSorting: false,
-            meta: { align: 'right' },
-            cell: ({ row }: { row: { original: InstitutionDepartment } }) => {
-                const id = row.original.id?.toString() ?? '';
-                return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                    {
-                        key: 'view',
-                        action: () => viewDepartment(id),
-                    },
-                    {
-                        key: 'edit',
-                        action: () => openDepartmentDivisionModal(row.original),
-                    },
-                ]);
-            },
-        });
 
         return columns;
     };
@@ -130,6 +127,7 @@ export const useInstitutionDepartments = () => {
         archiveDepartment,
         createInstitutionDepartmentColumns,
         deleteDepartment,
+        institutionDepartmentRowKey,
         openInstitutionDepartmentsModal,
         openDepartmentDivisionModal,
         restoreDepartment,

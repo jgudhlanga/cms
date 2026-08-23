@@ -32,6 +32,7 @@ interface Props {
     loading?: boolean;
     showColumnFilters?: boolean;
     createLabel?: string;
+    expandedRowId?: string | null;
 }
 
 defineOptions({ inheritAttrs: false });
@@ -167,7 +168,16 @@ const showToolBar = computed(() => {
         <div class="overflow-x-auto">
             <table class="hava-table">
                 <TableHead :table="table" />
-                <TableBody :table="table" :drag-items="dragItems" :draggable-update-url="draggableUpdateUrl" />
+                <TableBody
+                    :table="table"
+                    :drag-items="dragItems"
+                    :draggable-update-url="draggableUpdateUrl"
+                    :expanded-row-id="expandedRowId"
+                >
+                    <template v-if="$slots['expanded-row']" #expanded-row="slotProps">
+                        <slot name="expanded-row" v-bind="slotProps" />
+                    </template>
+                </TableBody>
             </table>
         </div>
     </div>

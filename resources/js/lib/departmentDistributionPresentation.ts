@@ -1,4 +1,5 @@
 import type { DepartmentDistribution } from '@/types/dashboard';
+import { resolveDepartmentColor } from '@/lib/departmentColor';
 
 export const REJECTION_RATE_FLAG_THRESHOLD = 0.15;
 
@@ -156,7 +157,7 @@ export function enrichDepartmentDistributionRows(rows: DepartmentDistribution[])
 
         return {
             ...row,
-            color: colorFromDepartment(row.departmentName),
+            color: resolveDepartmentColor(row.colorCode, row.departmentName),
             percentage: formatPercent(percentageValue),
             percentageValue,
             rejectionRate: rate,

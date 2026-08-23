@@ -13,6 +13,7 @@ type SyncModuleLecturersResponse = {
     message: string;
     moduleId: number;
     staffIds: number[];
+    staffNames?: string[];
 };
 
 type CopyDefaultsResponse = {
@@ -59,11 +60,14 @@ export function useClassModuleLecturerSave(
         }, 4000);
     };
 
-    const saveModuleLecturers = async (module: ClassSemesterModule, staffIds: number[]): Promise<boolean> => {
+    const saveModuleLecturers = async (
+        module: ClassSemesterModule,
+        staffIds: number[],
+    ): Promise<SyncModuleLecturersResponse | null> => {
         const optionId = semesterId();
 
         if (optionId == null) {
-            return false;
+            return null;
         }
 
         savingModuleId[module.moduleId] = true;
@@ -90,14 +94,14 @@ export function useClassModuleLecturerSave(
             };
             clearFeedbackLater(module.moduleId);
 
-            return true;
+            return data;
         } catch (error) {
             moduleFeedback[module.moduleId] = {
                 type: 'error',
                 message: extractErrorMessage(error, trans('academic_calendar.tutor_assign_failed')),
             };
 
-            return false;
+            return null;
         } finally {
             savingModuleId[module.moduleId] = false;
         }

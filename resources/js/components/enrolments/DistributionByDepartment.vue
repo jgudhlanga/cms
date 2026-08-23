@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import IntakePeriodComboSelect from '@/components/core/form/combobox/IntakePeriodComboSelect.vue';
 import DepartmentClassListActionLink from '@/components/enrolments/DepartmentClassListActionLink.vue';
+import DepartmentColorSwatch from '@/components/institution/DepartmentColorSwatch.vue';
 import DepartmentDistributionExpandedDetail from '@/components/enrolments/partials/DepartmentDistributionExpandedDetail.vue';
 import DepartmentDistributionKpiCards from '@/components/enrolments/partials/DepartmentDistributionKpiCards.vue';
 import DepartmentDistributionToolbar from '@/components/enrolments/partials/DepartmentDistributionToolbar.vue';
@@ -199,11 +200,7 @@ const onIntakeChange = (option: SelectOption | null) => {
                                         :aria-expanded="isExpanded(rowKey(row))"
                                         @click="toggleRow(rowKey(row))"
                                     >
-                                        <span
-                                            class="inline-block h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                                            :style="{ backgroundColor: row.color }"
-                                            aria-hidden="true"
-                                        />
+                                        <DepartmentColorSwatch :color-code="row.colorCode" :department-name="row.departmentName" />
                                         <span class="truncate text-xs font-medium text-foreground group-hover:text-primary">
                                             {{ row.departmentName }}
                                         </span>

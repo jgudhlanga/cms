@@ -28,7 +28,15 @@ class InstitutionDepartment extends Model
 {
     use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
 
-    protected $fillable = ['tenant_id', 'department_id', 'description', 'department_code', 'division_id', 'has_apprentice_courses'];
+    protected $fillable = [
+        'tenant_id',
+        'department_id',
+        'description',
+        'department_code',
+        'color_code',
+        'division_id',
+        'has_apprentice_courses',
+    ];
 
     protected function casts(): array
     {

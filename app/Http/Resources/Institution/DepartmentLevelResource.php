@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Institution;
 
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,14 +15,20 @@ class DepartmentLevelResource extends JsonResource
     {
         $this->resource->loadMissing(['level', 'requirement']);
 
+        $calendarType = $this->level?->calendar_type;
+        $calendarTypeValue = $calendarType instanceof AcademicCalendarTypeEnum
+            ? $calendarType->value
+            : (is_string($calendarType) && $calendarType !== '' ? $calendarType : 'semester');
+
         return [
             'type' => 'department-level',
             'id' => $this->resource->id,
-            "attributes" => [
-                "institutionDepartmentId" => $this->institution_department_id,
-                "levelId" => $this->level_id,
-                "level" => $this->level?->name,
+            'attributes' => [
+                'institutionDepartmentId' => $this->institution_department_id,
+                'levelId' => $this->level_id,
+                'level' => $this->level?->name,
                 'levelPosition' => $this->level?->position,
+                'calendarType' => $calendarTypeValue,
                 'description' => $this->resource->description,
                 'showOnCurrentApplicationPeriod' => $this->resource->show_on_current_application_period,
                 $this->mergeWhen($request->routeIs('department-levels.*'), [
@@ -30,9 +37,9 @@ class DepartmentLevelResource extends JsonResource
                     'deletedAt' => $this->resource->deleted_at,
                 ]),
             ],
-            "relationships" => [
+            'relationships' => [
                 'requirement' => DepartmentLevelRequirementResource::make($this->requirement),
-            ]
+            ],
         ];
     }
 }

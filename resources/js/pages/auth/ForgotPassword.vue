@@ -32,7 +32,7 @@ const submit = () => {
                     :input-auto-focus="true"
                     :error="form.errors.email"
                     :label="$t('trans.email')"
-                    :placeholder="$t('trans.email')"
+                    :placeholder="$t('trans.auth_email_placeholder')"
                     :is-required="true"
                     @input="clearFormErrors(form, 'email')"
                 />

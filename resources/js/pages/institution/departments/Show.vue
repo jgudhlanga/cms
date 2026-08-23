@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
+import DepartmentColorSwatch from '@/components/institution/DepartmentColorSwatch.vue';
 import { useInstitution } from '@/composables/institution/useInstitution';
 import ClassConfig from '@/pages/institution/academicCalendars/partials/ClassConfig.vue';
 import DepartmentContextBar from '@/pages/institution/departments/partials/DepartmentContextBar.vue';
@@ -11,11 +12,10 @@ import { AuthObject } from '@/types/data-pagination';
 import { InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref, watch } from 'vue';
 import { hasAbility } from '@/lib/permissions';
-import { useUtils } from '@/composables/core/useUtils';
 
 interface Props {
     department: InstitutionDepartment;
@@ -44,7 +44,6 @@ const breadcrumbs: Array<Link> = [
 
 const { departmentTabs } = useInstitution();
 const { activeTab } = storeToRefs(useDepartmentMetaStore());
-const { getQueryParams } = useUtils();
 const canViewAnyDepartmentMetaData = hasAbility('viewAny:department-metadata');
 const switchDepartmentForm = useForm({
     department: null,
@@ -54,12 +53,30 @@ const selectedDepartment = ref<SelectOption>({
     label: department.attributes?.department ?? '',
 });
 
+const visibleTabs = computed(() => {
+    return departmentTabs(props.department).filter((tab) => tab.show);
+});
+
 onMounted(() => {
-    const query = getQueryParams();
-    if (query.intake_period_id || query.mode_of_study_id) {
-        activeTab.value = 'enrolments';
+    const tabParam = new URL(usePage().url, window.location.origin).searchParams.get('tab');
+    if (tabParam && visibleTabs.value.some((tab) => tab.value === tabParam)) {
+        activeTab.value = tabParam;
     }
 });
+
+watch(
+    visibleTabs,
+    (tabs) => {
+        if (tabs.length === 0) {
+            return;
+        }
+
+        if (!tabs.some((tab) => tab.value === activeTab.value)) {
+            activeTab.value = tabs[0].value;
+        }
+    },
+    { immediate: true },
+);
 
 watch(selectedDepartment, (nextDepartment) => {
     const selectedDepartmentId = Number(nextDepartment?.value ?? 0);
@@ -70,10 +87,6 @@ watch(selectedDepartment, (nextDepartment) => {
     }
 
     router.get(route('institution-departments.show', selectedDepartmentId));
-});
-
-const visibleTabs = computed(() => {
-    return departmentTabs(props.department).filter((tab) => tab.show);
 });
 
 const activeSection = computed(() => visibleTabs.value.find((tab) => tab.value === activeTab.value));
@@ -92,6 +105,15 @@ const activeTabDescription = computed(() => activeSection.value?.transDescriptio
                 :show-switcher="canViewAnyDepartmentMetaData"
             />
         </template>
+
+        <div class="mb-4 flex items-center gap-2">
+            <DepartmentColorSwatch
+                :color-code="department.attributes?.colorCode"
+                :department-name="department.attributes?.department"
+                size-class="h-3.5 w-3.5"
+            />
+            <h1 class="text-lg font-semibold tracking-tight text-foreground">{{ departmentTitle() }}</h1>
+        </div>
 
         <BaseSectionNav
             v-model:active-tab="activeTab"

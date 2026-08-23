@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('departments/{institution_department}/courses', [DepartmentMetaDataController::class, 'courses'])->name('v1.department-metadata.courses');
     Route::get('departments/{institution_department}/levels', [DepartmentMetaDataController::class, 'levels'])->name('v1.department-metadata.levels');
+    Route::get('departments/{institution_department}/modes', [DepartmentMetaDataController::class, 'modes'])->name('v1.department-metadata.modes');
     Route::get('departments/{institution_department}/staff', [DepartmentMetaDataController::class, 'staff'])->name('v1.department-metadata.staff');
     Route::get('departments/{institution_department}/class-sizes', [DepartmentMetaDataController::class, 'classSizes'])->name('v1.department-metadata.class-sizes');
     Route::get('departments/{institution_department}/enrolments', [DepartmentMetaDataController::class, 'departmentEnrolments'])->name('v1.department-metadata.enrolments');

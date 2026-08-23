@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import type { AcademicCalendarClassStudentFiltersState } from '@/composables/academicCalendars/useAcademicCalendarClassStudentFilters';
+import { ButtonSize } from '@/enums/buttons';
 import { IconName } from '@/enums/icons';
 import type { SelectOption } from '@/types/utils';
 import { useDebounceFn } from '@vueuse/core';
@@ -69,8 +70,8 @@ const resetFilters = (): void => {
 </script>
 
 <template>
-    <div class="mb-4 w-full max-w-full min-w-0">
-        <div class="grid min-w-0 grid-cols-1 items-end gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] md:gap-4">
+    <div class="w-full min-w-0">
+        <div class="grid min-w-0 grid-cols-1 items-center gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,12rem)_auto]">
             <div class="min-w-0">
                 <BaseInputWithIcon
                     v-model="name"
@@ -97,8 +98,9 @@ const resetFilters = (): void => {
                     class="rounded-full"
                 />
             </div>
-            <div class="flex justify-end">
-                <ResetButton @click="resetFilters" />
+            <div class="flex flex-nowrap items-center justify-end gap-1.5">
+                <ResetButton :size="ButtonSize.xs" @click="resetFilters" />
+                <slot name="actions" />
             </div>
         </div>
     </div>

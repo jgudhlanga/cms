@@ -1,19 +1,15 @@
 <script setup lang="ts">
-import ModeOfStudyComboSelect from '@/components/core/form/combobox/ModeOfStudyComboSelect.vue';
 import { IconName, icons } from '@/lib/icons';
-import { ModeOfStudy } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 
 interface Props {
     semesters: SelectOption[];
     programmeSemesters: SelectOption[];
-    modesOfStudy: ModeOfStudy[];
     handleFilterChange: () => void;
 }
 defineProps<Props>();
 
 const academicYearModel = defineModel<SelectOption | null>('academicYearModel');
-const modeOfStudyModel = defineModel<SelectOption | null>('modeOfStudyModel');
 const programmeSemesterModel = defineModel<SelectOption | null>('programmeSemesterModel');
 </script>
 
@@ -38,20 +34,6 @@ const programmeSemesterModel = defineModel<SelectOption | null>('programmeSemest
             />
         </div>
         <div class="flex min-w-0 flex-1 items-center gap-2 sm:min-w-[220px] sm:max-w-sm">
-            <component :is="icons[IconName.graduation_cape]" class="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-            <span class="shrink-0 text-sm font-medium text-muted-foreground">{{ $tChoice('trans.mode_of_study', 1) }}</span>
-            <ModeOfStudyComboSelect
-                label=""
-                :data="modesOfStudy ?? []"
-                v-model="modeOfStudyModel!"
-                :vertical-layout="false"
-                :is-required="true"
-                width-class="w-full"
-                class="min-w-0 flex-1"
-                @update:modelValue="handleFilterChange"
-            />
-        </div>
-        <div class="flex min-w-0 flex-1 items-center gap-2 sm:min-w-[220px] sm:max-w-sm">
             <component :is="icons[IconName.calendar]" class="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             <span class="shrink-0 text-sm font-medium text-muted-foreground">{{ $t('academic_calendar.programme_semester') }}</span>
             <BaseCombobox
@@ -64,6 +46,9 @@ const programmeSemesterModel = defineModel<SelectOption | null>('programmeSemest
                 class="min-w-0 flex-1"
                 @update:modelValue="handleFilterChange"
             />
+        </div>
+        <div class="flex min-w-0 w-full sm:ml-auto sm:w-auto sm:flex-1 sm:justify-end">
+            <slot name="end" />
         </div>
     </div>
 </template>

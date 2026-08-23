@@ -20,11 +20,12 @@ export function useAcademicCalendarClassMoveStudents(
         target_academic_calendar_class_id: null as number | null,
     });
 
-    const openMoveStudentsModal = (): void => {
+    const openMoveStudentsModal = (studentEnrolmentId?: number): void => {
         if (moveTargetClasses.value.length === 0) {
             return;
         }
-        moveForm.student_enrolment_ids = [...selectedStudentEnrolmentIds.value];
+        moveForm.student_enrolment_ids =
+            studentEnrolmentId != null ? [studentEnrolmentId] : [...selectedStudentEnrolmentIds.value];
         moveForm.target_academic_calendar_class_id = moveTargetClasses.value[0]?.id ?? null;
         moveForm.clearErrors();
         openModal(MOVE_STUDENTS_MODAL);

@@ -242,6 +242,13 @@ test('countsByCourseLevel is isolated by mode of study', function () {
 
     expect($this->query->countsByCourseLevel((int) $institutionDepartment->id, $modeA->id, '2026'))->toHaveKey($key)
         ->and($this->query->countsByCourseLevel((int) $institutionDepartment->id, $modeB->id, '2026'))->not->toHaveKey($key);
+
+    $calendarIds = AcademicCalendar::idsForStartedCalendarYear('2026');
+    $modeTotals = $this->query->countsByModeForCalendars((int) $institutionDepartment->id, $calendarIds);
+
+    expect($modeTotals)->toHaveKey($modeA->id)
+        ->and($modeTotals[$modeA->id])->toBe(1)
+        ->and($modeTotals)->not->toHaveKey($modeB->id);
 });
 
 test('listForClassAllocation returns empty without matching student enrolment', function () {

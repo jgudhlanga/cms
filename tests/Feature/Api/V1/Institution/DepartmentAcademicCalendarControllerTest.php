@@ -31,6 +31,8 @@ use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Laravel\Sanctum\Sanctum;
 
+require_once __DIR__.'/../../../../Support/AcademicCalendarClassTestHelpers.php';
+
 function attachDepartmentCalendarApiEnrolment(Student $student, StudentApplication $studentApplication, AcademicCalendar $calendar): void
 {
     $semester = Semester::query()->firstOrCreate(
@@ -1130,4 +1132,54 @@ test('department academic calendar semester filter hides other pills but keeps r
         ->and($levelRow['remainingPeriods'])->toEqual([
             ['id' => $semesterTwo->id, 'name' => 'Semester 2', 'isCurrent' => false],
         ]);
+});
+
+test('department academic calendar returns mode totals without course rows when mode is omitted', function () {
+    $this->travelTo('2026-05-15');
+
+    $context = buildDepartmentClassContext();
+    createFinalStudentApplication($context, 'mode-totals-one@example.com');
+    createFinalStudentApplication($context, 'mode-totals-two@example.com');
+
+    Sanctum::actingAs($context['user']);
+
+    $response = $this->getJson('/api/v1/departments/'.$context['institutionDepartment']->id.'/academic-calendars?academic_year='.$context['calendar']->calendar_year);
+
+    $response->assertOk()
+        ->assertJsonPath('data', [])
+        ->assertJsonStructure([
+            'meta' => [
+                'modeTotals' => [
+                    '*' => ['modeOfStudyId', 'count'],
+                ],
+            ],
+        ]);
+
+    expect(collect($response->json('meta.modeTotals'))->firstWhere('modeOfStudyId', $context['modeOfStudy']->id)['count'] ?? 0)
+        ->toBe(2);
+});
+
+test('department academic calendar includes mode totals with course rows when mode is present', function () {
+    $this->travelTo('2026-05-15');
+
+    $context = buildDepartmentClassContext();
+    createFinalStudentApplication($context, 'mode-rows-one@example.com');
+    createFinalStudentApplication($context, 'mode-rows-two@example.com');
+
+    Sanctum::actingAs($context['user']);
+
+    $response = $this->getJson('/api/v1/departments/'.$context['institutionDepartment']->id.'/academic-calendars?academic_year='.$context['calendar']->calendar_year.'&mode_of_study_id='.$context['modeOfStudy']->id);
+
+    $response->assertOk()
+        ->assertJsonStructure([
+            'meta' => [
+                'modeTotals' => [
+                    '*' => ['modeOfStudyId', 'count'],
+                ],
+            ],
+        ]);
+
+    expect($response->json('data'))->not->toBeEmpty()
+        ->and(collect($response->json('meta.modeTotals'))->firstWhere('modeOfStudyId', $context['modeOfStudy']->id)['count'] ?? 0)
+        ->toBe(2);
 });

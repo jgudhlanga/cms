@@ -12,7 +12,6 @@ use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Syllabus\CourseSyllabus;
-use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentSemester;
 use App\Queries\Enrolments\ConfirmedStudentsQuery;
 use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
@@ -32,18 +31,30 @@ class DepartmentAcademicCalendarController extends Controller
         $department = $this->loadDepartmentWithCourses($institutionDepartment);
         $context = $this->resolveContext();
 
-        $lookups = $context === null
-            ? $this->emptyLookups()
-            : $this->buildLookups($department, $context);
+        if ($context === null) {
+            return response()->json([
+                'data' => $this->formatDepartment($department, $this->emptyLookups()),
+                'meta' => null,
+            ]);
+        }
 
-        $meta = $context === null ? null : [
+        $modeTotals = $this->modeTotals($department, $context);
+        $meta = [
             'academicYear' => $context['calendarYear'],
             'resolvedAcademicCalendarId' => $context['academicCalendarId'],
             'resolvedSemesterId' => $context['semesterId'],
+            'modeTotals' => $modeTotals,
         ];
 
+        if ($context['modeOfStudyId'] === null) {
+            return response()->json([
+                'data' => [],
+                'meta' => $meta,
+            ]);
+        }
+
         return response()->json([
-            'data' => $this->formatDepartment($department, $lookups),
+            'data' => $this->formatDepartment($department, $this->buildLookups($department, $context)),
             'meta' => $meta,
         ]);
     }
@@ -62,14 +73,13 @@ class DepartmentAcademicCalendarController extends Controller
     }
 
     /**
-     * @return array{calendarYear: string, academicCalendarId: int, modeOfStudyId: int, calendarIdsForYear: list<int>, semesterId: int|null}|null
+     * @return array{calendarYear: string, academicCalendarId: int, modeOfStudyId: int|null, calendarIdsForYear: list<int>, semesterId: int|null}|null
      */
     private function resolveContext(): ?array
     {
         $academicYear = request()->query('academic_year');
-        $modeOfStudyId = request()->query('mode_of_study_id');
 
-        if (! is_string($academicYear) || $academicYear === '' || ! $modeOfStudyId) {
+        if (! is_string($academicYear) || $academicYear === '') {
             return null;
         }
 
@@ -79,16 +89,41 @@ class DepartmentAcademicCalendarController extends Controller
             return null;
         }
 
+        $modeOfStudyIdRaw = request()->query('mode_of_study_id');
+        $modeOfStudyId = is_numeric($modeOfStudyIdRaw) ? (int) $modeOfStudyIdRaw : null;
         $semesterIdRaw = request()->query('semester_id');
         $semesterId = is_numeric($semesterIdRaw) ? (int) $semesterIdRaw : null;
 
         return [
             'calendarYear' => $academicYear,
             'academicCalendarId' => (int) $resolvedId,
-            'modeOfStudyId' => (int) $modeOfStudyId,
+            'modeOfStudyId' => $modeOfStudyId !== null && $modeOfStudyId > 0 ? $modeOfStudyId : null,
             'calendarIdsForYear' => AcademicCalendar::idsForStartedCalendarYear($academicYear),
             'semesterId' => $semesterId !== null && $semesterId > 0 ? $semesterId : null,
         ];
+    }
+
+    /**
+     * @param  array{calendarYear: string, academicCalendarId: int, modeOfStudyId: int|null, calendarIdsForYear: list<int>, semesterId: int|null}  $context
+     * @return list<array{modeOfStudyId: int, count: int}>
+     */
+    private function modeTotals(InstitutionDepartment $department, array $context): array
+    {
+        $counts = app(ConfirmedStudentsQuery::class)->countsByModeForCalendars(
+            (int) $department->id,
+            $context['calendarIdsForYear'],
+        );
+
+        $totals = [];
+
+        foreach ($counts as $modeOfStudyId => $count) {
+            $totals[] = [
+                'modeOfStudyId' => (int) $modeOfStudyId,
+                'count' => (int) $count,
+            ];
+        }
+
+        return $totals;
     }
 
     /**
@@ -110,21 +145,22 @@ class DepartmentAcademicCalendarController extends Controller
     }
 
     /**
-     * @param  array{calendarYear: string, academicCalendarId: int, modeOfStudyId: int, calendarIdsForYear: list<int>, semesterId: int|null}  $context
+     * @param  array{calendarYear: string, academicCalendarId: int, modeOfStudyId: int|null, calendarIdsForYear: list<int>, semesterId: int|null}  $context
      * @return array{calendarYear: string, classConfig: array<string, array{id: int, students_per_class: int, semesterId: int|null, semester: string|null, courseSyllabusIds: list<int>, courseSyllabusCodes: list<string>}>, configsByPair: array<string, list<array{id: int, students_per_class: int, semesterId: int|null, semester: string|null, courseSyllabusIds: list<int>, courseSyllabusCodes: list<string>}>>, classesCount: array<string, int>, totalnClass: array<string, int>, totalFinalList: array<string, int>, filterSemesterId: int|null, periodsByType: array<string, list<array{id: int, name: string, slug: string}>>, currentSemesterIdByType: array<string, int|null>}
      */
     private function buildLookups(InstitutionDepartment $department, array $context): array
     {
+        $modeOfStudyId = (int) $context['modeOfStudyId'];
         $confirmedCounts = app(ConfirmedStudentsQuery::class)->countsByCourseLevelForCalendars(
             (int) $department->id,
-            $context['modeOfStudyId'],
+            $modeOfStudyId,
             $context['calendarIdsForYear'],
         );
 
         $configs = ClassConfig::query()
             ->where('calendar_year', $context['calendarYear'])
             ->where('institution_department_id', $department->id)
-            ->where('mode_of_study_id', $context['modeOfStudyId'])
+            ->where('mode_of_study_id', $modeOfStudyId)
             ->with('semester')
             ->get();
 
@@ -139,7 +175,7 @@ class DepartmentAcademicCalendarController extends Controller
             'totalnClass' => $this->totalnClassLookup(
                 $context['calendarIdsForYear'],
                 (int) $department->id,
-                $context['modeOfStudyId'],
+                $modeOfStudyId,
             ),
             'totalFinalList' => $confirmedCounts,
             'filterSemesterId' => $context['semesterId'],

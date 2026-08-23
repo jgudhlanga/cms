@@ -2,20 +2,27 @@
 import AcademicCalendarClassNavComboSelect from '@/components/academicCalendars/AcademicCalendarClassNavComboSelect.vue';
 import AssignClassTutorModal from '@/components/academicCalendars/AssignClassTutorModal.vue';
 import ClassListExportModal from '@/components/academicCalendars/ClassListExportModal.vue';
+import { BaseButton } from '@/components/core/button';
+import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import Empty from '@/components/core/util/Empty.vue';
 import { openAssignClassTutorModal } from '@/composables/academicCalendars/useAcademicCalendarClassTutor';
+import { ADD_STUDENTS_MODAL, useAcademicCalendarClassAddStudents } from '@/composables/academicCalendars/useAcademicCalendarClassAddStudents';
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { EDIT_CLASS_MODAL, useAcademicCalendarClassEdit } from '@/composables/academicCalendars/useAcademicCalendarClassEdit';
 import { openClassListExportModal } from '@/composables/academicCalendars/useClassListExport';
 import { MOVE_STUDENTS_MODAL, useAcademicCalendarClassMoveStudents } from '@/composables/academicCalendars/useAcademicCalendarClassMoveStudents';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 import { useAcademicCalendarClassStudentFilters } from '@/composables/academicCalendars/useAcademicCalendarClassStudentFilters';
 import { useAcademicCalendarClassStudentSelection } from '@/composables/academicCalendars/useAcademicCalendarClassStudentSelection';
 import { useAcademicCalendarClassStudents } from '@/composables/academicCalendars/useAcademicCalendarClassStudents';
 import { useDepartmentAcademicCalendarClassNavigation } from '@/composables/academicCalendars/useDepartmentAcademicCalendarClassNavigation';
-import { errorAlert } from '@/lib/alerts';
+import { errorAlert, successAlert } from '@/lib/alerts';
 import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { hasAbility } from '@/lib/permissions';
-import { AcademicCalendar, AcademicCalendarClassDetail, AcademicCalendarClassMoveTarget, ClassConfig, ClassSemesterModule } from '@/types/academic-calendar';
+import { AcademicCalendar, AcademicCalendarClassDetail, AcademicCalendarClassMoveTarget, AcademicCalendarClassPreviewStudent, ClassConfig, ClassSemesterModule } from '@/types/academic-calendar';
 import { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import { Head, router } from '@inertiajs/vue3';
@@ -25,6 +32,7 @@ import AcademicCalendarClassStudentFilters from './partials/AcademicCalendarClas
 import AcademicCalendarClassHeaderCard from './partials/AcademicCalendarClassHeaderCard.vue';
 import AcademicCalendarClassModulesPanel from './partials/AcademicCalendarClassModulesPanel.vue';
 import AcademicCalendarClassStudentsTable from './partials/AcademicCalendarClassStudentsTable.vue';
+import AddAcademicCalendarClassStudentsModal from './partials/AddAcademicCalendarClassStudentsModal.vue';
 import EditAcademicCalendarClassModal from './partials/EditAcademicCalendarClassModal.vue';
 import MoveAcademicCalendarStudentsModal from './partials/MoveAcademicCalendarStudentsModal.vue';
 
@@ -48,10 +56,12 @@ const props = withDefaults(
         semesterConfigHasSyllabi?: boolean;
         canAssignStaffing?: boolean;
         isLastProgrammePhase?: boolean;
+        unassignedStudents?: AcademicCalendarClassPreviewStudent[];
     }>(),
     {
         moveTargetClasses: () => [],
         siblingAcademicCalendarClasses: () => [],
+        unassignedStudents: () => [],
         canUpdateAcademicCalendarClass: false,
         canViewCourseWork: false,
         canExportClassList: false,
@@ -67,7 +77,7 @@ const props = withDefaults(
 const { department, academicCalendar, academicCalendarClass, course, level, mode, classConfig, moveTargetClasses, siblingAcademicCalendarClasses, selectedSemesterId } =
     toRefs(props);
 
-const { departmentClassesUrl, moveStudentsUrl, advancePhaseUrl, completeLevelUrl, updateClassUrl, breadcrumbs, studentCourseWorkUrl, classConfigQuery } =
+const { departmentClassesUrl, moveStudentsUrl, addStudentsUrl, removeStudentsUrl, advancePhaseUrl, completeLevelUrl, updateClassUrl, breadcrumbs, studentCourseWorkUrl, classConfigQuery } =
     useDepartmentAcademicCalendarClassNavigation(
     department,
     academicCalendar,
@@ -95,6 +105,10 @@ const { moveForm, openMoveStudentsModal, submitMoveStudents, resetMoveFormOnModa
     moveStudentsUrl,
     moveTargetClasses,
     selectedStudentEnrolmentIds,
+);
+
+const { addStudentsForm, openAddStudentsModal, submitAddStudents, resetAddStudentsFormOnModalClose } = useAcademicCalendarClassAddStudents(
+    addStudentsUrl,
 );
 
 const { editClassForm, openEditClassModal, submitEditClass, resetEditClassFormOnModalClose } = useAcademicCalendarClassEdit(
@@ -212,6 +226,33 @@ const onRemoveTutor = async (): Promise<void> => {
         },
     );
 };
+
+const onRemoveStudent = async (student: AcademicCalendarClassPreviewStudent): Promise<void> => {
+    const confirmed = await openConfirmDialog({
+        title: trans('academic_calendar.remove_from_class_confirm_title'),
+        message: trans('academic_calendar.remove_from_class_confirm_message', { name: student.name }),
+        confirmText: trans('academic_calendar.remove_from_class'),
+        cancelText: trans('trans.cancel'),
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.post(
+        removeStudentsUrl.value,
+        { student_enrolment_ids: [student.studentEnrolmentId] },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                successAlert(trans('academic_calendar.remove_students_success', { count: 1 }));
+            },
+            onError: (errors) => {
+                errorAlert(firstInertiaErrorMessage(errors, trans('academic_calendar.remove_students_failed')));
+            },
+        },
+    );
+};
 </script>
 
 <template>
@@ -225,41 +266,63 @@ const onRemoveTutor = async (): Promise<void> => {
                 :calendar-year="academicCalendar.attributes.calendarYear"
             />
         </template>
-        <div class="flex flex-col space-y-6">
-            <div>
-                <AcademicCalendarClassHeaderCard
-                    :title="academicCalendarClass.name"
-                    :description="academicCalendarClass.description"
-                    :student-count="academicCalendarClass.studentCount"
-                    :tutor="academicCalendarClass.tutor ?? null"
-                    :can-update="canUpdateAcademicCalendarClass"
-                    :can-export-class-list="canExportClassList"
-                    :can-assign-staffing="canAssignStaffing"
-                    @edit="openEditClassModal"
-                    @export-class-list="openClassListExportModal"
-                    @assign-tutor="onAssignTutor"
-                    @remove-tutor="onRemoveTutor"
-                />
-            </div>
-            <AcademicCalendarClassModulesPanel
-                :institution-department-id="Number(department.id)"
-                :calendar-year="String(academicCalendar.attributes.calendarYear)"
-                :academic-calendar-class-id="academicCalendarClass.id"
-                :semester-modules="semesterModules"
-                :selected-semester-id="selectedSemesterId"
-                :calendar-type="calendarType"
-                :semester-config-has-syllabi="semesterConfigHasSyllabi"
+        <div class="flex flex-col gap-2">
+            <AcademicCalendarClassHeaderCard
+                :title="academicCalendarClass.name"
+                :description="academicCalendarClass.description"
+                :student-count="academicCalendarClass.studentCount"
+                :tutor="academicCalendarClass.tutor ?? null"
+                :can-update="canUpdateAcademicCalendarClass"
                 :can-assign-staffing="canAssignStaffing"
-            />
-            <div class="space-y-4">
-                <h2 class="text-lg font-semibold text-foreground">{{ $tChoice('trans.student', 2) }}</h2>
-                <AcademicCalendarClassStudentFilters :filters="filters" @change="onFiltersChange" />
+                :class-config="classConfig"
+                @edit="openEditClassModal"
+                @assign-tutor="onAssignTutor"
+                @remove-tutor="onRemoveTutor"
+            >
+                <AcademicCalendarClassModulesPanel
+                    embedded
+                    :institution-department-id="Number(department.id)"
+                    :calendar-year="String(academicCalendar.attributes.calendarYear)"
+                    :academic-calendar-class-id="academicCalendarClass.id"
+                    :semester-modules="semesterModules"
+                    :selected-semester-id="selectedSemesterId"
+                    :calendar-type="calendarType"
+                    :semester-config-has-syllabi="semesterConfigHasSyllabi"
+                    :can-assign-staffing="canAssignStaffing"
+                />
+            </AcademicCalendarClassHeaderCard>
+            <div class="mt-4 flex flex-col gap-2">
+                <AcademicCalendarClassStudentFilters class="min-w-0" :filters="filters" @change="onFiltersChange">
+                    <template #actions>
+                        <BaseButton
+                            v-if="canMoveStudents"
+                            type="button"
+                            :size="ButtonSize.xs"
+                            :variant="ColorVariant.primary"
+                            classes="rounded-full"
+                            @click="openAddStudentsModal"
+                        >
+                            <BaseIcon :name="IconName.add" :color="ColorVariant.white" />
+                            {{ $t('academic_calendar.add_student') }}
+                        </BaseButton>
+                        <BaseButton
+                            v-if="canExportClassList"
+                            type="button"
+                            :size="ButtonSize.xs"
+                            :variant="ColorVariant.primary_outline"
+                            classes="rounded-full"
+                            @click="openClassListExportModal"
+                        >
+                            <BaseIcon :name="IconName.export" />
+                            {{ $t('academic_calendar.export_class_list') }}
+                        </BaseButton>
+                    </template>
+                </AcademicCalendarClassStudentFilters>
                 <Empty
                     v-if="filteredStudents.length === 0 && sortedStudents.length > 0"
                     :message="$t('trans.no_data')"
                 />
                 <AcademicCalendarClassStudentsTable
-                    v-else
                     v-model:selected-student-enrolment-ids="selectedStudentEnrolmentIds"
                     v-model:select-all-change-class-model="selectAllChangeClassModel"
                     :sorted-students="filteredStudents"
@@ -274,6 +337,7 @@ const onRemoveTutor = async (): Promise<void> => {
                     @open-move-students="openMoveStudentsModal"
                     @advance-phase="onAdvancePhase"
                     @complete-level="onCompleteLevel"
+                    @remove-student="onRemoveStudent"
                 />
             </div>
             <EditAcademicCalendarClassModal
@@ -290,6 +354,14 @@ const onRemoveTutor = async (): Promise<void> => {
                 :move-target-classes="moveTargetClasses"
                 :on-form-action="submitMoveStudents"
                 :on-close-modal="resetMoveFormOnModalClose"
+            />
+            <AddAcademicCalendarClassStudentsModal
+                v-if="canMoveStudents"
+                v-model:form="addStudentsForm"
+                :modal-name="ADD_STUDENTS_MODAL"
+                :unassigned-students="unassignedStudents"
+                :on-form-action="submitAddStudents"
+                :on-close-modal="resetAddStudentsFormOnModalClose"
             />
             <ClassListExportModal
                 v-if="canExportClassList"

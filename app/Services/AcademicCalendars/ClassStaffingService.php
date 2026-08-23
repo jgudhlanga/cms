@@ -219,12 +219,22 @@ class ClassStaffingService
     ): array {
         $classId = (int) $academicCalendarClass->id;
 
+        $allStaffIds = [];
+        foreach ($modules as $module) {
+            foreach (array_values(array_unique($classModuleStaffIdsByClassId[$classId][$module->id] ?? [])) as $staffId) {
+                $allStaffIds[] = (int) $staffId;
+            }
+        }
+
+        $namesById = $this->staffNamesKeyedById($allStaffIds);
+
         return $modules->map(function (CourseSyllabusModule $module) use (
             $classId,
             $classModuleStaffIdsByClassId,
             $templateStaffIdsByModuleId,
+            $namesById,
         ): array {
-            $staffIds = $classModuleStaffIdsByClassId[$classId][$module->id] ?? [];
+            $staffIds = array_values(array_unique($classModuleStaffIdsByClassId[$classId][$module->id] ?? []));
             $syllabusDefaultStaffIds = $templateStaffIdsByModuleId[$module->id] ?? [];
 
             return [
@@ -232,10 +242,66 @@ class ClassStaffingService
                 'code' => (string) $module->code,
                 'title' => (string) $module->title,
                 'captureMarkOnly' => (bool) $module->capture_mark_only,
-                'staffIds' => array_values(array_unique($staffIds)),
+                'staffIds' => $staffIds,
+                'staffNames' => $this->orderedStaffNames($staffIds, $namesById),
                 'syllabusDefaultStaffIds' => array_values(array_unique($syllabusDefaultStaffIds)),
             ];
         })->values()->all();
+    }
+
+    /**
+     * @param  list<int>  $staffIds
+     * @return array<int, string>
+     */
+    public function staffNamesKeyedById(array $staffIds): array
+    {
+        $uniqueIds = array_values(array_unique(array_map('intval', $staffIds)));
+
+        if ($uniqueIds === []) {
+            return [];
+        }
+
+        return Staff::query()
+            ->with('user')
+            ->whereIn('id', $uniqueIds)
+            ->get()
+            ->mapWithKeys(function (Staff $staff): array {
+                return [(int) $staff->id => $this->displayNameForStaff($staff)];
+            })
+            ->all();
+    }
+
+    /**
+     * @param  list<int>  $staffIds
+     * @param  array<int, string>|null  $namesById
+     * @return list<string>
+     */
+    public function orderedStaffNames(array $staffIds, ?array $namesById = null): array
+    {
+        $uniqueIds = array_values(array_unique(array_map('intval', $staffIds)));
+        $namesById ??= $this->staffNamesKeyedById($uniqueIds);
+
+        $names = [];
+        foreach ($uniqueIds as $staffId) {
+            $name = trim((string) ($namesById[$staffId] ?? ''));
+            if ($name !== '') {
+                $names[] = $name;
+            }
+        }
+
+        return $names;
+    }
+
+    private function displayNameForStaff(Staff $staff): string
+    {
+        $user = $staff->user;
+        $name = trim((string) ($user?->full_name ?? ''));
+
+        if ($name === '' && $user !== null) {
+            $name = trim(((string) ($user->first_name ?? '')).' '.((string) ($user->last_name ?? '')));
+        }
+
+        return $name;
     }
 
     public function formatTutorSummary(?array $tutor): ?array
