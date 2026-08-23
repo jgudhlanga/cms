@@ -18,10 +18,10 @@ import { Link } from '@/types/ui';
 
 const {
     createInstitutionDepartmentColumns,
+    departmentShowUrl,
     institutionDepartmentRowKey,
     openDepartmentDivisionModal,
     openInstitutionDepartmentsModal,
-    viewDepartment,
 } = useInstitutionDepartments();
 
 const isAcademic = Number(route().params?.is_academic) === 1;
@@ -98,7 +98,7 @@ const canEditDepartment = computed(() => hasAbility('update:department-metadata'
                     :is-academic="isAcademic"
                     :can-view="canViewDepartment"
                     :can-edit="canEditDepartment"
-                    @view="viewDepartment(institutionDepartmentRowKey(row))"
+                    :view-url="departmentShowUrl(row)"
                     @edit="openDepartmentDivisionModal(row)"
                 />
             </template>

@@ -32,16 +32,17 @@ const departmentCode = computed(() => props.department.attributes?.departmentCod
 </script>
 
 <template>
-    <div class="flex items-center">
-        <div class="flex space-x-2 w-[200px] items-center">
+    <div class="flex h-9 shrink-0 items-center gap-3">
+        <div class="flex shrink-0 items-center gap-2">
             <component :is="icons[IconName.company]" class="h-4 w-4 shrink-0 text-muted-foreground" />
-            <span class="text-sm font-medium text-foreground uppercase">{{ $t('trans.ui_switch_department') }}</span>
+            <span class="text-sm leading-none font-medium text-foreground uppercase">{{ $t('trans.ui_switch_department') }}</span>
         </div>
-        <div class="flex w-1/3">
+        <div class="flex h-9 w-64 min-w-0 items-center sm:w-72">
             <InstitutionDepartmentComboSelect
                 :form="form"
                 v-model="selectedDepartment"
                 label=""
+                :vertical-layout="false"
                 width-class="w-full"
             />
         </div>

@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import BaseTag from '@/components/core/util/BaseTag.vue';
 import LevelCodeBadge from '@/components/core/util/LevelCodeBadge.vue';
 import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 import { formatLevelBadge } from '@/lib/levelBadge';
 import { InstitutionDepartment } from '@/types/institution';
 import { CircleUser } from 'lucide-vue-next';
@@ -11,12 +13,12 @@ interface Props {
     isAcademic?: boolean;
     canView?: boolean;
     canEdit?: boolean;
+    viewUrl?: string;
 }
 
 defineProps<Props>();
 
 const emit = defineEmits<{
-    view: [];
     edit: [];
 }>();
 
@@ -123,21 +125,25 @@ const hasStaffName = (name?: string | null): boolean => Boolean(name?.trim());
 
             <div v-if="canView || canEdit" class="mt-auto flex items-center justify-end gap-2 pt-3">
                 <button
-                    v-if="canView"
-                    type="button"
-                    class="rounded-full border-2 border-primary bg-transparent px-5 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/5"
-                    @click.stop="emit('view')"
-                >
-                    {{ $t('trans.view') }}
-                </button>
-                <button
                     v-if="canEdit"
                     type="button"
-                    class="rounded-full border border-primary/30 bg-transparent px-5 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/5"
+                    class="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-transparent px-4 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/5"
                     @click.stop="emit('edit')"
                 >
+                    <BaseIcon :name="IconName.edit" class="h-3.5 w-3.5" />
                     {{ $t('trans.edit') }}
                 </button>
+                <a
+                    v-if="canView && viewUrl"
+                    :href="viewUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-transparent px-4 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/5"
+                    @click.stop
+                >
+                    <BaseIcon :name="IconName.eye" class="h-3.5 w-3.5" />
+                    {{ $t('trans.view') }}
+                </a>
             </div>
         </div>
     </div>

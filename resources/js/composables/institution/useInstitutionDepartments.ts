@@ -80,6 +80,10 @@ export const useInstitutionDepartments = () => {
         openModal({ name: APP_MODULE_KEYS.institution_departments, edit: institutionDepartments });
     };
 
+    const departmentShowUrl = (department: InstitutionDepartment): string => {
+        return route('institution-departments.show', getIdParams(institutionDepartmentRowKey(department)));
+    };
+
     const viewDepartment = (institutionDepartment: string) => {
         const id = getIdParams(institutionDepartment);
         onView(hasAbility('view:department-metadata'), route('institution-departments.show', id));
@@ -117,6 +121,7 @@ export const useInstitutionDepartments = () => {
         archiveDepartment,
         createInstitutionDepartmentColumns,
         deleteDepartment,
+        departmentShowUrl,
         institutionDepartmentRowKey,
         openInstitutionDepartmentsModal,
         openDepartmentDivisionModal,

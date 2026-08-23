@@ -98,22 +98,23 @@ const activeTabDescription = computed(() => activeSection.value?.transDescriptio
     <Head :title="$tChoice('trans.department', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution.index')">
         <template #backNavigationLeading>
+            <div class="flex h-9 min-w-0 items-center gap-2">
+                <DepartmentColorSwatch
+                    :color-code="department.attributes?.colorCode"
+                    :department-name="department.attributes?.department"
+                    size-class="h-3.5 w-3.5"
+                />
+                <h1 class="truncate text-lg leading-none font-semibold tracking-tight text-foreground">{{ departmentTitle() }}</h1>
+            </div>
+        </template>
+
+        <template v-if="canViewAnyDepartmentMetaData" #backNavigationTrailing>
             <DepartmentContextBar
                 :department="department"
                 :form="switchDepartmentForm"
                 v-model="selectedDepartment"
-                :show-switcher="canViewAnyDepartmentMetaData"
             />
         </template>
-
-        <div class="mb-4 flex items-center gap-2">
-            <DepartmentColorSwatch
-                :color-code="department.attributes?.colorCode"
-                :department-name="department.attributes?.department"
-                size-class="h-3.5 w-3.5"
-            />
-            <h1 class="text-lg font-semibold tracking-tight text-foreground">{{ departmentTitle() }}</h1>
-        </div>
 
         <BaseSectionNav
             v-model:active-tab="activeTab"
