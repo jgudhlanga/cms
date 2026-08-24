@@ -29,15 +29,20 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { isItTrue } = useUtils();
+const { isItTrue, navigateTo } = useUtils();
 const { requirements, departmentLevel, institutionDepartment } = props;
+
+const requirementsIndexUrl = route(
+    'application-requirements.department',
+    getIdParams(institutionDepartment.id?.toString() ?? ''),
+);
 
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { title: 'Enrolment setup', href: route('application-offerings.index') },
     {
         title: institutionDepartment.attributes.department,
-        href: route('application-requirements.department', getIdParams(institutionDepartment.id?.toString() ?? '')),
+        href: requirementsIndexUrl,
     },
     { title: departmentLevel.attributes.level },
     { transKey: 'enrolment_requirements' },
@@ -134,7 +139,7 @@ const onInputOtherSubjectsCount = () => {
     <Head :title="$t('trans.enrolment_requirements')" />
     <PageContainer
         :breadcrumbs="breadcrumbs"
-        :back-url="route('application-requirements.department', getIdParams(institutionDepartment.id?.toString() ?? ''))"
+        :back-url="requirementsIndexUrl"
     >
         <form @submit.prevent="updateLevel" class="flex flex-col">
             <div class="flex flex-col space-y-3">
@@ -202,7 +207,7 @@ const onInputOtherSubjectsCount = () => {
                     type="button"
                     :variant="ColorVariant.shade"
                     :size="ButtonSize.lg"
-                    :href="route('application-requirements.department', getIdParams(institutionDepartment.id?.toString() ?? ''))"
+                    @click="navigateTo(requirementsIndexUrl)"
                 >
                     {{ $t('trans.back') }}
                 </BaseButton>

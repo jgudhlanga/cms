@@ -58,6 +58,18 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        app(ApplicationRequirementBackfillService::class)->restoreLegacyFromLatestSnapshot(dryRun: false);
+        $service = app(ApplicationRequirementBackfillService::class);
+
+        // Prefer live application_* rows (post-cutover edits). Fall back to the newest non-empty snapshot.
+        if (
+            Schema::hasTable('application_level_requirements')
+            && \App\Models\Applications\ApplicationLevelRequirement::query()->count() > 0
+        ) {
+            $service->restoreLegacyFromApplication(dryRun: false);
+
+            return;
+        }
+
+        $service->restoreLegacyFromLatestSnapshot(dryRun: false);
     }
 };

@@ -73,7 +73,7 @@ class ApplicationRequirementController extends Controller
                     'levels' => $levels,
                 ];
             })
-            ->filter(fn (array $course) => $course['levels'] !== [])
+            ->filter(fn (array $course) => $course['hasEnrolmentRequirements'] && $course['levels'] !== [])
             ->values()
             ->all();
 
@@ -142,6 +142,8 @@ class ApplicationRequirementController extends Controller
     ): Response {
         $this->authorize('manage:online-application-catalogue');
         abort_unless((int) $department_course->institution_department_id === (int) $institution_department->id, 404);
+        $department_course->loadMissing('course');
+        abort_unless((bool) ($department_course->course?->has_enrolment_requirements ?? false), 404);
 
         $department_course->loadMissing([
             'course',
@@ -183,6 +185,9 @@ class ApplicationRequirementController extends Controller
         CourseRequirementRequest $request,
     ): RedirectResponse {
         $this->authorize('manage:online-application-catalogue');
+        abort_unless((int) $department_course->institution_department_id === (int) $institution_department->id, 404);
+        $department_course->loadMissing('course');
+        abort_unless((bool) ($department_course->course?->has_enrolment_requirements ?? false), 404);
 
         $this->syncService->syncCourseRequirement(
             $institution_department,

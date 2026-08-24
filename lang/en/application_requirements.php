@@ -19,6 +19,8 @@ return [
     'requirements_description' => 'Configure academic entry requirements (O-level, subjects, prior level) for linked levels and courses.',
     'level_requirements' => 'Level requirements',
     'course_requirements' => 'Course requirements',
+    'course_requirements_description' => 'Only courses with “Has enrolment requirements” enabled under Config → Courses appear here. Use Configure per linked level to set O-level and related rules for that course.',
+    'no_course_overrides' => 'No courses in this department have enrolment requirement overrides enabled.',
     'class_sizes_heading' => 'Class sizes',
     'class_sizes_description' => 'Configure intake class sizes per course, level, intake period, and mode of study.',
     'tab_offerings' => 'Offerings',

@@ -4,6 +4,7 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import DepartmentColorSwatch from '@/components/institution/DepartmentColorSwatch.vue';
 import InstitutionDepartmentNameCell from '@/components/institution/InstitutionDepartmentNameCell.vue';
 import EnrolmentSetupTabs from '@/pages/institution/enrolments/partials/EnrolmentSetupTabs.vue';
+import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { cn } from '@/lib/utils';
 import type { Link } from '@/types/ui';
@@ -99,12 +100,21 @@ const filteredNavDepartments = computed(() => {
                                     {{ level.configured ? $t('application_requirements.configured') : $t('application_requirements.not_configured') }}
                                 </p>
                             </div>
-                            <BaseButton
-                                :variant="ColorVariant.primary_outline"
-                                :href="route('application-requirements.level', { institution_department: department.id, department_level: level.id })"
+                            <InertiaLink
+                                :href="
+                                    route('application-requirements.level', {
+                                        institution_department: department.id,
+                                        department_level: level.id,
+                                    })
+                                "
                             >
-                                {{ $t('application_requirements.configure_requirements') }}
-                            </BaseButton>
+                                <BaseButton
+                                    :title="$t('application_requirements.configure_requirements')"
+                                    :variant="ColorVariant.primary_outline"
+                                    :size="ButtonSize.xs"
+                                    classes="rounded-full"
+                                />
+                            </InertiaLink>
                         </div>
                         <p v-if="levels.length === 0" class="px-3 py-6 text-center text-xs text-muted-foreground">
                             {{ $t('application_offerings.empty_levels') }}
@@ -112,27 +122,24 @@ const filteredNavDepartments = computed(() => {
                     </div>
                 </section>
 
-                <section class="space-y-3 rounded-lg border border-border bg-card p-4">
-                    <h2 class="text-sm font-semibold">{{ $t('application_requirements.course_requirements') }}</h2>
+                <section v-if="courses.length > 0" class="space-y-3 rounded-lg border border-border bg-card p-4">
+                    <div>
+                        <h2 class="text-sm font-semibold">{{ $t('application_requirements.course_requirements') }}</h2>
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            {{ $t('application_requirements.course_requirements_description') }}
+                        </p>
+                    </div>
                     <div class="space-y-2">
                         <div
                             v-for="course in courses"
                             :key="course.id"
                             class="rounded-md border border-border px-3 py-2.5"
                         >
-                            <div class="flex flex-wrap items-center justify-between gap-2">
-                                <div>
-                                    <p class="text-sm font-medium">{{ course.name }}</p>
-                                    <p v-if="!course.hasEnrolmentRequirements" class="text-[11px] text-muted-foreground">
-                                        {{ $t('trans.no_data') }}
-                                    </p>
-                                </div>
-                            </div>
-                            <div v-if="course.hasEnrolmentRequirements" class="mt-2 flex flex-wrap gap-2">
-                                <BaseButton
+                            <p class="text-sm font-medium">{{ course.name }}</p>
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                <InertiaLink
                                     v-for="level in course.levels"
                                     :key="`${course.id}_${level.id}`"
-                                    :variant="ColorVariant.shade"
                                     :href="
                                         route('application-requirements.course', {
                                             institution_department: department.id,
@@ -141,13 +148,15 @@ const filteredNavDepartments = computed(() => {
                                         })
                                     "
                                 >
-                                    {{ level.name }}
-                                </BaseButton>
+                                    <BaseButton
+                                        :title="level.name"
+                                        :variant="ColorVariant.shade"
+                                        :size="ButtonSize.xs"
+                                        classes="rounded-full"
+                                    />
+                                </InertiaLink>
                             </div>
                         </div>
-                        <p v-if="courses.length === 0" class="py-6 text-center text-xs text-muted-foreground">
-                            {{ $t('application_offerings.empty_courses') }}
-                        </p>
                     </div>
                 </section>
             </div>

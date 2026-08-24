@@ -31,13 +31,19 @@ interface Props {
 const props = defineProps<Props>();
 
 const { institutionDepartment, departmentCourse, requirements, allowedLevels, selectedDepartmentLevelId } = props;
+const { isItTrue, navigateTo } = useUtils();
+
+const requirementsIndexUrl = route(
+    'application-requirements.department',
+    getIdParams(institutionDepartment.id?.toString() ?? ''),
+);
 
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { title: 'Enrolment setup', href: route('application-offerings.index') },
     {
         title: institutionDepartment.attributes.department,
-        href: route('application-requirements.department', getIdParams(institutionDepartment.id?.toString() ?? '')),
+        href: requirementsIndexUrl,
     },
     { title: departmentCourse.attributes.course },
     { transKey: 'enrolment_requirements' },
@@ -49,7 +55,6 @@ const mainSubjectsCountDisabled = ref(true);
 const otherSubjectsCountDisabled = ref(true);
 const mainSubjectsDisabled = ref(true);
 
-const { isItTrue } = useUtils();
 const { listSubjects, subjects } = useSubjects();
 const { storeCourseRequirements, courserRequirementsFormSchema } = useApplicationRequirements();
 
@@ -130,7 +135,7 @@ const onInputOtherSubjectsCount = () => {
     <Head :title="$t('trans.enrolment_requirements')" />
     <PageContainer
         :breadcrumbs="breadcrumbs"
-        :back-url="route('application-requirements.department', getIdParams(institutionDepartment.id?.toString() ?? ''))"
+        :back-url="requirementsIndexUrl"
     >
         <form @submit.prevent="updateRequirements" class="flex flex-col">
             <div class="mb-4">
@@ -196,7 +201,7 @@ const onInputOtherSubjectsCount = () => {
                     type="button"
                     :variant="ColorVariant.shade"
                     :size="ButtonSize.lg"
-                    :href="route('application-requirements.department', getIdParams(institutionDepartment.id?.toString() ?? ''))"
+                    @click="navigateTo(requirementsIndexUrl)"
                 >
                     {{ $t('trans.back') }}
                 </BaseButton>

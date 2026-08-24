@@ -144,3 +144,54 @@ test('enrolment setup can save level requirements', function () {
         ->where('is_o_level_required', true)
         ->exists())->toBeTrue();
 });
+
+test('requirements index only lists courses with has enrolment requirements', function () {
+    $user = makeRequirementsManager();
+    [$tenant, $institutionDepartment, $departmentLevel, $overrideCourse] = requirementFixture();
+
+    $plainCourse = Course::factory()->create(['has_enrolment_requirements' => false]);
+    $plainDepartmentCourse = DepartmentCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'course_id' => $plainCourse->id,
+    ]);
+    \App\Models\Institution\DepartmentLevelCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'department_level_id' => $departmentLevel->id,
+        'department_course_id' => $plainDepartmentCourse->id,
+    ]);
+    \App\Models\Institution\DepartmentLevelCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'department_level_id' => $departmentLevel->id,
+        'department_course_id' => $overrideCourse->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('application-requirements.department', $institutionDepartment->id))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('institution/enrolments/requirements/Index')
+            ->has('courses', 1)
+            ->where('courses.0.id', $overrideCourse->id)
+        );
+});
+
+test('course requirements page is unavailable when course has no enrolment requirements flag', function () {
+    $user = makeRequirementsManager();
+    [$tenant, $institutionDepartment, $departmentLevel] = requirementFixture();
+
+    $plainCourse = Course::factory()->create(['has_enrolment_requirements' => false]);
+    $plainDepartmentCourse = DepartmentCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'course_id' => $plainCourse->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('application-requirements.course', [
+            'institution_department' => $institutionDepartment->id,
+            'department_course' => $plainDepartmentCourse->id,
+            'department_level_id' => $departmentLevel->id,
+        ]))
+        ->assertNotFound();
+});

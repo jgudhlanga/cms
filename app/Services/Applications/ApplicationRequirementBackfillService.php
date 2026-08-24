@@ -297,6 +297,7 @@ class ApplicationRequirementBackfillService
     private function levelPayloadFromApplication(ApplicationLevelRequirement $row): array
     {
         return [
+            'tenant_id' => (int) $row->tenant_id,
             'is_o_level_required' => (bool) $row->is_o_level_required,
             'required_subjects_count' => $row->required_subjects_count,
             'main_subjects_count' => $row->main_subjects_count,
@@ -313,6 +314,7 @@ class ApplicationRequirementBackfillService
     private function coursePayloadFromApplication(ApplicationCourseRequirement $row): array
     {
         return [
+            'tenant_id' => (int) $row->tenant_id,
             'is_o_level_required' => (bool) $row->is_o_level_required,
             'required_subjects_count' => $row->required_subjects_count,
             'main_subjects_count' => $row->main_subjects_count,
@@ -329,11 +331,17 @@ class ApplicationRequirementBackfillService
      */
     private function levelPayloadFromArray(array $row): array
     {
+        $mainSubjectIds = $row['main_subject_ids'] ?? [];
+        if (is_string($mainSubjectIds)) {
+            $mainSubjectIds = json_decode($mainSubjectIds, true) ?: [];
+        }
+
         return [
+            'tenant_id' => (int) ($row['tenant_id'] ?? 0),
             'is_o_level_required' => (bool) ($row['is_o_level_required'] ?? false),
             'required_subjects_count' => $row['required_subjects_count'] ?? null,
             'main_subjects_count' => $row['main_subjects_count'] ?? null,
-            'main_subject_ids' => json_decode((string) ($row['main_subject_ids'] ?? '[]'), true) ?: [],
+            'main_subject_ids' => is_array($mainSubjectIds) ? $mainSubjectIds : [],
             'other_subjects_count' => $row['other_subjects_count'] ?? null,
             'only_read_write_required' => (bool) ($row['only_read_write_required'] ?? false),
             'required_level_id' => $row['required_level_id'] ?? null,
@@ -394,6 +402,24 @@ class ApplicationRequirementBackfillService
         }
 
         rsort($snapshots);
+
+        foreach ($snapshots as $relativePath) {
+            $absolutePath = Storage::disk('local')->path($relativePath);
+            try {
+                $payload = $this->readSnapshot($absolutePath);
+            } catch (\Throwable) {
+                continue;
+            }
+
+            $levelCount = (int) ($payload['source_level_count'] ?? 0);
+            $courseCount = (int) ($payload['source_course_count'] ?? 0);
+            $levelRows = count($payload['department_level_requirements'] ?? []);
+            $courseRows = count($payload['course_requirements'] ?? []);
+
+            if ($levelCount + $courseCount + $levelRows + $courseRows > 0) {
+                return $absolutePath;
+            }
+        }
 
         return Storage::disk('local')->path($snapshots[0]);
     }
