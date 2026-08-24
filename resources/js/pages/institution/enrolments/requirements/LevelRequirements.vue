@@ -74,17 +74,16 @@ onMounted(async () => {
     form.other_subjects_count = requirements?.attributes?.otherSubjectsCount?.toString() ?? '';
     form.main_subject_ids = requirements?.attributes?.mainSubjectIds ?? [];
     form.only_read_write_required = onlyReadWriteRequired.value = isItTrue(requirements?.attributes?.onlyReadWriteRequired);
-    form.required_level_id = requirements?.attributes?.requiredLevelId?.toString();
+    form.required_level_id =
+        requirements?.attributes?.requiredLevelId != null && requirements.attributes.requiredLevelId !== ''
+            ? String(requirements.attributes.requiredLevelId)
+            : 'none';
     mainSubjectsCountDisabled.value = isItTrue(!requirements?.attributes?.mainSubjectsCount);
     otherSubjectsCountDisabled.value = isItTrue(!requirements?.attributes?.otherSubjectsCount);
     mainSubjectsDisabled.value = isItTrue(!requirements?.attributes?.otherSubjectsCount);
 });
 
 const departmentLevels = computed(() => props.levels.filter((item: DepartmentLevel) => item.id !== departmentLevel.id));
-
-const onRadioChange = (value: any) => {
-    form.required_level_id = value === 'none' ? null : value;
-};
 
 const options = computed(() => {
     const rows = departmentLevels.value.map(
@@ -103,12 +102,18 @@ const options = computed(() => {
 const updateLevel = () => {
     form.is_o_level_required = isOLevelRequired.value;
     form.only_read_write_required = onlyReadWriteRequired.value;
+    const previousRequiredLevelId = form.required_level_id;
+    if (form.required_level_id === 'none' || form.required_level_id === '') {
+        form.required_level_id = null;
+    }
     const result = levelRequirementsFormSchema(isOLevelRequired.value).safeParse(form.data());
     if (!result.success) {
+        form.required_level_id = previousRequiredLevelId || 'none';
         errorAlert(trans('trans.validation_failed'));
         return;
     }
     if (Number(form.main_subjects_count ?? '') > 0 && form.main_subject_ids?.length < Number(form.main_subjects_count)) {
+        form.required_level_id = previousRequiredLevelId || 'none';
         errorAlert(trans('trans.main_subject_not_valid', { count: form.main_subjects_count?.toString() ?? '' }));
         return;
     }
@@ -195,11 +200,10 @@ const onInputOtherSubjectsCount = () => {
             <div v-if="departmentLevels.length > 0" class="mt-5 flex flex-col space-y-3">
                 <HeadingSmall :title="$t('trans.requires_previous_level')" :description="$t('trans.requires_previous_level_description')" />
                 <BaseRadioGroup
+                    v-model="form.required_level_id"
                     :options="options"
-                    :default-value="requirements?.attributes?.requiredLevelId?.toString()"
                     :label-uppercase="true"
                     :is-required="true"
-                    @update:modelValue="onRadioChange"
                 />
             </div>
             <div class="flex items-center justify-center space-x-3 p-6">

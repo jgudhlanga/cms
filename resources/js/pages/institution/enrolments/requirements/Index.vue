@@ -15,6 +15,9 @@ interface LevelRow {
     id: number;
     name: string;
     configured: boolean;
+    isOLevelRequired?: boolean;
+    hasPriorLevel?: boolean;
+    onlyReadWriteRequired?: boolean;
 }
 
 interface CourseRow {
@@ -97,7 +100,19 @@ const filteredNavDepartments = computed(() => {
                             <div>
                                 <p class="text-sm font-medium">{{ level.name }}</p>
                                 <p class="text-[11px] text-muted-foreground">
-                                    {{ level.configured ? $t('application_requirements.configured') : $t('application_requirements.not_configured') }}
+                                    <template v-if="!level.configured">
+                                        {{ $t('application_requirements.not_configured') }}
+                                    </template>
+                                    <template v-else-if="level.isOLevelRequired || level.hasPriorLevel || level.onlyReadWriteRequired">
+                                        <span v-if="level.isOLevelRequired">{{ $t('application_requirements.configured_o_level') }}</span>
+                                        <span v-if="level.isOLevelRequired && (level.hasPriorLevel || level.onlyReadWriteRequired)"> · </span>
+                                        <span v-if="level.hasPriorLevel">{{ $t('application_requirements.configured_prior_level') }}</span>
+                                        <span v-if="level.hasPriorLevel && level.onlyReadWriteRequired"> · </span>
+                                        <span v-if="level.onlyReadWriteRequired">{{ $t('application_requirements.configured_read_write') }}</span>
+                                    </template>
+                                    <template v-else>
+                                        {{ $t('application_requirements.configured') }}
+                                    </template>
                                 </p>
                             </div>
                             <InertiaLink

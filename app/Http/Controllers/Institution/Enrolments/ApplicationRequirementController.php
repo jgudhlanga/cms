@@ -91,6 +91,9 @@ class ApplicationRequirementController extends Controller
                     'id' => (int) $dl->id,
                     'name' => (string) ($dl->level?->name ?? ''),
                     'configured' => $dl->requirement !== null,
+                    'isOLevelRequired' => (bool) ($dl->requirement?->is_o_level_required ?? false),
+                    'hasPriorLevel' => $dl->requirement?->required_level_id !== null,
+                    'onlyReadWriteRequired' => (bool) ($dl->requirement?->only_read_write_required ?? false),
                 ])
                 ->all(),
             'courses' => $courses,
