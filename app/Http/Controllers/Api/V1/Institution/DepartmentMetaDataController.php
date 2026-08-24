@@ -41,7 +41,7 @@ class DepartmentMetaDataController extends Controller
 
     public function levels(InstitutionDepartment $institutionDepartment): JsonResponse
     {
-        $institutionDepartment->loadMissing(['departmentLevels.level', 'departmentLevels.requirement']);
+        $institutionDepartment->loadMissing(['departmentLevels.level']);
 
         $levels = DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
         $departmentLevelsIds = $institutionDepartment?->departmentLevels?->pluck('level_id');

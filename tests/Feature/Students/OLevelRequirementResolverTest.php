@@ -1,11 +1,11 @@
 <?php
 
+use App\Models\Applications\ApplicationCourseRequirement;
+use App\Models\Applications\ApplicationLevelRequirement;
 use App\Models\Institution\Course;
-use App\Models\Institution\CourseRequirement;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
-use App\Models\Institution\DepartmentLevelRequirement;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Level;
 use App\Models\Tenants\Tenant;
@@ -35,9 +35,10 @@ function createRequirementResolverFixture(): array
     return [$tenant, $departmentLevel, $departmentCourse];
 }
 
-function saveLevelRequirement(int $tenantId, int $departmentLevelId, bool $isOLevelRequired, int $mainCount): DepartmentLevelRequirement
+function saveLevelRequirement(int $tenantId, int $departmentLevelId, bool $isOLevelRequired, int $mainCount): ApplicationLevelRequirement
 {
-    $requirement = new DepartmentLevelRequirement([
+    return ApplicationLevelRequirement::query()->create([
+        'tenant_id' => $tenantId,
         'department_level_id' => $departmentLevelId,
         'is_o_level_required' => $isOLevelRequired,
         'required_subjects_count' => $mainCount,
@@ -47,10 +48,6 @@ function saveLevelRequirement(int $tenantId, int $departmentLevelId, bool $isOLe
         'only_read_write_required' => false,
         'required_level_id' => null,
     ]);
-    $requirement->tenant_id = $tenantId;
-    $requirement->save();
-
-    return $requirement;
 }
 
 function saveCourseRequirement(
@@ -59,8 +56,9 @@ function saveCourseRequirement(
     int $departmentCourseId,
     bool $isOLevelRequired,
     int $mainCount,
-): CourseRequirement {
-    $requirement = new CourseRequirement([
+): ApplicationCourseRequirement {
+    return ApplicationCourseRequirement::query()->create([
+        'tenant_id' => $tenantId,
         'department_level_id' => $departmentLevelId,
         'department_course_id' => $departmentCourseId,
         'is_o_level_required' => $isOLevelRequired,
@@ -71,10 +69,6 @@ function saveCourseRequirement(
         'only_read_write_required' => false,
         'required_level_id' => null,
     ]);
-    $requirement->tenant_id = $tenantId;
-    $requirement->save();
-
-    return $requirement;
 }
 
 test('o level requirement resolver prefers course when course requires o levels', function () {
@@ -86,7 +80,7 @@ test('o level requirement resolver prefers course when course requires o levels'
     $resolved = app(OLevelRequirementResolver::class)
         ->resolve($departmentLevel->id, $departmentCourse->id);
 
-    expect($resolved)->toBeInstanceOf(CourseRequirement::class)
+    expect($resolved)->toBeInstanceOf(ApplicationCourseRequirement::class)
         ->and($resolved->is($courseRequirement))->toBeTrue()
         ->and((int) $resolved->main_subjects_count)->toBe(5);
 });
@@ -100,7 +94,7 @@ test('o level requirement resolver falls through to level when course does not r
     $resolved = app(OLevelRequirementResolver::class)
         ->resolve($departmentLevel->id, $departmentCourse->id);
 
-    expect($resolved)->toBeInstanceOf(DepartmentLevelRequirement::class)
+    expect($resolved)->toBeInstanceOf(ApplicationLevelRequirement::class)
         ->and($resolved->is($levelRequirement))->toBeTrue()
         ->and((int) $resolved->main_subjects_count)->toBe(4);
 });

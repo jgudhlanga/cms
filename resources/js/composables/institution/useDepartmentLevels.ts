@@ -28,53 +28,14 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
             {
                 header: trans_choice('trans.level', 1),
                 accessorKey: 'level',
-                cell: ({ row }: { row: { original: DepartmentLevel } }) => {
-                    const id = getIdParams(row.original.id?.toString() ?? '');
-                    return hasAbility('update:department-metadata')
-                        ? textLink(route('department-levels.requirements', id), row.original.attributes?.level)
-                        : row.original.attributes?.level;
-                },
-            },
-            {
-                header: trans('trans.configured'),
-                accessorKey: 'requirement',
-                meta: { align: 'center' },
-                enableSorting: false,
-                cell: ({ row }: { row: { original: DepartmentLevel } }) => {
-                    return checkStatusIcon(!!row.original.relationships?.requirement);
-                },
-            },
-            {
-                header: trans_choice('trans.requirement', 2),
-                accessorKey: 'requirements',
-                enableSorting: false,
-                meta: { align: 'center' },
-                cell: ({ row }: { row: { original: DepartmentLevel } }) => {
-                    const id = getIdParams(row.original.id?.toString() ?? '');
-                    return hasAbility('update:department-metadata')
-                        ? actionButton({
-                              title: trans_choice('trans.requirement', 2),
-                              variant: ColorVariant.primary_outline,
-                              onClick: () => navigateTo(route('department-levels.requirements', id)),
-                          })
-                        : trans_choice('trans.requirement', 2);
-                },
+                cell: ({ row }: { row: { original: DepartmentLevel } }) => row.original.attributes?.level,
             },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',
                 enableSorting: false,
                 meta: { align: 'right' },
-                cell: ({ row }: { row: { original: DepartmentLevel } }) => {
-                    const allowed = hasAbility('create:department-metadata');
-                    const id = getIdParams(row.original.id?.toString() ?? '');
-                    return moreActionButton(!!row.original?.attributes?.deletedAt, [
-                        {
-                            key: 'edit',
-                            action: () => onEdit(allowed, route('department-levels.requirements', id)),
-                        },
-                    ]);
-                },
+                cell: () => null,
             },
         ];
     };
@@ -90,29 +51,6 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
                     closeModal(APP_MODULE_KEYS.department_levels);
                 },
                 onError: () => errorAlert(error),
-            });
-        } catch (error: any) {
-            form.setError(error.format());
-        }
-    };
-
-    const storeDepartmentLevelRequirements = (departmentLevelId: string, form: InertiaForm<any>, institutionDepartmentId: string) => {
-        try {
-            const success = trans('trans.item_saved', { item: trans_choice('trans.level', 2) });
-            const error = trans('trans.item_save_failure', { item: trans_choice('trans.level', 2) });
-            form.post(route('department-levels.store-requirements', departmentLevelId), {
-                onStart: () => toggleFormLoader(true),
-                onFinish: () => {
-                    form.reset();
-                    toggleFormLoader(false);
-                },
-                onSuccess: () => {
-                    successAlert(success);
-                    navigateTo(route('institution-departments.show', getIdParams(institutionDepartmentId)));
-                },
-                onError: () => {
-                    errorAlert(error);
-                },
             });
         } catch (error: any) {
             form.setError(error.format());
@@ -221,7 +159,6 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
         createDepartmentLevelColumns,
         openDepartmentLevelsModal,
         syncDepartmentLevels,
-        storeDepartmentLevelRequirements,
         listDepartmentLevels,
         isLoading,
         departmentLevels,

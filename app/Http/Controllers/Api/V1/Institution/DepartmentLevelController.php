@@ -115,6 +115,7 @@ class DepartmentLevelController extends Controller
                 'departmentLevel.requirement',
                 'departmentCourse.course',
                 'departmentCourse.requirement',
+                'departmentCourse.requirements',
                 'intakePeriod',
                 'classList',
             ])

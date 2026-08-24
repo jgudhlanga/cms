@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Students;
 
-use App\Models\Institution\CourseRequirement;
-use App\Models\Institution\DepartmentLevelRequirement;
+use App\Models\Applications\ApplicationCourseRequirement;
+use App\Models\Applications\ApplicationLevelRequirement;
 
 class OLevelRequirementResolver
 {
-    public function resolve(?int $departmentLevelId, ?int $departmentCourseId): DepartmentLevelRequirement|CourseRequirement|null
+    public function resolve(?int $departmentLevelId, ?int $departmentCourseId): ApplicationLevelRequirement|ApplicationCourseRequirement|null
     {
         if ($departmentLevelId && $departmentCourseId) {
-            $courseRequirement = CourseRequirement::query()
+            $courseRequirement = ApplicationCourseRequirement::query()
                 ->where('department_level_id', $departmentLevelId)
                 ->where('department_course_id', $departmentCourseId)
                 ->first();
@@ -21,7 +23,7 @@ class OLevelRequirementResolver
         }
 
         if ($departmentLevelId) {
-            $levelRequirement = DepartmentLevelRequirement::query()
+            $levelRequirement = ApplicationLevelRequirement::query()
                 ->where('department_level_id', $departmentLevelId)
                 ->first();
 

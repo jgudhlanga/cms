@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'backfill_dry_run' => 'Dry run — no changes written.',
+    'backfill_snapshot_written' => 'Snapshot written to :path',
+    'backfill_fresh' => 'Cleared existing application requirement rows.',
+    'backfill_summary' => 'Source: :source_levels level rows, :source_courses course rows. Copied: :levels levels, :courses courses. Skipped orphans: :levels_skipped levels, :courses_skipped courses.',
+    'backfill_complete' => 'Application requirements backfill complete.',
+    'restore_dry_run' => 'Dry run — legacy requirement tables not updated.',
+    'restore_summary' => 'Restored :levels level requirements and :courses course requirements on legacy tables.',
+    'restore_complete' => 'Legacy requirement tables restored.',
+    'restore_snapshot_missing' => 'Snapshot file not found: :path',
+    'restore_snapshot_missing_latest' => 'No requirements backfill snapshot found under storage/app/enrolments/.',
+    'legacy_requirement_tables_removed' => 'Legacy requirement tables have been removed. Manage requirements via Institution Config → Enrolment setup.',
+    'saved' => 'Enrolment requirements saved.',
+    'requirements_heading' => 'Enrolment requirements',
+    'requirements_description' => 'Configure academic entry requirements (O-level, subjects, prior level) for linked levels and courses.',
+    'level_requirements' => 'Level requirements',
+    'course_requirements' => 'Course requirements',
+    'class_sizes_heading' => 'Class sizes',
+    'class_sizes_description' => 'Configure intake class sizes per course, level, intake period, and mode of study.',
+    'tab_offerings' => 'Offerings',
+    'tab_requirements' => 'Requirements',
+    'tab_class_sizes' => 'Class sizes',
+    'configured' => 'Configured',
+    'not_configured' => 'Not configured',
+    'configure_requirements' => 'Configure',
+    'invalid_level_for_department' => 'The selected level does not belong to this department.',
+    'invalid_course_for_department' => 'The selected course does not belong to this department.',
+];

@@ -6,9 +6,9 @@ use App\Enums\Shared\DisabilityStatusEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Students\ApplicationTrackEnum;
 use App\Helpers\PaymentHelper;
-use App\Models\Institution\CourseRequirement;
+use App\Models\Applications\ApplicationCourseRequirement;
+use App\Models\Applications\ApplicationLevelRequirement;
 use App\Models\Institution\DepartmentLevel;
-use App\Models\Institution\DepartmentLevelRequirement;
 use App\Models\Institution\Level;
 use App\Models\Institution\ModeOfStudy;
 use App\Rules\Students\ValidateOLevelResults;
@@ -291,12 +291,12 @@ class CreateApplicationRequest extends FormRequest
         $departmentLevelId = $this->integer('level_id');
         $departmentCourseId = $this->integer('course_id');
 
-        $courseRequirement = CourseRequirement::query()
+        $courseRequirement = ApplicationCourseRequirement::query()
             ->where('department_level_id', $departmentLevelId)
             ->where('department_course_id', $departmentCourseId)
             ->first();
 
-        $levelRequirement = DepartmentLevelRequirement::query()
+        $levelRequirement = ApplicationLevelRequirement::query()
             ->where('department_level_id', $departmentLevelId)
             ->first();
 

@@ -10,6 +10,7 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
 import { cn } from '@/lib/utils';
+import EnrolmentSetupTabs from '@/pages/institution/enrolments/partials/EnrolmentSetupTabs.vue';
 import type { Link } from '@/types/ui';
 import { Head, Link as InertiaLink, useForm, usePage } from '@inertiajs/vue3';
 import { computed, reactive, watch } from 'vue';
@@ -294,6 +295,8 @@ const incompleteCourseIds = computed(() => {
                         </div>
                     </div>
                 </header>
+
+                <EnrolmentSetupTabs :department-id="department.id" active="offerings" />
 
                 <BaseAlert
                     v-if="flashSuccess"

@@ -31,7 +31,7 @@ class EnrolmentResource extends JsonResource
             'departmentLevel.level',
             'departmentLevel.requirement',
             'departmentCourse.course',
-            'departmentCourse.requirement',
+            'departmentCourse.requirements',
             'intakePeriod',
             'classList',
             'workflowStep',
@@ -47,6 +47,8 @@ class EnrolmentResource extends JsonResource
                 'idNumberRectificationStatus' => null,
                 'idNumberConflict' => null,
             ];
+
+        $courseRequirement = $this->departmentCourse?->requirementForLevel((int) $this->department_level_id);
 
         return [
             'type' => 'enrolments',
@@ -109,7 +111,7 @@ class EnrolmentResource extends JsonResource
                 'oLevelResults' => AcademicLevelResource::collection($this->student?->oLevelResults),
                 'workflowStep' => WorkflowStepResource::make($this->workflowStep),
                 'requirements' => $this->departmentLevel?->requirement ? DepartmentLevelRequirementResource::make($this->departmentLevel->requirement) : null,
-                'courseRequirements' => $this->departmentCourse?->requirement ? CourseRequirementResource::make($this->departmentCourse->requirement) : null,
+                'courseRequirements' => $courseRequirement ? CourseRequirementResource::make($courseRequirement) : null,
             ],
         ];
     }

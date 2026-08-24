@@ -436,7 +436,6 @@ declare module 'vue' {
     StaffSelect: typeof import('./../components/core/form/select/StaffSelect.vue')['default']
     StartDate: typeof import('./../components/core/form/date/StartDate.vue')['default']
     StepAction: typeof import('./../components/core/timelines/StepAction.vue')['default']
-    StepMetadata: typeof import('./../components/core/timelines/StepMetadata.vue')['default']
     Stepper: typeof import('./../components/ui/stepper/Stepper.vue')['default']
     StepperDescription: typeof import('./../components/ui/stepper/StepperDescription.vue')['default']
     StepperIndicator: typeof import('./../components/ui/stepper/StepperIndicator.vue')['default']

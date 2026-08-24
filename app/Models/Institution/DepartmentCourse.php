@@ -3,6 +3,7 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Institution\DepartmentMetaDataFilter;
+use App\Models\Applications\ApplicationCourseRequirement;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -11,7 +12,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -57,9 +57,16 @@ class DepartmentCourse extends Model
         return $this->hasMany(CourseLevelMode::class, 'department_course_id');
     }
 
-    public function requirement(): HasOne
+    public function requirements(): HasMany
     {
-        return $this->hasOne(CourseRequirement::class, 'department_course_id');
+        return $this->hasMany(ApplicationCourseRequirement::class, 'department_course_id');
+    }
+
+    public function requirementForLevel(int $departmentLevelId): ?ApplicationCourseRequirement
+    {
+        return $this->requirements()
+            ->where('department_level_id', $departmentLevelId)
+            ->first();
     }
 
     public function getActivitylogOptions(): LogOptions

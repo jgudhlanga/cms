@@ -3,13 +3,10 @@
 namespace App\Http\Controllers\Institution\Departments;
 
 use App\DTO\Institution\DepartmentLevelDto;
-use App\DTO\Institution\DepartmentLevelRequirementsDto;
 use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\DepartmentLevelRequest;
-use App\Http\Requests\Institution\DepartmentLevelRequirementRequest;
 use App\Http\Resources\Enrolments\EnrolmentGroupResource;
-use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Http\Resources\Institution\IntakePeriodResource;
@@ -27,30 +24,6 @@ use Inertia\Response;
 class DepartmentLevelController extends Controller
 {
     public function __construct(protected IDepartmentLevelRepository $repository, protected DepartmentEnrolmentService $departmentEnrolmentService) {}
-
-    /**
-     * @throws AuthorizationException
-     */
-    public function departmentLevelRequirements(DepartmentLevel $departmentLevel): Response
-    {
-        $this->authorize('updateDepartmentMetaData');
-        $departmentLevel = DepartmentLevelResource::make($departmentLevel);
-        $institutionDepartment = InstitutionDepartmentResource::make($departmentLevel->institutionDepartment);
-        $levels = DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
-        $requirements = $departmentLevel->requirement ? DepartmentLevelRequirementResource::make($departmentLevel->requirement) : null;
-
-        return Inertia::render('institution/departments/DepartmentLevelRequirements',
-            compact('departmentLevel', 'institutionDepartment', 'levels', 'requirements'));
-    }
-
-    /**
-     * @throws AuthorizationException
-     */
-    public function updateDepartmentLevelRequirements(DepartmentLevel $departmentLevel, DepartmentLevelRequirementRequest $request): void
-    {
-        $this->authorize('updateDepartmentMetaData');
-        $this->repository->updateDepartmentLevelRequirements($departmentLevel, DepartmentLevelRequirementsDto::fromDepartmentLevelRequirementRequest($request));
-    }
 
     /**
      * @throws AuthorizationException

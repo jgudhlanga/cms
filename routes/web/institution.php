@@ -22,6 +22,7 @@ use App\Http\Controllers\Institution\Dropdowns\LevelController;
 use App\Http\Controllers\Institution\Dropdowns\ModeOfStudyController;
 use App\Http\Controllers\Institution\Dropdowns\SubjectController;
 use App\Http\Controllers\Institution\Enrolments\ApplicationOfferingController;
+use App\Http\Controllers\Institution\Enrolments\ApplicationRequirementController;
 use App\Http\Controllers\Institution\InstitutionController;
 use App\Http\Controllers\Institution\Staff\StaffController;
 use App\Http\Controllers\Students\StudentEnrolmentStatusController;
@@ -36,14 +37,10 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::resource('departments', InstitutionDepartmentController::class)->names('institution-departments');
     // ==================================== DEPARTMENT LEVELS ===========================================================
     Route::post('departments/{institution_department}/sync-levels', [DepartmentLevelController::class, 'syncDepartmentLevels'])->name('department-levels.sync');
-    Route::get('departments/{department_level}/requirements', [DepartmentLevelController::class, 'departmentLevelRequirements'])->name('department-levels.requirements');
-    Route::post('departments/{department_level}/requirements', [DepartmentLevelController::class, 'updateDepartmentLevelRequirements'])->name('department-levels.store-requirements');
     Route::get('departments/{institution_department}/enrolments/{department_level}', [DepartmentLevelController::class, 'enrolments'])->name('department-levels.enrolments');
     // ==================================== DEPARTMENT COURSES ==========================================================
     Route::post('departments/{institution_department}/sync-courses', [DepartmentCourseController::class, 'syncDepartmentCourses'])->name('department-courses.sync');
     Route::get('departments/{department_course}/show', [DepartmentCourseController::class, 'show'])->name('department-courses.show');
-    Route::get('departments/{department_course}/course-requirements', [DepartmentCourseController::class, 'courseRequirements'])->name('department-courses.requirements');
-    Route::post('departments/{department_course}/course-requirements', [DepartmentCourseController::class, 'updateCourseRequirements'])->name('department-courses.store-requirements');
     Route::post('departments/{department_course}/update', [DepartmentCourseController::class, 'update'])->name('department-courses.update');
     Route::get('departments/course/{department_course}/modes', [DepartmentCourseController::class, 'courseLevelModes'])->name('department-courses.modes');
     Route::post('departments/course/{department_course}/modes', [DepartmentCourseController::class, 'storeCourseLevelModes'])->name('department-courses.modes.store');
@@ -100,6 +97,12 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::get('enrolments', [ApplicationOfferingController::class, 'index'])->name('application-offerings.index');
     Route::get('enrolments/{institution_department}', [ApplicationOfferingController::class, 'show'])->name('application-offerings.show');
     Route::put('enrolments/{institution_department}', [ApplicationOfferingController::class, 'update'])->name('application-offerings.update');
+    Route::get('enrolments/{institution_department}/requirements', [ApplicationRequirementController::class, 'departmentRequirements'])->name('application-requirements.department');
+    Route::get('enrolments/{institution_department}/requirements/levels/{department_level}', [ApplicationRequirementController::class, 'levelRequirements'])->name('application-requirements.level');
+    Route::post('enrolments/{institution_department}/requirements/levels/{department_level}', [ApplicationRequirementController::class, 'updateLevelRequirements'])->name('application-requirements.level.store');
+    Route::get('enrolments/{institution_department}/requirements/courses/{department_course}', [ApplicationRequirementController::class, 'courseRequirements'])->name('application-requirements.course');
+    Route::post('enrolments/{institution_department}/requirements/courses/{department_course}', [ApplicationRequirementController::class, 'updateCourseRequirements'])->name('application-requirements.course.store');
+    Route::get('enrolments/{institution_department}/class-sizes', [ApplicationRequirementController::class, 'classSizes'])->name('application-requirements.class-sizes');
     // ==================================== INSTITUTION FEATURES =======================================================
     Route::get('features', [InstitutionFeatureController::class, 'index'])->name('institution-features.index');
     Route::put('features', [InstitutionFeatureController::class, 'update'])->name('institution-features.update');

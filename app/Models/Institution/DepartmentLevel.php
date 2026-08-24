@@ -3,6 +3,7 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Institution\DepartmentMetaDataFilter;
+use App\Models\Applications\ApplicationLevelRequirement;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -39,7 +40,7 @@ class DepartmentLevel extends Model
 
     public function requirement(): HasOne
     {
-        return $this->hasOne(DepartmentLevelRequirement::class, 'department_level_id');
+        return $this->hasOne(ApplicationLevelRequirement::class, 'department_level_id');
     }
 
     public function courses(): HasMany
