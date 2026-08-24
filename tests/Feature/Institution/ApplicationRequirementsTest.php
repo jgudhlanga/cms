@@ -8,6 +8,7 @@ use App\Models\Institution\Course;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Level;
 use App\Models\Rbac\Permission;
@@ -155,12 +156,12 @@ test('requirements index only lists courses with has enrolment requirements', fu
         'institution_department_id' => $institutionDepartment->id,
         'course_id' => $plainCourse->id,
     ]);
-    \App\Models\Institution\DepartmentLevelCourse::query()->create([
+    DepartmentLevelCourse::query()->create([
         'tenant_id' => $tenant->id,
         'department_level_id' => $departmentLevel->id,
         'department_course_id' => $plainDepartmentCourse->id,
     ]);
-    \App\Models\Institution\DepartmentLevelCourse::query()->create([
+    DepartmentLevelCourse::query()->create([
         'tenant_id' => $tenant->id,
         'department_level_id' => $departmentLevel->id,
         'department_course_id' => $overrideCourse->id,
@@ -194,4 +195,31 @@ test('course requirements page is unavailable when course has no enrolment requi
             'department_level_id' => $departmentLevel->id,
         ]))
         ->assertNotFound();
+});
+
+test('course requirements page serializes department levels for a course with attached level courses', function () {
+    $user = makeRequirementsManager();
+    [$tenant, $institutionDepartment, $departmentLevel, $departmentCourse] = requirementFixture();
+    $departmentLevel->loadMissing('level');
+
+    DepartmentLevelCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'department_level_id' => $departmentLevel->id,
+        'department_course_id' => $departmentCourse->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('application-requirements.course', [
+            'institution_department' => $institutionDepartment->id,
+            'department_course' => $departmentCourse->id,
+        ]))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('institution/enrolments/requirements/CourseRequirements')
+            ->has('levels', 1)
+            ->where('levels.0.type', 'department-level')
+            ->where('levels.0.id', $departmentLevel->id)
+            ->where('levels.0.attributes.level', $departmentLevel->level->name)
+            ->where('allowedLevels', [(int) $departmentLevel->id])
+        );
 });
