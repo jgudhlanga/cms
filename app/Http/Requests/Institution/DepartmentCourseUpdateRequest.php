@@ -28,7 +28,6 @@ class DepartmentCourseUpdateRequest extends FormRequest
     {
         return [
             'department_level_ids' => ['nullable', 'array'],
-            'show_on_current_application_period' => ['sometimes', 'boolean'],
             'coursework_capture_enabled' => ['sometimes', 'nullable', 'boolean'],
         ];
     }

@@ -344,6 +344,7 @@ return [
             'delete:class-lists',
             'view:class-lists',
             'manage-final:class-lists',
+            'manage:online-application-catalogue',
         ],
         'examinations' => [
             'viewAny:examinations',

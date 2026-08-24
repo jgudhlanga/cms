@@ -13,14 +13,22 @@ interface Props {
     departmentCourseId?: string;
     departmentLevelId?: string;
     label?: string;
+    /** When true, load modes from the application offerings catalogue. */
+    useApplicationOfferings?: boolean;
 }
 
 const { isLoading, listCourseModesOfStudy, courseModesOfStudy, listModesOfStudy, modesOfStudy } = useModeOfStudy();
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    useApplicationOfferings: false,
+});
+
+const loadCourseModes = async (departmentCourseId: string, departmentLevelId: string) => {
+    await listCourseModesOfStudy(departmentCourseId, departmentLevelId, props.useApplicationOfferings);
+};
 
 onMounted(async () => {
     if (Number(props.departmentCourseId ?? '') > 0) {
-        await listCourseModesOfStudy(String(props.departmentCourseId), String(props.departmentLevelId));
+        await loadCourseModes(String(props.departmentCourseId), String(props.departmentLevelId));
     } else {
         await listModesOfStudy();
     }
@@ -59,7 +67,7 @@ watch(
         if (props.form) {
             clearFormErrors(props.form, 'modeOfStudy');
         }
-        if (Number(newValue) > 0) await listCourseModesOfStudy(String(newValue), String(props.departmentLevelId));
+        if (Number(newValue) > 0) await loadCourseModes(String(newValue), String(props.departmentLevelId));
     },
 );
 </script>

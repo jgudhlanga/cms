@@ -339,7 +339,7 @@ class CreateApplicationRequest extends FormRequest
             );
         }
 
-        if (! $departmentLevel->show_on_current_application_period) {
+        if (! app(RegistrationProgrammeAvailabilityService::class)->isDepartmentLevelOffered($departmentLevel)) {
             $validator->errors()->add(
                 'level_id',
                 __('trans.portal_selected_level_not_active_toast'),

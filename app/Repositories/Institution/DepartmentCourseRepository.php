@@ -44,15 +44,17 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
 
     public function update(DepartmentCourse $departmentCourse, DepartmentCourseUpdateDto $dto)
     {
-        $attributes = [
-            'show_on_current_application_period' => $dto->show_on_current_application_period,
-        ];
+        $attributes = [];
 
         if ($dto->coursework_capture_enabled !== null) {
             $attributes['coursework_capture_enabled'] = $dto->coursework_capture_enabled;
         }
 
-        $departmentCourse = tap($departmentCourse)->update($attributes);
+        if ($attributes !== []) {
+            $departmentCourse = tap($departmentCourse)->update($attributes);
+        } else {
+            $departmentCourse = $departmentCourse->fresh() ?? $departmentCourse;
+        }
         // Get existing department_ linked to this department
         $existingCourseLevels = $departmentCourse->departmentCourseLevels()->where('department_course_id', $departmentCourse->id)->pluck('department_level_id')->toArray();
         $newCourseLevelIds = $dto->department_level_ids;

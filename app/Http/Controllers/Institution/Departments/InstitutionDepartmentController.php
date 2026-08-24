@@ -89,7 +89,6 @@ class InstitutionDepartmentController extends Controller
             'department_code',
             'color_code',
             'description',
-            'has_apprentice_courses',
         ]));
     }
 

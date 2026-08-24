@@ -21,6 +21,7 @@ use App\Http\Controllers\Institution\Dropdowns\GradeController;
 use App\Http\Controllers\Institution\Dropdowns\LevelController;
 use App\Http\Controllers\Institution\Dropdowns\ModeOfStudyController;
 use App\Http\Controllers\Institution\Dropdowns\SubjectController;
+use App\Http\Controllers\Institution\Enrolments\ApplicationOfferingController;
 use App\Http\Controllers\Institution\InstitutionController;
 use App\Http\Controllers\Institution\Staff\StaffController;
 use App\Http\Controllers\Students\StudentEnrolmentStatusController;
@@ -95,6 +96,10 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::put('fee-structures/{fee_structure}/restore', [FeeStructureController::class, 'restore'])->name('fee-structures.restore');
     Route::delete('fee-structures/{fee_structure}/force-delete', [FeeStructureController::class, 'forceDelete'])->name('fee-structures.force-delete');
     Route::resource('fee-structures', FeeStructureController::class)->names('fee-structures');
+    // ==================================== APPLICATION OFFERINGS (online enrolments catalogue) ========================
+    Route::get('enrolments', [ApplicationOfferingController::class, 'index'])->name('application-offerings.index');
+    Route::get('enrolments/{institution_department}', [ApplicationOfferingController::class, 'show'])->name('application-offerings.show');
+    Route::put('enrolments/{institution_department}', [ApplicationOfferingController::class, 'update'])->name('application-offerings.update');
     // ==================================== INSTITUTION FEATURES =======================================================
     Route::get('features', [InstitutionFeatureController::class, 'index'])->name('institution-features.index');
     Route::put('features', [InstitutionFeatureController::class, 'update'])->name('institution-features.update');

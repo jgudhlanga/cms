@@ -93,10 +93,14 @@ export const useModeOfStudy = () => {
         isLoading.value = false;
         modesOfStudy.value = data.value;
     };
-    const listCourseModesOfStudy = async (departmentCourseId: string, departmentLevelId: string) => {
+    const listCourseModesOfStudy = async (
+        departmentCourseId: string,
+        departmentLevelId: string,
+        useApplicationOfferings = false,
+    ) => {
         isLoading.value = true;
         courseModesOfStudy.value = await HttpService.get(
-            route('v1.modes-of-study.course-modes', {
+            route(useApplicationOfferings ? 'v1.enrolments.course-modes' : 'v1.modes-of-study.course-modes', {
                 department_course: departmentCourseId,
                 department_level: departmentLevelId,
             }),

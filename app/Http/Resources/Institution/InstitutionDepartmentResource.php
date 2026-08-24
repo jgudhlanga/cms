@@ -32,7 +32,6 @@ class InstitutionDepartmentResource extends JsonResource
                 'levelsOffered' => InstitutionDepartmentPresenter::levelsOffered($this->resource),
                 'colorCode' => $this->resource->color_code,
                 'isAcademic' => $this->department?->is_academic,
-                'hasApprenticeCourses' => (bool) $this->resource->has_apprentice_courses,
                 'description' => $this->resource->description,
                 $this->mergeWhen($request->routeIs('institution-departments.*'), [
                     'createdAt' => $this->resource->created_at,

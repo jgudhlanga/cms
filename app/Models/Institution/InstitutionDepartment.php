@@ -35,14 +35,11 @@ class InstitutionDepartment extends Model
         'department_code',
         'color_code',
         'division_id',
-        'has_apprentice_courses',
     ];
 
     protected function casts(): array
     {
-        return [
-            'has_apprentice_courses' => 'boolean',
-        ];
+        return [];
     }
 
     public function department(): BelongsTo

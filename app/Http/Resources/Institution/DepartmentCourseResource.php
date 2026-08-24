@@ -25,7 +25,6 @@ class DepartmentCourseResource extends JsonResource
                 'institutionDepartmentId' => $this->institution_department_id,
                 'courseId' => $this->course_id,
                 'course' => $this->course?->name,
-                'showOnCurrentApplicationPeriod' => $this->show_on_current_application_period,
                 'courseworkCaptureEnabled' => $this->coursework_capture_enabled ?? true,
                 'hasEnrolmentRequirements' => $this->course?->has_enrolment_requirements,
                 'description' => $this->resource->description,

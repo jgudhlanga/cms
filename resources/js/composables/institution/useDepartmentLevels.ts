@@ -45,14 +45,6 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
                 },
             },
             {
-                header: trans('trans.show_on_current_application_period'),
-                accessorKey: 'showOnCurrentApplicationPeriod',
-                meta: { align: 'center' },
-                cell: ({ row }: { row: { original: DepartmentLevel } }) => {
-                    return checkStatusIcon(row.original.attributes?.showOnCurrentApplicationPeriod);
-                },
-            },
-            {
                 header: trans_choice('trans.requirement', 2),
                 accessorKey: 'requirements',
                 enableSorting: false,
@@ -129,10 +121,9 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
 
     const openDepartmentLevelsModal = (
         departmentLevels: Array<string | undefined | null> | null,
-        showOnCurrentApplicationPeriod: Array<string | undefined | null> | null,
     ) => {
         if (!can['department-setup:levels']) return forbiddenAlert();
-        openModal({ name: APP_MODULE_KEYS.department_levels, edit: [departmentLevels, showOnCurrentApplicationPeriod] });
+        openModal({ name: APP_MODULE_KEYS.department_levels, edit: departmentLevels });
     };
 
     const departmentLevels = ref<DepartmentLevel[]>([]);

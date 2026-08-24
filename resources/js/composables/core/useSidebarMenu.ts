@@ -245,6 +245,11 @@ export function useSidebarMenu() {
                     show: institutionModuleOn && hasAbility('viewAny:fee-structures'),
                 },
                 {
+                    transChoiceKey: 'application_offerings.menu',
+                    url: route('application-offerings.index'),
+                    show: institutionModuleOn && hasAbility('manage:online-application-catalogue'),
+                },
+                {
                     transKey: 'trans.institution_features',
                     url: route('institution-features.index'),
                     show: institutionModuleOn && hasAbility('manage:institution-features'),

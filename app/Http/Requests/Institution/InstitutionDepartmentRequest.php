@@ -46,7 +46,6 @@ class InstitutionDepartmentRequest extends FormRequest
                         ->ignore($this->route('department')?->id),
                 ],
                 'description' => ['nullable', 'string', 'max:1000'],
-                'has_apprentice_courses' => ['sometimes', 'boolean'],
             ];
         }
 

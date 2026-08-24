@@ -260,6 +260,7 @@ const onUpdated = () => {
                             :is-required="true"
                             :department-course-id="course?.value?.toString() ?? ''"
                             :department-level-id="level?.value?.toString() ?? ''"
+                            :use-application-offerings="true"
                         />
                     </div>
                     <div class="my-4 flex w-full flex-col">

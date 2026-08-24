@@ -45,9 +45,8 @@ class DepartmentMetaDataController extends Controller
 
         $levels = DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
         $departmentLevelsIds = $institutionDepartment?->departmentLevels?->pluck('level_id');
-        $showOnCurrentApplicationPeriodIds = $institutionDepartment?->departmentLevels->where('show_on_current_application_period', true)->pluck('level_id');
 
-        return response()->json(compact('levels', 'departmentLevelsIds', 'showOnCurrentApplicationPeriodIds'));
+        return response()->json(compact('levels', 'departmentLevelsIds'));
     }
 
     public function staff(StaffFilter $filters, InstitutionDepartment $institutionDepartment): AnonymousResourceCollection

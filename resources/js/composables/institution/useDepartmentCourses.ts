@@ -60,14 +60,6 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
                 },
             },
             {
-                header: trans('trans.show_on_current_application_period'),
-                accessorKey: 'showOnCurrentApplicationPeriod',
-                meta: { align: 'center' },
-                cell: ({ row }: { row: { original: DepartmentCourse } }) => {
-                    return checkStatusIcon(row.original.attributes?.showOnCurrentApplicationPeriod);
-                },
-            },
-            {
                 header: 'Has Enrolment Requirements',
                 accessorKey: 'hasEnrolmentRequirements',
                 meta: { align: 'center' },

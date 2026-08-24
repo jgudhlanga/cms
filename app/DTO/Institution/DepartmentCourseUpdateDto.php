@@ -8,7 +8,6 @@ readonly class DepartmentCourseUpdateDto
 {
     public function __construct(
         public array $department_level_ids,
-        public bool $show_on_current_application_period,
         public ?bool $coursework_capture_enabled = null,
     ) {}
 
@@ -16,7 +15,6 @@ readonly class DepartmentCourseUpdateDto
     {
         return new self(
             department_level_ids: $request->department_level_ids ?? [],
-            show_on_current_application_period: (bool) $request->show_on_current_application_period,
             coursework_capture_enabled: $request->has('coursework_capture_enabled')
                 ? $request->boolean('coursework_capture_enabled')
                 : null,

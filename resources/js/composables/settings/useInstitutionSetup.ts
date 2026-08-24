@@ -21,6 +21,11 @@ export function useInstitutionSetup() {
             show: hasAbility('viewAny:fee-structures'),
         },
         {
+            transChoiceKey: 'application_offerings.menu',
+            url: route('application-offerings.index'),
+            show: hasAbility('manage:online-application-catalogue'),
+        },
+        {
             transKey: 'institution_features',
             url: route('institution-features.index'),
             show: hasAbility('manage:institution-features'),

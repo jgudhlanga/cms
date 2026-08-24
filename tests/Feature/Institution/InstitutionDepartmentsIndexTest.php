@@ -58,7 +58,6 @@ test('institution departments index returns color and expanded metadata', functi
     $institutionDepartment->department()->update(['is_academic' => true]);
     $institutionDepartment->update([
         'color_code' => '#123456',
-        'has_apprentice_courses' => true,
     ]);
 
     $divisionHeadUser = User::factory()->create([
@@ -96,8 +95,7 @@ test('institution departments index returns color and expanded metadata', functi
         ->and($row['attributes']['headOfDepartment'])->toBe('Applied HOD')
         ->and($row['attributes']['headOfDivision'])->toBe('Division Head')
         ->and($row['attributes']['division'])->toBe('Applied Sciences Division')
-        ->and($row['attributes']['coursesOfferedCount'])->toBe(1)
-        ->and($row['attributes']['hasApprenticeCourses'])->toBeTrue();
+        ->and($row['attributes']['coursesOfferedCount'])->toBe(1);
 });
 
 test('institution department update persists color code', function () {
@@ -111,7 +109,6 @@ test('institution department update persists color code', function () {
         ->put(route('institution-departments.update', $institutionDepartment->id), [
             'division_id' => null,
             'color_code' => '#ABCDEF',
-            'has_apprentice_courses' => false,
         ])
         ->assertSuccessful();
 
@@ -166,7 +163,6 @@ test('institution department update rejects duplicate color codes within tenant'
         ->put(route('institution-departments.update', $second->id), [
             'division_id' => null,
             'color_code' => '#ff0000',
-            'has_apprentice_courses' => false,
         ])
         ->assertSessionHasErrors('color_code');
 

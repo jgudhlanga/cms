@@ -17,15 +17,15 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
- *
  * @mixin Builder
+ *
  * @method static filter(DepartmentMetaDataFilter $filters)
  */
 class DepartmentLevel extends Model
 {
-    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
+    use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
 
-    protected $fillable = ['tenant_id', 'institution_department_id', 'level_id', 'description', 'show_on_current_application_period'];
+    protected $fillable = ['tenant_id', 'institution_department_id', 'level_id', 'description'];
 
     public function level(): BelongsTo
     {

@@ -27,13 +27,12 @@ class DepartmentCourse extends Model
 
     protected $fillable = [
         'tenant_id', 'institution_department_id', 'course_id',
-        'description', 'show_on_current_application_period', 'coursework_capture_enabled',
+        'description', 'coursework_capture_enabled',
     ];
 
     protected function casts(): array
     {
         return [
-            'show_on_current_application_period' => 'boolean',
             'coursework_capture_enabled' => 'boolean',
         ];
     }

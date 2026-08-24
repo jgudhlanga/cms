@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
-import BaseTag from '@/components/core/util/BaseTag.vue';
 import LevelCodeBadge from '@/components/core/util/LevelCodeBadge.vue';
-import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { formatLevelBadge } from '@/lib/levelBadge';
 import { InstitutionDepartment } from '@/types/institution';
@@ -85,17 +83,6 @@ const hasStaffName = (name?: string | null): boolean => Boolean(name?.trim());
                                 :title="level"
                             />
                         </template>
-                        <span v-else class="font-medium text-foreground">—</span>
-                    </dd>
-                </div>
-                <div v-if="isAcademic" class="flex items-center justify-between gap-2">
-                    <dt class="text-muted-foreground">{{ $t('trans.apprentice_course') }}</dt>
-                    <dd>
-                        <BaseTag
-                            v-if="department.attributes?.hasApprenticeCourses"
-                            :title="$t('trans.yes')"
-                            :variant="ColorVariant.success_outline"
-                        />
                         <span v-else class="font-medium text-foreground">—</span>
                     </dd>
                 </div>

@@ -1,19 +1,21 @@
 <?php
 
-use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Institution\LevelEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Students\ApplicationTrackEnum;
-use App\Models\Rbac\Role;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Institution\ModeOfStudy;
+use App\Models\Rbac\Role;
 use App\Models\Shared\Gender;
 use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
@@ -217,7 +219,7 @@ test('express apprentice application creates student apprentice record without a
     expect($student->contacts()->exists())->toBeTrue()
         ->and($student->nextOfKins()->exists())->toBeTrue();
 
-    $intake = \App\Models\Institution\IntakePeriod::query()->findOrFail($seeded['intakeId']);
+    $intake = IntakePeriod::query()->findOrFail($seeded['intakeId']);
 
     $apprentice = StudentApprentice::query()
         ->where('student_id', $student->id)
@@ -287,7 +289,7 @@ test('apprentice reapply from hub does not redirect to fee payment', function ()
         ],
     ]);
 
-    $intake = \App\Models\Institution\IntakePeriod::query()->findOrFail($seeded['intakeId']);
+    $intake = IntakePeriod::query()->findOrFail($seeded['intakeId']);
     StudentApprentice::query()->create([
         'tenant_id' => $student->tenant_id,
         'student_id' => $student->id,
@@ -414,15 +416,25 @@ test('continuous application submit succeeds when regular intake is closed', fun
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
         'level_id' => $sdp->id,
-        'show_on_current_application_period' => true,
     ]);
     $course = Course::factory()->create();
     $departmentCourse = DepartmentCourse::query()->create([
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
         'course_id' => $course->id,
-        'show_on_current_application_period' => true,
     ]);
+
+    DepartmentLevelCourse::query()->firstOrCreate([
+        'department_level_id' => $departmentLevel->id,
+        'department_course_id' => $departmentCourse->id,
+    ]);
+
+    seedApplicationOffering(
+        $institutionDepartment,
+        $departmentLevel,
+        $departmentCourse,
+        [(int) $mode->id],
+    );
 
     $idNumber = '63-1234567N63';
 

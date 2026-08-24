@@ -30,7 +30,6 @@ class DepartmentLevelResource extends JsonResource
                 'levelPosition' => $this->level?->position,
                 'calendarType' => $calendarTypeValue,
                 'description' => $this->resource->description,
-                'showOnCurrentApplicationPeriod' => $this->resource->show_on_current_application_period,
                 $this->mergeWhen($request->routeIs('department-levels.*'), [
                     'createdAt' => $this->resource->created_at,
                     'updatedAt' => $this->resource->updated_at,

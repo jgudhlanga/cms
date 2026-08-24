@@ -198,7 +198,6 @@ export type InstitutionDepartment = {
         staffCount?: number;
         levelsOffered?: string[];
         isAcademic: boolean | number;
-        hasApprenticeCourses?: boolean;
         description?: string;
         createdAt?: string;
         updatedAt?: string;

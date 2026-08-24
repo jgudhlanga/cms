@@ -5,6 +5,10 @@ use App\Enums\Institution\LevelEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Enums\Students\ApplicationTrackEnum;
+use App\Models\Applications\ApplicationOfferingCourse;
+use App\Models\Applications\ApplicationOfferingDepartment;
+use App\Models\Applications\ApplicationOfferingLevel;
+use App\Models\Applications\ApplicationOfferingMode;
 use App\Models\Institution\Course;
 use App\Models\Institution\CourseLevelMode;
 use App\Models\Institution\Department;
@@ -15,6 +19,57 @@ use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Level;
 use App\Models\Institution\ModeOfStudy;
 use App\Services\Students\RegistrationIntentSession;
+
+/**
+ * @param  list<int>  $modeIds
+ */
+function seedApplicationOffering(
+    InstitutionDepartment $institutionDepartment,
+    DepartmentLevel $departmentLevel,
+    DepartmentCourse $departmentCourse,
+    array $modeIds,
+    bool $hasApprenticeProgrammes = false,
+): void {
+    $tenantId = (int) $institutionDepartment->tenant_id;
+
+    $offeringDepartment = ApplicationOfferingDepartment::query()->updateOrCreate(
+        [
+            'tenant_id' => $tenantId,
+            'institution_department_id' => $institutionDepartment->id,
+        ],
+        ['has_apprentice_programmes' => $hasApprenticeProgrammes],
+    );
+
+    $offeringLevel = ApplicationOfferingLevel::query()->updateOrCreate(
+        [
+            'application_offering_department_id' => $offeringDepartment->id,
+            'department_level_id' => $departmentLevel->id,
+        ],
+        ['tenant_id' => $tenantId],
+    );
+
+    $offeringCourse = ApplicationOfferingCourse::query()->updateOrCreate(
+        [
+            'application_offering_level_id' => $offeringLevel->id,
+            'department_course_id' => $departmentCourse->id,
+        ],
+        ['tenant_id' => $tenantId],
+    );
+
+    ApplicationOfferingMode::query()
+        ->where('application_offering_course_id', $offeringCourse->id)
+        ->delete();
+
+    foreach ($modeIds as $modeId) {
+        ApplicationOfferingMode::query()->updateOrCreate(
+            [
+                'application_offering_course_id' => $offeringCourse->id,
+                'mode_of_study_id' => (int) $modeId,
+            ],
+            ['tenant_id' => $tenantId],
+        );
+    }
+}
 
 /**
  * @return array{level: Level, intakeId: int, departmentId: int, departmentLevelId: int, courseId: int, modeId: int}
@@ -32,17 +87,17 @@ function seedGuestRegistrationProgramme(?Level $level = null): array
 
     $department = Department::query()->firstOrCreate(
         ['name' => 'Guest Reg Dept '.uniqid()],
-        ['description' => 'Test'],
+        ['description' => 'Test', 'is_academic' => true],
     );
+    $department->update(['is_academic' => true]);
 
     $institutionDepartment = InstitutionDepartment::query()->firstOrCreate(
         [
             'tenant_id' => $tenantId,
             'department_id' => $department->id,
         ],
-        ['department_code' => 'GRD', 'has_apprentice_courses' => true],
+        ['department_code' => 'GRD'],
     );
-    $institutionDepartment->update(['has_apprentice_courses' => true]);
 
     $departmentLevel = DepartmentLevel::query()->firstOrCreate(
         [
@@ -50,9 +105,7 @@ function seedGuestRegistrationProgramme(?Level $level = null): array
             'institution_department_id' => $institutionDepartment->id,
             'level_id' => $level->id,
         ],
-        ['show_on_current_application_period' => true],
     );
-    $departmentLevel->update(['show_on_current_application_period' => true]);
 
     $course = Course::query()->firstOrCreate(
         ['name' => 'Guest Reg Course '.uniqid()],
@@ -65,9 +118,7 @@ function seedGuestRegistrationProgramme(?Level $level = null): array
             'institution_department_id' => $institutionDepartment->id,
             'course_id' => $course->id,
         ],
-        ['show_on_current_application_period' => true],
     );
-    $departmentCourse->update(['show_on_current_application_period' => true]);
 
     DepartmentLevelCourse::query()->firstOrCreate([
         'department_level_id' => $departmentLevel->id,
@@ -89,6 +140,14 @@ function seedGuestRegistrationProgramme(?Level $level = null): array
             'department_level_id' => $departmentLevel->id,
         ],
         ['modes' => [$mode->id, $blockRelease->id]],
+    );
+
+    seedApplicationOffering(
+        $institutionDepartment,
+        $departmentLevel,
+        $departmentCourse,
+        [(int) $mode->id, (int) $blockRelease->id],
+        hasApprenticeProgrammes: true,
     );
 
     return [
@@ -177,8 +236,9 @@ function seedGuestContinuousProgramme(string $focus = 'sdp'): array
 
     $department = Department::query()->firstOrCreate(
         ['name' => 'Guest Continuous Dept '.uniqid()],
-        ['description' => 'Test'],
+        ['description' => 'Test', 'is_academic' => true],
     );
+    $department->update(['is_academic' => true]);
 
     $institutionDepartment = InstitutionDepartment::query()->firstOrCreate(
         [
@@ -194,9 +254,7 @@ function seedGuestContinuousProgramme(string $focus = 'sdp'): array
             'institution_department_id' => $institutionDepartment->id,
             'level_id' => $level->id,
         ],
-        ['show_on_current_application_period' => true],
     );
-    $departmentLevel->update(['show_on_current_application_period' => true]);
 
     $course = Course::query()->firstOrCreate(
         ['name' => 'Guest Continuous Course '.uniqid()],
@@ -209,9 +267,7 @@ function seedGuestContinuousProgramme(string $focus = 'sdp'): array
             'institution_department_id' => $institutionDepartment->id,
             'course_id' => $course->id,
         ],
-        ['show_on_current_application_period' => true],
     );
-    $departmentCourse->update(['show_on_current_application_period' => true]);
 
     DepartmentLevelCourse::query()->firstOrCreate([
         'department_level_id' => $departmentLevel->id,
@@ -233,6 +289,13 @@ function seedGuestContinuousProgramme(string $focus = 'sdp'): array
             'department_level_id' => $departmentLevel->id,
         ],
         ['modes' => [$fullTime->id, $ojet->id]],
+    );
+
+    seedApplicationOffering(
+        $institutionDepartment,
+        $departmentLevel,
+        $departmentCourse,
+        [(int) $fullTime->id, (int) $ojet->id],
     );
 
     return [

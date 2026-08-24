@@ -21,7 +21,6 @@ const { createDepartmentLevelColumns, openDepartmentLevelsModal, isLoading, depa
     useDepartmentLevels();
 const allowed = hasAbility('create:department-metadata');
 const departmentLevelsIds = computed(() => departmentLevelsMetadata.value?.departmentLevelsIds ?? []);
-const showOnCurrentApplicationPeriodIds = computed(() => departmentLevelsMetadata.value?.showOnCurrentApplicationPeriodIds ?? []);
 const departmentLevels = computed(() => departmentLevelsMetadata.value?.levels ?? []);
 const departmentId = props.department?.id?.toString() ?? '';
 
@@ -55,7 +54,7 @@ watch(
                 class="rounded-full"
                 :icon-variant="ColorVariant.white"
                 :variant="ColorVariant.primary_outline"
-                @click="() => openDepartmentLevelsModal(departmentLevelsIds, showOnCurrentApplicationPeriodIds)"
+                @click="() => openDepartmentLevelsModal(departmentLevelsIds)"
                 :title="$t('trans.link_levels')"
             />
         </template>
