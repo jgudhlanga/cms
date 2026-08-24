@@ -40,13 +40,20 @@ class DepartmentCourseController extends Controller
     public function courseRequirements(DepartmentCourse $departmentCourse): Response
     {
         $this->authorize('updateDepartmentMetaData');
+
+        $departmentCourse->loadMissing([
+            'requirement',
+            'institutionDepartment.departmentLevels.level',
+            'institutionDepartment.departmentLevels.requirement',
+        ]);
+
         $requirements = $departmentCourse->requirement ? CourseRequirementResource::make($departmentCourse->requirement) : null;
-        $departmentCourse = DepartmentCourseResource::make($departmentCourse);
         $institutionDepartment = InstitutionDepartmentResource::make($departmentCourse->institutionDepartment);
-        $levels = DepartmentLevelResource::collection($departmentCourse->departmentCourseLevels);
+        $levels = DepartmentLevelResource::collection($departmentCourse->institutionDepartment->departmentLevels);
         $allowedLevelIds = Level::whereIn('name', [LevelEnum::NC->name()])->pluck('id')->toArray();
-        $allowedLevels = DepartmentLevel::where('institution_department_id', $departmentCourse?->institutionDepartment?->id)
+        $allowedLevels = DepartmentLevel::where('institution_department_id', $departmentCourse->institutionDepartment?->id)
             ->whereIn('level_id', $allowedLevelIds)->pluck('id')->toArray();
+        $departmentCourse = DepartmentCourseResource::make($departmentCourse);
 
         return Inertia::render('institution/departments/courses/CourseRequirements',
             compact('departmentCourse', 'requirements', 'levels', 'institutionDepartment', 'allowedLevels'));
