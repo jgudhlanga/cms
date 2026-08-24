@@ -34,6 +34,7 @@ use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Students\StudentEnrolment;
+use App\Queries\AcademicCalendars\UnassignedClassConfigStudentsQuery;
 use App\Queries\Enrolments\ConfirmedStudentsQuery;
 use App\Services\AcademicCalendars\AcademicCalendarClassNameFormatter;
 use App\Services\AcademicCalendars\ClassListDataService;
@@ -45,6 +46,7 @@ use App\Services\AcademicCalendars\CourseWorkMarksheetDataService;
 use App\Services\AcademicCalendars\CourseWorkMarksheetPdfService;
 use App\Services\Lecturer\LecturerCourseWorkAccess;
 use App\Services\Students\StudentEnrolmentProgressionService;
+use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -119,9 +121,10 @@ class AcademicCalendarController extends Controller
         $level = DepartmentLevel::find($departmentLevelId);
         $mode = ModeOfStudy::find($modeOfStudyId);
         $level?->loadMissing('level');
-        $selectedSemesterId = request()->filled('semester_id')
-            ? (int) request()->query('semester_id')
-            : null;
+        $selectedSemesterId = $this->resolveSelectedSemesterId(
+            $level,
+            (string) $academicCalendar->calendar_year,
+        );
         $classConfigId = request()->query('class_config_id');
         $classConfig = ClassConfig::query()
             ->when($classConfigId, fn ($query) => $query->where('id', $classConfigId))
@@ -147,11 +150,12 @@ class AcademicCalendarController extends Controller
             $calendarIdsForYear,
             (int) $departmentLevelId,
             (int) $departmentCourseId,
-            (int) $modeOfStudyId
+            (int) $modeOfStudyId,
+            $this->classConfigSemesterId($classConfig),
         );
 
-        $assignedStudentEnrolmentIds = $this->resolveAssignedStudentEnrolmentIds($classConfig);
-        $unassignedFinalStudentApplications = $this->filterUnassignedFinalStudentApplications($finalStudentApplications, $assignedStudentEnrolmentIds);
+        $assignedStudentSemesterIds = $this->resolveAssignedStudentSemesterIds($classConfig);
+        $unassignedFinalStudentApplications = $this->filterUnassignedFinalStudentApplications($finalStudentApplications, $assignedStudentSemesterIds);
         $existingClasses = $this->resolveExistingClassesForAllocation($classConfig);
         $classNamePrefix = $this->resolveClassNamePrefix($level);
         $classNumberOffset = $this->resolveClassNumberOffset($existingClasses->pluck('name'), $classNamePrefix, $mode);
@@ -442,7 +446,8 @@ class AcademicCalendarController extends Controller
     public function showDepartmentAcademicCalendarClass(
         InstitutionDepartment $institutionDepartment,
         string $calendar_year,
-        AcademicCalendarClass $academicCalendarClass
+        AcademicCalendarClass $academicCalendarClass,
+        UnassignedClassConfigStudentsQuery $unassignedStudentsQuery,
     ): Response {
         $this->authorize('viewAny', AcademicCalendar::class);
 
@@ -470,11 +475,11 @@ class AcademicCalendarController extends Controller
 
         $students = $this->studentsPayloadForAcademicCalendarClass($academicCalendarClass);
 
-        $selectedSemesterId = request()->filled('semester_id')
-            ? (int) request()->query('semester_id')
-            : null;
-
         $level?->loadMissing('level');
+        $selectedSemesterId = $this->resolveSelectedSemesterId(
+            $level,
+            (string) $academicCalendar->calendar_year,
+        );
         $staffingContext = $this->buildStaffingContextForClass(
             $academicCalendarClass,
             $classConfig,
@@ -530,6 +535,11 @@ class AcademicCalendarController extends Controller
             'semesterConfigHasSyllabi' => $staffingContext['semesterConfigHasSyllabi'],
             'canAssignStaffing' => auth()->user()?->can('update', $academicCalendar) ?? false,
             'isLastProgrammePhase' => $this->isLastProgrammePhase($classConfig, $level),
+            'unassignedStudents' => $unassignedStudentsQuery->list(
+                $institutionDepartment,
+                $classConfig,
+                (string) $academicCalendar->calendar_year,
+            ),
         ]);
     }
 
@@ -763,15 +773,32 @@ class AcademicCalendarController extends Controller
 
     private function isLastProgrammePhase(ClassConfig $classConfig, ?DepartmentLevel $level): bool
     {
-        $calendarType = $level?->level?->calendar_type;
-
-        if (! $calendarType instanceof AcademicCalendarTypeEnum) {
-            $calendarType = AcademicCalendarTypeEnum::tryFrom((string) $calendarType) ?? AcademicCalendarTypeEnum::SEMESTER;
-        }
-
         return $this->enrolmentProgression->isLastPhaseSemesterId(
             $classConfig->semester_id !== null ? (int) $classConfig->semester_id : null,
-            $calendarType,
+            $this->calendarTypeForLevel($level),
+        );
+    }
+
+    private function calendarTypeForLevel(?DepartmentLevel $level): AcademicCalendarTypeEnum
+    {
+        $calendarType = $level?->level?->calendar_type;
+
+        if ($calendarType instanceof AcademicCalendarTypeEnum) {
+            return $calendarType;
+        }
+
+        return AcademicCalendarTypeEnum::tryFrom((string) $calendarType) ?? AcademicCalendarTypeEnum::SEMESTER;
+    }
+
+    private function resolveSelectedSemesterId(?DepartmentLevel $level, string $calendarYear): ?int
+    {
+        if (request()->filled('semester_id')) {
+            return (int) request()->query('semester_id');
+        }
+
+        return AcademicCalendarPeriodResolver::currentSemesterIdForYear(
+            $calendarYear,
+            $this->calendarTypeForLevel($level),
         );
     }
 
@@ -797,7 +824,7 @@ class AcademicCalendarController extends Controller
                 'course_syllabus_ids' => $validated['course_syllabus_ids'] ?? [],
             ]);
 
-            return back()->with('success', 'Class config successfully saved.');
+            return back()->with('success', __('academic_calendar.class_config_saved'));
         }
 
         ClassConfig::query()->updateOrCreate(
@@ -815,7 +842,7 @@ class AcademicCalendarController extends Controller
             ],
         );
 
-        return back()->with('success', 'Class config successfully saved.');
+        return back()->with('success', __('academic_calendar.class_config_saved'));
     }
 
     public function storeDepartmentAcademicCalendarClasses(
@@ -843,18 +870,19 @@ class AcademicCalendarController extends Controller
             (int) $validated['department_level_id'],
             (int) $validated['department_course_id'],
             (int) $validated['mode_of_study_id'],
-            $classConfig->semester_id !== null ? (int) $classConfig->semester_id : null,
+            $this->classConfigSemesterId($classConfig),
         );
-        $assignedStudentEnrolmentIds = $this->resolveAssignedStudentEnrolmentIds($classConfig);
-        $unassignedFinalStudentApplications = $this->filterUnassignedFinalStudentApplications($finalStudentApplications, $assignedStudentEnrolmentIds);
+        $assignedStudentSemesterIds = $this->resolveAssignedStudentSemesterIds($classConfig);
+        $unassignedFinalStudentApplications = $this->filterUnassignedFinalStudentApplications($finalStudentApplications, $assignedStudentSemesterIds);
         $level = DepartmentLevel::find((int) $validated['department_level_id']);
         $mode = ModeOfStudy::query()->find((int) $validated['mode_of_study_id']);
         $existingClasses = $this->resolveExistingClassesForAllocation($classConfig);
         $tenantId = function_exists('tenant') ? tenant('id') : null;
         $tenantId = $tenantId ?? auth()->user()?->tenant_id;
 
-        DB::transaction(function () use ($classConfig, $unassignedFinalStudentApplications, $existingClasses, $validated, $level, $mode, $tenantId): void {
+        $persistedStudentCount = DB::transaction(function () use ($classConfig, $unassignedFinalStudentApplications, $existingClasses, $validated, $level, $mode, $tenantId): int {
             $remainingStudents = $unassignedFinalStudentApplications->values();
+            $persistedStudentCount = 0;
 
             foreach ($existingClasses as $existingClass) {
                 $remainingSeats = (int) $validated['students_per_class'] - (int) $existingClass->student_count;
@@ -873,19 +901,25 @@ class AcademicCalendarController extends Controller
                     AcademicCalendarStudentEnrolment::query()->create([
                         'tenant_id' => $tenantId,
                         'student_enrolment_id' => (int) $student->student_enrolment_id,
+                        'student_semesters_id' => (int) $student->student_semesters_id,
                         'academic_calendar_class_id' => (int) $existingClass->id,
                     ]);
-                    $this->pinSyllabusFromClassConfig((int) $student->student_enrolment_id, $classConfig);
+                    $this->pinSyllabusFromClassConfig(
+                        (int) $student->student_enrolment_id,
+                        $classConfig,
+                        (int) $student->student_semesters_id,
+                    );
+                    $persistedStudentCount++;
                 }
 
                 $remainingStudents = $this->filterUnassignedFinalStudentApplications(
                     $remainingStudents,
-                    $balancedChunk->pluck('student_enrolment_id')->map(fn (mixed $id): int => (int) $id)
+                    $balancedChunk->pluck('student_semesters_id')->map(fn (mixed $id): int => (int) $id)
                 )->values();
             }
 
             if ($remainingStudents->isEmpty()) {
-                return;
+                return $persistedStudentCount;
             }
 
             $classNamePrefix = $this->resolveClassNamePrefix($level);
@@ -911,12 +945,24 @@ class AcademicCalendarController extends Controller
                     AcademicCalendarStudentEnrolment::query()->create([
                         'tenant_id' => $tenantId,
                         'student_enrolment_id' => $student['studentEnrolmentId'],
+                        'student_semesters_id' => $student['studentSemestersId'],
                         'academic_calendar_class_id' => $academicClass->id,
                     ]);
-                    $this->pinSyllabusFromClassConfig((int) $student['studentEnrolmentId'], $classConfig);
+                    $this->pinSyllabusFromClassConfig(
+                        (int) $student['studentEnrolmentId'],
+                        $classConfig,
+                        (int) $student['studentSemestersId'],
+                    );
+                    $persistedStudentCount++;
                 }
             }
+
+            return $persistedStudentCount;
         });
+
+        if ($persistedStudentCount < 1 && $assignedStudentSemesterIds->isEmpty()) {
+            return back()->with('error', __('enrolment.classes_generation_empty'));
+        }
 
         return back()->with('success', __('enrolment.classes_generated_successfully'));
     }
@@ -960,6 +1006,15 @@ class AcademicCalendarController extends Controller
             ->all();
     }
 
+    private function classConfigSemesterId(?ClassConfig $classConfig): ?int
+    {
+        if (! $classConfig instanceof ClassConfig || $classConfig->semester_id === null) {
+            return null;
+        }
+
+        return (int) $classConfig->semester_id;
+    }
+
     /**
      * @param  list<int>  $academicCalendarIds
      */
@@ -981,7 +1036,7 @@ class AcademicCalendarController extends Controller
         );
     }
 
-    private function pinSyllabusFromClassConfig(int $studentEnrolmentId, ClassConfig $classConfig): void
+    private function pinSyllabusFromClassConfig(int $studentEnrolmentId, ClassConfig $classConfig, ?int $studentSemestersId = null): void
     {
         $enrolment = StudentEnrolment::query()->find($studentEnrolmentId);
 
@@ -989,9 +1044,16 @@ class AcademicCalendarController extends Controller
             return;
         }
 
+        $studentSemester = null;
+
+        if ($studentSemestersId !== null) {
+            $studentSemester = $enrolment->studentSemesters()->whereKey($studentSemestersId)->first();
+        }
+
         $this->enrolmentProgression->pinSyllabusIds(
             $enrolment,
             $this->enrolmentProgression->syllabusIdsForClassConfig($classConfig),
+            $studentSemester,
         );
     }
 
@@ -1051,6 +1113,7 @@ class AcademicCalendarController extends Controller
 
                         return [
                             'studentEnrolmentId' => (int) $student->student_enrolment_id,
+                            'studentSemestersId' => (int) $student->student_semesters_id,
                             'studentId' => (int) $student->student_id,
                             'applicationTrackingNumber' => $student->application_tracking_number,
                             'name' => trim($firstName.' '.$middleName.' '.$lastName),
@@ -1416,7 +1479,7 @@ class AcademicCalendarController extends Controller
         ];
     }
 
-    private function resolveAssignedStudentEnrolmentIds(?ClassConfig $classConfig): Collection
+    private function resolveAssignedStudentSemesterIds(?ClassConfig $classConfig): Collection
     {
         if (! $classConfig instanceof ClassConfig) {
             return collect();
@@ -1425,23 +1488,24 @@ class AcademicCalendarController extends Controller
         return AcademicCalendarStudentEnrolment::query()
             ->join('academic_calendar_classes', 'academic_calendar_classes.id', '=', 'academic_calendar_student_enrolments.academic_calendar_class_id')
             ->where('academic_calendar_classes.class_config_id', $classConfig->id)
-            ->pluck('academic_calendar_student_enrolments.student_enrolment_id')
+            ->whereNotNull('academic_calendar_student_enrolments.student_semesters_id')
+            ->pluck('academic_calendar_student_enrolments.student_semesters_id')
             ->map(fn (mixed $id): int => (int) $id)
             ->values();
     }
 
-    private function filterUnassignedFinalStudentApplications(Collection $finalStudentApplications, Collection $assignedStudentEnrolmentIds): Collection
+    private function filterUnassignedFinalStudentApplications(Collection $finalStudentApplications, Collection $assignedStudentSemesterIds): Collection
     {
-        if ($assignedStudentEnrolmentIds->isEmpty()) {
+        if ($assignedStudentSemesterIds->isEmpty()) {
             return $finalStudentApplications->values();
         }
 
-        $assignedLookup = $assignedStudentEnrolmentIds
+        $assignedLookup = $assignedStudentSemesterIds
             ->mapWithKeys(fn (int $id): array => [$id => true])
             ->all();
 
         return $finalStudentApplications
-            ->reject(fn (mixed $student): bool => isset($assignedLookup[(int) $student->student_enrolment_id]))
+            ->reject(fn (mixed $student): bool => isset($assignedLookup[(int) $student->student_semesters_id]))
             ->values();
     }
 

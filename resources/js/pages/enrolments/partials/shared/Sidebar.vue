@@ -1,30 +1,37 @@
 <script setup lang="ts">
+import { useUtils } from '@/composables/core/useUtils';
+import { enrolmentStatusFromQuery } from '@/lib/enrolmentStatusOrigin';
 import { ClassListTopNext, ClassListType, OtherApplication } from '@/types/enrolments';
+import { trans } from 'laravel-vue-i18n';
 
 interface Props {
     nextTop: ClassListTopNext[];
     otherApplications?: OtherApplication[];
     type: ClassListType;
+    compact?: boolean;
 }
 
 defineProps<Props>();
+const { getQueryParams } = useUtils();
+const originQuery = enrolmentStatusFromQuery(getQueryParams());
 
 const getDescription = (type: ClassListType) => {
     switch (type) {
         case 'provisional':
-            return 'Awaiting verification of applicants details';
+            return trans('enrolments.up_next_description_verify');
         case 'verified':
-            return 'Awaiting confirmation to final class list';
+            return trans('enrolments.up_next_description_confirm');
         default:
             return '';
     }
 };
+
 const getRouteName = (type: ClassListType, applicationId: string) => {
     switch (type) {
         case 'provisional':
-            return route('enrolments.verify', { student_application: applicationId, type: 'provisional' });
+            return route('enrolments.verify', { student_application: applicationId, type: 'provisional', ...originQuery });
         case 'verified':
-            return route('enrolments.confirm', { student_application: applicationId, type: 'verified' });
+            return route('enrolments.confirm', { student_application: applicationId, type: 'verified', ...originQuery });
         default:
             return '';
     }
@@ -32,38 +39,56 @@ const getRouteName = (type: ClassListType, applicationId: string) => {
 </script>
 
 <template>
-    <div class="flex flex-col space-y-3" v-if="otherApplications && otherApplications.length > 0">
-        <HeadingSmall :title="$t('trans.ui_other_applications')" :description="$t('trans.ui_applications_in_other_departments')" />
-        <div class="flex flex-col space-y-2">
-            <div
-                v-for="application in otherApplications"
-                :key="application.applicationId"
-                class="text-foreground flex flex-col rounded-md border border-border bg-card px-3 py-2 text-[8px] uppercase"
-            >
-                <div class="flex justify-between">
-                    <div>{{ application.department }}</div>
-                    <div class="bg-primary text-primary-foreground rounded-full px-2 py-0.5">{{ application.level }}</div>
-                </div>
-                <div class="my-1 flex justify-between">
-                    <div>{{ application.course }}</div>
-                    <div>{{ application.modeOfStudy }}</div>
-                </div>
-                <div class="flex">
-                    {{ application.inClassList ? 'In Class List' : 'Not in Class List' }}
+    <div class="flex flex-col gap-4">
+        <div v-if="otherApplications && otherApplications.length > 0" class="flex flex-col gap-2">
+            <div>
+                <h3 class="text-[0.65rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+                    {{ $t('trans.ui_other_applications') }}
+                </h3>
+                <p class="text-xs text-muted-foreground">{{ $t('enrolments.other_applications_subtitle') }}</p>
+            </div>
+            <div class="flex flex-col gap-2">
+                <div
+                    v-for="application in otherApplications"
+                    :key="application.applicationId"
+                    class="rounded-lg border border-border bg-card px-3 py-2"
+                >
+                    <div class="flex items-start justify-between gap-2">
+                        <span class="text-sm font-semibold leading-tight">{{ application.course }}</span>
+                        <span class="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-primary">
+                            {{ application.level }}
+                        </span>
+                    </div>
+                    <p class="mt-0.5 text-xs text-muted-foreground">
+                        {{ application.department }} · {{ application.modeOfStudy }}
+                    </p>
+                    <p class="mt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                        {{
+                            application.inClassList
+                                ? $t('enrolments.in_class_list')
+                                : $t('enrolments.not_in_class_list')
+                        }}
+                    </p>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="flex flex-col space-y-3" v-if="nextTop && nextTop.length > 0">
-        <HeadingSmall :title="$t('trans.ui_next_5')" :description="getDescription(type as ClassListType)" />
-        <div class="flex flex-col space-y-2">
-            <TextLink
-                classes="bg-card px-3 py-2 rounded-md text-xs uppercase text-foreground border border-border hover:bg-muted"
-                v-for="application in nextTop"
-                :key="application.applicationId"
-                :title="application.name"
-                :href="getRouteName(type as ClassListType, String(application.applicationId))"
-            />
+
+        <div v-if="nextTop && nextTop.length > 0" class="flex flex-col gap-2">
+            <div>
+                <h3 class="text-[0.65rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+                    {{ $t('enrolments.up_next_title') }}
+                </h3>
+                <p class="text-xs text-muted-foreground">{{ getDescription(type as ClassListType) }}</p>
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <TextLink
+                    v-for="application in nextTop"
+                    :key="application.applicationId"
+                    classes="rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
+                    :title="application.name"
+                    :href="getRouteName(type as ClassListType, String(application.applicationId))"
+                />
+            </div>
         </div>
     </div>
 </template>

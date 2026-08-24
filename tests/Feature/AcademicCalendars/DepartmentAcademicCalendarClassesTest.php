@@ -4,9 +4,11 @@ use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\ClassConfig;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\Department;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
+use App\Models\Students\StudentEnrolment;
 use Illuminate\Support\Facades\DB;
 
 require_once __DIR__.'/../../Support/AcademicCalendarClassTestHelpers.php';
@@ -172,7 +174,7 @@ test('department academic calendar api returns assigned and ready class counts',
         ->assertJsonPath('data.0.levels.0.totalFinalList', 3);
 });
 
-test('department academic calendar api total final list is scoped by intake calendar year', function () {
+test('department academic calendar api total final list is scoped by academic calendar year', function () {
     $context = buildDepartmentClassContext();
 
     $intakeB = IntakePeriod::query()->create([
@@ -201,7 +203,10 @@ test('department academic calendar api total final list is scoped by intake cale
     createFinalStudentApplication($context, 'intake-a-one@example.com');
     createFinalStudentApplication($context, 'intake-a-two@example.com');
 
-    $contextForIntakeB = array_merge($context, ['intakePeriod' => $intakeB]);
+    $contextForIntakeB = array_merge($context, [
+        'intakePeriod' => $intakeB,
+        'calendar' => $calendar2027,
+    ]);
     createFinalStudentApplication($contextForIntakeB, 'intake-b-one@example.com');
 
     $this->actingAs($context['user']);
@@ -970,4 +975,343 @@ test('updating class validates name is required', function () {
     $academicCalendarClass->refresh();
 
     expect($academicCalendarClass->name)->toBe($originalName);
+});
+
+test('department classes preview is scoped to the class config semester', function () {
+    $context = buildDepartmentClassContext();
+    $semesterOne = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $semesterTwo = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-2'],
+        ['name' => 'Semester 2', 'description' => null],
+    );
+
+    $context['classConfig']->update(['semester_id' => $semesterOne->id]);
+    createFinalStudentApplication($context, 'semester-one-student@example.com');
+
+    $context['classConfig']->update(['semester_id' => $semesterTwo->id]);
+    createFinalStudentApplication($context, 'semester-two-a@example.com');
+    createFinalStudentApplication($context, 'semester-two-b@example.com');
+
+    $this->actingAs($context['user']);
+    $response = $this->get(route('academic-calendars.department-classes', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'class_config_id' => $context['classConfig']->id,
+        'semester_id' => $semesterTwo->id,
+    ]));
+
+    $response->assertSuccessful();
+    $page = $response->viewData('page');
+
+    expect(data_get($page, 'props.generationContext.finalStudentCount'))->toBe(2)
+        ->and(data_get($page, 'props.generationContext.newFinalStudentCount'))->toBe(2);
+});
+
+test('generating classes flashes an error when no enrolments match the class config semester', function () {
+    $context = buildDepartmentClassContext();
+    $semesterOne = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $semesterTwo = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-2'],
+        ['name' => 'Semester 2', 'description' => null],
+    );
+
+    $context['classConfig']->update(['semester_id' => $semesterOne->id]);
+    createFinalStudentApplication($context, 'wrong-semester-student@example.com');
+    $context['classConfig']->update(['semester_id' => $semesterTwo->id]);
+
+    $this->actingAs($context['user']);
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 20,
+    ])->assertSessionHas('error', __('enrolment.classes_generation_empty'));
+
+    expect(AcademicCalendarClass::query()->where('class_config_id', $context['classConfig']->id)->count())->toBe(0);
+});
+
+test('class detail page lists confirmed students created after generation as unassigned', function () {
+    $context = buildDepartmentClassContext();
+    createFinalStudentApplication($context, 'assigned-one@example.com');
+    createFinalStudentApplication($context, 'assigned-two@example.com');
+
+    $this->actingAs($context['user']);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ])->assertSessionHas('success');
+
+    $lateApplication = createFinalStudentApplication($context, 'unassigned-late@example.com');
+    $lateEnrolmentId = (int) StudentEnrolment::query()->where('student_application_id', $lateApplication->id)->value('id');
+    $academicCalendarClass = AcademicCalendarClass::query()->firstOrFail();
+
+    $page = $this->get(route('academic-calendars.department-classes.show', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]))->assertSuccessful()->viewData('page');
+
+    expect(collect(data_get($page, 'props.unassignedStudents'))->pluck('studentEnrolmentId')->all())->toContain($lateEnrolmentId)
+        ->and(collect(data_get($page, 'props.academicCalendarClass.students'))->pluck('studentEnrolmentId')->all())->not->toContain($lateEnrolmentId);
+});
+
+test('authorized user can add an unassigned confirmed student to the class', function () {
+    $context = buildDepartmentClassContext();
+    createFinalStudentApplication($context, 'add-assigned-one@example.com');
+    createFinalStudentApplication($context, 'add-assigned-two@example.com');
+    $context['user']->givePermissionTo('update:academic-calendar-student-enrolments');
+
+    $this->actingAs($context['user']);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ])->assertSessionHas('success');
+
+    $lateApplication = createFinalStudentApplication($context, 'add-late@example.com');
+    $lateEnrolmentId = (int) StudentEnrolment::query()->where('student_application_id', $lateApplication->id)->value('id');
+    $academicCalendarClass = AcademicCalendarClass::query()->firstOrFail();
+
+    $this->post(route('academic-calendars.department-classes.add-students', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]), [
+        'student_enrolment_ids' => [$lateEnrolmentId],
+    ])->assertSessionHas('success');
+
+    expect(
+        AcademicCalendarStudentEnrolment::query()
+            ->where('academic_calendar_class_id', $academicCalendarClass->id)
+            ->where('student_enrolment_id', $lateEnrolmentId)
+            ->whereNull('deleted_at')
+            ->exists()
+    )->toBeTrue();
+
+    $page = $this->get(route('academic-calendars.department-classes.show', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]))->assertSuccessful()->viewData('page');
+
+    expect(collect(data_get($page, 'props.academicCalendarClass.students'))->pluck('studentEnrolmentId')->all())->toContain($lateEnrolmentId)
+        ->and(collect(data_get($page, 'props.unassignedStudents'))->pluck('studentEnrolmentId')->all())->not->toContain($lateEnrolmentId);
+});
+
+test('cannot add a student who is already in a class of the same config', function () {
+    $context = buildDepartmentClassContext();
+    createFinalStudentApplication($context, 'already-one@example.com');
+    createFinalStudentApplication($context, 'already-two@example.com');
+    $context['user']->givePermissionTo('update:academic-calendar-student-enrolments');
+
+    $this->actingAs($context['user']);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ])->assertSessionHas('success');
+
+    $academicCalendarClass = AcademicCalendarClass::query()->firstOrFail();
+    $assignedEnrolmentId = (int) AcademicCalendarStudentEnrolment::query()
+        ->where('academic_calendar_class_id', $academicCalendarClass->id)
+        ->whereNull('deleted_at')
+        ->value('student_enrolment_id');
+
+    $this->post(route('academic-calendars.department-classes.add-students', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]), [
+        'student_enrolment_ids' => [$assignedEnrolmentId],
+    ])->assertSessionHasErrors('student_enrolment_ids');
+});
+
+test('adding students without permission is forbidden', function () {
+    $context = buildDepartmentClassContext();
+    createFinalStudentApplication($context, 'forbid-add-one@example.com');
+    createFinalStudentApplication($context, 'forbid-add-two@example.com');
+
+    $this->actingAs($context['user']);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ])->assertSessionHas('success');
+
+    $lateApplication = createFinalStudentApplication($context, 'forbid-add-late@example.com');
+    $lateEnrolmentId = (int) StudentEnrolment::query()->where('student_application_id', $lateApplication->id)->value('id');
+    $academicCalendarClass = AcademicCalendarClass::query()->firstOrFail();
+
+    $this->post(route('academic-calendars.department-classes.add-students', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]), [
+        'student_enrolment_ids' => [$lateEnrolmentId],
+    ])->assertForbidden();
+});
+
+test('authorized user can unassign a student from the class without dropping the programme', function () {
+    $context = buildDepartmentClassContext();
+    createFinalStudentApplication($context, 'remove-one@example.com');
+    createFinalStudentApplication($context, 'remove-two@example.com');
+    $context['user']->givePermissionTo('update:academic-calendar-student-enrolments');
+
+    $this->actingAs($context['user']);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ])->assertSessionHas('success');
+
+    $academicCalendarClass = AcademicCalendarClass::query()->firstOrFail();
+    $membership = AcademicCalendarStudentEnrolment::query()
+        ->where('academic_calendar_class_id', $academicCalendarClass->id)
+        ->whereNull('deleted_at')
+        ->firstOrFail();
+    $studentEnrolmentId = (int) $membership->student_enrolment_id;
+
+    $this->post(route('academic-calendars.department-classes.remove-students', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]), [
+        'student_enrolment_ids' => [$studentEnrolmentId],
+    ])->assertSessionHas('success');
+
+    expect(AcademicCalendarStudentEnrolment::query()->whereKey($membership->id)->exists())->toBeFalse()
+        ->and(AcademicCalendarStudentEnrolment::withTrashed()->whereKey($membership->id)->first()?->trashed())->toBeTrue()
+        ->and(StudentEnrolment::query()->whereKey($studentEnrolmentId)->exists())->toBeTrue();
+
+    $page = $this->get(route('academic-calendars.department-classes.show', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]))->assertSuccessful()->viewData('page');
+
+    expect(collect(data_get($page, 'props.academicCalendarClass.students'))->pluck('studentEnrolmentId')->all())->not->toContain($studentEnrolmentId)
+        ->and(collect(data_get($page, 'props.unassignedStudents'))->pluck('studentEnrolmentId')->all())->toContain($studentEnrolmentId);
+});
+
+test('removing students without permission is forbidden', function () {
+    $context = buildDepartmentClassContext();
+    createFinalStudentApplication($context, 'forbid-remove-one@example.com');
+    createFinalStudentApplication($context, 'forbid-remove-two@example.com');
+
+    $this->actingAs($context['user']);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ])->assertSessionHas('success');
+
+    $academicCalendarClass = AcademicCalendarClass::query()->firstOrFail();
+    $studentEnrolmentId = (int) AcademicCalendarStudentEnrolment::query()
+        ->where('academic_calendar_class_id', $academicCalendarClass->id)
+        ->whereNull('deleted_at')
+        ->value('student_enrolment_id');
+
+    $this->post(route('academic-calendars.department-classes.remove-students', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]), [
+        'student_enrolment_ids' => [$studentEnrolmentId],
+    ])->assertForbidden();
+});
+
+test('re-adding a removed student restores the class membership instead of inserting a duplicate', function () {
+    $context = buildDepartmentClassContext();
+    createFinalStudentApplication($context, 'restore-one@example.com');
+    createFinalStudentApplication($context, 'restore-two@example.com');
+    $context['user']->givePermissionTo('update:academic-calendar-student-enrolments');
+
+    $this->actingAs($context['user']);
+
+    $this->post(route('academic-calendars.department-classes.store', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+    ]), [
+        'class_config_id' => $context['classConfig']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 2,
+    ])->assertSessionHas('success');
+
+    $academicCalendarClass = AcademicCalendarClass::query()->firstOrFail();
+    $membership = AcademicCalendarStudentEnrolment::query()
+        ->where('academic_calendar_class_id', $academicCalendarClass->id)
+        ->whereNull('deleted_at')
+        ->firstOrFail();
+    $studentEnrolmentId = (int) $membership->student_enrolment_id;
+
+    $this->post(route('academic-calendars.department-classes.remove-students', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]), [
+        'student_enrolment_ids' => [$studentEnrolmentId],
+    ])->assertSessionHas('success');
+
+    $this->post(route('academic-calendars.department-classes.add-students', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'academic_calendar_class' => $academicCalendarClass->id,
+    ]), [
+        'student_enrolment_ids' => [$studentEnrolmentId],
+    ])->assertSessionHas('success');
+
+    expect(AcademicCalendarStudentEnrolment::withTrashed()->where('academic_calendar_class_id', $academicCalendarClass->id)->where('student_enrolment_id', $studentEnrolmentId)->count())->toBe(1)
+        ->and($membership->fresh()?->trashed())->toBeFalse();
 });

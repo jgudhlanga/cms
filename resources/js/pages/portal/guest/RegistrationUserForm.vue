@@ -46,10 +46,16 @@ const props = withDefaults(
         requireEligibilityFirst?: boolean;
         stepperVariant?: StepperVariant;
         requiresFee?: boolean;
+        lockedIdentity?: {
+            identityType?: 'zimbabwean' | 'international' | null;
+            idNumber?: string | null;
+            passportNumber?: string | null;
+        } | null;
     }>(),
     {
         stepperVariant: 'regular',
         requiresFee: false,
+        lockedIdentity: null,
     },
 );
 
@@ -77,14 +83,29 @@ const wizardPhase = ref<WizardPhase>(
     props.startAtIdentity || acknowledged_advert.value ? 'registration' : 'instructions',
 );
 const showInstructionsValidationHint = ref(false);
-const activePath = ref<EnrollmentPath>('zimbabwean');
-const step = ref<Step>('identity');
+const identityLocked = computed(() => props.lockedIdentity != null);
+const lockedPath = computed<EnrollmentPath>(() =>
+    props.lockedIdentity?.identityType === 'international' ? 'international' : 'zimbabwean',
+);
+const activePath = ref<EnrollmentPath>(identityLocked.value ? lockedPath.value : 'zimbabwean');
+const step = ref<Step>(identityLocked.value ? 'account' : 'identity');
 const passwordMatches = ref(true);
 const isChecking = ref(false);
 const lookupError = ref<string | null>(null);
 const duplicateResult = ref<EnrollmentLookupResult | null>(null);
 const returningLookupType = ref<ReturningLookupType>('id_number');
 const returningLookupValue = ref('');
+
+if (identityLocked.value) {
+    registration_path.value = lockedPath.value === 'international' ? 'international' : 'zimbabwean';
+    if (lockedPath.value === 'international') {
+        passport_number.value = props.lockedIdentity?.passportNumber ?? '';
+        id_number.value = '';
+    } else {
+        id_number.value = props.lockedIdentity?.idNumber ?? '';
+        passport_number.value = '';
+    }
+}
 
 const form = useForm<CreateApplicationUserParams & { registration_path: RegistrationPath }>({
     password_confirmation: '',
@@ -101,7 +122,9 @@ const form = useForm<CreateApplicationUserParams & { registration_path: Registra
 
 const isReturning = computed(() => activePath.value === 'returning');
 const isInternational = computed(() => activePath.value === 'international');
-const showIdentityStep = computed(() => isReturning.value || step.value === 'identity');
+const showIdentityStep = computed(
+    () => !identityLocked.value && (isReturning.value || step.value === 'identity'),
+);
 const existingRecordBlocked = computed(() => duplicateResult.value?.found === true && !isReturning.value);
 const returningRecordFound = computed(() => isReturning.value && duplicateResult.value?.found === true);
 const isInstructionsPhase = computed(() => wizardPhase.value === 'instructions' || !acknowledged_advert.value);
@@ -111,6 +134,14 @@ const pathOptions: { id: EnrollmentPath; labelKey: string }[] = [
     { id: 'returning', labelKey: 'trans.enrollment_path_returning' },
     { id: 'international', labelKey: 'trans.enrollment_path_international' },
 ];
+
+const visiblePathOptions = computed(() => {
+    if (!identityLocked.value) {
+        return pathOptions;
+    }
+
+    return pathOptions.filter((option) => option.id === lockedPath.value);
+});
 
 const stepperHighlight = computed(() => {
     if (isInstructionsPhase.value) {
@@ -135,7 +166,7 @@ onMounted(() => {
     if (props.startAtIdentity) {
         acknowledged_advert.value = true;
         wizardPhase.value = 'registration';
-        step.value = 'identity';
+        step.value = identityLocked.value ? 'account' : 'identity';
         return;
     }
 
@@ -152,6 +183,10 @@ watch(acknowledged_advert, (acknowledged) => {
 
 const goToEligibilityFlow = () => {
     router.visit(route('portal.register.track'));
+};
+
+const goToProgrammeStep = () => {
+    router.visit(route('portal.register.programme'));
 };
 
 const completeInstructions = () => {
@@ -176,6 +211,10 @@ const resetLookupState = () => {
 };
 
 const switchPath = (path: EnrollmentPath) => {
+    if (identityLocked.value) {
+        return;
+    }
+
     activePath.value = path;
     registration_path.value = path === 'international' ? 'international' : 'zimbabwean';
     step.value = 'identity';
@@ -282,8 +321,12 @@ const updateForm = () => {
     form.middle_name = middle_name.value ?? '';
     form.last_name = last_name.value ?? '';
     form.password = password.value;
-    form.id_number = id_number.value ?? '';
-    form.passport_number = passport_number.value ?? '';
+    form.id_number = identityLocked.value
+        ? (props.lockedIdentity?.idNumber ?? id_number.value ?? '')
+        : (id_number.value ?? '');
+    form.passport_number = identityLocked.value
+        ? (props.lockedIdentity?.passportNumber ?? passport_number.value ?? '')
+        : (passport_number.value ?? '');
     form.registration_path = isInternational.value ? 'international' : 'zimbabwean';
     form.acknowledged_advert = acknowledged_advert.value;
 };
@@ -360,7 +403,25 @@ const clearFormError = (field: string) => {
                         />
 
                         <template v-else>
-                            <RegistrationPathSelector :active-path="activePath" :path-options="pathOptions" @switch-path="switchPath" />
+                            <RegistrationPathSelector
+                                :active-path="activePath"
+                                :path-options="visiblePathOptions"
+                                @switch-path="switchPath"
+                            />
+
+                            <div
+                                v-if="identityLocked"
+                                class="mb-4 rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground"
+                            >
+                                <p v-if="lockedPath === 'international'">
+                                    <span class="font-medium text-foreground">{{ $t('trans.passport_number') }}:</span>
+                                    {{ lockedIdentity?.passportNumber }}
+                                </p>
+                                <p v-else>
+                                    <span class="font-medium text-foreground">{{ $t('trans.id_number') }}:</span>
+                                    {{ lockedIdentity?.idNumber }}
+                                </p>
+                            </div>
 
                             <RegistrationIdentityStep
                                 v-if="showIdentityStep"
@@ -402,7 +463,7 @@ const clearFormError = (field: string) => {
                                 @update:password="password = $event"
                                 @update:password-confirmation="password_confirmation = $event"
                                 @clear-error="clearFormError"
-                                @back="step = 'identity'"
+                                @back="identityLocked ? goToProgrammeStep() : (step = 'identity')"
                                 @submit="submitForm"
                             />
                         </template>

@@ -5,6 +5,14 @@ import { AcademicCalendar } from '@/types/academic-calendar';
 import { AuthObject } from '@/types/data-pagination';
 import { IntakePeriod } from '@/types/institution';
 import { LecturerDashboard } from '@/types/lecturer';
+import type {
+    ExaminationChartLabels,
+    ExaminationComparison,
+    ExaminationDashboardFiltersState,
+    ExaminationFilterOptions,
+    ExaminationStatusCounts,
+    ExaminationStatusLabels,
+} from '@/types/examinations';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { useDashboardStore } from '@/store/dashboard/useDashboardStore';
@@ -13,11 +21,10 @@ import { School } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { computed, ref, watch } from 'vue';
 
-// Tab Components
 import AcademicTab from './tabs/AcademicTab.vue';
-import ActivityTab from './tabs/ActivityTab.vue';
 import AttendanceTab from './tabs/AttendanceTab.vue';
 import EnrolmentsTab from './tabs/EnrolmentsTab.vue';
+import ExaminationsTab from './tabs/ExaminationsTab.vue';
 import FinanceTab from './tabs/FinanceTab.vue';
 import HostelTab from './tabs/HostelTab.vue';
 import OverviewTab from './tabs/OverviewTab.vue';
@@ -46,6 +53,16 @@ interface Props {
     visibleTabs: string[];
     dashboardTitle: string;
     moduleEnabled: boolean;
+    filters: ExaminationDashboardFiltersState | null;
+    filterOptions: ExaminationFilterOptions | null;
+    statusCounts: ExaminationStatusCounts | null;
+    statusLabels: ExaminationStatusLabels | null;
+    chartLabels: ExaminationChartLabels | null;
+    totalCandidates: number | null;
+    passRate: number | null;
+    onlineViewedCount: number | null;
+    onlineViewedRate: number | null;
+    comparison: ExaminationComparison | null;
 }
 
 const props = defineProps<Props>();
@@ -64,6 +81,21 @@ const resolvedActiveTab = computed({
 
 const showTab = (tab: string) => props.visibleTabs.includes(tab);
 
+const examinationExtraQuery = computed(() => ({
+    intake_period_id: props.intakePeriod?.id ? String(props.intakePeriod.id) : undefined,
+    academic_calendar_id: props.academicCalendar?.id ? String(props.academicCalendar.id) : undefined,
+}));
+
+const hasExaminationDashboard = computed(
+    () =>
+        props.filters !== null
+        && props.filterOptions !== null
+        && props.statusCounts !== null
+        && props.statusLabels !== null
+        && props.chartLabels !== null
+        && props.totalCandidates !== null,
+);
+
 watch(
     () => props.intakePeriod,
     (period) => {
@@ -75,12 +107,15 @@ watch(
 );
 
 const handleFilterChange = (option: SelectOption) => {
-    // Enrolment metrics use intake_period_id only; academic_calendar_id is for other dashboard tabs.
     router.get(
         window.location.pathname,
         {
             intake_period_id: String(option.value),
             academic_calendar_id: String(props.academicCalendar.id),
+            session: props.filters?.session ?? undefined,
+            discipline: props.filters?.discipline ?? undefined,
+            subject_code: props.filters?.subject_code ?? undefined,
+            compare_session: props.filters?.compare_session ?? undefined,
         },
         {
             preserveState: true,
@@ -88,14 +123,12 @@ const handleFilterChange = (option: SelectOption) => {
         },
     );
 };
-
 </script>
 
 <template>
     <Head :title="$tChoice('trans.dashboard', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="flex w-full flex-col">
-            <!-- Topbar -->
             <div class="mb-4 border-b border-gray-200 pb-4">
                 <h1 class="flex items-center gap-2 text-base font-medium text-gray-900">
                     <School class="h-5 w-5 text-gray-500" />
@@ -106,7 +139,6 @@ const handleFilterChange = (option: SelectOption) => {
                 </p>
             </div>
 
-            <!-- Tabs Layout -->
             <Tabs v-model="resolvedActiveTab" class="w-full">
                 <TabsList class="flex h-auto w-fit flex-wrap justify-start rounded-md bg-gray-100/80 p-1">
                     <TabsTrigger
@@ -159,15 +191,14 @@ const handleFilterChange = (option: SelectOption) => {
                         {{ $t('dashboard.hostel') }}
                     </TabsTrigger>
                     <TabsTrigger
-                        v-if="showTab('activity')"
-                        value="activity"
+                        v-if="showTab('examinations')"
+                        value="examinations"
                         class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
                     >
-                        {{ $t('dashboard.activity') }}
+                        {{ $t('dashboard.exams') }}
                     </TabsTrigger>
                 </TabsList>
 
-                <!-- Tab Contents -->
                 <TabsContent v-if="showTab('overview')" value="overview" class="mt-0">
                     <OverviewTab
                         v-if="overviewDashboard"
@@ -211,8 +242,21 @@ const handleFilterChange = (option: SelectOption) => {
                     <HostelTab v-if="hostelDashboard" :hostel-dashboard="hostelDashboard" />
                 </TabsContent>
 
-                <TabsContent v-if="showTab('activity')" value="activity" class="mt-0">
-                    <ActivityTab />
+                <TabsContent v-if="showTab('examinations')" value="examinations" class="mt-0">
+                    <ExaminationsTab
+                        v-if="hasExaminationDashboard"
+                        :filters="filters!"
+                        :filter-options="filterOptions!"
+                        :status-counts="statusCounts!"
+                        :status-labels="statusLabels!"
+                        :chart-labels="chartLabels!"
+                        :total-candidates="totalCandidates!"
+                        :pass-rate="passRate"
+                        :online-viewed-count="onlineViewedCount!"
+                        :online-viewed-rate="onlineViewedRate"
+                        :comparison="comparison"
+                        :extra-query="examinationExtraQuery"
+                    />
                 </TabsContent>
             </Tabs>
         </div>

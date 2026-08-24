@@ -9,6 +9,7 @@ use App\Http\Resources\Enrolments\EnrolmentResource;
 use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Shared\WorkflowStepResource;
+use App\Models\Applications\ApplicationOfferingLevel;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
@@ -19,15 +20,18 @@ class DepartmentLevelController extends Controller
 {
     public function index(InstitutionDepartment $institutionDepartment)
     {
+        $levelIds = ApplicationOfferingLevel::query()
+            ->whereHas('offeringDepartment', fn ($q) => $q->where('institution_department_id', $institutionDepartment->id))
+            ->pluck('department_level_id');
+
         $levels = DepartmentLevel::where('institution_department_id', $institutionDepartment->id)
-            ->where('show_on_current_application_period', true)
+            ->whereIn('id', $levelIds)
             ->select('*')
             ->orderBy('level_id', 'asc')
             ->orderBy('created_at')
             ->orderBy('deleted_at')
             ->get();
 
-        // return DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
         return DepartmentLevelResource::collection($levels);
     }
 
@@ -111,6 +115,7 @@ class DepartmentLevelController extends Controller
                 'departmentLevel.requirement',
                 'departmentCourse.course',
                 'departmentCourse.requirement',
+                'departmentCourse.requirements',
                 'intakePeriod',
                 'classList',
             ])

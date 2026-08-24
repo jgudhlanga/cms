@@ -24,11 +24,15 @@ import { onMounted, ref } from 'vue';
 
 interface Props {
     department: InstitutionDepartment;
+    enrolmentSetup?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    enrolmentSetup: false,
+});
 
-const { department } = props;
+const { department, enrolmentSetup } = props;
+
 const institutionDepartmentId = department?.id?.toString() ?? '';
 const courses = ref<DepartmentCourse[]>([]);
 const levels = ref<DepartmentLevel[]>([]);
@@ -173,7 +177,11 @@ const handleModeOfStudyChange = async (value: any) => {
                         </tbody>
                     </table>
                     <div class="flex items-center justify-center">
-                        <BaseButton type="submit" :processing="form.processing" v-if="hasAbility('department-setup:class-sizes')">
+                        <BaseButton
+                            type="submit"
+                            :processing="form.processing"
+                            v-if="hasAbility(enrolmentSetup ? 'manage:online-application-catalogue' : 'department-setup:class-sizes')"
+                        >
                             {{ $t('trans.save') }}
                         </BaseButton>
                     </div>

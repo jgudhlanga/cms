@@ -80,7 +80,7 @@ function enableDashboardModule(array $tabSettings = []): void
         'staff' => true,
         'finance' => true,
         'hostel' => true,
-        'activity' => true,
+        'examinations' => true,
     ];
 
     dashboardsModule()->update([

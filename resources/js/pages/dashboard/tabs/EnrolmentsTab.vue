@@ -253,6 +253,7 @@ watch(
                 :department-distribution="departmentDistribution"
                 :show-actions-column="true"
                 :show-filters="false"
+                origin="dashboard"
                 v-model:intakePeriodModel="intakePeriodModel"
             />
             <DashboardCard :title="$t('dashboard.distribution_by_level')">

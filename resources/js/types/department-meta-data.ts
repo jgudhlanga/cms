@@ -9,8 +9,8 @@ export type DepartmentLevel = {
         levelId: string | number;
         level: string;
         levelPosition: number;
+        calendarType?: 'semester' | 'term' | 'abma';
         description?: string;
-        showOnCurrentApplicationPeriod?: boolean;
         createdAt?: string;
         updatedAt?: string;
         deletedAt?: string;
@@ -22,7 +22,6 @@ export type DepartmentLevel = {
 
 export type DepartmentLevelParams = {
     level_ids: Array<string | undefined | null> | null;
-    show_on_current_application_period: Array<string | undefined | null> | null;
 };
 
 export type DepartmentCourse = {
@@ -32,7 +31,6 @@ export type DepartmentCourse = {
         institutionDepartmentId: string | number;
         courseId: string | number;
         course: string;
-        showOnCurrentApplicationPeriod: boolean;
         courseworkCaptureEnabled?: boolean | null;
         hasEnrolmentRequirements: boolean;
         description?: string;
@@ -59,7 +57,6 @@ export type DepartmentCourseParams = {
 
 export type DepartmentCourseUpdateParams = {
     department_level_ids?: Array<any> | null;
-    show_on_current_application_period?: boolean;
     coursework_capture_enabled?: boolean | null;
 };
 
@@ -79,7 +76,6 @@ export interface DepartmentCourseMetaData {
 export interface DepartmentLevelMetaData {
     levels: DepartmentCourse[];
     departmentLevelsIds: Array<string | undefined | null> | null;
-    showOnCurrentApplicationPeriodIds: Array<string | undefined | null> | null;
 }
 
 export type DepartmentLevelRequirement = {
@@ -181,13 +177,26 @@ export type DepartmentEnrolmentCount = {
     institutionDepartmentId: string | number;
     departmentCourseId: string | number;
     courseName: string;
-    levels: [
-        {
-            departmentLevelId: string | number;
-            levelName: string;
-            enrolmentsCount: string | number | null;
-        },
-    ];
+    levels: Array<{
+        departmentLevelId: string | number;
+        levelName: string;
+        enrolmentsCount: string | number | null;
+    }>;
+};
+
+export type DepartmentEnrolmentModeTotal = {
+    modeOfStudyId: number;
+    count: number;
+};
+
+export type DepartmentEnrolmentSummaryAttributes = {
+    institutionDepartmentId: number;
+    departmentCourseId: number;
+    courseName: string | null;
+    departmentLevelId: number;
+    levelName: string | null;
+    enrolmentsCount: number;
+    modeOfStudyId: number;
 };
 
 export type CourseLevelMode = {

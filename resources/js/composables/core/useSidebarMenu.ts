@@ -80,26 +80,46 @@ export function useSidebarMenu() {
             url: route('teaching.modules.index'),
             show: canShowMenuItem('view:lecturer-modules', 'institution', moduleState),
         },
+        (() => {
+            const canSearchStudents = canShowMenuItem('view:students', 'students', moduleState);
+            const canViewApplications = canShowMenuItem('view:student-applications', 'enrolments', moduleState);
+            const canViewStudentIds = canShowMenuItem(
+                'viewAny:student-id-card-requests',
+                'student-ids',
+                moduleState,
+            );
+            const studentChildren: MenuItemInterface[] = [
+                {
+                    transChoiceKey: 'trans.application',
+                    url: route('enrolments.index'),
+                    show: canViewApplications,
+                },
+                {
+                    transKey: 'trans.nav_search',
+                    url: route('students.index'),
+                    show: canSearchStudents,
+                },
+                {
+                    transChoiceKey: 'trans.student_id',
+                    url: route('admin.students.id-card-requests.index'),
+                    show: canViewStudentIds,
+                },
+            ].filter((child) => child.show);
+
+            return {
+                groupKey: 'students' as const,
+                transChoiceKey: 'trans.student',
+                icon: icons[IconName.user_check],
+                items: studentChildren,
+                show: studentChildren.length > 0,
+            };
+        })(),
         {
             groupKey: 'students',
-            transChoiceKey: 'trans.enrolment',
-            icon: icons[IconName.user_add],
-            url: route('enrolments.index'),
-            show: canShowMenuItem('view:student-applications', 'enrolments', moduleState),
-        },
-        {
-            groupKey: 'students',
-            transChoiceKey: 'trans.student',
-            icon: icons[IconName.user_check],
-            url: route('students.index'),
-            show: canShowMenuItem('view:students', 'students', moduleState),
-        },
-        {
-            groupKey: 'students',
-            transChoiceKey: 'trans.student_id',
-            icon: icons[IconName.card],
-            url: route('admin.students.id-card-requests.index'),
-            show: canShowMenuItem('viewAny:student-id-card-requests', 'student-ids', moduleState),
+            transChoiceKey: 'trans.communication',
+            url: '#',
+            icon: icons[IconName.person_chat],
+            show: false /*hasAbility('view:communication')*/,
         },
         (() => {
             const canViewExaminations = canShowMenuItem(
@@ -121,20 +141,13 @@ export function useSidebarMenu() {
             ].filter((child) => child.show);
 
             return {
-                groupKey: 'students' as const,
+                groupKey: 'operations' as const,
                 transChoiceKey: 'trans.examination',
                 icon: icons[IconName.book_check],
                 items: examinationChildren,
                 show: canViewExaminations,
             };
         })(),
-        {
-            groupKey: 'students',
-            transChoiceKey: 'trans.communication',
-            url: '#',
-            icon: icons[IconName.person_chat],
-            show: false /*hasAbility('view:communication')*/,
-        },
         {
             groupKey: 'operations',
             transChoiceKey: 'trans.report',
@@ -230,6 +243,11 @@ export function useSidebarMenu() {
                     transChoiceKey: 'trans.fee_levy_structure',
                     url: route('fee-structures.index'),
                     show: institutionModuleOn && hasAbility('viewAny:fee-structures'),
+                },
+                {
+                    transChoiceKey: 'application_offerings.menu',
+                    url: route('application-offerings.index'),
+                    show: institutionModuleOn && hasAbility('manage:online-application-catalogue'),
                 },
                 {
                     transKey: 'trans.institution_features',
@@ -385,13 +403,30 @@ export function useSidebarMenu() {
                 show: canViewSettings,
             };
         })(),
-        {
-            groupKey: 'system',
-            transChoiceKey: 'trans.user',
-            url: route('users.index'),
-            icon: icons[IconName.users],
-            show: canShowMenuItem('view:users', 'users', moduleState),
-        },
+        (() => {
+            const canSearchUsers = canShowMenuItem('view:users', 'users', moduleState);
+            const canViewAuditTrail = isModuleEnabled('dashboards', moduleState) && !hasStudentProfile();
+            const userChildren: MenuItemInterface[] = [
+                {
+                    transKey: 'trans.nav_search',
+                    url: route('users.index'),
+                    show: canSearchUsers,
+                },
+                {
+                    transKey: 'trans.audit_trail',
+                    url: route('users.audit-trail'),
+                    show: canViewAuditTrail,
+                },
+            ].filter((child) => child.show);
+
+            return {
+                groupKey: 'system' as const,
+                transChoiceKey: 'trans.user',
+                icon: icons[IconName.users],
+                items: userChildren,
+                show: userChildren.length > 0,
+            };
+        })(),
         (() => {
             const canMaintain = canShowMenuItem(['root:manage', 'manage:data-maintenance'], 'root', moduleState);
             const maintenanceChildren: MenuItemInterface[] = [

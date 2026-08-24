@@ -6,6 +6,8 @@ use App\Models\AcademicCalendars\AcademicCalendarClassMetaData;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\AcademicCalendars\ClassMetaDataType;
+use App\Models\AcademicCalendars\Semester;
+use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Students\StudentEnrolment;
@@ -30,7 +32,7 @@ function buildClassStaffingContext(): array
         'view:course-syllabuses',
     ]);
 
-    $departmentLevelCourse = \App\Models\Institution\DepartmentLevelCourse::query()
+    $departmentLevelCourse = DepartmentLevelCourse::query()
         ->where('department_course_id', $context['departmentCourse']->id)
         ->where('department_level_id', $context['departmentLevel']->id)
         ->firstOrFail();
@@ -45,21 +47,25 @@ function buildClassStaffingContext(): array
         'status' => 'active',
     ]);
 
-    $context['semesterOne'] = \App\Models\AcademicCalendars\Semester::query()->firstOrCreate(
+    $context['semesterOne'] = Semester::query()->firstOrCreate(
         ['slug' => 'semester-1'],
         ['name' => 'Semester 1', 'description' => null],
     );
 
-    $semesterConfig = ClassConfig::query()->create([
-        'calendar_year' => $context['calendar']->calendar_year,
-        'institution_department_id' => $context['institutionDepartment']->id,
-        'department_course_id' => $context['departmentCourse']->id,
-        'department_level_id' => $context['departmentLevel']->id,
-        'mode_of_study_id' => $context['modeOfStudy']->id,
-        'semester_id' => $context['semesterOne']->id,
-        'course_syllabus_ids' => [$context['courseSyllabus']->id],
-        'students_per_class' => 2,
-    ]);
+    $semesterConfig = ClassConfig::query()->updateOrCreate(
+        [
+            'calendar_year' => $context['calendar']->calendar_year,
+            'institution_department_id' => $context['institutionDepartment']->id,
+            'department_course_id' => $context['departmentCourse']->id,
+            'department_level_id' => $context['departmentLevel']->id,
+            'mode_of_study_id' => $context['modeOfStudy']->id,
+            'semester_id' => $context['semesterOne']->id,
+        ],
+        [
+            'course_syllabus_ids' => [$context['courseSyllabus']->id],
+            'students_per_class' => 2,
+        ],
+    );
 
     $module = CourseSyllabusModule::query()->create([
         'tenant_id' => $context['tenant']->id,
@@ -269,6 +275,8 @@ test('sync class module lecturers returns json when accept header is application
         ->assertJsonPath('staffIds', collect([$firstLecturer->id, $secondLecturer->id])->sort()->values()->all());
 
     expect($response->json('message'))->toBeString()->not->toBeEmpty();
+    expect($response->json('staffNames'))->toBeArray()->toHaveCount(2)
+        ->each->toBeString()->not->toBeEmpty();
 });
 
 test('copy defaults returns json with semester modules when accept header is application json', function () {
@@ -298,6 +306,8 @@ test('copy defaults returns json with semester modules when accept header is app
         ->assertJsonPath('semesterModules.0.staffIds', [$lecturer->id]);
 
     expect($response->json('message'))->toBeString()->not->toBeEmpty();
+    expect($response->json('semesterModules.0.staffNames'))->toBeArray()->toHaveCount(1)
+        ->each->toBeString()->not->toBeEmpty();
 });
 
 test('department classes page includes tutor and staffing summary when semester is selected', function () {
@@ -333,4 +343,58 @@ test('department classes page includes tutor and staffing summary when semester 
     expect(data_get($page, 'props.staffingSummary.tutorsAssigned'))->toBe(1)
         ->and(data_get($previewClass, 'tutor.id'))->toBe($tutor->id)
         ->and(data_get($page, 'props.selectedSemesterId'))->toBe($context['semesterOne']->id);
+});
+
+test('department classes page auto selects the current period when semester is omitted', function () {
+    $context = buildClassStaffingContext();
+
+    $response = $this->actingAs($context['user'])->get(route('academic-calendars.department-classes', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'class_config_id' => $context['classConfig']->id,
+    ]));
+
+    $response->assertSuccessful();
+    $page = $response->viewData('page');
+
+    expect(data_get($page, 'props.selectedSemesterId'))->toBe($context['semesterOne']->id);
+});
+
+test('class detail page auto selects the current semester for module lecturers', function () {
+    $context = buildClassStaffingContext();
+
+    $response = $this->actingAs($context['user'])->get(route('academic-calendars.department-classes.show', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'academic_calendar_class' => $context['academicCalendarClass']->id,
+    ]));
+
+    $response->assertSuccessful();
+    $page = $response->viewData('page');
+
+    expect(data_get($page, 'props.selectedSemesterId'))->toBe($context['semesterOne']->id)
+        ->and(data_get($page, 'props.semesterModules.0.moduleId'))->toBe($context['module']->id);
+});
+
+test('class detail page keeps an explicit semester query over the current semester', function () {
+    $context = buildClassStaffingContext();
+    $semesterTwo = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-2'],
+        ['name' => 'Semester 2', 'description' => null],
+    );
+
+    $response = $this->actingAs($context['user'])->get(route('academic-calendars.department-classes.show', [
+        'institution_department' => $context['institutionDepartment']->id,
+        'calendar_year' => $context['calendar']->calendar_year,
+        'academic_calendar_class' => $context['academicCalendarClass']->id,
+        'semester_id' => $semesterTwo->id,
+    ]));
+
+    $response->assertSuccessful();
+    $page = $response->viewData('page');
+
+    expect(data_get($page, 'props.selectedSemesterId'))->toBe($semesterTwo->id);
 });

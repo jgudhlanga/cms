@@ -1,11 +1,13 @@
 <script lang="ts" setup>
 import RequiredIndicator from '@/components/core/form/RequiredIndicator.vue';
 import { Label } from '@/components/ui/label';
+import { resolveUiLabel } from '@/lib/uiLabel';
 import { cn } from '@/lib/utils';
 import { SelectOption } from '@/types/utils';
 import VueSelect from 'vue3-select-component';
 import Empty from '../../util/Empty.vue';
 import InputError from '../InputError.vue';
+import { computed } from 'vue';
 
 interface Props {
     label?: string;
@@ -19,13 +21,15 @@ interface Props {
     labelUppercase?: boolean;
     verticalLayout?: boolean;
     isRequired?: boolean;
-    teleport?: string;
+    isDisabled?: boolean;
+    teleport?: string | false;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
     options: () => [],
     isClearable: true,
     isSearchable: true,
+    isDisabled: false,
     labelUppercase: false,
     verticalLayout: true,
     isRequired: false,
@@ -33,6 +37,10 @@ withDefaults(defineProps<Props>(), {
 });
 
 const model = defineModel<any>();
+
+const resolvedTeleport = computed(() =>
+    typeof props.teleport === 'string' && props.teleport.length > 0 ? props.teleport : undefined,
+);
 </script>
 <template>
     <div class="flex flex-col">
@@ -41,19 +49,21 @@ const model = defineModel<any>();
                 {{ label }}<RequiredIndicator v-if="isRequired" />
             </Label>
             <VueSelect
+                v-bind="$attrs"
                 :class="cn('custom-select', '')"
                 :options="options"
-                :placeholder="placeholder"
+                :placeholder="resolveUiLabel(placeholder || 'trans.select_one', $t)"
+                :get-option-label="(option) => resolveUiLabel(String(option?.label ?? ''), $t)"
                 v-model="model"
-                v-bind="$attrs"
                 :is-multi="isMulti"
                 :is-searchable="isSearchable"
                 :is-loading="loading"
                 :is-clearable="isClearable"
-                :teleport="teleport"
+                :is-disabled="isDisabled"
+                :teleport="resolvedTeleport"
             >
                 <template #no-options>
-                    <Empty :message="$t('trans.no_options_found')" />
+                    <Empty :message="resolveUiLabel('trans.no_options_found', $t)" />
                 </template>
             </VueSelect>
         </div>

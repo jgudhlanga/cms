@@ -3,6 +3,7 @@
 namespace App\Models\Institution;
 
 use App\Http\Filters\Institution\DepartmentMetaDataFilter;
+use App\Models\Applications\ApplicationLevelRequirement;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -17,15 +18,15 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
- *
  * @mixin Builder
+ *
  * @method static filter(DepartmentMetaDataFilter $filters)
  */
 class DepartmentLevel extends Model
 {
-    use HasFactory, SoftDeletes, Filterable, BelongsToTenant, Paginatable, LogsActivity;
+    use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
 
-    protected $fillable = ['tenant_id', 'institution_department_id', 'level_id', 'description', 'show_on_current_application_period'];
+    protected $fillable = ['tenant_id', 'institution_department_id', 'level_id', 'description'];
 
     public function level(): BelongsTo
     {
@@ -39,7 +40,7 @@ class DepartmentLevel extends Model
 
     public function requirement(): HasOne
     {
-        return $this->hasOne(DepartmentLevelRequirement::class, 'department_level_id');
+        return $this->hasOne(ApplicationLevelRequirement::class, 'department_level_id');
     }
 
     public function courses(): HasMany

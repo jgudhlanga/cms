@@ -6,6 +6,7 @@ namespace App\Services\Students;
 
 use App\Enums\Institution\LevelEnum;
 use App\Enums\Students\ApplicationTrackEnum;
+use App\Models\Applications\ApplicationOfferingLevel;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use Illuminate\Support\Collection;
@@ -40,6 +41,16 @@ class RegistrationLevelOptionsService
         if ($track === ApplicationTrackEnum::Continuous) {
             $levels = $this->eligibility->filterLevelsForContinuousTrack($levels);
         }
+
+        $offeredInstitutionLevelIds = ApplicationOfferingLevel::query()
+            ->with('departmentLevel')
+            ->get()
+            ->map(fn ($row) => (int) ($row->departmentLevel?->level_id ?? 0))
+            ->filter(fn (int $id) => $id > 0)
+            ->unique()
+            ->all();
+
+        $levels = $levels->filter(fn (Level $level) => in_array((int) $level->id, $offeredInstitutionLevelIds, true))->values();
 
         $openIntakes = $this->openIntakesForTrack($track);
         $openLevelCount = $levels->count();

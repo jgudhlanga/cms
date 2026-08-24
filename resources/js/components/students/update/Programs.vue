@@ -314,6 +314,7 @@ const goToPayment = () => {
                 data-field="modeOfStudy"
                 :error="form.errors.modeOfStudy"
                 :is-required="true"
+                :use-application-offerings="true"
             />
         </div>
 

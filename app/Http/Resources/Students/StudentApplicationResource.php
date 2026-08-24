@@ -30,7 +30,7 @@ class StudentApplicationResource extends JsonResource
             'departmentLevel.level',
             'departmentLevel.requirement',
             'departmentCourse.course',
-            'departmentCourse.requirement',
+            'departmentCourse.requirements',
             'departmentCourse.departmentCourseLevels',
             'intakePeriod',
             'workflowStep',

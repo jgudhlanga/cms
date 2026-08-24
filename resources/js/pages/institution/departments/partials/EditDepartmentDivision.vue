@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { BaseCheckbox } from '@/components/core/form';
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
+import DepartmentColorSwatch from '@/components/institution/DepartmentColorSwatch.vue';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
+import { resolveDepartmentColor } from '@/lib/departmentColor';
 import { buildFormOptions, clearFormErrors } from '@/lib/forms';
 import { getIdParams } from '@/lib/utils';
 import { useModalStore } from '@/store/core/useModalStore';
@@ -20,7 +21,7 @@ const props = defineProps<{
 const department = ref<InstitutionDepartment>();
 const form = useForm({
     division_id: null as number | null,
-    has_apprentice_courses: false,
+    color_code: '#2563EB',
 });
 const divisionOption = ref<SelectOption | null>(null);
 const { modals } = useModalStore();
@@ -32,10 +33,12 @@ const options = computed<SelectOption[]>(() =>
     })),
 );
 
+const previewColor = computed(() => resolveDepartmentColor(form.color_code, department.value?.attributes?.department, 1));
+
 watch(modals!, () => {
     department.value = getModalEdit(APP_MODULE_KEYS.institution_department_division);
     form.division_id = department.value?.attributes?.divisionId ? Number(department.value.attributes.divisionId) : null;
-    form.has_apprentice_courses = !!department.value?.attributes?.hasApprenticeCourses;
+    form.color_code = department.value?.attributes?.colorCode ?? '#2563EB';
     divisionOption.value =
         form.division_id != null ? (options.value.find((option) => Number(option.value) === Number(form.division_id)) ?? null) : null;
     form.defaults();
@@ -66,7 +69,8 @@ const save = () => {
         :form="form"
     >
         <template #body>
-            <p v-if="department" class="mb-3 text-sm text-muted-foreground">
+            <p v-if="department" class="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+                <DepartmentColorSwatch :color-code="previewColor" :department-name="department.attributes?.department" size-class="h-3 w-3" />
                 {{ department.attributes?.department }}
             </p>
             <BaseCombobox
@@ -76,12 +80,25 @@ const save = () => {
                 :options="options"
                 :error="form.errors.division_id"
             />
-            <div v-if="department?.attributes?.isAcademic" class="mt-4">
-                <BaseCheckbox
-                    input-id="has_apprentice_courses"
-                    v-model="form.has_apprentice_courses"
-                    :label="$t('trans.has_apprentice_courses')"
-                />
+            <div class="mt-4 space-y-2">
+                <label class="text-sm font-medium text-foreground" for="department_color_code">
+                    {{ $t('trans.department_color') }}
+                </label>
+                <div class="flex items-center gap-3">
+                    <input
+                        id="department_color_code"
+                        v-model="form.color_code"
+                        type="color"
+                        class="h-10 w-14 cursor-pointer rounded border border-border bg-transparent p-1"
+                    />
+                    <input
+                        v-model="form.color_code"
+                        type="text"
+                        maxlength="7"
+                        class="h-10 flex-1 rounded-md border border-border bg-background px-3 text-sm uppercase"
+                    />
+                </div>
+                <p v-if="form.errors.color_code" class="text-xs text-destructive">{{ form.errors.color_code }}</p>
             </div>
         </template>
     </BaseModal>

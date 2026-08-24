@@ -27,6 +27,11 @@ export type DepartmentCourseClassCount = {
     levels: ClassLevelSummary[];
 };
 
+export type DepartmentClassModeTotal = {
+    modeOfStudyId: number;
+    count: number;
+};
+
 export type ClassConfigPeriodOption = {
     id: number | string;
     name: string;
@@ -119,6 +124,7 @@ export type ClassSemesterModule = {
     title: string;
     captureMarkOnly?: boolean;
     staffIds: number[];
+    staffNames?: string[];
     syllabusDefaultStaffIds: number[];
 };
 

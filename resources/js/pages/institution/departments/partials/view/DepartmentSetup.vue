@@ -2,7 +2,6 @@
 import CustomSeparator from '@/components/core/util/CustomSeparator.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import Courses from '@/pages/institution/departments/partials/view/Courses.vue';
-import IntakePeriodClassSizeConfig from '@/pages/institution/departments/partials/view/IntakePeriodClassSizeConfig.vue';
 import Levels from '@/pages/institution/departments/partials/view/Levels.vue';
 import { InstitutionDepartment } from '@/types/institution';
 
@@ -28,10 +27,6 @@ const { department } = props;
             <Courses :department="department" />
             <CustomSeparator classes="h-1 my-4" />
         </div>
-        <!-- INTAKE CLASS SIZE SETUP -->
-        <div class="flex flex-col">
-            <HeadingSmall :title="`${$t('trans.enrolment_class_size_setup')}`" :description="$t('trans.intake_class_size_config_description')" />
-            <IntakePeriodClassSizeConfig :department="department" />
-        </div>
+        <!-- INTAKE CLASS SIZE SETUP moved to Enrolment setup -->
     </div>
 </template>

@@ -63,6 +63,7 @@ use App\Services\Students\ApplicationEligibilityService;
 use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\ApplicationTrackSession;
 use App\Services\Students\IntakePeriodResolver;
+use App\Services\Students\OjetFormerStudentIntentService;
 use App\Services\Students\RegistrationAvailabilityService;
 use App\Services\Students\RegistrationIntentSession;
 use App\Services\Students\RegistrationLevelOptionsService;
@@ -102,6 +103,7 @@ class PortalController extends Controller
         protected RegistrationIntentSession $intentSession,
         protected RegistrationLevelOptionsService $levelOptionsService,
         protected RegistrationProgrammeAvailabilityService $programmeAvailability,
+        protected OjetFormerStudentIntentService $ojetFormerStudentIntent,
     ) {}
 
     // ========= Dashboard and Registration =========
@@ -209,6 +211,48 @@ class PortalController extends Controller
                 ])]);
         }
 
+        $isOjetIntent = $this->intentSession->stepperVariant() === 'ojet';
+
+        if ($isOjetIntent && ! $this->intentSession->hasResolvedOjetFormerStudent()) {
+            return to_route('portal.register.programme')
+                ->withErrors(['id_number' => __('trans.ojet_former_student_number_required')]);
+        }
+
+        if ($isOjetIntent) {
+            $lockedType = $this->intentSession->ojetIdentityType();
+            if ($path !== $lockedType) {
+                return back()->withErrors([
+                    'registration_path' => __('trans.ojet_former_student_number_required'),
+                ])->withInput();
+            }
+
+            if ($path === 'zimbabwean') {
+                $posted = EnrollmentLookupService::normalizeNationalId($request->string('id_number')->toString());
+                if ($posted !== $this->intentSession->ojetIdNumber()) {
+                    return back()->withErrors([
+                        'id_number' => __('trans.ojet_former_student_number_required'),
+                    ])->withInput();
+                }
+            } else {
+                $posted = EnrollmentLookupService::normalizePassportNumber(
+                    $request->string('passport_number')->toString()
+                );
+                if ($posted !== $this->intentSession->ojetPassportNumber()) {
+                    return back()->withErrors([
+                        'passport_number' => __('trans.ojet_former_student_number_required'),
+                    ])->withInput();
+                }
+            }
+
+            // Existing CMS students must log in — never create a second account.
+            if ($this->intentSession->ojetStudentId() !== null) {
+                return to_route('login')->with(
+                    'status',
+                    __('trans.ojet_former_student_login_required'),
+                );
+            }
+        }
+
         if ($path === 'zimbabwean' && $enrollmentLookup->nationalIdExists($request->string('id_number')->toString())) {
             return back()->withErrors([
                 'id_number' => __('trans.id_number_already_taken'),
@@ -249,6 +293,10 @@ class PortalController extends Controller
             $registrationSession['registration.passport_number'] = EnrollmentLookupService::normalizePassportNumber(
                 $request->string('passport_number')->toString()
             );
+        }
+
+        if ($isOjetIntent && $this->intentSession->ojetStudentNumber() !== null) {
+            $registrationSession['registration.ojet_student_number'] = $this->intentSession->ojetStudentNumber();
         }
 
         session($registrationSession);
@@ -569,10 +617,21 @@ class PortalController extends Controller
                 $intakePeriod = $this->eligibility->resolveIntakeForTrack($track, null);
             }
 
-            $student = $this->studentRepository->create(
-                CreateApplicationDto::fromCreateApplicationRequest($request, $user, $intakePeriod)
-            );
-            $application = $student->applications()->latest()->first();
+            $existingStudent = $user->studentProfile;
+            $dto = CreateApplicationDto::fromCreateApplicationRequest($request, $user, $intakePeriod);
+
+            if (
+                $existingStudent instanceof Student
+                && $this->ojetFormerStudentIntent->hasPromotedOjetApplicationIntent()
+                && $this->ojetFormerStudentIntent->studentMatchesVerifiedIdentity($existingStudent)
+            ) {
+                $this->ojetFormerStudentIntent->ensureStudentNumber($existingStudent);
+                $application = $this->studentRepository->applyReturningApplication($existingStudent, $dto);
+                $student = $existingStudent->fresh();
+            } else {
+                $student = $this->studentRepository->create($dto);
+                $application = $student->applications()->latest()->first();
+            }
             $stepOne = WorkflowHelper::getStepByPosition(1);
             $stepTwo = WorkflowHelper::getStepByPosition(2);
             $application->update(['workflow_step_id' => $stepOne?->id ?? null]);
@@ -620,6 +679,12 @@ class PortalController extends Controller
                 'application.continuous_focus',
                 'application.requires_fee',
                 'application.level_id',
+                'application.ojet_identity_type',
+                'application.ojet_student_number',
+                'application.ojet_id_number',
+                'application.ojet_passport_number',
+                'application.ojet_student_id',
+                'registration.ojet_student_number',
                 ApplicationTrackSession::TRANSFER_COLLEGE_NAME_KEY,
             ]);
             if ($stepTwo) {

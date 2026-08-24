@@ -2,25 +2,32 @@
 
 namespace App\Http\Controllers\Api\V1\Institution;
 
-use App\Enums\Shared\ClassListTypeEnum;
+use App\Helpers\EnrolmentHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Institution\StaffFilter;
 use App\Http\Resources\Institution\CourseSyllabusResource;
 use App\Http\Resources\Institution\DepartmentCourseResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\IntakePeriodClassSizeResource;
+use App\Http\Resources\Institution\ModeOfStudyResource;
 use App\Http\Resources\Institution\StaffResource;
+use App\Models\Institution\CourseLevelMode;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\ModeOfStudy;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Repositories\Institution\interface\IStaffRepository;
+use App\Services\DepartmentEnrolmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class DepartmentMetaDataController extends Controller
 {
-    public function __construct(protected IStaffRepository $staffRepository) {}
+    public function __construct(
+        protected IStaffRepository $staffRepository,
+        protected DepartmentEnrolmentService $departmentEnrolmentService,
+    ) {}
 
     public function courses(InstitutionDepartment $institutionDepartment): JsonResponse
     {
@@ -34,13 +41,12 @@ class DepartmentMetaDataController extends Controller
 
     public function levels(InstitutionDepartment $institutionDepartment): JsonResponse
     {
-        $institutionDepartment->loadMissing(['departmentLevels.level', 'departmentLevels.requirement']);
+        $institutionDepartment->loadMissing(['departmentLevels.level']);
 
         $levels = DepartmentLevelResource::collection($institutionDepartment->departmentLevels);
         $departmentLevelsIds = $institutionDepartment?->departmentLevels?->pluck('level_id');
-        $showOnCurrentApplicationPeriodIds = $institutionDepartment?->departmentLevels->where('show_on_current_application_period', true)->pluck('level_id');
 
-        return response()->json(compact('levels', 'departmentLevelsIds', 'showOnCurrentApplicationPeriodIds'));
+        return response()->json(compact('levels', 'departmentLevelsIds'));
     }
 
     public function staff(StaffFilter $filters, InstitutionDepartment $institutionDepartment): AnonymousResourceCollection
@@ -49,6 +55,34 @@ class DepartmentMetaDataController extends Controller
             'filters' => request()->only(['search', 'trashed']),
             'trashedCount' => $this->staffRepository->allTrashed()->count(),
         ]);
+    }
+
+    public function modes(InstitutionDepartment $institutionDepartment): AnonymousResourceCollection
+    {
+        $courseIds = $institutionDepartment->departmentCourses()->pluck('id');
+
+        if ($courseIds->isEmpty()) {
+            return ModeOfStudyResource::collection(collect());
+        }
+
+        $modeIds = CourseLevelMode::query()
+            ->whereIn('department_course_id', $courseIds)
+            ->get()
+            ->pluck('modes')
+            ->flatten()
+            ->map(fn (mixed $id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($modeIds === []) {
+            return ModeOfStudyResource::collection(collect());
+        }
+
+        return ModeOfStudyResource::collection(
+            ModeOfStudy::query()->whereIn('id', $modeIds)->orderBy('name')->get(),
+        );
     }
 
     public function classSizes(InstitutionDepartment $institutionDepartment): AnonymousResourceCollection
@@ -66,84 +100,38 @@ class DepartmentMetaDataController extends Controller
 
     public function departmentEnrolments(InstitutionDepartment $institutionDepartment): JsonResponse
     {
-        $intakePeriodId = request('intake_period_id');
-        $modeOfStudyId = request('mode_of_study_id');
+        $intakePeriodId = request('intake_period_id') > 0 ? (int) request('intake_period_id') : null;
+        $modeOfStudyId = request('mode_of_study_id') > 0 ? (int) request('mode_of_study_id') : null;
 
-        // Eager-load relationships to avoid N+1
-        $enrolments = $institutionDepartment->studentApplications()
-            ->with(['departmentCourse.course', 'departmentLevel.level'])
-            ->when($intakePeriodId, fn ($q) => $q->where('intake_period_id', $intakePeriodId))
-            ->when($modeOfStudyId, fn ($q) => $q->where('mode_of_study_id', $modeOfStudyId))
-            ->get();
+        $document = $this->departmentEnrolmentService->summariseDepartmentEnrolments(
+            $institutionDepartment,
+            $intakePeriodId,
+            $modeOfStudyId,
+        );
 
-        // Group by department_course_id
-        $grouped = $enrolments->groupBy('department_course_id')->map(function ($courseGroup) use ($institutionDepartment) {
-            $course = $courseGroup->first()->departmentCourse;
-
-            // Group within each course by department_level_id
-            $levels = $courseGroup->groupBy('department_level_id')->map(function ($levelGroup) {
-                $level = $levelGroup->first()->departmentLevel;
-                if (! $level) {
-                    return null;
-                }
-
-                return [
-                    'departmentLevelId' => $level->id,
-                    'levelName' => $level->level->name ?? null,
-                    'enrolmentsCount' => $levelGroup->count(),
-                ];
-            })->values(); // reset numeric keys
-
-            return [
-                'institutionDepartmentId' => $institutionDepartment->id,
-                'departmentCourseId' => $course->id,
-                'courseName' => $course?->course?->name,
-                'levels' => $levels,
-            ];
-        })->values(); // reset numeric key
-
-        return response()->json($grouped);
+        return response()->json($document);
     }
 
     public function departmentClassLists(InstitutionDepartment $institutionDepartment): JsonResponse
     {
-        $intakePeriodId = request('intake_period_id');
-        $modeOfStudyId = request('mode_of_study_id');
-        $type = request('type', ClassListTypeEnum::PROVISIONAL->value);
-        // Eager-load relationships to avoid N+1
-        $enrolments = $institutionDepartment->studentApplications()
-            ->join('class_lists', 'student_applications.id', '=', 'class_lists.student_application_id')
-            ->with(['departmentCourse.course', 'departmentLevel.level'])
-            ->when($intakePeriodId, fn ($q) => $q->where('intake_period_id', $intakePeriodId))
-            ->when($modeOfStudyId, fn ($q) => $q->where('mode_of_study_id', $modeOfStudyId))
-            ->whereIn('class_lists.type', [$type])
-            ->get();
-        // Group by department_course_id
-        $grouped = $enrolments->groupBy('department_course_id')->map(function ($courseGroup) use ($institutionDepartment) {
-            $course = $courseGroup->first()->departmentCourse;
-            // Group within each course by department_level_id
-            $levels = $courseGroup->groupBy('department_level_id')->map(function ($levelGroup) {
-                $level = $levelGroup->first()->departmentLevel;
-                if (! $level) {
-                    return null;
-                }
+        $type = request()->string('type')->toString();
+        $permission = EnrolmentHelper::classListBrowsePermissionForType($type !== '' ? $type : null);
+        if ($permission === null) {
+            abort(403);
+        }
+        $this->authorize($permission);
 
-                return [
-                    'departmentLevelId' => $level->id,
-                    'levelName' => $level->level->name ?? null,
-                    'enrolmentsCount' => $levelGroup->count(),
-                ];
-            })->filter()->values(); // remove nulls, then reset numeric keys
+        $intakePeriodId = request('intake_period_id') > 0 ? (int) request('intake_period_id') : null;
+        $modeOfStudyId = request('mode_of_study_id') > 0 ? (int) request('mode_of_study_id') : null;
 
-            return [
-                'institutionDepartmentId' => $institutionDepartment->id,
-                'departmentCourseId' => $course->id,
-                'courseName' => $course?->course?->name,
-                'levels' => $levels,
-            ];
-        })->values(); // reset numeric keys
+        $document = $this->departmentEnrolmentService->summariseDepartmentEnrolments(
+            $institutionDepartment,
+            $intakePeriodId,
+            $modeOfStudyId,
+            $type,
+        );
 
-        return response()->json($grouped);
+        return response()->json($document);
     }
 
     public function classConfigCourseSyllabuses(InstitutionDepartment $institutionDepartment): AnonymousResourceCollection

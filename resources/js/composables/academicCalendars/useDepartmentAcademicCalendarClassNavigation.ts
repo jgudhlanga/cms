@@ -41,6 +41,22 @@ export function useDepartmentAcademicCalendarClassNavigation(
         }),
     );
 
+    const addStudentsUrl = computed(() =>
+        route('academic-calendars.department-classes.add-students', {
+            institution_department: String(department.value.id),
+            calendar_year: String(academicCalendar.value.attributes.calendarYear),
+            academic_calendar_class: String(academicCalendarClass.value.id),
+        }),
+    );
+
+    const removeStudentsUrl = computed(() =>
+        route('academic-calendars.department-classes.remove-students', {
+            institution_department: String(department.value.id),
+            calendar_year: String(academicCalendar.value.attributes.calendarYear),
+            academic_calendar_class: String(academicCalendarClass.value.id),
+        }),
+    );
+
     const advancePhaseUrl = computed(() =>
         route('academic-calendars.department-classes.advance-phase', {
             institution_department: String(department.value.id),
@@ -111,6 +127,8 @@ export function useDepartmentAcademicCalendarClassNavigation(
     return {
         departmentClassesUrl,
         moveStudentsUrl,
+        addStudentsUrl,
+        removeStudentsUrl,
         advancePhaseUrl,
         completeLevelUrl,
         updateClassUrl,

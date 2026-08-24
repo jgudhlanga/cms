@@ -1,13 +1,12 @@
 import { useUtils } from '@/composables/core/useUtils';
+import { grantedAbilitiesFromCanMap } from '@/lib/grantedAbilities';
 import { ModuleState, PageProps } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 
 export function getUserAbilities(): string[] {
     const { props } = usePage<PageProps>();
-    const { can } = props?.auth;
-    const abilities: Record<string, boolean> = can;
-    if (!abilities) return [];
-    return Object.keys(abilities).filter((ability) => can[ability]);
+
+    return grantedAbilitiesFromCanMap(props?.auth?.can);
 }
 
 /**
@@ -42,6 +41,7 @@ const DASHBOARD_TAB_PERMISSIONS = [
     'view-staff:dashboards',
     'view-finance:dashboards',
     'view-hostel:dashboards',
+    'view-examinations:dashboards',
 ] as const;
 
 export function getModuleState(): ModuleState {

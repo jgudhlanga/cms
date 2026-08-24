@@ -22,7 +22,6 @@ defineProps<Props>();
 const allSelected = ref(false);
 const form = useForm<DepartmentLevelParams>({
     level_ids: [],
-    show_on_current_application_period: [],
 });
 
 const { isLoading, levels, listLevels } = useLevels();
@@ -43,8 +42,7 @@ const { modals } = useModalStore();
 
 watch(modals!, async () => {
     const data = getModalEdit(APP_MODULE_KEYS.department_levels);
-    form.level_ids = data && data[0] ? data[0] : [];
-    form.show_on_current_application_period = data && data[1] ? data[1] : [];
+    form.level_ids = Array.isArray(data) ? (data[0] ?? data) : (data ?? []);
     await listLevels();
     form.defaults();
 });
@@ -75,22 +73,13 @@ watch(modals!, async () => {
                         </div>
                         <div class="grid grid-cols-1 gap-x-6 md:grid-cols-2">
                             <template v-for="level in levels" :key="`level_key_${level['id']}`">
-                                <div class="flex justify-between">
-                                    <BaseCheckbox
-                                        :input-id="`level_id_${level['id']}`"
-                                        :value="level['id']"
-                                        v-model="form.level_ids"
-                                        :label="level['attributes']['name']"
-                                        @change="updateModel()"
-                                    />
-                                    <BaseCheckbox
-                                        :input-id="`show_on_current_application_period_${level['id']}`"
-                                        :value="level['id']"
-                                        v-model="form.show_on_current_application_period"
-                                        :label="$t('trans.show_on_current_application_period')"
-                                        @change="updateModel()"
-                                    />
-                                </div>
+                                <BaseCheckbox
+                                    :input-id="`level_id_${level['id']}`"
+                                    :value="level['id']"
+                                    v-model="form.level_ids"
+                                    :label="level['attributes']['name']"
+                                    @change="updateModel()"
+                                />
                             </template>
                         </div>
                     </div>

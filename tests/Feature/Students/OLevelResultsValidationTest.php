@@ -4,7 +4,7 @@ use App\Models\Institution\Course;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
-use App\Models\Institution\DepartmentLevelRequirement;
+use App\Models\Applications\ApplicationLevelRequirement;
 use App\Models\Institution\Grade;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Level;
@@ -44,7 +44,8 @@ function createOLevelRequirementFixture(int $mainCount = 1, int $otherCount = 0)
         fn (int $index) => Subject::factory()->create(['name' => "Subject {$index}"])
     );
 
-    $requirement = new DepartmentLevelRequirement([
+    $requirement = ApplicationLevelRequirement::query()->create([
+        'tenant_id' => $tenant->id,
         'department_level_id' => $departmentLevel->id,
         'is_o_level_required' => true,
         'required_subjects_count' => $mainCount + $otherCount,
@@ -54,8 +55,6 @@ function createOLevelRequirementFixture(int $mainCount = 1, int $otherCount = 0)
         'only_read_write_required' => false,
         'required_level_id' => null,
     ]);
-    $requirement->tenant_id = $tenant->id;
-    $requirement->save();
 
     $gradeA = Grade::query()->where('name', 'A')->firstOrFail();
 

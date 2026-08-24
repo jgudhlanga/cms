@@ -8,6 +8,7 @@ use App\Http\Filters\Institution\InstitutionDepartmentFilter;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Institution\interface\IInstitutionDepartmentRepository;
+use App\Support\Institution\DepartmentColorPalette;
 
 class InstitutionDepartmentRepository extends BaseRepository implements IInstitutionDepartmentRepository
 {
@@ -25,7 +26,13 @@ class InstitutionDepartmentRepository extends BaseRepository implements IInstitu
             return collect();
         }
         $query = $this->institutionDepartment
-            ->with('department')
+            ->with([
+                'department',
+                'division.headOfDivision.user',
+                'departmentLevels.level',
+                'staff.user.roles',
+            ])
+            ->withCount(['departmentCourses', 'staff'])
             ->select($columns)
             ->filter($filters);
         if (!empty($userDepartments)) {
@@ -71,8 +78,18 @@ class InstitutionDepartmentRepository extends BaseRepository implements IInstitu
                 }
                 // Already active, nothing to do
             } else {
+                $usedColors = $this->institutionDepartment
+                    ->withTrashed()
+                    ->whereNotNull('color_code')
+                    ->pluck('color_code')
+                    ->map(fn (?string $color): string => strtoupper((string) $color))
+                    ->all();
+
                 $this->institutionDepartment->create([
                     'department_id' => $departmentId,
+                    'color_code' => DepartmentColorPalette::normalize(
+                        DepartmentColorPalette::nextColor($usedColors),
+                    ),
                 ]);
             }
         }

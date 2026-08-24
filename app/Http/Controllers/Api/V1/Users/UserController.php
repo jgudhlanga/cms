@@ -155,11 +155,66 @@ class UserController extends ApiDropdownController
         return AuditTrailResource::collection($activities);
     }
 
+    public function getUserCausedActivities(User $user)
+    {
+        $actor = request()->user();
+        abort_unless($actor instanceof User, 401);
+
+        abort_unless(
+            $actor->is($user) || $actor->can('root:manage'),
+            403
+        );
+
+        $activities = $this->applyActivityEventFilter(
+            Activity::query()
+                ->where('causer_type', $user->getMorphClass())
+                ->where('causer_id', $user->getKey())
+        )
+            ->with('subject')
+            ->latest()
+            ->paginate(request()->integer('per_page', 20));
+
+        return AuditTrailResource::collection($activities);
+    }
+
+    public function activityLookup()
+    {
+        $actor = request()->user();
+        abort_unless($actor instanceof User, 401);
+        abort_unless($actor->can('root:manage'), 403);
+
+        $search = trim((string) request()->query('search', ''));
+
+        $query = User::query()
+            ->select(['id', 'first_name', 'middle_name', 'last_name', 'email'])
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->limit(25);
+
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search): void {
+                $builder
+                    ->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('middle_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->get()->map(fn (User $user): array => [
+            'id' => $user->id,
+            'name' => $user->full_name,
+            'email' => $user->email,
+        ]);
+
+        return response()->json(['data' => $users]);
+    }
+
     private function applyActivityEventFilter(mixed $query): mixed
     {
         $event = request()->string('event')->toString();
 
-        if (in_array($event, ['created', 'updated'], true)) {
+        if (in_array($event, ['created', 'updated', 'deleted'], true)) {
             $query->where('description', $event);
         }
 

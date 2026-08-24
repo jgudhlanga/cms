@@ -3,8 +3,8 @@ defineProps<{ deficit: string | number }>();
 </script>
 
 <template>
-    <div class="flex space-x-3 rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-500">
-        <div>{{ $t('trans.ui_deficit') }}</div>
-        <div class="font-bold">{{ deficit }}</div>
+    <div class="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-medium leading-5 text-orange-600 uppercase">
+        <span>{{ $t('trans.ui_deficit') }}</span>
+        <span class="font-bold tabular-nums">{{ deficit }}</span>
     </div>
 </template>

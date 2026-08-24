@@ -6,6 +6,7 @@ import { BaseCheckbox, EmailInputWithIcon, PasswordInputWithToggle } from '@/com
 import { useAuth } from '@/composables/auth/useAuth';
 import { useUtils } from '@/composables/core/useUtils';
 import { useRegistrationAvailability } from '@/composables/students/useRegistrationAvailability';
+import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
 import { clearFormErrors } from '@/lib/forms';
@@ -50,7 +51,7 @@ const loginNavigateTo = () => {
                     :input-auto-focus="true"
                     :error="form.errors.email"
                     :label="$t('trans.email')"
-                    :placeholder="$t('trans.email')"
+                    :placeholder="$t('trans.auth_email_placeholder')"
                     :is-required="true"
                     @input="clearFormErrors(form, 'email')"
                 />
@@ -58,7 +59,7 @@ const loginNavigateTo = () => {
                     v-model="form.password"
                     :error="form.errors.password"
                     :label="$t('trans.password')"
-                    :placeholder="$t('trans.password')"
+                    :placeholder="$t('trans.enter_your_password')"
                     :is-required="true"
                     @input="clearFormErrors(form, 'password')"
                 />
@@ -68,7 +69,7 @@ const loginNavigateTo = () => {
                 <BaseCheckbox input-id="remember" v-model="form.remember" :label="$t('trans.remember_me')" />
                 <TextLink
                     :href="route('password.request')"
-                    class="text-muted-foreground pointer-anchor hover:text-primary text-sm underline-offset-4 transition-colors hover:underline"
+                    class="pointer-anchor inline-flex min-h-11 items-center text-sm underline-offset-4 hover:underline"
                 >
                     {{ $t('trans.forgot_password') }}
                 </TextLink>
@@ -77,18 +78,20 @@ const loginNavigateTo = () => {
             <div class="space-y-3">
                 <BaseButton
                     :variant="ColorVariant.primary"
+                    :size="ButtonSize.lg"
                     type="submit"
                     :processing="form.processing"
-                    classes="min-h-11 w-full rounded-xl dark:text-white"
+                    classes="min-h-12 w-full rounded-xl normal-case bg-gradient-to-b from-primary to-primary/80 shadow-lg shadow-primary/30 dark:text-white"
                 >
-                    {{ $t('trans.login') }}
+                    {{ $t('trans.sign_in') }}
                 </BaseButton>
                 <BaseButton
                     @click="() => loginNavigateTo()"
                     :variant="ColorVariant.primary_outline"
+                    :size="ButtonSize.lg"
                     type="button"
                     :disabled="form.processing"
-                    classes="min-h-11 w-full rounded-xl dark:border-white dark:text-white dark:hover:border-white/80 dark:hover:bg-white/10 dark:hover:text-white"
+                    classes="min-h-12 w-full rounded-xl normal-case dark:border-white dark:text-white dark:hover:border-white/80 dark:hover:bg-white/10 dark:hover:text-white"
                 >
                     {{ $t('trans.new_student_registration') }}
                 </BaseButton>

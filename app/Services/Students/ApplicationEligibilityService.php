@@ -8,7 +8,7 @@ use App\Enums\Institution\LevelEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Students\ApplicationTrackEnum;
 use App\Helpers\PaymentHelper;
-use App\Models\Institution\CourseLevelMode;
+use App\Models\Applications\ApplicationOfferingMode;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
@@ -63,10 +63,12 @@ class ApplicationEligibilityService
             return $ids;
         }
 
-        $departmentLevelIds = CourseLevelMode::query()
+        $departmentLevelIds = ApplicationOfferingMode::query()
+            ->where('mode_of_study_id', $ojetModeId)
+            ->with('offeringCourse.offeringLevel')
             ->get()
-            ->filter(fn (CourseLevelMode $courseLevelMode) => in_array((int) $ojetModeId, array_map('intval', $courseLevelMode->modes ?? []), true))
-            ->pluck('department_level_id')
+            ->map(fn ($mode) => (int) ($mode->offeringCourse?->offeringLevel?->department_level_id ?? 0))
+            ->filter(fn (int $id) => $id > 0)
             ->unique()
             ->values();
 

@@ -32,6 +32,8 @@ Route::prefix('students')->middleware('auth')->group(function () {
         ->name('students.id-number.update');
     Route::patch('{student}/enrolments/{student_enrolment}/status', [StudentEnrolmentProgressController::class, 'updateStatus'])
         ->name('students.enrolments.status.update');
+    Route::patch('{student}/student-semesters/{student_semester}/status', [StudentEnrolmentProgressController::class, 'updateSemesterStatus'])
+        ->name('students.student-semesters.status.update');
     Route::post('{student}/id-photo', [StudentController::class, 'uploadIdPhoto'])
         ->name('students.id-photo.store');
     Route::delete('{student}/purge', [StudentController::class, 'purge'])
@@ -59,4 +61,6 @@ Route::prefix('students')->middleware('auth')->group(function () {
     Route::get('program/{student_application}/edit', [UserStudentController::class, 'edit'])->name('students.program-edit');
     Route::put('program/{student_application}/update', [UserStudentController::class, 'updateProgram'])->name('students.program-update');
 });
-Route::middleware('auth')->resource('students', StudentController::class)->names('students');
+Route::middleware('auth')->resource('students', StudentController::class)
+    ->except(['create', 'store'])
+    ->names('students');

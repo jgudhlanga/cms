@@ -2,25 +2,19 @@
 
 namespace App\Http\Controllers\Institution\Departments;
 
-use App\DTO\Institution\CourseRequirementsDto;
 use App\DTO\Institution\DepartmentCourseDto;
 use App\DTO\Institution\DepartmentCourseUpdateDto;
-use App\Enums\Institution\LevelEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\CourseLevelModeRequest;
-use App\Http\Requests\Institution\CourseRequirementRequest;
 use App\Http\Requests\Institution\DepartmentCourseRequest;
 use App\Http\Requests\Institution\DepartmentCourseUpdateRequest;
 use App\Http\Resources\Institution\CourseLevelModeResource;
-use App\Http\Resources\Institution\CourseRequirementResource;
 use App\Http\Resources\Institution\DepartmentCourseResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Http\Resources\Institution\ModeOfStudyResource;
 use App\Models\Institution\DepartmentCourse;
-use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
-use App\Models\Institution\Level;
 use App\Models\Institution\ModeOfStudy;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -35,37 +29,6 @@ class DepartmentCourseController extends Controller
     {
         $this->authorize('createDepartmentMetaData');
         $this->repository->syncDepartmentCourses($institutionDepartment, DepartmentCourseDto::fromDepartmentCourseRequest($request));
-    }
-
-    public function courseRequirements(DepartmentCourse $departmentCourse): Response
-    {
-        $this->authorize('updateDepartmentMetaData');
-
-        $departmentCourse->loadMissing([
-            'requirement',
-            'institutionDepartment.departmentLevels.level',
-            'institutionDepartment.departmentLevels.requirement',
-        ]);
-
-        $requirements = $departmentCourse->requirement ? CourseRequirementResource::make($departmentCourse->requirement) : null;
-        $institutionDepartment = InstitutionDepartmentResource::make($departmentCourse->institutionDepartment);
-        $levels = DepartmentLevelResource::collection($departmentCourse->institutionDepartment->departmentLevels);
-        $allowedLevelIds = Level::whereIn('name', [LevelEnum::NC->name()])->pluck('id')->toArray();
-        $allowedLevels = DepartmentLevel::where('institution_department_id', $departmentCourse->institutionDepartment?->id)
-            ->whereIn('level_id', $allowedLevelIds)->pluck('id')->toArray();
-        $departmentCourse = DepartmentCourseResource::make($departmentCourse);
-
-        return Inertia::render('institution/departments/courses/CourseRequirements',
-            compact('departmentCourse', 'requirements', 'levels', 'institutionDepartment', 'allowedLevels'));
-    }
-
-    /**
-     * @throws AuthorizationException
-     */
-    public function updateCourseRequirements(DepartmentCourse $departmentCourse, CourseRequirementRequest $request): void
-    {
-        $this->authorize('updateDepartmentMetaData');
-        $this->repository->updateLevelCourseRequirements($departmentCourse, CourseRequirementsDto::fromCourseRequirementRequest($request));
     }
 
     public function show(DepartmentCourse $departmentCourse)
@@ -91,7 +54,6 @@ class DepartmentCourseController extends Controller
             'institutionDepartment.department',
             'institutionDepartment.division',
             'institutionDepartment.departmentLevels.level',
-            'institutionDepartment.departmentLevels.requirement',
             'departmentCourseLevels.departmentLevel.level',
             'departmentCourseLevels.departmentCourse.course',
             'courseLevelModes.departmentCourse.course',

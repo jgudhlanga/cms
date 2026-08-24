@@ -1,118 +1,120 @@
 <script setup lang="ts">
 import IntakePeriodComboSelect from '@/components/core/form/combobox/IntakePeriodComboSelect.vue';
 import DepartmentClassListActionLink from '@/components/enrolments/DepartmentClassListActionLink.vue';
+import DepartmentColorSwatch from '@/components/institution/DepartmentColorSwatch.vue';
+import DepartmentDistributionExpandedDetail from '@/components/enrolments/partials/DepartmentDistributionExpandedDetail.vue';
+import DepartmentDistributionKpiCards from '@/components/enrolments/partials/DepartmentDistributionKpiCards.vue';
+import DepartmentDistributionToolbar from '@/components/enrolments/partials/DepartmentDistributionToolbar.vue';
+import {
+    buildDepartmentDistributionKpis,
+    presentDepartmentDistributionRows,
+    rowKey,
+    sumDepartmentDistribution,
+    type DepartmentDistributionRow,
+    type DepartmentDistributionSortKey,
+} from '@/lib/departmentDistributionPresentation';
+import { canOpenEnrolmentStatusList } from '@/lib/enrolmentStatusNavigation';
+import { buildDepartmentApplicationsUrl, type EnrolmentStatusFrom } from '@/lib/enrolmentStatusOrigin';
 import { IconName, icons } from '@/lib/icons';
-import { hasAbility } from '@/lib/permissions';
-import { DepartmentDistribution } from '@/types/dasboard';
-import { IntakePeriod } from '@/types/institution';
-import { SelectOption } from '@/types/utils';
-import { computed } from 'vue';
+import { getUserAbilities } from '@/lib/permissions';
+import { cn } from '@/lib/utils';
+import type { DepartmentDistribution } from '@/types/dashboard';
+import type { IntakePeriod } from '@/types/institution';
+import type { SelectOption } from '@/types/utils';
+import { ArrowDownWideNarrow, ChevronDown, ChevronRight } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
 
 interface Props {
     departmentDistribution: DepartmentDistribution[];
     showActionsColumn?: boolean;
     showFilters?: boolean;
+    showSummaryCards?: boolean;
     intakePeriods?: IntakePeriod[];
-    handleFilterChange?: () => void;
+    handleFilterChange?: (option: SelectOption) => void;
+    origin?: EnrolmentStatusFrom;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     showActionsColumn: false,
     showFilters: false,
+    showSummaryCards: false,
+    origin: 'enrolments',
 });
 
-// Generate consistent RGBA color from department name
-const colorFromDepartment = (name: string, alpha = 0.7): string => {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const r = (hash >> 16) & 255;
-    const g = (hash >> 8) & 255;
-    const b = hash & 255;
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
+
+const search = ref('');
+const sortKey = ref<DepartmentDistributionSortKey>('name_asc');
+const expandedRowKey = ref<string | null>(null);
+
+const kpis = computed(() => buildDepartmentDistributionKpis(props.departmentDistribution ?? []));
+const totals = computed(() => sumDepartmentDistribution(props.departmentDistribution ?? []));
+const tableRows = computed(() =>
+    presentDepartmentDistributionRows(props.departmentDistribution ?? [], search.value, sortKey.value),
+);
+
+const intakePeriodId = computed(() =>
+    intakePeriodModel.value?.value != null ? String(intakePeriodModel.value.value) : undefined,
+);
+
+watch(
+    () => props.departmentDistribution,
+    () => {
+        expandedRowKey.value = null;
+    },
+);
+
+const toggleRow = (key: string) => {
+    expandedRowKey.value = expandedRowKey.value === key ? null : key;
 };
 
-// Total number of applications across all departments
-const totalApplications = computed(() => props.departmentDistribution?.reduce((sum, d) => sum + d.applicationCount, 0) ?? 0);
+const isExpanded = (key: string) => expandedRowKey.value === key;
 
-// Build per-department table data with color + percentage
-const departmentTableData = computed(() => {
-    const total = totalApplications.value || 0;
-    return (
-        props.departmentDistribution?.map((d) => {
-            const color = colorFromDepartment(d.departmentName, 0.7);
-            const percentage = total > 0 ? ((d.applicationCount / total) * 100).toFixed(1) : '0.0';
-            return {
-                ...d,
-                color,
-                percentage,
-            };
-        }) ?? []
-    );
-});
+const setSort = (next: DepartmentDistributionSortKey) => {
+    sortKey.value = next;
+};
 
-const departmentTotals = computed(() => {
-    return props.departmentDistribution?.reduce(
-        (acc, d) => {
-            acc.male += Number(d.maleCount) || 0;
-            acc.female += Number(d.femaleCount) || 0;
-            acc.disabled += Number(d.disabledCount) || 0;
-            acc.fullTime += Number(d.fullTimeCount) || 0;
-            acc.partTime += Number(d.partTimeCount) || 0;
-            acc.block += Number(d.blockReleaseCount) || 0;
-            acc.ojet += Number(d.ojetCount) || 0;
-            acc.total += Number(d.applicationCount) || 0;
-            acc.intakeClassSizeTotal += Number(d.departmentIntakeClassSizeTotal) || 0;
-            return acc;
-        },
-        {
-            male: 0,
-            female: 0,
-            disabled: 0,
-            fullTime: 0,
-            partTime: 0,
-            block: 0,
-            ojet: 0,
-            intakeClassSizeTotal: 0,
-            total: 0,
-        },
-    );
-});
-const classListTotals = computed(() => {
-    return props.departmentDistribution?.reduce(
-        (acc, d) => {
-            acc.provisional += Number(d.provisionalCount) || 0;
-            acc.waiting += Number(d.waitingCount) || 0;
-            acc.verified += Number(d.verifiedCount) || 0;
-            acc.final += Number(d.finalCount) || 0;
-            acc.failed += Number(d.failedCount) || 0;
-            return acc;
-        },
-        {
-            provisional: 0,
-            waiting: 0,
-            verified: 0,
-            final: 0,
-            failed: 0,
-        },
-    );
-});
-const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
+const canOpenStatusList = (row: DepartmentDistributionRow, type: string) =>
+    canOpenEnrolmentStatusList(type, props.showActionsColumn, row.institutionDepartmentId, getUserAbilities());
+
+const statusRoute = (row: DepartmentDistributionRow, type: string) =>
+    buildDepartmentApplicationsUrl({
+        institutionDepartmentId: row.institutionDepartmentId,
+        intakePeriodId: intakePeriodId.value,
+        type,
+        from: props.origin,
+    });
+
+const onIntakeChange = (option: SelectOption | null) => {
+    if (!option || !props.handleFilterChange) {
+        return;
+    }
+    props.handleFilterChange(option);
+};
 </script>
 
 <template>
-    <div class="rounded-lg border border-border bg-card px-4 py-2 text-card-foreground shadow">
-        <div class="mb-4 flex flex-nowrap items-center justify-between gap-4">
-            <div class="shrink-0 whitespace-nowrap text-xs font-bold uppercase text-accent-foreground">
-                {{ $t('trans.ui_distribution_by_department') }}
+    <div class="space-y-2.5 rounded-lg border border-border bg-card p-3 text-card-foreground shadow-sm">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div class="min-w-0">
+                <h2 class="text-sm font-semibold tracking-tight text-foreground">
+                    {{ $t('trans.ui_distribution_by_department') }}
+                </h2>
+                <p class="text-xs text-muted-foreground">
+                    {{
+                        $t('trans.ui_applications_tracked_across_departments', {
+                            applications: kpis.totalApplications.toLocaleString(),
+                            departments: String(kpis.assignedDepartmentCount),
+                        })
+                    }}
+                </p>
             </div>
             <div
                 v-if="showFilters"
-                class="flex min-w-0 shrink-0 items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2 sm:min-w-[280px] sm:max-w-md"
+                class="flex min-w-0 shrink-0 items-center gap-1.5 rounded-md border border-border/60 bg-muted/20 px-2 py-1 sm:min-w-[240px] sm:max-w-sm"
             >
-                <component :is="icons[IconName.calendar]" class="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                <span class="shrink-0 text-sm font-medium text-muted-foreground">{{ $tChoice('trans.intake_period', 1) }}</span>
+                <component :is="icons[IconName.calendar]" class="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <span class="shrink-0 text-xs font-medium text-muted-foreground">{{ $tChoice('trans.intake_period', 1) }}</span>
                 <IntakePeriodComboSelect
                     :data="intakePeriods ?? []"
                     label=""
@@ -121,134 +123,197 @@ const intakePeriodModel = defineModel<SelectOption | null>('intakePeriodModel');
                     :is-required="true"
                     width-class="w-full"
                     class="min-w-0 flex-1"
-                    @update:modelValue="handleFilterChange"
+                    @update:modelValue="onIntakeChange"
                 />
             </div>
         </div>
-        <div class="h-auto">
-            <table class="j-table">
-                <thead class="j-thead">
-                    <tr class="j-tr">
-                        <th colspan="10"></th>
+
+        <DepartmentDistributionKpiCards v-if="showSummaryCards" :kpis="kpis" />
+
+        <DepartmentDistributionToolbar v-model:search="search" v-model:sort-key="sortKey" />
+
+        <div class="overflow-x-auto rounded-md border border-border/70">
+            <table class="w-full min-w-175 border-collapse text-xs">
+                <thead>
+                    <tr class="border-b border-border bg-muted/40 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+                        <th class="px-2 py-1.5 text-left">{{ $tChoice('trans.department', 1) }}</th>
+                        <th class="px-2 py-1.5 text-right">
+                            <button
+                                type="button"
+                                class="inline-flex items-center gap-0.5 hover:text-foreground"
+                                @click="setSort('total_desc')"
+                            >
+                                {{ $t('trans.ui_total') }}
+                                <ArrowDownWideNarrow
+                                    class="h-3 w-3"
+                                    :class="sortKey === 'total_desc' ? 'text-foreground' : 'opacity-40'"
+                                />
+                            </button>
+                        </th>
+                        <th class="px-2 py-1.5 text-left">{{ $t('trans.ui_share_of_intake') }}</th>
                         <th
-                            colspan="5"
-                            class="bg-primary/20 text-foreground text-uppercase j-td-l-border j-td-r-border px-3 py-2 text-center text-xs font-bold"
+                            class="border-l border-border/70 px-1.5 py-1.5 text-center"
+                            :title="$t('trans.provisional')"
                         >
-                            {{ $t('trans.ui_application_statuses') }}
+                            {{ $t('trans.ui_status_abbr_provisional') }}
+                        </th>
+                        <th class="px-1.5 py-1.5 text-center" :title="$t('trans.ui_waitlist')">
+                            {{ $t('trans.ui_status_abbr_waitlist') }}
+                        </th>
+                        <th class="px-1.5 py-1.5 text-center" :title="$t('trans.ui_rejected')">
+                            {{ $t('trans.ui_status_abbr_rejected') }}
+                        </th>
+                        <th class="px-1.5 py-1.5 text-center" :title="$t('trans.ui_verified')">
+                            {{ $t('trans.ui_status_abbr_verified') }}
+                        </th>
+                        <th class="px-1.5 py-1.5 text-center" :title="$t('trans.ui_final')">
+                            <button
+                                type="button"
+                                class="inline-flex items-center justify-center gap-0.5 hover:text-foreground"
+                                @click="setSort('final_desc')"
+                            >
+                                {{ $t('trans.ui_status_abbr_final') }}
+                                <ArrowDownWideNarrow
+                                    class="h-3 w-3"
+                                    :class="sortKey === 'final_desc' ? 'text-foreground' : 'opacity-40'"
+                                />
+                            </button>
                         </th>
                     </tr>
-                    <tr class="j-th">
-                        <th class="j-th text-left">{{ $tChoice('trans.department', 1) }}</th>
-                        <th class="j-th text-center">{{ $tChoice('general.male', 2) }}</th>
-                        <th class="j-th text-center">{{ $tChoice('general.female', 2) }}</th>
-                        <th class="j-th text-center">{{ $t('trans.ui_disabled') }}</th>
-                        <th class="j-th text-center">{{ $t('trans.ui_full_time') }}</th>
-                        <th class="j-th text-center">{{ $t('trans.ui_part_time') }}</th>
-                        <th class="j-th text-center">{{ $t('trans.ui_block') }}</th>
-                        <th class="j-th text-center">{{ $t('trans.ui_ojet') }}</th>
-                        <th class="j-th text-center">{{ $t('trans.ui_total') }}</th>
-                        <!--<th class="j-th text-center">{{ $t('trans.ui_class_sizes') }}</th>-->
-                        <th class="j-th text-center">{{ $t('trans.ui_percentage') }}</th>
-                        <th class="j-th j-td-l-border text-center">{{ $t('trans.provisional') }}</th>
-                        <th class="j-th j-td-l-border text-center">{{ $t('trans.ui_waitlist') }}</th>
-                        <th class="j-th j-td-l-border text-center">{{ $t('trans.ui_rejected') }}</th>
-                        <th class="j-th j-td-l-border text-center">{{ $t('trans.ui_verified') }}</th>
-                        <th class="j-th j-td-l-border j-td-r-border text-center">{{ $t('trans.ui_final') }}</th>
-                    </tr>
                 </thead>
-                <tbody class="j-tbody">
-                    <tr class="j-tr" v-for="data in departmentTableData" :key="data.institutionDepartmentId || data.departmentId">
-                        <td class="j-td flex items-center gap-2">
-                            <span class="inline-block h-3 w-3 rounded-full" :style="{ backgroundColor: data.color }"></span>
-                            <span>{{ data.departmentName }}</span>
-                        </td>
-                        <td class="j-td text-center">{{ data.maleCount }}</td>
-                        <td class="j-td text-center">{{ data.femaleCount }}</td>
-                        <td class="j-td text-center">{{ data.disabledCount }}</td>
-                        <td class="j-td text-center">{{ data.fullTimeCount }}</td>
-                        <td class="j-td text-center">{{ data.partTimeCount }}</td>
-                        <td class="j-td text-center">{{ data.blockReleaseCount }}</td>
-                        <td class="j-td text-center">{{ data.ojetCount }}</td>
-                        <td class="j-td text-center font-medium">{{ data.applicationCount }}</td>
-                        <!--<td class="j-td text-center font-medium">{{ data.departmentIntakeClassSizeTotal }}</td>-->
-                        <td class="j-td text-center">{{ data.percentage }}</td>
-                        <td class="j-td j-td-l-border text-center">
-                            <DepartmentClassListActionLink
-                                :actionable="hasAbility('verify:class-lists') && showActionsColumn && data.institutionDepartmentId > 0"
-                                :title="String(data.provisionalCount)"
-                                :route-name="
-                                    route('enrolments.department-applications', {
-                                        institution_department: data.institutionDepartmentId,
-                                        intake_period_id: intakePeriodModel?.value.toString(),
-                                        type: 'provisional',
-                                    })
+                <tbody>
+                    <template v-if="tableRows.length > 0">
+                        <template v-for="(row, index) in tableRows" :key="rowKey(row)">
+                            <tr
+                                :class="
+                                    cn(
+                                        'border-b border-border/50 transition-colors hover:bg-muted/30',
+                                        index % 2 === 1 && 'bg-muted/10',
+                                        isExpanded(rowKey(row)) && 'bg-muted/25',
+                                    )
                                 "
-                            />
+                            >
+                                <td class="px-2 py-1.5">
+                                    <button
+                                        type="button"
+                                        class="group flex max-w-full items-center gap-1.5 text-left"
+                                        :aria-expanded="isExpanded(rowKey(row))"
+                                        @click="toggleRow(rowKey(row))"
+                                    >
+                                        <DepartmentColorSwatch :color-code="row.colorCode" :department-name="row.departmentName" />
+                                        <span class="truncate text-xs font-medium text-foreground group-hover:text-primary">
+                                            {{ row.departmentName }}
+                                        </span>
+                                        <ChevronDown
+                                            v-if="isExpanded(rowKey(row))"
+                                            class="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                                        />
+                                        <ChevronRight v-else class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                    </button>
+                                </td>
+                                <td class="px-2 py-1.5 text-right text-sm font-semibold tabular-nums text-foreground">
+                                    {{ row.applicationCount.toLocaleString() }}
+                                </td>
+                                <td class="min-w-27.5 px-2 py-1.5">
+                                    <div class="flex items-center gap-2">
+                                        <div class="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+                                            <div
+                                                class="h-full rounded-full"
+                                                :style="{
+                                                    width: `${Math.min(100, row.percentageValue)}%`,
+                                                    backgroundColor: row.color,
+                                                }"
+                                            />
+                                        </div>
+                                        <div class="w-10 shrink-0 text-right text-[10px] tabular-nums text-muted-foreground">
+                                            {{ row.percentage }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="border-l border-border/70 px-1 py-1.5 text-center" @click.stop>
+                                    <DepartmentClassListActionLink
+                                        :actionable="canOpenStatusList(row, 'provisional')"
+                                        :title="row.provisionalCount.toLocaleString()"
+                                        tone="provisional"
+                                        :route-name="statusRoute(row, 'provisional')"
+                                    />
+                                </td>
+                                <td class="px-1 py-1.5 text-center" @click.stop>
+                                    <DepartmentClassListActionLink
+                                        :actionable="false"
+                                        :title="row.waitingCount.toLocaleString()"
+                                        tone="waiting"
+                                    />
+                                </td>
+                                <td class="px-1 py-1.5 text-center" @click.stop>
+                                    <DepartmentClassListActionLink
+                                        :actionable="false"
+                                        :title="row.failedCount.toLocaleString()"
+                                        tone="rejected"
+                                        :flagged="row.isRejectionFlagged"
+                                    />
+                                </td>
+                                <td class="px-1 py-1.5 text-center" @click.stop>
+                                    <DepartmentClassListActionLink
+                                        :actionable="canOpenStatusList(row, 'verified')"
+                                        :title="row.verifiedCount.toLocaleString()"
+                                        tone="verified"
+                                        :route-name="statusRoute(row, 'verified')"
+                                    />
+                                </td>
+                                <td class="px-1 py-1.5 text-center" @click.stop>
+                                    <DepartmentClassListActionLink
+                                        :actionable="canOpenStatusList(row, 'final')"
+                                        :title="row.finalCount.toLocaleString()"
+                                        tone="final"
+                                        :route-name="statusRoute(row, 'final')"
+                                    />
+                                </td>
+                            </tr>
+                            <tr v-if="isExpanded(rowKey(row))" class="border-b border-border/50">
+                                <td colspan="8" class="p-0">
+                                    <DepartmentDistributionExpandedDetail
+                                        :row="row"
+                                        :show-actions-column="showActionsColumn"
+                                        :intake-period-id="intakePeriodId"
+                                        :origin="origin"
+                                    />
+                                </td>
+                            </tr>
+                        </template>
+                    </template>
+                    <tr v-else>
+                        <td colspan="8" class="px-2 py-6 text-center text-xs text-muted-foreground">
+                            {{
+                                search.trim()
+                                    ? $t('trans.ui_no_departments_match_search')
+                                    : $t('trans.ui_no_department_distribution_data')
+                            }}
                         </td>
-                        <td class="j-td j-td-l-border text-center">
-                            <DepartmentClassListActionLink
-                                :actionable="hasAbility('verify:class-lists') && showActionsColumn && data.institutionDepartmentId > 0"
-                                :title="String(data.waitingCount)"
-                                :route-name="
-                                    route('enrolments.department-applications', {
-                                        institution_department: data.institutionDepartmentId,
-                                        intake_period_id: intakePeriodModel?.value.toString(),
-                                        type: 'waiting',
-                                    })
-                                "
-                            />
-                        </td>
-                        <td class="j-td j-td-l-border text-center">
-                            <DepartmentClassListActionLink :actionable="false" :title="String(data.failedCount)" />
-                        </td>
-                        <td class="j-td j-td-l-border text-center">
-                            <DepartmentClassListActionLink
-                                :actionable="hasAbility('manage-final:class-lists') && showActionsColumn && data.institutionDepartmentId > 0"
-                                :title="String(data.verifiedCount)"
-                                :route-name="
-                                    route('enrolments.department-applications', {
-                                        institution_department: data.institutionDepartmentId,
-                                        intake_period_id: intakePeriodModel?.value.toString(),
-                                        type: 'verified',
-                                    })
-                                "
-                            />
-                        </td>
-                        <td class="j-td j-td-l-border j-td-r-border text-center">
-                            <DepartmentClassListActionLink
-                                :actionable="hasAbility('manage-final:class-lists') && showActionsColumn && data.institutionDepartmentId > 0"
-                                :title="String(data.finalCount)"
-                                :route-name="
-                                    route('enrolments.department-applications', {
-                                        institution_department: data.institutionDepartmentId,
-                                        intake_period_id: intakePeriodModel?.value.toString(),
-                                        type: 'final',
-                                    })
-                                "
-                            />
-                        </td>
-                    </tr>
-                    <!-- Totals Row -->
-                    <tr class="j-tr bg-muted/40 font-semibold">
-                        <td class="j-td text-left">{{ $t('trans.ui_total') }}</td>
-                        <td class="j-td text-center">{{ departmentTotals?.male }}</td>
-                        <td class="j-td text-center">{{ departmentTotals?.female }}</td>
-                        <td class="j-td text-center">{{ departmentTotals?.disabled }}</td>
-                        <td class="j-td text-center">{{ departmentTotals?.fullTime }}</td>
-                        <td class="j-td text-center">{{ departmentTotals?.partTime }}</td>
-                        <td class="j-td text-center">{{ departmentTotals?.block }}</td>
-                        <td class="j-td text-center">{{ departmentTotals?.ojet }}</td>
-                        <td class="j-td text-center">{{ departmentTotals?.total }}</td>
-                        <!--<td class="j-td text-center">{{ departmentTotals?.intakeClassSizeTotal }}</td>-->
-                        <td class="j-td text-center">{{ $t('trans.ui_100') }}</td>
-                        <td class="j-td j-td-l-border j-td-b-border text-center">{{ classListTotals?.provisional }}</td>
-                        <td class="j-td j-td-l-border j-td-b-border text-center">{{ classListTotals?.waiting }}</td>
-                        <td class="j-td j-td-l-border j-td-b-border text-center">{{ classListTotals?.failed }}</td>
-                        <td class="j-td j-td-l-border j-td-b-border text-center">{{ classListTotals?.verified }}</td>
-                        <td class="j-td j-td-l-border j-td-r-border j-td-b-border text-center">{{ classListTotals?.final }}</td>
                     </tr>
                 </tbody>
+                <tfoot v-if="(departmentDistribution?.length ?? 0) > 0">
+                    <tr class="border-t border-border bg-sky-50/80 text-xs font-semibold dark:bg-sky-950/30">
+                        <td class="px-2 py-1.5 text-left">{{ $t('trans.ui_total') }}</td>
+                        <td class="px-2 py-1.5 text-right tabular-nums">{{ totals.total.toLocaleString() }}</td>
+                        <td class="px-2 py-1.5 text-[10px] text-muted-foreground">{{ $t('trans.ui_100') }}</td>
+                        <td class="border-l border-border/70 px-1 py-1.5 text-center tabular-nums">
+                            {{ totals.provisional.toLocaleString() }}
+                        </td>
+                        <td class="px-1 py-1.5 text-center tabular-nums">{{ totals.waiting.toLocaleString() }}</td>
+                        <td class="px-1 py-1.5 text-center tabular-nums">{{ totals.failed.toLocaleString() }}</td>
+                        <td class="px-1 py-1.5 text-center tabular-nums">{{ totals.verified.toLocaleString() }}</td>
+                        <td class="px-1 py-1.5 text-center tabular-nums text-emerald-700 dark:text-emerald-400">
+                            {{ totals.final.toLocaleString() }}
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
+        </div>
+
+        <div class="flex flex-col gap-0.5 text-[10px] leading-snug text-muted-foreground sm:flex-row sm:items-start sm:justify-between">
+            <p>{{ $t('trans.ui_department_distribution_click_hint') }}</p>
+            <p class="sm:text-right">{{ $t('trans.ui_rejection_rate_flag_hint') }}</p>
         </div>
     </div>
 </template>

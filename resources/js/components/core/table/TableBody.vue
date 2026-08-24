@@ -3,18 +3,20 @@ import Empty from '@/components/core/util/Empty.vue';
 import { useShared } from '@/composables/shared/useShared';
 import { getIdParams } from '@/lib/utils';
 import { FlexRender, type Table } from '@tanstack/vue-table';
-import { ref, watchEffect } from 'vue';
+import { ref, useSlots, watchEffect } from 'vue';
 import draggable from 'vuedraggable';
 
 interface Props {
     table: Table<any>;
     dragItems?: boolean;
     draggableUpdateUrl?: string;
+    expandedRowId?: string | null;
+    onRowClick?: (row: any) => void;
 }
 
 const props = defineProps<Props>();
+const slots = useSlots();
 const { movePosition } = useShared();
-// Local list of row data to support dragging
 const draggableRows = ref<any[]>([]);
 
 watchEffect(() => {
@@ -23,23 +25,30 @@ watchEffect(() => {
     }
 });
 
-// Helper to map original data back to full row
 const getRowByOriginal = (original: any) => {
     return props.table.getRowModel().rows.find((r) => r.original.id === original.id);
+};
+
+const rowKey = (original: any): string => String(original?.id ?? '');
+
+const isExpanded = (original: any): boolean => props.expandedRowId != null && props.expandedRowId === rowKey(original);
+
+const handleRowClick = (original: any) => {
+    props.onRowClick?.(original);
 };
 
 const onMove = (evt: any) => {
     const draggedElement = evt.draggedContext?.element;
     const isDeleted = !!draggedElement?.attributes?.deletedAt;
-    return !isDeleted; // allow move only if not deleted
+    return !isDeleted;
 };
+
 const onChange = (evt: any) => {
     const moved = evt?.moved;
     if (!moved) return;
     const { element, newIndex } = moved;
     const isDeleted = !!element.attributes?.deletedAt;
     if (isDeleted) return;
-    // get the position of the new index
     movePosition(route(props.draggableUpdateUrl ?? '', getIdParams(element.id.toString())), newIndex + 1);
 };
 </script>
@@ -70,14 +79,20 @@ const onChange = (evt: any) => {
         </template>
     </draggable>
     <tbody class="hava-tbody" v-else>
-        <tr
-            v-for="row in table.getRowModel().rows"
-            :key="row.id"
-            :class="`hava-tr ${row.original?.attributes?.deletedAt && 'hava-tr-highlight-archived'}`"
-        >
-            <td v-for="cell in row.getVisibleCells()" :key="cell.id" :align="cell.column.columnDef.meta?.align ?? 'left'" class="hava-td">
-                <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-            </td>
-        </tr>
+        <template v-for="row in table.getRowModel().rows" :key="row.id">
+            <tr
+                :class="`hava-tr ${row.original?.attributes?.deletedAt && 'hava-tr-highlight-archived'} ${isExpanded(row.original) && 'bg-muted/25'} ${onRowClick && 'cursor-pointer hover:bg-muted/40'}`"
+                @click="handleRowClick(row.original)"
+            >
+                <td v-for="cell in row.getVisibleCells()" :key="cell.id" :align="cell.column.columnDef.meta?.align ?? 'left'" class="hava-td">
+                    <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
+                </td>
+            </tr>
+            <tr v-if="slots['expanded-row'] && isExpanded(row.original)" class="border-b border-border/50">
+                <td :colspan="row.getVisibleCells().length" class="p-0">
+                    <slot name="expanded-row" :row="row.original" />
+                </td>
+            </tr>
+        </template>
     </tbody>
 </template>

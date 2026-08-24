@@ -1,22 +1,30 @@
 <script setup lang="ts">
+import EnrolmentApplicantLookupDrawer from '@/components/enrolments/EnrolmentApplicantLookupDrawer.vue';
+import BaseAccordion from '@/components/core/accordion/BaseAccordion.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
+import { IconName } from '@/enums/icons';
+import {
+    buildDepartmentApplicationsUrl,
+    enrolmentStatusOriginBackUrl,
+    parseEnrolmentStatusFrom,
+} from '@/lib/enrolmentStatusOrigin';
+import { filterEnrolmentApplications, toTitleCase } from '@/lib/enrolmentClassListPresentation';
 import ClassListTable from '@/pages/enrolments/partials/ClassListTable.vue';
-import ClassSize from '@/pages/institution/enrolments/partials/ClassSize.vue';
-import EnrolmentFilters from '@/pages/institution/enrolments/partials/EnrolmentFilters.vue';
+import GenderEnrolmentAccordionItem from '@/pages/institution/enrolments/partials/GenderEnrolmentAccordionItem.vue';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentLevel } from '@/types/department-meta-data';
 import { ClassListType, EnrolmentGroup, EnrolmentGroupResponse } from '@/types/enrolments';
 import { InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
-import { Link } from '@/types/ui';
-import { SelectOption } from '@/types/utils';
-import { Head, router } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
+import { Head } from '@inertiajs/vue3';
+import { Search } from 'lucide-vue-next';
+import { trans_choice } from 'laravel-vue-i18n';
+import { computed, ref, watch } from 'vue';
 
 interface Props {
     department: InstitutionDepartment;
     level: DepartmentLevel;
-    course: object;
+    course: { name?: string; department_course_id?: number | string } | null;
     intakePeriod: IntakePeriod;
     modeOfStudy: ModeOfStudy;
     auth: AuthObject;
@@ -29,118 +37,185 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { department, level, enrolments, intakePeriod, modeOfStudy, course, classSize } = props;
-const { allocateClassSlots, applyPolicyAlgorithmToApplications } = useEnrolments();
+const { department, level, enrolments, intakePeriod, modeOfStudy, course } = props;
+const { applyPolicyAlgorithmToApplications } = useEnrolments();
 const { getQueryParams, isItTrue } = useUtils();
-
-const intakePeriodModel = ref<SelectOption | null>(null);
-const modeOfStudyModel = ref<SelectOption | null>(null);
 const queryParams = getQueryParams();
-onMounted(async () => {
-    intakePeriodModel.value = intakePeriod ? { value: Number(intakePeriod.id), label: intakePeriod.attributes.name } : null;
-    modeOfStudyModel.value = modeOfStudy ? { value: Number(modeOfStudy.id), label: modeOfStudy.attributes.name } : null;
+const from = parseEnrolmentStatusFrom(queryParams['from']);
+const originBackUrl = enrolmentStatusOriginBackUrl(from, String(intakePeriod.id));
+
+const search = ref('');
+const lookupOpen = ref(false);
+const genderGroups = ['disabled', 'females', 'males'] as const;
+
+const GROUP_ICONS: Record<(typeof genderGroups)[number], IconName> = {
+    disabled: IconName.accessibility,
+    females: IconName.venus,
+    males: IconName.mars,
+};
+
+const listTypeLabel = computed(() => {
+    const type = String(queryParams['type'] ?? '').trim();
+
+    if (type) {
+        return toTitleCase(`${type} ${trans_choice('trans.application', 2)}`);
+    }
+
+    return trans_choice('trans.class_list', 1);
 });
 
-const breadcrumbs: Array<Link> = [
-    { transKey: 'dashboard', href: route('dashboard') },
-    { transChoiceKey: 'enrolment', href: route('enrolments.index') },
-    {
-        title: department.attributes.department,
-        href: route('enrolments.department-applications', { institution_department: String(department?.id), type: queryParams['type'] }),
-    },
-    {
-        title: level.attributes.level,
-        href: route('enrolments.department-applications', { institution_department: String(department?.id), type: queryParams['type'] }),
-    },
-    {
-        title: course?.name,
-        href: route('enrolments.department-applications', { institution_department: String(department?.id), type: queryParams['type'] }),
-    },
-    { title: `${queryParams['type']} applications` },
-];
-
-const handleFilterChange = () => {
-    const intakePeriodId = intakePeriodModel.value?.value ?? null;
-    const modeOfStudyId = modeOfStudyModel.value?.value ?? null;
-    router.get(
-        route('enrolments.class-lists', {
-            institution_department: String(department.id),
-            department_level: String(level.id),
-            intake_period_id: intakePeriodId,
-            mode_of_study_id: modeOfStudyId,
-            department_course_id: String(course?.department_course_id),
-            type: queryParams['type'],
-        }),
-    );
-};
-const noData = computed(
-    () => enrolments.groups.disabled.length === 0 && enrolments.groups.females.length === 0 && enrolments.groups.males.length === 0,
+const departmentApplicationsUrl = computed(() =>
+    buildDepartmentApplicationsUrl({
+        institutionDepartmentId: department.id,
+        type: String(queryParams['type'] ?? ''),
+        intakePeriodId: String(intakePeriod.id),
+        modeOfStudyId: String(modeOfStudy.id),
+        from: queryParams['from'],
+    }),
 );
 
-const totalApplications = computed(() => {
-    return enrolments.groups.disabled.length + enrolments.groups.females.length + enrolments.groups.males.length;
-});
-const getGroupSlot = (group: EnrolmentGroup): number => {
-    const groups = enrolments?.groups ?? { disabled: [], females: [], males: [] };
-    if (totalApplications.value > Number(classSize)) {
-        const { disabled, females, males } = allocateClassSlots(
-            Number(classSize),
-            groups.disabled.length,
-            groups.females.length,
-            groups.males.length,
-        );
-        const slots = { disabled, females, males };
-        return slots[group] ?? 0;
-    } else {
-        // If total applications are less than or equal to class size, allocate all to class list
-        return groups[group]?.length ?? 0;
+const breadcrumbs = computed(() => [
+    from === 'dashboard'
+        ? { transKey: 'dashboard', href: originBackUrl }
+        : { transKey: 'dashboard', href: route('dashboard') },
+    ...(from === 'dashboard' ? [] : [{ transChoiceKey: 'trans.application', href: originBackUrl }]),
+    { title: department.attributes.department, href: departmentApplicationsUrl.value },
+    { title: level.attributes.level, href: departmentApplicationsUrl.value },
+    { title: course?.name ?? '', href: departmentApplicationsUrl.value },
+    { title: listTypeLabel.value },
+]);
+
+const isOLevel = computed(() => isItTrue(level?.relationships?.requirement?.attributes?.isOLevelRequired));
+const classListType = computed(() => (queryParams['type'] as ClassListType) || undefined);
+
+const groupApplications = (group: EnrolmentGroup) => {
+    const applications = enrolments.groups?.[group] ?? [];
+
+    if (isOLevel.value) {
+        return applyPolicyAlgorithmToApplications(applications, level);
     }
+
+    return applications;
 };
+
+const filteredGroupApplications = (group: EnrolmentGroup) =>
+    filterEnrolmentApplications(groupApplications(group), search.value);
+
+const groupCount = (group: EnrolmentGroup) => filteredGroupApplications(group).length;
+
+const noData = computed(() => genderGroups.every((group) => (enrolments.groups?.[group]?.length ?? 0) === 0));
+
+const hasSearchResults = computed(() => genderGroups.some((group) => groupCount(group) > 0));
+
+const visibleGenderGroups = computed(() => genderGroups.filter((group) => groupCount(group) > 0));
+
+const firstNonEmptyGroup = genderGroups.find((group) => (enrolments.groups?.[group]?.length ?? 0) > 0) ?? '';
+const openGenderGroup = ref(firstNonEmptyGroup);
+
+watch(
+    [search, visibleGenderGroups],
+    () => {
+        if (visibleGenderGroups.value.length === 0) {
+            return;
+        }
+
+        if (!visibleGenderGroups.value.includes(openGenderGroup.value as (typeof genderGroups)[number])) {
+            openGenderGroup.value = visibleGenderGroups.value[0];
+        }
+    },
+    { immediate: true },
+);
 </script>
 
 <template>
-    <Head :title="$tChoice('trans.enrolment', 2)" />
-    <PageContainer :breadcrumbs="breadcrumbs">
-        <EnrolmentFilters
-            v-model:intakePeriodModel="intakePeriodModel"
-            v-model:modeOfStudyModel="modeOfStudyModel"
-            :intake-periods="intakePeriods"
-            :modes-of-study="modesOfStudy"
-            :handle-filter-change="handleFilterChange"
-        />
-        <div class="my-6 flex flex-col">
-            <!-- ============ SHOW ALERT IF NO DATA FOUND -->
+    <Head :title="listTypeLabel" />
+    <PageContainer :breadcrumbs="breadcrumbs" :back-url="departmentApplicationsUrl">
+        <template #backNavigationLeading>
+            <div class="min-w-0">
+                <h2 class="truncate text-base font-semibold uppercase leading-tight sm:text-lg">{{ course?.name }}</h2>
+                <p class="truncate text-xs text-muted-foreground sm:text-sm">
+                    {{ level.attributes.level }} · {{ modeOfStudy.attributes.name }} · {{ listTypeLabel }}
+                </p>
+            </div>
+        </template>
+
+        <template #backNavigationTrailing>
+            <button
+                type="button"
+                class="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-muted"
+                @click="lookupOpen = true"
+            >
+                <Search class="h-3.5 w-3.5 shrink-0" />
+                {{ $t('enrolments.find_applicant') }}
+            </button>
+        </template>
+
+        <div class="my-3 flex flex-col gap-3">
             <BaseAlert
                 v-if="noData"
                 :title="$t('trans.no_data')"
                 :description="
                     $t('trans.no_data_found_description', {
-                        data: `${$tChoice('trans.enrolment', 2)} for ${intakePeriodModel?.label} - ${modeOfStudyModel?.label}`,
+                        data: `${$tChoice('trans.class_list', 2)} for ${intakePeriod.attributes.name} - ${modeOfStudy.attributes.name}`,
                     })
                 "
             />
-            <div class="flex justify-end space-x-2" v-if="!noData">
-                <ClassSize :class-size="classSize" />
-            </div>
-            <div v-for="(enrolmentsInGroup, group) in enrolments.groups" :key="group" class="flex flex-col">
-                <div class="flex flex-col" v-if="Number(getGroupSlot(group.toLowerCase() as EnrolmentGroup)) > 0">
-                    <HeadingSmall :title="`${group} (${getGroupSlot(group.toLowerCase() as EnrolmentGroup)})`" class="mt-6" />
-                    <ClassListTable
-                        v-if="isItTrue(level?.relationships?.requirement?.attributes?.isOLevelRequired)"
-                        :class-list-type="queryParams['type'] as ClassListType"
-                        :department-id="String(department?.id)"
-                        :applications="applyPolicyAlgorithmToApplications(enrolmentsInGroup, level)"
-                        :class-size="Number(classSize)"
-                    />
-                    <ClassListTable
-                        v-else
-                        :class-list-type="queryParams['type'] as ClassListType"
-                        :department-id="String(department?.id)"
-                        :applications="enrolmentsInGroup"
-                        :class-size="Number(classSize)"
-                    />
+
+            <template v-if="!noData">
+                <div class="flex flex-col gap-1.5">
+                    <label class="relative block">
+                        <Search class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <input
+                            v-model="search"
+                            type="search"
+                            class="h-10 w-full rounded-full border border-border bg-card pr-3 pl-9 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                            :placeholder="$t('enrolments.class_list_search_placeholder')"
+                            :aria-label="$t('enrolments.class_list_search_placeholder')"
+                        />
+                    </label>
+                    <p class="text-xs text-muted-foreground">
+                        {{ $t('enrolments.class_list_search_hint', { department: department.attributes.department }) }}
+                    </p>
                 </div>
-            </div>
+
+                <div
+                    v-if="!hasSearchResults"
+                    class="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground"
+                >
+                    {{ $t('enrolments.class_list_search_no_results') }}
+                </div>
+
+                <BaseAccordion v-else v-model="openGenderGroup" type="single" :collapsible="true" class="w-full gap-3">
+                    <GenderEnrolmentAccordionItem
+                        v-for="group in visibleGenderGroups"
+                        :key="group"
+                        :value="group"
+                        :title="group"
+                        :count="groupCount(group)"
+                        :icon="GROUP_ICONS[group]"
+                        :is-open="openGenderGroup === group"
+                    >
+                        <ClassListTable
+                            :level="level"
+                            :is-o-level="isOLevel"
+                            :class-list-type="classListType"
+                            :department-id="String(department?.id)"
+                            :applications="filteredGroupApplications(group)"
+                        />
+                    </GenderEnrolmentAccordionItem>
+                </BaseAccordion>
+            </template>
         </div>
+
+        <EnrolmentApplicantLookupDrawer
+            v-model:open="lookupOpen"
+            :list-type="classListType ?? 'provisional'"
+            :intake-period-id="intakePeriod.id"
+            :intake-period-name="intakePeriod.attributes.name"
+            :from="queryParams['from']"
+            :initial-department-id="department.id"
+            :initial-level-id="level.id"
+            :initial-course-id="course?.department_course_id"
+        />
     </PageContainer>
 </template>

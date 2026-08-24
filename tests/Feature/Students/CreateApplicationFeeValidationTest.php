@@ -1,25 +1,62 @@
 <?php
 
-use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\IntakePeriodStatusEnum;
+use App\Enums\Institution\ModeOfStudyEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Helpers\PaymentHelper;
 use App\Http\Requests\Students\UpdateReturningApplicationRequest;
-use App\Models\Rbac\Role;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Level;
+use App\Models\Institution\ModeOfStudy;
+use App\Models\Rbac\Role;
 use App\Models\Students\ApplicationFee;
+use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 beforeEach(function () {
     Role::findOrCreate(RoleEnum::STUDENT->name(), 'web');
 });
+
+if (! function_exists('createReturningStudentUser')) {
+    function createReturningStudentUser(array $studentAttributes = []): array
+    {
+        $tenant = Tenant::query()->firstOrFail();
+        $user = User::factory()->create(['tenant_id' => $tenant->id, 'email_verified_at' => now()]);
+        $user->assignRole(RoleEnum::STUDENT->name());
+        $user->givePermissionTo('manageOwnStudentPersonalDetails:students');
+
+        $student = Student::query()->create(array_merge([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'title_id' => DB::table('titles')->value('id') ?? DB::table('titles')->insertGetId([
+                'name' => 'Mr', 'created_at' => now(), 'updated_at' => now(),
+            ]),
+            'gender_id' => DB::table('genders')->value('id') ?? DB::table('genders')->insertGetId([
+                'title' => 'Male', 'created_at' => now(), 'updated_at' => now(),
+            ]),
+            'marital_status_id' => DB::table('marital_statuses')->value('id') ?? DB::table('marital_statuses')->insertGetId([
+                'title' => 'Single', 'created_at' => now(), 'updated_at' => now(),
+            ]),
+            'id_type_id' => DB::table('id_types')->value('id') ?? DB::table('id_types')->insertGetId([
+                'name' => 'National ID', 'created_at' => now(), 'updated_at' => now(),
+            ]),
+            'date_of_birth' => '2000-01-01',
+            'id_number' => '55-'.uniqid().'C55',
+            'student_number' => 'SN-'.uniqid(),
+        ], $studentAttributes));
+
+        return [$user, $student];
+    }
+}
 
 function validateReturningApplicationFee(User $user, array $overrides = []): Illuminate\Validation\Validator
 {
@@ -84,14 +121,12 @@ function createApplicationFeeValidationFixture(): array
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
         'level_id' => $paidLevel->id,
-        'show_on_current_application_period' => true,
     ]);
 
     $alternateDepartmentLevel = DepartmentLevel::query()->create([
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
         'level_id' => $alternateLevel->id,
-        'show_on_current_application_period' => true,
     ]);
 
     $course = Course::factory()->create();
@@ -99,8 +134,26 @@ function createApplicationFeeValidationFixture(): array
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
         'course_id' => $course->id,
-        'show_on_current_application_period' => true,
     ]);
+
+    $mode = ModeOfStudy::query()->firstOrCreate(
+        ['name' => ModeOfStudyEnum::FULL_TIME->value],
+        ['description' => 'Full Time'],
+    );
+
+    foreach ([$paidDepartmentLevel, $alternateDepartmentLevel] as $departmentLevel) {
+        DepartmentLevelCourse::query()->firstOrCreate([
+            'department_level_id' => $departmentLevel->id,
+            'department_course_id' => $departmentCourse->id,
+        ]);
+
+        seedApplicationOffering(
+            $institutionDepartment,
+            $departmentLevel,
+            $departmentCourse,
+            [(int) $mode->id],
+        );
+    }
 
     return [
         $tenant,

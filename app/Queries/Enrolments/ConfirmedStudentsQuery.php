@@ -3,7 +3,9 @@
 namespace App\Queries\Enrolments;
 
 use App\Enums\Shared\ClassListTypeEnum;
+use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentSemester;
 use App\Services\Students\StudentEnrolmentProgressionService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -11,19 +13,31 @@ use Illuminate\Support\Collection;
 class ConfirmedStudentsQuery
 {
     /**
-     * Raw FINAL class-list counts per (department_course_id, department_level_id) for a department + mode.
+     * Distinct FINAL-list applications with a class-allocation enrolment for started calendars in the year.
      *
      * @return array<string, int> Keys "{department_course_id}_{department_level_id}"
      */
     public function countsByCourseLevel(int $institutionDepartmentId, int $modeOfStudyId, string $calendarYear): array
     {
-        $rows = $this->baseQueryWithFinalClassList($institutionDepartmentId, $modeOfStudyId)
-            ->join('intake_periods', function ($join) use ($calendarYear): void {
-                $join->on('intake_periods.id', '=', 'student_applications.intake_period_id')
-                    ->where('intake_periods.calendar_year', '=', $calendarYear)
-                    ->whereNull('intake_periods.deleted_at');
-            })
-            ->selectRaw('student_applications.department_course_id, student_applications.department_level_id, COUNT(*) as total')
+        return $this->countsByCourseLevelForCalendars(
+            $institutionDepartmentId,
+            $modeOfStudyId,
+            AcademicCalendar::idsForStartedCalendarYear($calendarYear),
+        );
+    }
+
+    /**
+     * @param  list<int>  $academicCalendarIds
+     * @return array<string, int> Keys "{department_course_id}_{department_level_id}"
+     */
+    public function countsByCourseLevelForCalendars(int $institutionDepartmentId, int $modeOfStudyId, array $academicCalendarIds): array
+    {
+        if ($academicCalendarIds === []) {
+            return [];
+        }
+
+        $rows = $this->allocationBaseQuery($institutionDepartmentId, $modeOfStudyId, $academicCalendarIds)
+            ->selectRaw('student_applications.department_course_id, student_applications.department_level_id, COUNT(DISTINCT student_applications.id) as total')
             ->groupBy('student_applications.department_course_id', 'student_applications.department_level_id')
             ->get();
 
@@ -38,7 +52,34 @@ class ConfirmedStudentsQuery
     }
 
     /**
-     * FINAL-list students with a student_enrolment for any of the given academic calendars (needed for class allocation payloads).
+     * Distinct FINAL-list applications with a class-allocation enrolment, grouped by mode of study.
+     *
+     * @param  list<int>  $academicCalendarIds
+     * @return array<int, int> Keys mode_of_study_id
+     */
+    public function countsByModeForCalendars(int $institutionDepartmentId, array $academicCalendarIds): array
+    {
+        if ($academicCalendarIds === []) {
+            return [];
+        }
+
+        $rows = $this->allocationBaseQuery($institutionDepartmentId, null, $academicCalendarIds)
+            ->selectRaw('student_applications.mode_of_study_id, COUNT(DISTINCT student_applications.id) as total')
+            ->whereNotNull('student_applications.mode_of_study_id')
+            ->groupBy('student_applications.mode_of_study_id')
+            ->get();
+
+        $lookup = [];
+
+        foreach ($rows as $row) {
+            $lookup[(int) $row->mode_of_study_id] = (int) $row->total;
+        }
+
+        return $lookup;
+    }
+
+    /**
+     * FINAL-list students with one student_semester for the given academic calendars (needed for class allocation payloads).
      *
      * @param  list<int>  $academicCalendarIds
      */
@@ -54,20 +95,8 @@ class ConfirmedStudentsQuery
             return collect();
         }
 
-        return $this->baseQueryWithFinalClassList($institutionDepartmentId, $modeOfStudyId)
+        return $this->allocationBaseQuery($institutionDepartmentId, $modeOfStudyId, $academicCalendarIds, $semesterId)
             ->join('students', 'students.id', '=', 'student_applications.student_id')
-            ->join('student_enrolments', function ($join) use ($academicCalendarIds, $semesterId): void {
-                $join->on('student_enrolments.student_application_id', '=', 'student_applications.id')
-                    ->whereIn('student_enrolments.academic_calendar_id', $academicCalendarIds)
-                    ->whereColumn('student_enrolments.mode_of_study_id', 'student_applications.mode_of_study_id')
-                    ->whereNull('student_enrolments.deleted_at');
-
-                if ($semesterId !== null) {
-                    $join->where('student_enrolments.semester_id', $semesterId);
-                }
-            })
-            ->join('student_enrolment_statuses', 'student_enrolment_statuses.id', '=', 'student_enrolments.student_enrolment_status_id')
-            ->whereNotIn('student_enrolment_statuses.slug', StudentEnrolmentProgressionService::BLOCKING_STATUSES)
             ->leftJoin('genders', 'genders.id', '=', 'students.gender_id')
             ->join('users', 'users.id', '=', 'students.user_id')
             ->where('student_applications.department_level_id', $departmentLevelId)
@@ -75,9 +104,12 @@ class ConfirmedStudentsQuery
             ->select([
                 'student_applications.id as student_application_id',
                 'student_enrolments.id as student_enrolment_id',
+                'student_semesters.id as student_semesters_id',
                 'student_applications.student_id',
                 'student_applications.application_tracking_number',
+                'students.student_number',
                 'genders.title as gender_title',
+                'users.id as user_id',
                 'users.first_name',
                 'users.middle_name',
                 'users.last_name',
@@ -87,7 +119,36 @@ class ConfirmedStudentsQuery
             ->get();
     }
 
-    private function baseQueryWithFinalClassList(int $institutionDepartmentId, int $modeOfStudyId): Builder
+    /**
+     * @param  list<int>  $academicCalendarIds
+     */
+    private function allocationBaseQuery(
+        int $institutionDepartmentId,
+        ?int $modeOfStudyId,
+        array $academicCalendarIds,
+        ?int $semesterId = null,
+    ): Builder {
+        $preferredSemesters = StudentSemester::query()
+            ->selectRaw('student_enrolments.student_application_id, MAX(student_semesters.id) as student_semesters_id')
+            ->join('student_enrolments', 'student_enrolments.id', '=', 'student_semesters.student_enrolment_id')
+            ->whereIn('student_enrolments.academic_calendar_id', $academicCalendarIds)
+            ->whereNull('student_semesters.deleted_at')
+            ->whereNull('student_enrolments.deleted_at')
+            ->when($semesterId !== null, fn (Builder $query) => $query->where('student_semesters.semester_id', $semesterId))
+            ->groupBy('student_enrolments.student_application_id');
+
+        return $this->baseQueryWithFinalClassList($institutionDepartmentId, $modeOfStudyId)
+            ->joinSub($preferredSemesters, 'preferred_semesters', function ($join): void {
+                $join->on('preferred_semesters.student_application_id', '=', 'student_applications.id');
+            })
+            ->join('student_semesters', 'student_semesters.id', '=', 'preferred_semesters.student_semesters_id')
+            ->join('student_enrolments', 'student_enrolments.id', '=', 'student_semesters.student_enrolment_id')
+            ->join('student_enrolment_statuses', 'student_enrolment_statuses.id', '=', 'student_semesters.student_enrolment_status_id')
+            ->whereColumn('student_enrolments.mode_of_study_id', 'student_applications.mode_of_study_id')
+            ->whereNotIn('student_enrolment_statuses.slug', StudentEnrolmentProgressionService::BLOCKING_STATUSES);
+    }
+
+    private function baseQueryWithFinalClassList(int $institutionDepartmentId, ?int $modeOfStudyId): Builder
     {
         return StudentApplication::query()
             ->join('class_lists', function ($join): void {
@@ -96,7 +157,10 @@ class ConfirmedStudentsQuery
                     ->whereNull('class_lists.deleted_at');
             })
             ->where('student_applications.institution_department_id', $institutionDepartmentId)
-            ->where('student_applications.mode_of_study_id', $modeOfStudyId)
+            ->when(
+                $modeOfStudyId !== null,
+                fn (Builder $query) => $query->where('student_applications.mode_of_study_id', $modeOfStudyId),
+            )
             ->whereNull('student_applications.deleted_at');
     }
 }

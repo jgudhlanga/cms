@@ -39,7 +39,9 @@ const appName = import.meta.env.VITE_APP_NAME || 'Harare Polytechnic';
                 <div
                     class="px-4 py-2 text-center text-xs leading-relaxed text-balance text-white/90 [&_a]:font-medium [&_a]:text-white [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-white"
                 >
-                    <a href="#">{{ $t('trans.terms_of_service') }}</a> {{ $t('trans.and') }}
+                    {{ $t('trans.auth_legal_agreement') }}
+                    <a href="#">{{ $t('trans.terms_of_service') }}</a>
+                    {{ $t('trans.and') }}
                     <a href="#">{{ $t('trans.privacy_policy') }}</a>.
                 </div>
             </div>

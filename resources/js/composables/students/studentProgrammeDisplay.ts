@@ -98,6 +98,10 @@ export const statusBadgeClass = (status: string | null | undefined): string => {
         return 'text-primary';
     }
 
+    if (normalized === 'unknown') {
+        return 'text-muted-foreground';
+    }
+
     if (['absent', 'deferred', 'disqualified', 'referred'].includes(normalized)) {
         return 'text-amber-500';
     }

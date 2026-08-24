@@ -6,6 +6,7 @@ return [
     'no_preview_classes_generated' => 'No preview classes were generated. Confirm class unit size and final enrolments.',
     'application_number' => 'Application #',
     'classes_generated_successfully' => 'Academic classes generated successfully.',
+    'classes_generation_empty' => 'No classes were created. No matching final enrolments were found for this class configuration.',
     'classes_generation_failed' => 'Unable to generate or update classes. Please try again.',
     'add_student_to_class' => 'Add student to class',
     'view_class' => 'View class',

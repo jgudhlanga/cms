@@ -60,37 +60,6 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
                 },
             },
             {
-                header: trans('trans.show_on_current_application_period'),
-                accessorKey: 'showOnCurrentApplicationPeriod',
-                meta: { align: 'center' },
-                cell: ({ row }: { row: { original: DepartmentCourse } }) => {
-                    return checkStatusIcon(row.original.attributes?.showOnCurrentApplicationPeriod);
-                },
-            },
-            {
-                header: 'Has Enrolment Requirements',
-                accessorKey: 'hasEnrolmentRequirements',
-                meta: { align: 'center' },
-                cell: ({ row }: { row: { original: DepartmentCourse } }) => {
-                    return checkStatusIcon(row.original.attributes?.hasEnrolmentRequirements);
-                },
-            },
-            {
-                header: 'Requirements',
-                accessorKey: 'requirements',
-                enableSorting: false,
-                meta: { align: 'center' },
-                cell: ({ row }: { row: { original: DepartmentCourse } }) => {
-                    return isItTrue(row.original.attributes?.hasEnrolmentRequirements)
-                        ? actionButton({
-                              title: 'Config Requirements',
-                              variant: ColorVariant.primary_outline,
-                              onClick: () => navigateTo(route('department-courses.requirements', getIdParams(row.original.id?.toString() ?? ''))),
-                          })
-                        : null;
-                },
-            },
-            {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',
                 enableSorting: false,

@@ -122,6 +122,7 @@ return [
             'view-staff:dashboards',
             'view-finance:dashboards',
             'view-hostel:dashboards',
+            'view-examinations:dashboards',
             'crud-settings:dashboards',
         ],
         'reports' => [
@@ -337,11 +338,13 @@ return [
             'crud-settings:student-applications',
             'viewAuditTrail:student-applications',
             'verify:class-lists',
+            'confirm:class-lists',
             'create:class-lists',
             'update:class-lists',
             'delete:class-lists',
             'view:class-lists',
             'manage-final:class-lists',
+            'manage:online-application-catalogue',
         ],
         'examinations' => [
             'viewAny:examinations',

@@ -28,7 +28,7 @@ const form = useForm({
             staff: props.module.attributes.settings?.tabs?.staff ?? true,
             finance: props.module.attributes.settings?.tabs?.finance ?? true,
             hostel: props.module.attributes.settings?.tabs?.hostel ?? true,
-            activity: props.module.attributes.settings?.tabs?.activity ?? true,
+            examinations: props.module.attributes.settings?.tabs?.examinations ?? true,
         },
     },
 });

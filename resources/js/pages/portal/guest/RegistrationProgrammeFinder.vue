@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { BaseButton } from '@/components/core/button';
+import BaseInput from '@/components/core/form/text/BaseInput.vue';
+import IdNumber from '@/components/core/form/text/IdNumber.vue';
 import RegistrationIntentSummary from '@/components/portal/RegistrationIntentSummary.vue';
 import RegistrationStepper from '@/components/portal/RegistrationStepper.vue';
 import { ColorVariant } from '@/enums/colors';
@@ -9,7 +11,7 @@ import type { StepperVariant } from '@/components/portal/RegistrationStepper.vue
 import { useRegistrationStepNavigation } from '@/composables/students/useRegistrationStepNavigation';
 import RegistrationBrandHeader from '@/pages/portal/guest/components/RegistrationBrandHeader.vue';
 import RegistrationGuide from '@/pages/portal/guest/RegistrationGuide.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 
 type ModeNode = { id: number; name: string; available: boolean };
@@ -48,6 +50,8 @@ type IntentSummary = {
     intakeName?: string | null;
 };
 
+type OjetIdentityType = 'zimbabwean' | 'international';
+
 const props = withDefaults(
     defineProps<{
         programmes: ProgrammeTree;
@@ -65,6 +69,11 @@ const props = withDefaults(
             courseId?: number | null;
             modeOfStudyId?: number | null;
         };
+        ojetIdentity?: {
+            identityType?: OjetIdentityType | null;
+            idNumber?: string | null;
+            passportNumber?: string | null;
+        };
     }>(),
     {
         stepperVariant: 'regular',
@@ -72,6 +81,7 @@ const props = withDefaults(
     },
 );
 
+const page = usePage();
 const { navigateToRegistrationStep } = useRegistrationStepNavigation();
 
 const isSdpExpress = computed(() => props.stepperVariant === 'sdp');
@@ -80,6 +90,11 @@ const departmentId = ref<number | null>(props.currentSelection?.departmentId ?? 
 const departmentLevelId = ref<number | null>(props.currentSelection?.departmentLevelId ?? null);
 const courseId = ref<number | null>(props.currentSelection?.courseId ?? null);
 const modeOfStudyId = ref<number | null>(props.currentSelection?.modeOfStudyId ?? null);
+const identityType = ref<OjetIdentityType>(
+    props.ojetIdentity?.identityType === 'international' ? 'international' : 'zimbabwean',
+);
+const idNumber = ref(props.ojetIdentity?.idNumber ?? '');
+const passportNumber = ref(props.ojetIdentity?.passportNumber ?? '');
 const submitting = ref(false);
 
 const departments = computed(() => props.programmes?.departments ?? []);
@@ -99,13 +114,39 @@ const selectedCourse = computed(
 
 const modes = computed(() => selectedCourse.value?.modes ?? []);
 
+const selectedMode = computed(() => modes.value.find((m) => m.id === modeOfStudyId.value) ?? null);
+
+const isOjetMode = computed(() => {
+    const name = selectedMode.value?.name ?? '';
+    return name.toLowerCase() === 'ojet';
+});
+
+const formErrors = computed(() => (page.props.errors ?? {}) as Record<string, string | undefined>);
+
+const identityError = computed(() =>
+    identityType.value === 'international' ? formErrors.value.passport_number : formErrors.value.id_number,
+);
+
+const identityFilled = computed(() => {
+    if (!isOjetMode.value) {
+        return true;
+    }
+
+    if (identityType.value === 'international') {
+        return passportNumber.value.trim().length >= 5;
+    }
+
+    return idNumber.value.trim().length > 0;
+});
+
 const canContinue = computed(
     () =>
         props.programmes.available &&
         departmentId.value !== null &&
         departmentLevelId.value !== null &&
         courseId.value !== null &&
-        modeOfStudyId.value !== null,
+        modeOfStudyId.value !== null &&
+        identityFilled.value,
 );
 
 watch(departmentId, () => {
@@ -139,20 +180,28 @@ const submit = () => {
     }
 
     submitting.value = true;
-    router.post(
-        route('portal.register.select-programme'),
-        {
-            department_id: departmentId.value,
-            department_level_id: departmentLevelId.value,
-            course_id: courseId.value,
-            mode_of_study_id: modeOfStudyId.value,
+
+    const payload: Record<string, string | number | null> = {
+        department_id: departmentId.value,
+        department_level_id: departmentLevelId.value,
+        course_id: courseId.value,
+        mode_of_study_id: modeOfStudyId.value,
+    };
+
+    if (isOjetMode.value) {
+        payload.identity_type = identityType.value;
+        if (identityType.value === 'international') {
+            payload.passport_number = passportNumber.value;
+        } else {
+            payload.id_number = idNumber.value;
+        }
+    }
+
+    router.post(route('portal.register.select-programme'), payload, {
+        onFinish: () => {
+            submitting.value = false;
         },
-        {
-            onFinish: () => {
-                submitting.value = false;
-            },
-        },
-    );
+    });
 };
 </script>
 
@@ -252,6 +301,74 @@ const submit = () => {
                                     </option>
                                 </select>
                             </label>
+
+                            <div v-if="isOjetMode" class="space-y-3 rounded-xl border border-border bg-muted/30 p-3">
+                                <div>
+                                    <p class="text-xs font-semibold uppercase tracking-wide text-foreground">
+                                        {{ $t('trans.ojet_former_student_identity_title') }}
+                                    </p>
+                                    <p class="mt-1 text-xs text-muted-foreground">
+                                        {{ $t('trans.ojet_former_student_identity_description') }}
+                                    </p>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        class="rounded-lg border px-2 py-2 text-xs font-medium uppercase"
+                                        :class="
+                                            identityType === 'zimbabwean'
+                                                ? 'border-primary bg-primary/5 text-primary'
+                                                : 'border-border text-muted-foreground'
+                                        "
+                                        @click="identityType = 'zimbabwean'"
+                                    >
+                                        {{ $t('trans.id_number') }}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="rounded-lg border px-2 py-2 text-xs font-medium uppercase"
+                                        :class="
+                                            identityType === 'international'
+                                                ? 'border-primary bg-primary/5 text-primary'
+                                                : 'border-border text-muted-foreground'
+                                        "
+                                        @click="identityType = 'international'"
+                                    >
+                                        {{ $t('trans.passport_number') }}
+                                    </button>
+                                </div>
+
+                                <IdNumber
+                                    v-if="identityType === 'zimbabwean'"
+                                    :model-value="idNumber"
+                                    :placeholder="$t('trans.enrollment_enter_national_id')"
+                                    :vertical-layout="false"
+                                    :label-uppercase="true"
+                                    :is-required="true"
+                                    :error="identityError"
+                                    @update:model-value="idNumber = $event"
+                                />
+                                <BaseInput
+                                    v-else
+                                    input-id="ojet_passport_number"
+                                    :label="$t('trans.passport_number')"
+                                    :model-value="passportNumber"
+                                    :placeholder="$t('trans.enrollment_enter_passport')"
+                                    :vertical-layout="false"
+                                    :label-uppercase="true"
+                                    :is-required="true"
+                                    :error="identityError"
+                                    @update:model-value="passportNumber = $event"
+                                />
+
+                                <BaseAlert
+                                    v-if="identityError"
+                                    :type="TypeVariant.danger"
+                                    :title="$t('trans.ojet_former_student_identity_title')"
+                                    :description="identityError"
+                                />
+                            </div>
                         </div>
 
                         <div class="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

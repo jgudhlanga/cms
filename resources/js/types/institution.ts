@@ -189,10 +189,15 @@ export type InstitutionDepartment = {
         departmentId: string | number;
         department: string;
         departmentCode?: string;
+        colorCode?: string | null;
         divisionId?: number | string | null;
         division?: string | null;
+        headOfDivision?: string | null;
+        headOfDepartment?: string | null;
+        coursesOfferedCount?: number;
+        staffCount?: number;
+        levelsOffered?: string[];
         isAcademic: boolean | number;
-        hasApprenticeCourses?: boolean;
         description?: string;
         createdAt?: string;
         updatedAt?: string;
@@ -204,6 +209,7 @@ export type InstitutionDepartmentParams = {
     is_academic: boolean;
     department_ids: Array<string | undefined | null>;
     division_id?: number | string | null;
+    color_code?: string;
 };
 
 export type IntakePeriodStatus = 'open' | 'suspended' | 'closed';

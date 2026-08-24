@@ -18,6 +18,7 @@ use App\Models\Users\User;
 use App\Repositories\Institution\interface\IStaffRepository;
 use App\Repositories\Users\interface\IUserRepository;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class UserController extends Controller
 {
@@ -25,6 +26,13 @@ class UserController extends Controller
         protected IUserRepository $repository,
         protected IStaffRepository $staffRepository,
     ) {}
+
+    public function auditTrail(): Response
+    {
+        abort_unless(auth()->user() instanceof User, 401);
+
+        return Inertia::render('users/AuditTrail');
+    }
 
     public function index(UserFilter $filters)
     {

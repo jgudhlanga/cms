@@ -2,6 +2,7 @@
 import AssignClassTutorModal from '@/components/academicCalendars/AssignClassTutorModal.vue';
 import ClassListExportModal from '@/components/academicCalendars/ClassListExportModal.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import DepartmentModeTotalsStrip from '@/components/institution/DepartmentModeTotalsStrip.vue';
 import { openAssignClassTutorModal } from '@/composables/academicCalendars/useAcademicCalendarClassTutor';
 import { openClassListExportModal } from '@/composables/academicCalendars/useClassListExport';
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
@@ -18,11 +19,10 @@ import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { errorAlert, successAlert } from '@/lib/alerts';
+import { errorAlert } from '@/lib/alerts';
 import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { Head, Link as InertiaLink, router, useForm } from '@inertiajs/vue3';
-import { UserIcon, UserRoundIcon } from 'lucide-vue-next';
-import { trans } from 'laravel-vue-i18n';
+import { trans, trans_choice } from 'laravel-vue-i18n';
 import { computed, toRefs } from 'vue';
 import AcademicCalendarClassPreviewCard from './partials/AcademicCalendarClassPreviewCard.vue';
 import AcademicCalendarClassStaffingSummaryCard from './partials/AcademicCalendarClassStaffingSummaryCard.vue';
@@ -184,7 +184,6 @@ const saveClasses = () => {
         }),
         {
             onSuccess: () => {
-                successAlert(trans('enrolment.classes_generated_successfully'));
                 syncFormDefaultsFromGenerationContext();
             },
             onError: (errors) => {
@@ -209,21 +208,38 @@ const classShowUrl = (classPreview: AcademicCalendarClassPreview): string | null
     return route('academic-calendars.department-classes.show', params);
 };
 
-const computedTitle = computed(() => {
-    let title = '';
-    if (classConfig?.value?.attributes?.departmentCourse) {
-        title += `${String(classConfig?.value?.attributes?.departmentCourse)} - `;
-    }
-    if (classConfig?.value?.attributes?.departmentLevel) {
-        title += `${String(classConfig?.value?.attributes?.departmentLevel)} - `;
-    }
-    if (classConfig?.value?.attributes?.modeOfStudy) {
-        title += `${String(classConfig?.value?.attributes?.modeOfStudy)} `;
-    }
-    if (classConfig?.value?.attributes?.calendarYear && String(classConfig?.value?.attributes?.calendarYear).trim() !== '') {
-        title += `( ${String(classConfig?.value?.attributes?.calendarYear)} )`;
-    }
-    return title;
+const computedTitle = computed(() => classConfig.value?.attributes?.departmentCourse ?? '');
+
+const enrolmentLegend = computed(() => {
+    const placed = previewClasses.value.reduce(
+        (totals, classPreview) => ({
+            male: totals.male + Number(classPreview.genderCounts?.male ?? 0),
+            female: totals.female + Number(classPreview.genderCounts?.female ?? 0),
+        }),
+        { male: 0, female: 0 },
+    );
+    const unplaced = generationContext.value.newStudentGenderCounts;
+
+    return [
+        {
+            id: 'male',
+            label: trans_choice('general.male', 2),
+            count: placed.male + Number(unplaced.male ?? 0),
+            colorClass: 'bg-blue-600',
+        },
+        {
+            id: 'female',
+            label: trans_choice('general.female', 2),
+            count: placed.female + Number(unplaced.female ?? 0),
+            colorClass: 'bg-pink-500',
+        },
+        {
+            id: 'unplaced',
+            label: trans('students.not_in_class'),
+            count: generationContext.value.newFinalStudentCount,
+            colorClass: 'bg-muted-foreground/40',
+        },
+    ];
 });
 
 const onAssignTutor = (classId: number, staffId?: number | null): void => {
@@ -264,7 +280,7 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
 <template>
     <Head :title="$tChoice('academic_calendar.academic_calendar', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution-departments.show', String(department.id))">
-        <div class="flex flex-col space-y-6">
+        <div class="flex flex-col gap-3">
             <AcademicCalendarClassStaffingSummaryCard
                 :title="computedTitle"
                 :class-config="classConfig"
@@ -274,16 +290,22 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                 :semester-config-has-syllabi="semesterConfigHasSyllabi"
             />
 
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <HeadingSmall :title="`${$t('enrolment.final_enrolments')} (${generationContext.finalStudentCount})`" />
-                <div class="flex flex-wrap items-center gap-2">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <DepartmentModeTotalsStrip
+                    :total="generationContext.finalStudentCount"
+                    :total-label="$t('enrolment.final_enrolments')"
+                    :items="enrolmentLegend"
+                    :align="'start'"
+                />
+                <div class="flex flex-wrap items-center gap-1.5 sm:justify-end">
                     <BaseButton
-                        :title="$t(classActionTitle)"
-                        :disabled="!hasNewStudentsToAssign || form.processing"
-                        :processing="form.processing"
-                        :size="ButtonSize.sm"
-                        @click="saveClasses"
+                        v-if="canExportClassLists"
+                        type="button"
+                        :title="$t('academic_calendar.export_class_lists')"
                         classes="rounded-full"
+                        :variant="ColorVariant.primary_outline"
+                        :size="ButtonSize.xs"
+                        @click="openClassListExportModal"
                     />
                     <InertiaLink v-if="canOpenCourseWorkMarksheet" :href="courseWorkMarksheetUrl">
                         <BaseButton
@@ -291,36 +313,17 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                             :title="$t('academic_calendar.course_work_open_marksheet')"
                             classes="rounded-full"
                             :variant="ColorVariant.primary_outline"
-                            :size="ButtonSize.sm"
+                            :size="ButtonSize.xs"
                         />
                     </InertiaLink>
                     <BaseButton
-                        v-if="canExportClassLists"
-                        type="button"
-                        :title="$t('academic_calendar.export_class_lists')"
+                        :title="$t(classActionTitle)"
+                        :disabled="!hasNewStudentsToAssign || form.processing"
+                        :processing="form.processing"
+                        :size="ButtonSize.xs"
+                        @click="saveClasses"
                         classes="rounded-full"
-                        :variant="ColorVariant.primary_outline"
-                        :size="ButtonSize.sm"
-                        @click="openClassListExportModal"
                     />
-                </div>
-            </div>
-            <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-700">
-                <div class="flex items-center gap-1">
-                    {{ $t('students.not_in_class') }}:
-                    <span class="font-semibold">{{ generationContext.newFinalStudentCount }}</span>
-                </div>
-                <div class="flex items-center gap-1">
-                    <UserIcon class="h-4 w-4 text-blue-600" />
-                    <span class="font-semibold">{{ $tChoice('general.male', 2) }}: {{ generationContext.newStudentGenderCounts.male }}</span>
-                </div>
-                <div class="flex items-center gap-1">
-                    <UserRoundIcon class="h-4 w-4 text-pink-600" />
-                    <span class="font-semibold">{{ $tChoice('general.female', 2) }}: {{ generationContext.newStudentGenderCounts.female }}</span>
-                </div>
-                <div class="flex items-center gap-1 font-medium">
-                    {{ $t('trans.other') }}:
-                    <span class="font-semibold">{{ generationContext.newStudentGenderCounts.unknown }}</span>
                 </div>
             </div>
 
@@ -329,20 +332,18 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                 :title="$t(previewEmptyAlert.titleKey)"
                 :description="$t(previewEmptyAlert.descriptionKey)"
             />
-            <template v-else>
-                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    <AcademicCalendarClassPreviewCard
-                        v-for="classPreview in previewClasses"
-                        :key="classPreview.name"
-                        :class-preview="classPreview"
-                        :show-url="classShowUrl(classPreview)"
-                        :can-assign-staffing="canAssignStaffing"
-                        :show-module-staffing="selectedSemesterId != null"
-                        @assign-tutor="onAssignTutor"
-                        @remove-tutor="onRemoveTutor"
-                    />
-                </div>
-            </template>
+            <div v-else class="flex flex-col gap-1.5">
+                <AcademicCalendarClassPreviewCard
+                    v-for="classPreview in previewClasses"
+                    :key="classPreview.name"
+                    :class-preview="classPreview"
+                    :show-url="classShowUrl(classPreview)"
+                    :can-assign-staffing="canAssignStaffing"
+                    :show-module-staffing="selectedSemesterId != null"
+                    @assign-tutor="onAssignTutor"
+                    @remove-tutor="onRemoveTutor"
+                />
+            </div>
             <AssignClassTutorModal
                 v-if="canAssignStaffing"
                 :institution-department-id="Number(department.id)"

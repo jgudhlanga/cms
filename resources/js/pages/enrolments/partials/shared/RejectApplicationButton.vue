@@ -13,6 +13,7 @@ const props = defineProps<{
     form: InertiaForm<ClassListAttributeParams>;
     requiredAbility: string;
     nextHref: string | null;
+    outline?: boolean;
 }>();
 
 const { navigateTo } = useUtils();
@@ -49,5 +50,9 @@ const rejectApplication = async () => {
 </script>
 
 <template>
-    <BaseButton :variant="ColorVariant.danger" :title="$t('enrolments.reject_button_title')" @click="rejectApplication" />
+    <BaseButton
+        :variant="outline ? ColorVariant.danger_outline : ColorVariant.danger"
+        :title="$t('enrolments.reject_button_title')"
+        @click="rejectApplication"
+    />
 </template>

@@ -22,12 +22,12 @@ const linkClass =
 
 <template>
     <div
-        class="flex w-full items-center justify-between gap-x-2 gap-y-1"
-        :class="compact ? 'text-xs' : 'text-sm'"
+        class="flex items-center gap-x-2 gap-y-1"
+        :class="compact ? 'w-auto min-w-0 text-[11px]' : 'w-full text-sm'"
     >
         <template v-if="hasTutor">
             <div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                <span class="text-muted-foreground">{{ $t('academic_calendar.class_tutor') }}:</span>
+                <span v-if="!compact" class="text-muted-foreground">{{ $t('academic_calendar.class_tutor') }}:</span>
                 <span class="inline-flex min-w-0 items-center gap-1">
                     <button
                         v-if="canAssign"
@@ -52,7 +52,7 @@ const linkClass =
                 </span>
             </div>
             <button
-                v-if="canAssign"
+                v-if="canAssign && !compact"
                 type="button"
                 :class="linkClass"
                 class="shrink-0 text-[10px]"
@@ -62,16 +62,29 @@ const linkClass =
             </button>
         </template>
         <template v-else>
-            <span class="text-muted-foreground">{{ $t('academic_calendar.no_tutor_assigned') }}</span>
-            <button
-                v-if="canAssign"
-                type="button"
-                :class="linkClass"
-                class="shrink-0"
-                @click.stop.prevent="emit('assign')"
-            >
-                {{ $t('academic_calendar.assign_tutor') }}
-            </button>
+            <template v-if="compact">
+                <button
+                    v-if="canAssign"
+                    type="button"
+                    class="inline-flex h-6 shrink-0 items-center rounded-full border border-dashed border-amber-300 bg-amber-50 px-2 text-[11px] font-medium text-amber-800 transition-colors hover:bg-amber-100"
+                    @click.stop.prevent="emit('assign')"
+                >
+                    {{ $t('academic_calendar.assign_tutor') }}
+                </button>
+                <span v-else class="text-muted-foreground">{{ $t('academic_calendar.no_tutor_assigned') }}</span>
+            </template>
+            <template v-else>
+                <span class="text-muted-foreground">{{ $t('academic_calendar.no_tutor_assigned') }}</span>
+                <button
+                    v-if="canAssign"
+                    type="button"
+                    :class="linkClass"
+                    class="shrink-0"
+                    @click.stop.prevent="emit('assign')"
+                >
+                    {{ $t('academic_calendar.assign_tutor') }}
+                </button>
+            </template>
         </template>
     </div>
 </template>

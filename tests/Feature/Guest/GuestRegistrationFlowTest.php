@@ -5,8 +5,8 @@ use App\Enums\Institution\LevelEnum;
 use App\Enums\Rbac\RoleEnum;
 use App\Enums\Students\ApplicationTrackEnum;
 use App\Helpers\DropdownHelper;
-use App\Models\Institution\DepartmentLevel;
-use App\Models\Institution\InstitutionDepartment;
+use App\Models\Applications\ApplicationOfferingDepartment;
+use App\Models\Applications\ApplicationOfferingLevel;
 use App\Models\Institution\Level;
 use App\Models\Rbac\Role;
 use App\Services\Students\ApplicationEligibilityService;
@@ -280,9 +280,9 @@ test('guest programmes api returns tree for level', function () {
 test('guest programmes api returns empty when no programmes shown', function () {
     $seeded = seedGuestRegistrationProgramme();
 
-    DepartmentLevel::query()
-        ->whereKey($seeded['departmentLevelId'])
-        ->update(['show_on_current_application_period' => false]);
+    ApplicationOfferingLevel::query()
+        ->where('department_level_id', $seeded['departmentLevelId'])
+        ->delete();
 
     $response = $this->getJson(route('v1.guest.enrollment.programmes', [
         'track' => ApplicationTrackEnum::Regular->value,
@@ -318,10 +318,12 @@ test('apprentice programmes api returns all configured modes for flagged departm
     expect($modeIds)->toBe($expected);
 });
 
-test('apprentice programmes api hides departments without has_apprentice_courses flag', function () {
+test('apprentice programmes api hides departments without has_apprentice_programmes flag', function () {
     $seeded = seedGuestRegistrationProgramme();
 
-    InstitutionDepartment::query()->whereKey($seeded['departmentId'])->update(['has_apprentice_courses' => false]);
+    ApplicationOfferingDepartment::query()
+        ->where('institution_department_id', $seeded['departmentId'])
+        ->update(['has_apprentice_programmes' => false]);
 
     $response = $this->getJson(route('v1.guest.enrollment.programmes', [
         'track' => ApplicationTrackEnum::Apprentice->value,

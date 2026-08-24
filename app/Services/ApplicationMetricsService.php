@@ -48,6 +48,7 @@ class ApplicationMetricsService
                 'institution_departments.id as institution_department_id',
                 'departments.id as department_id',
                 'departments.name as department_name',
+                'institution_departments.color_code as color_code',
                 DB::raw('COUNT(DISTINCT student_applications.id) as application_count'),
                 DB::raw("COUNT(DISTINCT CASE WHEN genders.title = 'Male' THEN student_applications.id END) as male_count"),
                 DB::raw("COUNT(DISTINCT CASE WHEN genders.title = 'Female' THEN student_applications.id END) as female_count"),
@@ -94,6 +95,7 @@ class ApplicationMetricsService
                 'institution_departments.id',
                 'departments.id',
                 'departments.name',
+                'institution_departments.color_code',
                 'class_sizes.total_class_size',
             )
             ->orderBy('departments.name')

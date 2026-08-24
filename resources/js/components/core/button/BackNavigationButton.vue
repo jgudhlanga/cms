@@ -11,6 +11,8 @@ import type { Link } from '@/types/ui';
 const props = defineProps<{
     url: string;
     destination?: Link;
+    /** Match pill-style header actions (e.g. Applicant Lookup). */
+    pill?: boolean;
 }>();
 
 const { getTransFile } = useUtils();
@@ -32,7 +34,16 @@ const buttonTitle = computed((): string => {
 </script>
 
 <template>
-    <BaseButton :title="buttonTitle" :size="ButtonSize.sm" :variant="ColorVariant.shade" @click="() => $inertia.visit(url)">
+    <button
+        v-if="pill"
+        type="button"
+        class="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-muted"
+        @click="() => $inertia.visit(url)"
+    >
+        <BaseIcon :name="IconName.back" class="h-3.5 w-3.5 shrink-0" />
+        {{ buttonTitle }}
+    </button>
+    <BaseButton v-else :title="buttonTitle" :size="ButtonSize.sm" :variant="ColorVariant.shade" @click="() => $inertia.visit(url)">
         <BaseIcon :name="IconName.back" :color="ColorVariant.shade" />
     </BaseButton>
 </template>

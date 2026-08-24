@@ -77,6 +77,11 @@ class PermissionsTableSeeder extends Seeder
             'manageOwnStudentProgramDetails:students',
             'manageOwnStudentApplicationDetails:students'
         );
+
+        $this->renamePermissionIfNeeded(
+            'manage:enrolments',
+            'manage:online-application-catalogue'
+        );
     }
 
     private function renamePermissionIfNeeded(string $from, string $to): void

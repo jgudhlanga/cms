@@ -24,13 +24,7 @@ test('unauthorized users cannot access academic dashboard tab', function () {
 
     $this->actingAs($user)
         ->get(route('dashboard'))
-        ->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
-            ->component('dashboard/Index')
-            ->where('visibleTabs', ['activity'])
-            ->where('academicDashboard', null)
-            ->where('teachingDashboard', null)
-        );
+        ->assertForbidden();
 });
 
 test('lecturer-only user sees academic tab with teaching metrics and null attendance', function () {
@@ -64,7 +58,7 @@ test('lecturer-only user sees academic tab with teaching metrics and null attend
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
-            ->where('visibleTabs', ['academic', 'activity'])
+            ->where('visibleTabs', ['academic'])
             ->where('teachingDashboard.attendance', null)
             ->where('teachingDashboard.summary.passRate', 100)
             ->where('teachingDashboard.summary.averageMark', 60)
@@ -96,7 +90,7 @@ test('teaching dashboard shows null metrics when no marks exist', function () {
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
-            ->where('visibleTabs', ['academic', 'activity'])
+            ->where('visibleTabs', ['academic'])
             ->where('teachingDashboard.attendance', null)
             ->where('teachingDashboard.summary.passRate', null)
             ->where('teachingDashboard.summary.averageMark', null)
@@ -129,7 +123,7 @@ test('dual permission user sees single academic tab with both dashboards', funct
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
-            ->where('visibleTabs', ['academic', 'activity'])
+            ->where('visibleTabs', ['academic'])
             ->where('teachingDashboard', fn ($value) => $value !== null)
             ->where('academicDashboard', fn ($value) => $value !== null)
         );
@@ -276,7 +270,7 @@ test('teaching dashboard priority alerts include applicable assessment calendars
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
-            ->where('visibleTabs', ['academic', 'activity'])
+            ->where('visibleTabs', ['academic'])
             ->has('teachingDashboard.priorityAlerts')
             ->where('teachingDashboard.priorityAlerts.0.kind', 'assessment_calendar')
             ->where('teachingDashboard.priorityAlerts.0.severity', 'critical')

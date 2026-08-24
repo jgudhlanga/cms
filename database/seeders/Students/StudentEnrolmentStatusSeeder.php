@@ -38,6 +38,10 @@ class StudentEnrolmentStatusSeeder extends Seeder
                 'name' => 'Referred',
                 'description' => 'The student has been referred and must retake one or more modules.',
             ],
+            [
+                'name' => 'Unknown',
+                'description' => 'Exam results for this semester/phase have not been recorded yet.',
+            ],
         ];
 
         foreach ($rows as $row) {

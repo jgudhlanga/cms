@@ -40,6 +40,7 @@ const APP_MODULE_KEYS = {
     institution_departments: 'institution_departments',
     institution_department_division: 'institution_department_division',
     department_levels: 'department_levels',
+    class_list_action: 'class_list_action',
     department_courses: 'department_courses',
     marital_statuses: 'marital_statuses',
     religions: 'religions',

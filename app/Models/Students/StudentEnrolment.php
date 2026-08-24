@@ -9,11 +9,14 @@ use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\ModeOfStudy;
+use App\Observers\Students\StudentEnrolmentObserver;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
@@ -24,9 +27,10 @@ use Spatie\Activitylog\Traits\LogsActivity;
  *
  * @method static filter(Filter $filters)
  */
+#[ObservedBy([StudentEnrolmentObserver::class])]
 class StudentEnrolment extends Model
 {
-    use Filterable, LogsActivity,Paginatable, SoftDeletes;
+    use Filterable, LogsActivity, Paginatable, SoftDeletes;
 
     protected $fillable = [
         'student_id',
@@ -90,12 +94,40 @@ class StudentEnrolment extends Model
         return $this->belongsTo(StudentEnrolmentStatus::class, 'student_enrolment_status_id');
     }
 
+    public function studentSemesters(): HasMany
+    {
+        return $this->hasMany(StudentSemester::class, 'student_enrolment_id');
+    }
+
     public function academicCalendarStudentEnrolment(): HasOne
     {
         return $this->hasOne(
             AcademicCalendarStudentEnrolment::class,
             'student_enrolment_id'
         );
+    }
+
+    public function currentStudentSemester(): ?StudentSemester
+    {
+        $this->loadMissing(['studentSemesters.semester']);
+
+        return $this->studentSemesters
+            ->sortBy(fn (StudentSemester $row): int => $this->phaseOrdinal((string) ($row->semester?->slug ?? '')))
+            ->last();
+    }
+
+    public function studentSemesterFor(int $semesterId): ?StudentSemester
+    {
+        return $this->studentSemesters()
+            ->where('semester_id', $semesterId)
+            ->first();
+    }
+
+    private function phaseOrdinal(string $slug): int
+    {
+        $parts = explode('-', $slug);
+
+        return (int) end($parts);
     }
 
     public function getActivitylogOptions(): LogOptions

@@ -7,6 +7,7 @@ namespace App\Console\Commands\Enrolments;
 use App\Actions\Students\CompleteLevelEnrolmentAction;
 use App\Exceptions\Students\StudentEnrolmentProgressionException;
 use App\Models\Students\StudentEnrolment;
+use App\Models\Students\StudentSemester;
 use App\Services\Students\StudentEnrolmentProgressionService;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,66 +28,65 @@ class CompleteLevelEnrolmentCommand extends Command
     /**
      * @var string
      */
-    protected $description = 'Mark Active last-phase enrolments as Completed for the whole level.';
+    protected $description = 'Mark Active last-phase student_semesters as Award for the whole level.';
 
     public function handle(
         CompleteLevelEnrolmentAction $completeLevelEnrolment,
         StudentEnrolmentProgressionService $progression,
     ): int {
         $dryRun = (bool) $this->option('dry-run');
-        $enrolments = $this->matchingEnrolments();
+        $targets = $this->matchingSemesters();
         $completed = 0;
         $skipped = 0;
 
-        foreach ($enrolments as $enrolment) {
-            if (! $progression->canCompleteLevel($enrolment)) {
+        foreach ($targets as $studentSemester) {
+            $enrolment = $studentSemester->enrolment;
+
+            if (! $enrolment instanceof StudentEnrolment || ! $progression->canCompleteLevelSemester($studentSemester)) {
                 $skipped++;
 
                 continue;
             }
 
             if ($dryRun) {
-                $this->line("Would complete level for enrolment {$enrolment->id} (student {$enrolment->student_id})");
+                $this->line("Would complete level for student_semester {$studentSemester->id} (enrolment {$enrolment->id})");
                 $completed++;
 
                 continue;
             }
 
             try {
-                $completeLevelEnrolment->execute($enrolment);
+                $completeLevelEnrolment->execute($studentSemester);
                 $completed++;
             } catch (StudentEnrolmentProgressionException $exception) {
                 $skipped++;
-                $this->warn("Skipped enrolment {$enrolment->id}: {$exception->getMessage()}");
+                $this->warn("Skipped student_semester {$studentSemester->id}: {$exception->getMessage()}");
             }
         }
 
         $this->info($dryRun
-            ? "Dry run: {$completed} enrolment(s) would complete, {$skipped} skipped."
-            : "Completed {$completed} enrolment(s), {$skipped} skipped.");
+            ? "Dry run: {$completed} student_semester(s) would complete, {$skipped} skipped."
+            : "Completed {$completed} student_semester(s), {$skipped} skipped.");
 
         return self::SUCCESS;
     }
 
     /**
-     * @return Collection<int, StudentEnrolment>
+     * @return Collection<int, StudentSemester>
      */
-    private function matchingEnrolments()
+    private function matchingSemesters()
     {
-        return StudentEnrolment::query()
-            ->with(['studentApplication', 'studentEnrolmentStatus', 'departmentLevel.level', 'academicCalendar'])
+        return StudentSemester::query()
+            ->with(['enrolment.studentApplication', 'studentEnrolmentStatus', 'enrolment.departmentLevel.level', 'enrolment.academicCalendar', 'semester'])
             ->whereNull('deleted_at')
-            ->when($this->intOption('department'), function (Builder $query, int $departmentId): void {
-                $query->where('institution_department_id', $departmentId);
-            })
-            ->when($this->intOption('academic-calendar-id'), function (Builder $query, int $calendarId): void {
-                $query->where('academic_calendar_id', $calendarId);
+            ->whereHas('enrolment', function (Builder $query): void {
+                $query->whereNull('deleted_at')
+                    ->when($this->intOption('department'), fn (Builder $inner, int $departmentId) => $inner->where('institution_department_id', $departmentId))
+                    ->when($this->intOption('academic-calendar-id'), fn (Builder $inner, int $calendarId) => $inner->where('academic_calendar_id', $calendarId))
+                    ->when($this->intOption('mode-of-study-id'), fn (Builder $inner, int $modeId) => $inner->where('mode_of_study_id', $modeId));
             })
             ->when($this->intOption('semester-id'), function (Builder $query, int $semesterId): void {
                 $query->where('semester_id', $semesterId);
-            })
-            ->when($this->intOption('mode-of-study-id'), function (Builder $query, int $modeId): void {
-                $query->where('mode_of_study_id', $modeId);
             })
             ->orderBy('id')
             ->get();

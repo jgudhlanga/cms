@@ -9,7 +9,7 @@ defineProps<{
 
 <template>
     <div
-        class="text-card-foreground relative flex w-full flex-col gap-6 rounded-3xl border border-white/70 bg-slate-50/95 p-6 shadow-2xl shadow-slate-950/25 backdrop-blur-xl sm:p-8 dark:border-slate-700/80 dark:bg-slate-950/95"
+        class="text-card-foreground relative flex w-full flex-col gap-6 rounded-3xl border border-white/40 bg-white/90 p-6 shadow-2xl shadow-slate-950/40 backdrop-blur-2xl supports-[backdrop-filter]:bg-white/75 sm:p-8 dark:border-white/15 dark:bg-slate-950/85 dark:supports-[backdrop-filter]:bg-slate-950/70"
     >
         <div class="flex flex-col items-center gap-3 text-center">
             <AppLogo classes="size-14 object-contain" />

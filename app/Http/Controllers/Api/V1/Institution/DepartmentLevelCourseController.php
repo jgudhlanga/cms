@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Institution;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Institution\DepartmentLevelCourseResource;
+use App\Models\Applications\ApplicationOfferingCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use Illuminate\Http\Request;
@@ -13,11 +14,15 @@ class DepartmentLevelCourseController extends Controller
 {
     public function index(DepartmentLevel $departmentLevel): AnonymousResourceCollection
     {
+        $courseIds = ApplicationOfferingCourse::query()
+            ->whereHas('offeringLevel', fn ($q) => $q->where('department_level_id', $departmentLevel->id))
+            ->pluck('department_course_id');
+
         $courses = $departmentLevel->courses()
             ->join('department_courses', 'department_courses.id', '=', 'department_level_courses.department_course_id')
-            ->where('department_courses.show_on_current_application_period', true)->get();
+            ->whereIn('department_courses.id', $courseIds)
+            ->get();
 
-        // return DepartmentLevelCourseResource::collection($departmentLevel->courses);
         return DepartmentLevelCourseResource::collection($courses);
     }
 

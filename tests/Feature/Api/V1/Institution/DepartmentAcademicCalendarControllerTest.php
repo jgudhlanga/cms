@@ -31,6 +31,32 @@ use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Laravel\Sanctum\Sanctum;
 
+require_once __DIR__.'/../../../../Support/AcademicCalendarClassTestHelpers.php';
+
+function attachDepartmentCalendarApiEnrolment(Student $student, StudentApplication $studentApplication, AcademicCalendar $calendar): void
+{
+    $semester = Semester::query()->firstOrCreate(
+        ['slug' => 'dept-cal-api-enrolment-option'],
+        ['name' => 'Dept Cal API Enrolment', 'description' => null],
+    );
+    $status = StudentEnrolmentStatus::query()->firstOrCreate(
+        ['name' => 'Active'],
+        ['description' => 'Test'],
+    );
+
+    StudentEnrolment::query()->create([
+        'student_id' => $student->id,
+        'student_application_id' => $studentApplication->id,
+        'institution_department_id' => $studentApplication->institution_department_id,
+        'department_level_id' => $studentApplication->department_level_id,
+        'department_course_id' => $studentApplication->department_course_id,
+        'semester_id' => $semester->id,
+        'academic_calendar_id' => $calendar->id,
+        'mode_of_study_id' => $studentApplication->mode_of_study_id,
+        'student_enrolment_status_id' => $status->id,
+    ]);
+}
+
 test('department academic calendar resolves course levels when department level is soft deleted', function () {
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
@@ -350,6 +376,7 @@ test('department academic calendar does not auto seed class config on get', func
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
+    attachDepartmentCalendarApiEnrolment($student, $studentApplication, $calendar);
 
     Sanctum::actingAs($user);
 
@@ -469,6 +496,7 @@ test('department academic calendar does not overwrite existing class config stud
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
+    attachDepartmentCalendarApiEnrolment($student, $studentApplication, $calendar);
 
     Sanctum::actingAs($user);
 
@@ -587,6 +615,7 @@ test('department academic calendar does not replace existing class config when s
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
+    attachDepartmentCalendarApiEnrolment($student, $studentApplication, $calendar);
 
     Sanctum::actingAs($user);
 
@@ -708,6 +737,7 @@ test('department academic calendar does not violate class config unique index wh
         'type' => ClassListTypeEnum::FINAL->value,
         'attributes' => [],
     ]);
+    attachDepartmentCalendarApiEnrolment($student, $studentApplication, $calendar);
 
     Sanctum::actingAs($user);
 
@@ -1102,4 +1132,54 @@ test('department academic calendar semester filter hides other pills but keeps r
         ->and($levelRow['remainingPeriods'])->toEqual([
             ['id' => $semesterTwo->id, 'name' => 'Semester 2', 'isCurrent' => false],
         ]);
+});
+
+test('department academic calendar returns mode totals without course rows when mode is omitted', function () {
+    $this->travelTo('2026-05-15');
+
+    $context = buildDepartmentClassContext();
+    createFinalStudentApplication($context, 'mode-totals-one@example.com');
+    createFinalStudentApplication($context, 'mode-totals-two@example.com');
+
+    Sanctum::actingAs($context['user']);
+
+    $response = $this->getJson('/api/v1/departments/'.$context['institutionDepartment']->id.'/academic-calendars?academic_year='.$context['calendar']->calendar_year);
+
+    $response->assertOk()
+        ->assertJsonPath('data', [])
+        ->assertJsonStructure([
+            'meta' => [
+                'modeTotals' => [
+                    '*' => ['modeOfStudyId', 'count'],
+                ],
+            ],
+        ]);
+
+    expect(collect($response->json('meta.modeTotals'))->firstWhere('modeOfStudyId', $context['modeOfStudy']->id)['count'] ?? 0)
+        ->toBe(2);
+});
+
+test('department academic calendar includes mode totals with course rows when mode is present', function () {
+    $this->travelTo('2026-05-15');
+
+    $context = buildDepartmentClassContext();
+    createFinalStudentApplication($context, 'mode-rows-one@example.com');
+    createFinalStudentApplication($context, 'mode-rows-two@example.com');
+
+    Sanctum::actingAs($context['user']);
+
+    $response = $this->getJson('/api/v1/departments/'.$context['institutionDepartment']->id.'/academic-calendars?academic_year='.$context['calendar']->calendar_year.'&mode_of_study_id='.$context['modeOfStudy']->id);
+
+    $response->assertOk()
+        ->assertJsonStructure([
+            'meta' => [
+                'modeTotals' => [
+                    '*' => ['modeOfStudyId', 'count'],
+                ],
+            ],
+        ]);
+
+    expect($response->json('data'))->not->toBeEmpty()
+        ->and(collect($response->json('meta.modeTotals'))->firstWhere('modeOfStudyId', $context['modeOfStudy']->id)['count'] ?? 0)
+        ->toBe(2);
 });

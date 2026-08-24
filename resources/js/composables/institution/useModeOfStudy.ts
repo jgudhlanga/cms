@@ -93,15 +93,33 @@ export const useModeOfStudy = () => {
         isLoading.value = false;
         modesOfStudy.value = data.value;
     };
-    const listCourseModesOfStudy = async (departmentCourseId: string, departmentLevelId: string) => {
+    const listCourseModesOfStudy = async (
+        departmentCourseId: string,
+        departmentLevelId: string,
+        useApplicationOfferings = false,
+    ) => {
         isLoading.value = true;
         courseModesOfStudy.value = await HttpService.get(
-            route('v1.modes-of-study.course-modes', {
+            route(useApplicationOfferings ? 'v1.enrolments.course-modes' : 'v1.modes-of-study.course-modes', {
                 department_course: departmentCourseId,
                 department_level: departmentLevelId,
             }),
         );
         isLoading.value = false;
+    };
+
+    const listDepartmentModesOfStudy = async (departmentId: string) => {
+        isLoading.value = true;
+        try {
+            const document = await HttpService.get(
+                route('v1.department-metadata.modes', { institution_department: departmentId }),
+            );
+            modesOfStudy.value = Array.isArray(document) ? document : (document?.data ?? []);
+        } catch {
+            modesOfStudy.value = [];
+        } finally {
+            isLoading.value = false;
+        }
     };
 
     return {
@@ -111,6 +129,7 @@ export const useModeOfStudy = () => {
         saveModeOfStudy,
         listModesOfStudy,
         listCourseModesOfStudy,
+        listDepartmentModesOfStudy,
         modesOfStudy,
         isLoading,
         courseModesOfStudy,

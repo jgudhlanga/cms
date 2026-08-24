@@ -98,7 +98,6 @@ export const useAcademicCalendars = () => {
             }),
             {
                 onSuccess: () => {
-                    successAlert('Academic calendar successfully config successfully saved');
                     closeModal(APP_MODULE_KEYS.student_per_class);
                     useDepartmentMetaStore().bumpAcademicClassConfigsRefresh();
                     onSuccess?.();

@@ -11,6 +11,7 @@ use App\Models\Institution\DepartmentLevel;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
+use App\Models\Students\StudentSemester;
 use Illuminate\Support\Collection;
 
 class StudentEnrolmentProgressionService
@@ -28,6 +29,8 @@ class StudentEnrolmentProgressionService
     public const STATUS_PROCEED = 'proceed';
 
     public const STATUS_REFERRED = 'referred';
+
+    public const STATUS_UNKNOWN = 'unknown';
 
     /** @deprecated Use STATUS_AWARD instead */
     public const STATUS_COMPLETED = 'award';
@@ -47,59 +50,76 @@ class StudentEnrolmentProgressionService
         self::STATUS_REFERRED,
     ];
 
+    public function __construct(
+        protected StudentSemesterPhaseResolver $phaseResolver,
+    ) {}
+
     /**
      * @return Collection<int, Semester>
      */
     public function phaseOptions(AcademicCalendarTypeEnum $type): Collection
     {
-        $prefix = $type->value;
-
-        return Semester::query()
-            ->where('slug', 'like', "{$prefix}-%")
-            ->get()
-            ->sortBy(function (Semester $option): int {
-                $parts = explode('-', (string) $option->slug);
-
-                return (int) end($parts);
-            })
-            ->values();
+        return $this->phaseResolver->phaseOptions($type);
     }
 
     public function existingPhaseCount(StudentApplication $studentApplication): int
     {
-        return (int) StudentEnrolment::query()
-            ->where('student_application_id', $studentApplication->id)
+        return (int) StudentSemester::query()
+            ->whereHas('enrolment', function ($query) use ($studentApplication): void {
+                $query
+                    ->where('student_application_id', $studentApplication->id)
+                    ->whereNull('deleted_at');
+            })
             ->whereNull('deleted_at')
             ->count();
     }
 
+    public function currentStudentSemester(StudentEnrolment $enrolment): ?StudentSemester
+    {
+        return $enrolment->currentStudentSemester();
+    }
+
     public function statusSlug(StudentEnrolment $enrolment): ?string
     {
-        $enrolment->loadMissing('studentEnrolmentStatus');
+        $studentSemester = $this->currentStudentSemester($enrolment);
+        $studentSemester?->loadMissing('studentEnrolmentStatus');
 
-        $slug = $enrolment->studentEnrolmentStatus?->slug;
+        $slug = $studentSemester?->studentEnrolmentStatus?->slug
+            ?? $enrolment->studentEnrolmentStatus?->slug;
+
+        return is_string($slug) && $slug !== '' ? $slug : null;
+    }
+
+    public function statusSlugForSemester(StudentSemester $studentSemester): ?string
+    {
+        $studentSemester->loadMissing('studentEnrolmentStatus');
+        $slug = $studentSemester->studentEnrolmentStatus?->slug;
 
         return is_string($slug) && $slug !== '' ? $slug : null;
     }
 
     public function isLastPhase(StudentEnrolment $enrolment): bool
     {
-        $enrolment->loadMissing(['studentApplication.departmentLevel.level', 'semester']);
+        $current = $this->currentStudentSemester($enrolment);
+
+        return $this->isLastPhaseSemester($enrolment, $current);
+    }
+
+    public function isLastPhaseSemester(StudentEnrolment $enrolment, ?StudentSemester $studentSemester): bool
+    {
+        $enrolment->loadMissing(['studentApplication.departmentLevel.level', 'departmentLevel.level']);
 
         $calendarType = $enrolment->studentApplication?->departmentLevel?->level?->calendar_type
             ?? $enrolment->departmentLevel?->level?->calendar_type;
 
         if (! $calendarType instanceof AcademicCalendarTypeEnum) {
-            $enrolment->loadMissing('departmentLevel.level');
-            $calendarType = $enrolment->departmentLevel?->level?->calendar_type;
-        }
-
-        if (! $calendarType instanceof AcademicCalendarTypeEnum) {
             return false;
         }
 
+        $semesterId = $studentSemester?->semester_id ?? $enrolment->semester_id;
+
         return $this->isLastPhaseSemesterId(
-            $enrolment->semester_id !== null ? (int) $enrolment->semester_id : null,
+            $semesterId !== null ? (int) $semesterId : null,
             $calendarType,
         );
     }
@@ -133,6 +153,21 @@ class StudentEnrolmentProgressionService
 
         return ($slug === self::STATUS_ACTIVE || $slug === self::STATUS_AWARD)
             && $this->isLastPhase($enrolment);
+    }
+
+    public function canCompleteLevelSemester(StudentSemester $studentSemester): bool
+    {
+        $studentSemester->loadMissing('enrolment');
+        $enrolment = $studentSemester->enrolment;
+
+        if (! $enrolment instanceof StudentEnrolment) {
+            return false;
+        }
+
+        $slug = $this->statusSlugForSemester($studentSemester);
+
+        return ($slug === self::STATUS_ACTIVE || $slug === self::STATUS_AWARD)
+            && $this->isLastPhaseSemester($enrolment, $studentSemester);
     }
 
     public function canApplyToNextLevel(StudentEnrolment $enrolment): bool
@@ -192,18 +227,20 @@ class StudentEnrolmentProgressionService
         )));
     }
 
-    public function matchingClassConfig(StudentEnrolment $enrolment): ?ClassConfig
+    public function matchingClassConfig(StudentEnrolment $enrolment, ?StudentSemester $studentSemester = null): ?ClassConfig
     {
         $enrolment->loadMissing('academicCalendar');
+        $studentSemester ??= $this->currentStudentSemester($enrolment);
 
         $calendarYear = $enrolment->academicCalendar?->calendar_year;
+        $semesterId = $studentSemester?->semester_id ?? $enrolment->semester_id;
 
         return ClassConfig::query()
             ->where('institution_department_id', $enrolment->institution_department_id)
             ->where('department_course_id', $enrolment->department_course_id)
             ->where('department_level_id', $enrolment->department_level_id)
             ->where('mode_of_study_id', $enrolment->mode_of_study_id)
-            ->where('semester_id', $enrolment->semester_id)
+            ->where('semester_id', $semesterId)
             ->when(
                 is_string($calendarYear) && $calendarYear !== '',
                 fn ($query) => $query->where('calendar_year', $calendarYear),
@@ -214,30 +251,60 @@ class StudentEnrolmentProgressionService
     /**
      * @param  list<int>  $syllabusIds
      */
-    public function pinSyllabusIds(StudentEnrolment $enrolment, array $syllabusIds): void
+    public function pinSyllabusIds(StudentEnrolment $enrolment, array $syllabusIds, ?StudentSemester $studentSemester = null): void
     {
-        $enrolment->update([
-            'course_syllabus_ids' => array_values(array_unique(array_filter(
-                $syllabusIds,
-                static fn (int $id): bool => $id > 0,
-            ))),
-        ]);
+        $studentSemester ??= $this->currentStudentSemester($enrolment);
+
+        $normalized = array_values(array_unique(array_filter(
+            $syllabusIds,
+            static fn (int $id): bool => $id > 0,
+        )));
+
+        if ($studentSemester instanceof StudentSemester) {
+            $studentSemester->update(['course_syllabus_ids' => $normalized]);
+        }
+
+        StudentEnrolment::withoutEvents(function () use ($enrolment, $normalized): void {
+            $enrolment->update(['course_syllabus_ids' => $normalized]);
+        });
     }
 
-    public function pinSyllabusFromMatchingClassConfig(StudentEnrolment $enrolment): void
+    public function pinSyllabusFromMatchingClassConfig(StudentEnrolment $enrolment, ?StudentSemester $studentSemester = null): void
     {
-        $ids = $this->syllabusIdsForClassConfig($this->matchingClassConfig($enrolment));
+        $studentSemester ??= $this->currentStudentSemester($enrolment);
+        $ids = $this->syllabusIdsForClassConfig($this->matchingClassConfig($enrolment, $studentSemester));
 
         if ($ids === []) {
             return;
         }
 
-        $this->pinSyllabusIds($enrolment, $ids);
+        $this->pinSyllabusIds($enrolment, $ids, $studentSemester);
     }
 
-    public function updateEnrolmentStatus(StudentEnrolment $enrolment, int $statusId): void
+    public function updateEnrolmentStatus(StudentEnrolment $enrolment, int $statusId, ?StudentSemester $studentSemester = null): void
     {
-        $enrolment->update(['student_enrolment_status_id' => $statusId]);
+        $studentSemester ??= $this->currentStudentSemester($enrolment);
+
+        if ($studentSemester instanceof StudentSemester) {
+            $studentSemester->update(['student_enrolment_status_id' => $statusId]);
+        }
+
+        StudentEnrolment::withoutEvents(function () use ($enrolment, $statusId): void {
+            $enrolment->update(['student_enrolment_status_id' => $statusId]);
+        });
+    }
+
+    public function updateStudentSemesterStatus(StudentSemester $studentSemester, int $statusId): void
+    {
+        $studentSemester->loadMissing('enrolment');
+        $studentSemester->update(['student_enrolment_status_id' => $statusId]);
+
+        $enrolment = $studentSemester->enrolment;
+
+        if ($enrolment instanceof StudentEnrolment) {
+            app(SyncStudentSemestersForEnrolmentService::class)
+                ->snapshotLatestPhaseOntoEnrolment($enrolment);
+        }
     }
 
     /**
@@ -245,9 +312,10 @@ class StudentEnrolmentProgressionService
      */
     public function syncStatusForApplication(StudentApplication $studentApplication, int $statusId): void
     {
-        StudentEnrolment::query()
-            ->where('student_application_id', $studentApplication->id)
-            ->whereNull('deleted_at')
+        StudentSemester::query()
+            ->whereHas('enrolment', fn ($query) => $query
+                ->where('student_application_id', $studentApplication->id)
+                ->whereNull('deleted_at'))
             ->update(['student_enrolment_status_id' => $statusId]);
     }
 
@@ -274,5 +342,35 @@ class StudentEnrolmentProgressionService
     public static function isBlockingStatus(?string $slug): bool
     {
         return $slug !== null && in_array($slug, self::BLOCKING_STATUSES, true);
+    }
+
+    public function nextPhaseSemester(StudentEnrolment $enrolment): ?Semester
+    {
+        $enrolment->loadMissing(['departmentLevel.level', 'studentApplication.departmentLevel.level']);
+
+        $calendarType = $enrolment->studentApplication?->departmentLevel?->level?->calendar_type
+            ?? $enrolment->departmentLevel?->level?->calendar_type;
+
+        if (! $calendarType instanceof AcademicCalendarTypeEnum) {
+            return null;
+        }
+
+        $current = $this->currentStudentSemester($enrolment);
+        $options = $this->phaseOptions($calendarType)->values();
+        $currentIndex = null;
+
+        foreach ($options as $index => $option) {
+            if ($current !== null && (int) $option->id === (int) $current->semester_id) {
+                $currentIndex = $index;
+
+                break;
+            }
+        }
+
+        if ($currentIndex === null) {
+            return $options->get(1);
+        }
+
+        return $options->get($currentIndex + 1);
     }
 }

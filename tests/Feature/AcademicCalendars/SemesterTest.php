@@ -168,12 +168,14 @@ test('semesters api filters by calendar_type term', function () {
     }
 });
 
-test('semesters api filters by calendar_type abma', function () {
+test('semesters api filters by multiple calendar types', function () {
     $this->seed(SemesterSeeder::class);
-    $response = $this->getJson(route('v1.semesters.index').'?calendar_type=abma')->assertSuccessful();
+    $response = $this->getJson(route('v1.semesters.index').'?calendar_type=semester,abma')->assertSuccessful();
     $rows = $response->json('data') ?? [];
     expect($rows)->not->toBeEmpty();
     foreach ($rows as $row) {
-        expect((string) ($row['attributes']['name'] ?? ''))->toStartWith('ABMA');
+        $name = (string) ($row['attributes']['name'] ?? '');
+        expect(str_starts_with($name, 'Semester') || str_starts_with($name, 'ABMA'))->toBeTrue();
+        expect(str_starts_with($name, 'Term'))->toBeFalse();
     }
 });

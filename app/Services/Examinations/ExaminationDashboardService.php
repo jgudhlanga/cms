@@ -89,6 +89,80 @@ class ExaminationDashboardService
     }
 
     /**
+     * @param  array{
+     *     session?: string|null,
+     *     discipline?: string|null,
+     *     subject_code?: string|null,
+     *     compare_session?: string|null,
+     * }  $requestFilters
+     * @return array{
+     *     filters: array{
+     *         session: string|null,
+     *         discipline: string|null,
+     *         subject_code: string|null,
+     *         compare_session: string|null,
+     *     },
+     *     filterOptions: array{
+     *         sessions: list<array{value: string, label: string}>,
+     *         disciplines: list<array{value: string, label: string}>,
+     *         subjects: list<array{value: string, label: string}>,
+     *         compareSessions: list<array{value: string, label: string}>,
+     *     },
+     *     statusCounts: array<string, int>,
+     *     statusLabels: array<string, string>,
+     *     chartLabels: array<string, string>,
+     *     totalCandidates: int,
+     *     passRate: float|null,
+     *     onlineViewedCount: int,
+     *     onlineViewedRate: float|null,
+     *     comparison: array<string, mixed>|null,
+     * }
+     */
+    public function pagePayload(array $requestFilters): array
+    {
+        $filters = $this->query->resolveFilters($requestFilters);
+        $dashboard = $this->build($filters);
+
+        $sessionOptions = $this->query->sessionOptions();
+        $compareSessionOptions = array_values(array_filter(
+            $sessionOptions,
+            fn (array $option): bool => $option['value'] !== ($filters['session'] ?? null),
+        ));
+
+        return [
+            'filters' => [
+                'session' => $filters['session'],
+                'discipline' => $filters['discipline'],
+                'subject_code' => $filters['subject_code'],
+                'compare_session' => $filters['compare_session'],
+            ],
+            'filterOptions' => [
+                'sessions' => $sessionOptions,
+                'disciplines' => $this->query->disciplineOptions($filters['session']),
+                'subjects' => $this->query->subjectOptions($filters['session'], $filters['discipline']),
+                'compareSessions' => $compareSessionOptions,
+            ],
+            'statusCounts' => $dashboard['statusCounts'],
+            'statusLabels' => $dashboard['statusLabels'],
+            'chartLabels' => [
+                'session' => __('examinations.session'),
+                'compareSession' => __('examinations.compare_session'),
+                'passRate' => __('examinations.pass_rate'),
+                'modulePassPrimary' => __('examinations.module_pass_primary'),
+                'modulePassCompare' => __('examinations.module_pass_compare'),
+                'moduleImproved' => __('examinations.module_improved'),
+                'moduleDeclined' => __('examinations.module_declined'),
+                'moduleUnchanged' => __('examinations.module_unchanged'),
+            ],
+            'totalCandidates' => $dashboard['totalCandidates'],
+            'passRate' => $dashboard['passRate'],
+            'onlineViewedCount' => $dashboard['onlineViewedCount'],
+            'onlineViewedRate' => $dashboard['onlineViewedRate'],
+            'comparison' => $dashboard['comparison'],
+        ];
+    }
+
+    /**
      * @return array<string, string>
      */
     public function statusLabels(): array

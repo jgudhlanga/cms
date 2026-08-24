@@ -94,7 +94,7 @@ class StudentController
             'applications.departmentLevel.level',
             'applications.departmentLevel.requirement',
             'applications.departmentCourse.course',
-            'applications.departmentCourse.requirement',
+            'applications.departmentCourse.requirements',
             'applications.intakePeriod',
             'applications.classList',
             'applications.workflowStep',

@@ -44,7 +44,6 @@ const canToggleCourseworkCapture = hasAbility('toggle:coursework-capture');
 const allSelected = ref(false);
 const form = useForm<DepartmentCourseUpdateParams>({
     department_level_ids: departmentCourse?.relationships?.departmentCourseLevels?.map((item: DepartmentCourseLevel) => item?.departmentLevelId),
-    show_on_current_application_period: isItTrue(departmentCourse?.attributes?.showOnCurrentApplicationPeriod),
     ...(canToggleCourseworkCapture
         ? { coursework_capture_enabled: departmentCourse?.attributes?.courseworkCaptureEnabled !== false }
         : {}),
@@ -107,16 +106,12 @@ const updateCourse = () => {
                 <BaseCard :title="`${$t('trans.other')} ${$t('trans.details')}`">
                     <div class="flex flex-col space-y-3">
                         <BaseCheckbox
-                            input-id="show_on_current_application_period"
-                            v-model="form.show_on_current_application_period"
-                            :label="`${$t('trans.show_on_current_application_period')}`"
-                        />
-                        <BaseCheckbox
                             v-if="canToggleCourseworkCapture"
                             input-id="coursework_capture_enabled"
                             v-model="form.coursework_capture_enabled"
                             :label="$t('trans.coursework_capture_enabled')"
                         />
+                        <Empty v-else />
                     </div>
                 </BaseCard>
             </div>

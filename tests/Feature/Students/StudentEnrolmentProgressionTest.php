@@ -10,6 +10,7 @@ use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
+use App\Models\Students\StudentSemester;
 use App\Services\Students\StudentEnrolmentProgressionService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -64,18 +65,26 @@ function createPhaseEnrolment(string $studentNumber, string $semesterSlug = 'sem
     ]);
 }
 
-it('advances an active first-phase enrolment to semester two while remaining active', function (): void {
+it('advances an active first-phase enrolment to semester two on the same enrolment', function (): void {
     $enrolment = createPhaseEnrolment('ADV-S1');
     $semesterTwoId = (int) Semester::query()->where('slug', 'semester-2')->value('id');
     $activeId = (int) StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
+    $proceedId = (int) StudentEnrolmentStatus::query()->where('slug', 'proceed')->value('id');
 
     $next = app(AdvanceToNextSemesterAction::class)->execute($enrolment);
 
-    expect($next->id)->not->toBe($enrolment->id)
+    expect($next->id)->toBe($enrolment->id)
         ->and((int) $next->semester_id)->toBe($semesterTwoId)
         ->and((int) $next->student_enrolment_status_id)->toBe($activeId)
         ->and((int) $next->student_application_id)->toBe((int) $enrolment->student_application_id)
-        ->and($enrolment->fresh()?->student_enrolment_status_id)->toBe($activeId);
+        ->and(StudentEnrolment::query()->where('student_application_id', $enrolment->student_application_id)->count())->toBe(1);
+
+    $semesterOne = StudentSemester::query()
+        ->where('student_enrolment_id', $enrolment->id)
+        ->where('semester_id', Semester::query()->where('slug', 'semester-1')->value('id'))
+        ->first();
+
+    expect((int) $semesterOne?->student_enrolment_status_id)->toBe($proceedId);
 });
 
 it('refuses to advance a last-phase enrolment', function (): void {
@@ -90,46 +99,58 @@ it('refuses to advance a referred enrolment', function (): void {
     app(AdvanceToNextSemesterAction::class)->execute($enrolment);
 })->throws(StudentEnrolmentProgressionException::class);
 
-it('completes the level on the last phase for that enrolment only (per-semester)', function (): void {
-    $first = createPhaseEnrolment('COMPLETE-LEVEL', 'semester-1');
-    $activeId = (int) $first->student_enrolment_status_id;
-    $second = StudentEnrolment::query()->create([
-        'student_id' => $first->student_id,
-        'student_application_id' => $first->student_application_id,
-        'institution_department_id' => $first->institution_department_id,
-        'department_level_id' => $first->department_level_id,
-        'department_course_id' => $first->department_course_id,
-        'semester_id' => (int) Semester::query()->where('slug', 'semester-2')->value('id'),
-        'academic_calendar_id' => $first->academic_calendar_id,
-        'mode_of_study_id' => $first->mode_of_study_id,
-        'student_enrolment_status_id' => $first->student_enrolment_status_id,
-    ]);
+it('completes the level on the last student_semester only', function (): void {
+    $enrolment = createPhaseEnrolment('COMPLETE-LEVEL', 'semester-2');
+    $activeId = (int) $enrolment->student_enrolment_status_id;
+    $semesterOneId = (int) Semester::query()->where('slug', 'semester-1')->value('id');
 
-    app(CompleteLevelEnrolmentAction::class)->execute($second->fresh());
+    StudentSemester::query()->updateOrCreate(
+        [
+            'student_enrolment_id' => $enrolment->id,
+            'semester_id' => $semesterOneId,
+        ],
+        ['student_enrolment_status_id' => $activeId],
+    );
+
+    $semesterTwo = StudentSemester::query()
+        ->where('student_enrolment_id', $enrolment->id)
+        ->where('semester_id', $enrolment->semester_id)
+        ->firstOrFail();
+
+    app(CompleteLevelEnrolmentAction::class)->execute($semesterTwo);
 
     $awardId = (int) StudentEnrolmentStatus::query()->where('slug', 'award')->value('id');
 
-    expect((int) $first->fresh()?->student_enrolment_status_id)->toBe($activeId)
-        ->and((int) $second->fresh()?->student_enrolment_status_id)->toBe($awardId);
+    expect((int) StudentSemester::query()->where('student_enrolment_id', $enrolment->id)->where('semester_id', $semesterOneId)->value('student_enrolment_status_id'))->toBe($activeId)
+        ->and((int) $semesterTwo->fresh()?->student_enrolment_status_id)->toBe($awardId);
 });
 
 it('refuses to complete the level on the first phase', function (): void {
     $enrolment = createPhaseEnrolment('COMPLETE-EARLY', 'semester-1');
+    $semesterOne = StudentSemester::query()
+        ->where('student_enrolment_id', $enrolment->id)
+        ->where('semester_id', $enrolment->semester_id)
+        ->firstOrFail();
 
-    app(CompleteLevelEnrolmentAction::class)->execute($enrolment);
+    app(CompleteLevelEnrolmentAction::class)->execute($semesterOne);
 })->throws(StudentEnrolmentProgressionException::class);
 
-it('sets referred status on the target enrolment only (per-semester)', function (): void {
+it('sets referred status on the current student_semester', function (): void {
     $enrolment = createPhaseEnrolment('STATUS-REFERRED');
+    $semester = StudentSemester::query()
+        ->where('student_enrolment_id', $enrolment->id)
+        ->where('semester_id', $enrolment->semester_id)
+        ->firstOrFail();
 
     app(UpdateStudentEnrolmentStatusAction::class)->execute(
-        $enrolment,
+        $semester,
         StudentEnrolmentProgressionService::STATUS_REFERRED,
     );
 
     $referredId = (int) StudentEnrolmentStatus::query()->where('slug', 'referred')->value('id');
 
-    expect((int) $enrolment->fresh()?->student_enrolment_status_id)->toBe($referredId);
+    expect((int) $semester->fresh()?->student_enrolment_status_id)->toBe($referredId)
+        ->and((int) $enrolment->fresh()?->student_enrolment_status_id)->toBe($referredId);
 });
 
 it('dry-runs advance-phase without creating a next enrolment', function (): void {

@@ -608,3 +608,100 @@ export function parseJsonApiStudentIdCardRequests(
 ): DataListProps<IdCardRequest> {
     return parseJsonApiCollection<IdCardRequest>(document);
 }
+
+export type DepartmentEnrolmentModeTotal = {
+    modeOfStudyId: number;
+    count: number;
+};
+
+export type DepartmentEnrolmentSummaryRow = {
+    institutionDepartmentId: number;
+    departmentCourseId: number;
+    courseName: string;
+    departmentLevelId: number;
+    levelName: string;
+    enrolmentsCount: number;
+    modeOfStudyId: number;
+};
+
+export type DepartmentEnrolmentSummaryDocument = {
+    data?: JsonApiResource[];
+    meta?: {
+        modeTotals?: DepartmentEnrolmentModeTotal[];
+    };
+};
+
+export function parseDepartmentEnrolmentSummaries(document: DepartmentEnrolmentSummaryDocument): {
+    rows: DepartmentEnrolmentSummaryRow[];
+    modeTotals: DepartmentEnrolmentModeTotal[];
+    courses: Array<{
+        institutionDepartmentId: number;
+        departmentCourseId: number;
+        courseName: string;
+        levels: Array<{
+            departmentLevelId: number;
+            levelName: string;
+            enrolmentsCount: number;
+        }>;
+    }>;
+} {
+    const rows = (document.data ?? []).map((resource) => {
+        const attrs = resource.attributes ?? {};
+
+        return {
+            institutionDepartmentId: Number(attrs.institutionDepartmentId ?? 0),
+            departmentCourseId: Number(attrs.departmentCourseId ?? 0),
+            courseName: String(attrs.courseName ?? ''),
+            departmentLevelId: Number(attrs.departmentLevelId ?? 0),
+            levelName: String(attrs.levelName ?? ''),
+            enrolmentsCount: Number(attrs.enrolmentsCount ?? 0),
+            modeOfStudyId: Number(attrs.modeOfStudyId ?? 0),
+        };
+    });
+
+    const modeTotals = (document.meta?.modeTotals ?? []).map((row) => ({
+        modeOfStudyId: Number(row.modeOfStudyId),
+        count: Number(row.count),
+    }));
+
+    const courseMap = new Map<
+        number,
+        {
+            institutionDepartmentId: number;
+            departmentCourseId: number;
+            courseName: string;
+            levels: Array<{
+                departmentLevelId: number;
+                levelName: string;
+                enrolmentsCount: number;
+            }>;
+        }
+    >();
+
+    for (const row of rows) {
+        const existing = courseMap.get(row.departmentCourseId);
+        const level = {
+            departmentLevelId: row.departmentLevelId,
+            levelName: row.levelName,
+            enrolmentsCount: row.enrolmentsCount,
+        };
+
+        if (existing) {
+            existing.levels.push(level);
+            continue;
+        }
+
+        courseMap.set(row.departmentCourseId, {
+            institutionDepartmentId: row.institutionDepartmentId,
+            departmentCourseId: row.departmentCourseId,
+            courseName: row.courseName,
+            levels: [level],
+        });
+    }
+
+    return {
+        rows,
+        modeTotals,
+        courses: Array.from(courseMap.values()),
+    };
+}

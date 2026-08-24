@@ -3,10 +3,14 @@
 namespace App\Http\Resources\AuditTrail;
 
 use App\Models\Users\User;
+use BackedEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
@@ -31,7 +35,7 @@ class AuditTrailResource extends JsonResource
 
     public function toArray(Request $request): array
     {
-        $properties = $this->properties['attributes'] ?? [];
+        $bag = $this->asArray($this->properties);
 
         return [
             'type' => 'audit-trail',
@@ -43,7 +47,8 @@ class AuditTrailResource extends JsonResource
                 'subjectId' => $this->resource->subject_id,
                 'causerType' => $this->resource->causer_type,
                 'causer' => $this->getCauserName(),
-                'properties' => $this->formatProperties(is_array($properties) ? $properties : []),
+                'properties' => $this->formatProperties($this->asArray($bag['attributes'] ?? [])),
+                'oldProperties' => $this->formatProperties($this->asArray($bag['old'] ?? [])),
                 'batchUuid' => $this->resource->batch_uuid,
                 'createdAt' => $this->resource->created_at,
                 'updatedAt' => $this->resource->updated_at,
@@ -56,6 +61,18 @@ class AuditTrailResource extends JsonResource
         return User::find($this->resource->causer_id)?->full_name
             ?? User::find(User::SUPER_ADMINISTRATOR)?->full_name
             ?? '';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function asArray(mixed $value): array
+    {
+        if ($value instanceof Collection) {
+            return $value->toArray();
+        }
+
+        return is_array($value) ? $value : [];
     }
 
     /**
@@ -88,20 +105,18 @@ class AuditTrailResource extends JsonResource
      */
     private function resolveForeignKeyProperties(array $properties): array
     {
-        $subject = $this->resolveSubject();
+        $subject = $this->subjectForRelations();
 
         if (! $subject instanceof Model) {
             return $properties;
         }
-
-        $relationsByForeignKey = $this->belongsToRelationsByForeignKey($subject);
 
         foreach ($properties as $key => $value) {
             if (! is_string($key) || ! str_ends_with($key, '_id') || ! $this->isResolvableForeignKeyValue($value)) {
                 continue;
             }
 
-            $relationName = $relationsByForeignKey[$key] ?? null;
+            $relationName = $this->relationNameForForeignKey($subject, $key);
 
             if (! is_string($relationName)) {
                 continue;
@@ -117,12 +132,19 @@ class AuditTrailResource extends JsonResource
         return $properties;
     }
 
+    private function subjectForRelations(): ?Model
+    {
+        return $this->resolveSubject() ?? $this->newSubjectInstance();
+    }
+
     private function resolveSubject(): ?Model
     {
         if ($this->resource->relationLoaded('subject')) {
             $subject = $this->resource->getRelation('subject');
 
-            return $subject instanceof Model ? $subject : null;
+            if ($subject instanceof Model) {
+                return $subject;
+            }
         }
 
         $subjectType = $this->resource->subject_type;
@@ -133,7 +155,57 @@ class AuditTrailResource extends JsonResource
         }
 
         /** @var class-string<Model> $subjectType */
-        return $subjectType::query()->find($subjectId);
+        try {
+            $query = $subjectType::query();
+
+            if ($this->modelUsesSoftDeletes($subjectType)) {
+                $query->withTrashed();
+            }
+
+            $found = $query->find($subjectId);
+        } catch (Throwable) {
+            return null;
+        }
+
+        return $found instanceof Model ? $found : null;
+    }
+
+    private function newSubjectInstance(): ?Model
+    {
+        $subjectType = $this->resource->subject_type;
+
+        if (! is_string($subjectType) || ! is_subclass_of($subjectType, Model::class)) {
+            return null;
+        }
+
+        try {
+            return new $subjectType;
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    private function relationNameForForeignKey(Model $subject, string $foreignKey): ?string
+    {
+        $mapped = $this->belongsToRelationsByForeignKey($subject)[$foreignKey] ?? null;
+
+        if (is_string($mapped)) {
+            return $mapped;
+        }
+
+        $guess = Str::camel(Str::beforeLast($foreignKey, '_id'));
+
+        if ($guess === '' || ! method_exists($subject, $guess)) {
+            return null;
+        }
+
+        try {
+            $relation = $subject->{$guess}();
+        } catch (Throwable) {
+            return null;
+        }
+
+        return $relation instanceof BelongsTo ? $guess : null;
     }
 
     /**
@@ -183,11 +255,17 @@ class AuditTrailResource extends JsonResource
 
     private function isResolvableForeignKeyValue(mixed $value): bool
     {
-        if (is_int($value)) {
+        if (is_int($value) && $value > 0) {
             return true;
         }
 
-        return is_string($value) && trim($value) !== '';
+        if (! is_string($value)) {
+            return false;
+        }
+
+        $trimmed = trim($value);
+
+        return $trimmed !== '' && ctype_digit($trimmed);
     }
 
     private function resolveRelationLabel(Model $subject, string $relationName, mixed $foreignKeyValue): ?string
@@ -199,7 +277,7 @@ class AuditTrailResource extends JsonResource
                 return null;
             }
 
-            $related = $relation->getRelated()->newQuery()->find($foreignKeyValue);
+            $related = $this->findRelated($relation, $foreignKeyValue);
         } catch (Throwable) {
             return null;
         }
@@ -211,20 +289,62 @@ class AuditTrailResource extends JsonResource
         return $this->extractModelLabel($related);
     }
 
+    private function findRelated(BelongsTo $relation, mixed $foreignKeyValue): ?Model
+    {
+        $related = $relation->getRelated();
+        $query = $related->newQuery();
+
+        if ($this->modelUsesSoftDeletes($related::class)) {
+            $query->withTrashed();
+        }
+
+        $found = $query->find($foreignKeyValue);
+
+        return $found instanceof Model ? $found : null;
+    }
+
+    /**
+     * @param  class-string<Model>  $class
+     */
+    private function modelUsesSoftDeletes(string $class): bool
+    {
+        return in_array(SoftDeletes::class, class_uses_recursive($class), true);
+    }
+
     private function extractModelLabel(Model $model): ?string
     {
-        foreach (['name', 'title', 'full_name', 'description', 'department_code', 'code'] as $attribute) {
-            $value = $model->getAttribute($attribute);
+        foreach (['full_name', 'name', 'title', 'label', 'description', 'department_code', 'code', 'email'] as $attribute) {
+            $label = $this->stringifyLabel($model->getAttribute($attribute));
 
-            if (is_string($value) && trim($value) !== '') {
-                return $value;
-            }
-
-            if (is_int($value)) {
-                return (string) $value;
+            if ($label !== null) {
+                return $label;
             }
         }
 
-        return null;
+        $combined = trim(implode(' ', array_filter([
+            $this->stringifyLabel($model->getAttribute('first_name')),
+            $this->stringifyLabel($model->getAttribute('last_name')),
+        ])));
+
+        return $combined !== '' ? $combined : null;
+    }
+
+    private function stringifyLabel(mixed $value): ?string
+    {
+        if ($value instanceof BackedEnum) {
+            $value = $value->value;
+        }
+
+        if (is_int($value)) {
+            return (string) $value;
+        }
+
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        return $trimmed !== '' ? $trimmed : null;
     }
 }

@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import BaseAccordion from '@/components/core/accordion/BaseAccordion.vue';
-import BaseAccordionItem from '@/components/core/accordion/BaseAccordionItem.vue';
 import SelectSemesterSelect from '@/components/core/form/select/SelectSemesterSelect.vue';
 import BaseButton from '@/components/core/button/BaseButton.vue';
-import BaseTag from '@/components/core/util/BaseTag.vue';
 import AcademicCalendarClassModuleAccordionItem from '@/pages/institution/academicCalendars/partials/AcademicCalendarClassModuleAccordionItem.vue';
 import { useClassModuleLecturerSave } from '@/composables/academicCalendars/useClassModuleLecturerSave';
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
@@ -13,6 +10,7 @@ import { errorAlert, successAlert } from '@/lib/alerts';
 import type { ClassSemesterModule } from '@/types/academic-calendar';
 import { router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
+import { ChevronDown } from 'lucide-vue-next';
 import { computed, reactive, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -24,13 +22,14 @@ const props = defineProps<{
     calendarType: 'term' | 'semester' | 'abma';
     semesterConfigHasSyllabi: boolean;
     canAssignStaffing: boolean;
+    embedded?: boolean;
 }>();
 
 const { open: openConfirmDialog } = useCustomConfirmDialog();
 
 const localSemesterModules = ref<ClassSemesterModule[]>([...props.semesterModules]);
 const moduleStaffIds = reactive<Record<number, number[]>>({});
-const expandedModules = ref<string[]>([]);
+const isOpen = ref(true);
 
 const copyDefaultsUrl = computed(() =>
     route('academic-calendars.department-classes.copy-module-lecturer-defaults', {
@@ -101,7 +100,20 @@ const selectedSemester = computed({
 
 const handleSaveModule = async (module: ClassSemesterModule): Promise<void> => {
     const staffIds = moduleStaffIds[module.moduleId] ?? [];
-    await saveModuleLecturers(module, staffIds);
+    const result = await saveModuleLecturers(module, staffIds);
+
+    if (result == null) {
+        return;
+    }
+
+    const index = localSemesterModules.value.findIndex((row) => row.moduleId === module.moduleId);
+    if (index !== -1) {
+        localSemesterModules.value[index] = {
+            ...localSemesterModules.value[index],
+            staffIds: result.staffIds,
+            staffNames: result.staffNames ?? [],
+        };
+    }
 };
 
 const handleCopyDefaults = async (): Promise<void> => {
@@ -143,74 +155,79 @@ const moduleCountLabel = computed(
 </script>
 
 <template>
-    <BaseAccordion class="w-full">
-        <BaseAccordionItem
-            value="module-lecturers"
-            :title="$t('academic_calendar.module_lecturers')"
-        >
-            <template #trigger-extra>
-                <div
-                    class="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2"
-                    @click.stop
-                    @mousedown.stop
-                >
-                    <div class="w-48 shrink-0">
-                        <SelectSemesterSelect
-                            v-model="selectedSemester"
-                            :calendar-type="calendarType"
-                        />
-                    </div>
-                    <BaseButton
-                        v-if="canAssignStaffing && selectedSemesterId != null && semesterConfigHasSyllabi"
-                        type="button"
-                        :title="$t('academic_calendar.copy_syllabus_defaults')"
-                        :variant="ColorVariant.primary_outline"
-                        :size="ButtonSize.xs"
-                        classes="rounded-full shrink-0"
-                        :processing="copyingDefaults"
-                        @click.stop="handleCopyDefaults"
-                    />
-                    <BaseTag
-                        v-if="selectedSemesterId != null"
-                        :title="moduleCountLabel"
-                        :variant="ColorVariant.fuchsia_outline"
-                        classes="cursor-default text-[10px] font-medium"
+    <div :class="embedded ? '' : 'overflow-hidden rounded-lg border border-border/60 bg-muted/20'">
+        <div class="flex flex-wrap items-center gap-2 px-2.5 py-2">
+            <button
+                type="button"
+                class="inline-flex min-w-0 items-center gap-1.5 text-left"
+                :aria-expanded="isOpen"
+                @click="isOpen = !isOpen"
+            >
+                <span class="text-xs font-semibold uppercase text-foreground">{{ $t('academic_calendar.module_lecturers') }}</span>
+                <span v-if="selectedSemesterId != null" class="truncate text-[11px] text-muted-foreground">
+                    {{ moduleCountLabel }}
+                </span>
+            </button>
+            <div class="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                <div class="w-40 shrink-0">
+                    <SelectSemesterSelect
+                        v-model="selectedSemester"
+                        :calendar-type="calendarType"
                     />
                 </div>
-            </template>
-
-            <div class="space-y-3">
-                <p
-                    v-if="selectedSemesterId != null && !semesterConfigHasSyllabi"
-                    class="text-sm text-amber-700"
-                >
-                    {{ $t('academic_calendar.semester_config_missing') }}
-                </p>
-
-                <Empty
-                    v-else-if="selectedSemesterId != null && !hasModules"
-                    :message="$t('academic_calendar.no_modules_for_semester')"
+                <BaseButton
+                    v-if="canAssignStaffing && selectedSemesterId != null && semesterConfigHasSyllabi"
+                    type="button"
+                    :title="$t('academic_calendar.copy_syllabus_defaults')"
+                    :variant="ColorVariant.primary_outline"
+                    :size="ButtonSize.xs"
+                    classes="rounded-full shrink-0"
+                    :processing="copyingDefaults"
+                    @click.stop="handleCopyDefaults"
                 />
-
-                <BaseAccordion
-                    v-else-if="selectedSemesterId != null && hasModules"
-                    v-model="expandedModules"
+                <button
+                    type="button"
+                    class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border text-muted-foreground"
+                    :aria-label="$t('academic_calendar.module_lecturers')"
+                    :aria-expanded="isOpen"
+                    @click="isOpen = !isOpen"
                 >
-                    <AcademicCalendarClassModuleAccordionItem
-                        v-for="module in localSemesterModules"
-                        :key="module.moduleId"
-                        :module-staff-ids="moduleStaffIds[module.moduleId] ?? []"
-                        :module="module"
-                        :institution-department-id="institutionDepartmentId"
-                        :can-assign-staffing="canAssignStaffing"
-                        :is-dirty="isModuleDirty(module.moduleId, moduleStaffIds[module.moduleId] ?? [])"
-                        :is-saving="savingModuleId[module.moduleId] === true"
-                        :feedback="moduleFeedback[module.moduleId] ?? null"
-                        @update:module-staff-ids="(staffIds) => (moduleStaffIds[module.moduleId] = staffIds)"
-                        @save="handleSaveModule(module)"
-                    />
-                </BaseAccordion>
+                    <ChevronDown class="h-3.5 w-3.5 transition-transform" :class="isOpen ? 'rotate-180' : ''" />
+                </button>
             </div>
-        </BaseAccordionItem>
-    </BaseAccordion>
+        </div>
+
+        <div v-if="isOpen" class="space-y-2 border-t border-border/50 px-2.5 py-2">
+            <p
+                v-if="selectedSemesterId != null && !semesterConfigHasSyllabi"
+                class="text-xs text-amber-700"
+            >
+                {{ $t('academic_calendar.semester_config_missing') }}
+            </p>
+
+            <Empty
+                v-else-if="selectedSemesterId != null && !hasModules"
+                :message="$t('academic_calendar.no_modules_for_semester')"
+            />
+
+            <div
+                v-else-if="selectedSemesterId != null && hasModules"
+                class="grid grid-cols-1 gap-1.5 sm:grid-cols-2"
+            >
+                <AcademicCalendarClassModuleAccordionItem
+                    v-for="module in localSemesterModules"
+                    :key="module.moduleId"
+                    :module-staff-ids="moduleStaffIds[module.moduleId] ?? []"
+                    :module="module"
+                    :institution-department-id="institutionDepartmentId"
+                    :can-assign-staffing="canAssignStaffing"
+                    :is-dirty="isModuleDirty(module.moduleId, moduleStaffIds[module.moduleId] ?? [])"
+                    :is-saving="savingModuleId[module.moduleId] === true"
+                    :feedback="moduleFeedback[module.moduleId] ?? null"
+                    @update:module-staff-ids="(staffIds) => (moduleStaffIds[module.moduleId] = staffIds)"
+                    @save="handleSaveModule(module)"
+                />
+            </div>
+        </div>
+    </div>
 </template>

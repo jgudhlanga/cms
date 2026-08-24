@@ -32,7 +32,7 @@ const emit = defineEmits<{
 }>();
 
 const header = computed(() => semesterHeaderMeta(props.semester));
-const canUpdateStatus = computed(() => hasAbility(['update:students']) && Boolean(props.semester.studentEnrolmentId));
+const canUpdateStatus = computed(() => hasAbility(['update:students']) && Boolean(props.semester.studentSemesterId ?? props.semester.studentEnrolmentId));
 const { open: openConfirmDialog } = useCustomConfirmDialog();
 
 const openMap = ref<Record<number, boolean>>({});
@@ -79,7 +79,10 @@ const showStatusDropdown = computed(
 );
 
 const updateStatus = async (status: string, message: string): Promise<void> => {
-    if (!props.semester.studentEnrolmentId) {
+    const semesterId = props.semester.studentSemesterId;
+    const enrolmentId = props.semester.studentEnrolmentId;
+
+    if (!semesterId && !enrolmentId) {
         return;
     }
 
@@ -94,13 +97,14 @@ const updateStatus = async (status: string, message: string): Promise<void> => {
         return;
     }
 
-    router.patch(
-        route('students.enrolments.status.update', {
-            student: String(props.studentId),
-            student_enrolment: String(props.semester.studentEnrolmentId),
-        }),
-        { status },
-        {
+    const routeName = semesterId
+        ? 'students.student-semesters.status.update'
+        : 'students.enrolments.status.update';
+    const routeParams = semesterId
+        ? { student: String(props.studentId), student_semester: String(semesterId) }
+        : { student: String(props.studentId), student_enrolment: String(enrolmentId) };
+
+    router.patch(route(routeName, routeParams), { status }, {
             preserveScroll: true,
             onSuccess: () => emit('statusUpdated'),
             onError: (errors) => {
@@ -171,7 +175,7 @@ const onStatusDropdownChange = (event: Event) => {
                 <div v-if="showStatusDropdown" class="flex flex-wrap justify-end gap-1">
                     <select
                         class="h-5 rounded border border-border bg-background px-1 text-[0.65rem] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                        :value="(semester.status ?? '').toLowerCase()"
+                        :value="semester.statusSlug ?? ''"
                         @change="onStatusDropdownChange"
                     >
                         <option value="" disabled>{{ $t('students.select_status') }}</option>
@@ -184,6 +188,12 @@ const onStatusDropdownChange = (event: Event) => {
                         </option>
                     </select>
                 </div>
+                <p
+                    v-if="semester.needsResultsCollection"
+                    class="max-w-[11rem] text-right text-[0.6rem] leading-tight text-red-600 dark:text-red-400"
+                >
+                    {{ $t('students.collect_exam_results_hint') }}
+                </p>
             </div>
         </div>
 

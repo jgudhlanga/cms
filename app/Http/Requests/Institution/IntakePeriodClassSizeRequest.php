@@ -9,7 +9,12 @@ class IntakePeriodClassSizeRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        $user = $this->user();
+
+        return $user !== null && (
+            $user->can('department-setup:class-sizes')
+            || $user->can('manage:online-application-catalogue')
+        );
     }
 
     public function prepareForValidation(): void
