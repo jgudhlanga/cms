@@ -12,6 +12,11 @@ import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
+import {
+    UNQUALIFIED_STATUS_KEY,
+    applicationsExcludedFromRanking,
+    filterEnrolmentApplications,
+} from '@/lib/enrolmentClassListPresentation';
 import { hasAbility } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
 import { DepartmentLevel } from '@/types/department-meta-data';
@@ -69,6 +74,7 @@ const STATUS_PILL: Record<string, string> = {
     provisional: 'bg-orange-100 text-orange-900 border-orange-200',
     failed: 'bg-red-100 text-red-900 border-red-200',
     others: 'bg-muted text-muted-foreground border-border',
+    [UNQUALIFIED_STATUS_KEY]: 'bg-red-50 text-red-800 border-red-200',
 };
 
 const STATUS_ACCENT: Record<string, string> = {
@@ -78,6 +84,7 @@ const STATUS_ACCENT: Record<string, string> = {
     provisional: 'border-l-orange-400',
     failed: 'border-l-red-400',
     others: 'border-l-muted-foreground/40',
+    [UNQUALIFIED_STATUS_KEY]: 'border-l-red-600',
 };
 
 const {
@@ -109,24 +116,29 @@ const rankedApplications = computed(() => {
     );
 });
 
-const searchFiltered = computed(() => {
-    const q = search.value.trim().toLowerCase();
-    if (!q) {
-        return rankedApplications.value;
+const unqualifiedApplications = computed(() => {
+    if (!props.isOLevel) {
+        return [] as EnrolmentApplication[];
     }
 
-    return rankedApplications.value.filter((app) => {
-        const haystack = [app.studentName, app.phoneNumber, app.applicationTrackingNumber, app.email]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase();
-
-        return haystack.includes(q);
-    });
+    return applicationsExcludedFromRanking(props.applications, rankedApplications.value);
 });
 
+const searchFiltered = computed(() => filterEnrolmentApplications(rankedApplications.value, search.value));
+
+const searchFilteredUnqualified = computed(() =>
+    filterEnrolmentApplications(unqualifiedApplications.value, search.value),
+);
+
+const unqualifiedIdSet = computed(
+    () => new Set(unqualifiedApplications.value.map((app) => Number(app.applicationId))),
+);
+
 const statusCounts = computed(() => {
-    const counts: Record<string, number> = { all: searchFiltered.value.length };
+    const counts: Record<string, number> = {
+        all: searchFiltered.value.length + searchFilteredUnqualified.value.length,
+        [UNQUALIFIED_STATUS_KEY]: searchFilteredUnqualified.value.length,
+    };
     STATUS_ORDER.forEach((key) => {
         counts[key] = 0;
     });
@@ -142,11 +154,21 @@ const statusCounts = computed(() => {
     return counts;
 });
 
-const visibleStatusPills = computed(() =>
-    STATUS_ORDER.filter((key) => (statusCounts.value[key] ?? 0) > 0 || activeStatus.value === key),
-);
+const visibleStatusPills = computed(() => {
+    const pills = STATUS_ORDER.filter((key) => (statusCounts.value[key] ?? 0) > 0 || activeStatus.value === key);
+
+    if ((statusCounts.value[UNQUALIFIED_STATUS_KEY] ?? 0) > 0 || activeStatus.value === UNQUALIFIED_STATUS_KEY) {
+        pills.push(UNQUALIFIED_STATUS_KEY);
+    }
+
+    return pills;
+});
 
 const groupedForDisplay = computed(() => {
+    if (activeStatus.value === UNQUALIFIED_STATUS_KEY) {
+        return {} as Record<string, EnrolmentApplication[]>;
+    }
+
     const source =
         activeStatus.value === 'all'
             ? searchFiltered.value
@@ -158,6 +180,10 @@ const groupedForDisplay = computed(() => {
 
                   return key === activeStatus.value;
               });
+
+    if (source.length === 0) {
+        return {} as Record<string, EnrolmentApplication[]>;
+    }
 
     if (props.classListCreated) {
         const grouped = groupByClassListType(source);
@@ -176,10 +202,34 @@ const groupedForDisplay = computed(() => {
     return { applications: source } as Record<string, EnrolmentApplication[]>;
 });
 
+const showUnqualifiedSection = computed(
+    () =>
+        (activeStatus.value === 'all' || activeStatus.value === UNQUALIFIED_STATUS_KEY) &&
+        searchFilteredUnqualified.value.length > 0,
+);
+
+const displaySections = computed(() => {
+    const sections = Object.entries(groupedForDisplay.value)
+        .filter(([, apps]) => apps.length > 0)
+        .map(([key, apps]) => ({
+            key,
+            apps,
+            rankRows: !props.classListCreated,
+        }));
+
+    if (showUnqualifiedSection.value) {
+        sections.push({
+            key: UNQUALIFIED_STATUS_KEY,
+            apps: searchFilteredUnqualified.value,
+            rankRows: false,
+        });
+    }
+
+    return sections;
+});
+
 const selectableInView = computed(() =>
-    Object.values(groupedForDisplay.value)
-        .flat()
-        .filter((app) => app.classListType !== 'final'),
+    displaySections.value.flatMap((section) => section.apps).filter((app) => app.classListType !== 'final'),
 );
 
 const selectedInThisGroup = computed(
@@ -211,7 +261,7 @@ const selectionCriteriaLines = computed(() => {
 });
 
 const ensureOpenDefaults = () => {
-    const keys = Object.keys(groupedForDisplay.value);
+    const keys = displaySections.value.map((section) => section.key);
     if (keys.length === 0) {
         return;
     }
@@ -221,7 +271,7 @@ const ensureOpenDefaults = () => {
     }
 };
 
-watch(groupedForDisplay, ensureOpenDefaults, { immediate: true });
+watch(displaySections, ensureOpenDefaults, { immediate: true });
 
 const isSectionOpen = (key: string) => openStatuses.value[key] ?? false;
 
@@ -265,7 +315,16 @@ const yearSuffix = (year: string | number | null | undefined): string => {
 const sittingBadgeClass = (count: number): string =>
     count > 1 ? 'bg-amber-100 text-amber-900' : 'bg-muted text-muted-foreground';
 
-const sectionTitle = (key: string): string => (key === 'applications' ? 'Applications' : key);
+const sectionTitle = (key: string): string => {
+    if (key === 'applications') {
+        return 'Applications';
+    }
+    if (key === UNQUALIFIED_STATUS_KEY) {
+        return 'Unqualified';
+    }
+
+    return key;
+};
 
 const canCreate = computed(() => hasAbility('create:class-lists'));
 const canVerify = computed(() => hasAbility('verify:class-lists'));
@@ -302,6 +361,9 @@ const transitionOptions = (app: EnrolmentApplication): Array<{ to: string; label
 const isFinalLocked = (app: EnrolmentApplication): boolean => app.classListType === 'final';
 
 const addBypassNeeded = (app: EnrolmentApplication): boolean => {
+    if (unqualifiedIdSet.value.has(Number(app.applicationId))) {
+        return true;
+    }
     if (props.classListCreated) {
         return true;
     }
@@ -310,6 +372,9 @@ const addBypassNeeded = (app: EnrolmentApplication): boolean => {
     }
     return !app.classListType || app.classListType === 'others';
 };
+
+const hasRankedScore = (application: EnrolmentApplication, statusKey: string): boolean =>
+    statusKey !== UNQUALIFIED_STATUS_KEY && application.totalScore != null;
 </script>
 
 <template>
@@ -353,7 +418,8 @@ const addBypassNeeded = (app: EnrolmentApplication): boolean => {
                 "
                 @click="activeStatus = status"
             >
-                {{ status }} {{ statusCounts[status] ?? 0 }}
+                {{ status === UNQUALIFIED_STATUS_KEY ? $t('trans.ui_unqualified') : status }}
+                {{ statusCounts[status] ?? 0 }}
             </button>
             <div class="ml-auto flex items-center gap-2">
                 <Checkbox
@@ -444,43 +510,51 @@ const addBypassNeeded = (app: EnrolmentApplication): boolean => {
 
         <!-- Empty -->
         <div
-            v-if="Object.keys(groupedForDisplay).length === 0 || searchFiltered.length === 0"
+            v-if="displaySections.length === 0"
             class="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground"
         >
-            No applications match your filters.
+            {{ $t('trans.ui_no_applications_match_filters') }}
         </div>
 
         <!-- Status sections -->
-        <div v-for="(apps, statusKey) in groupedForDisplay" :key="String(statusKey)" class="flex flex-col gap-2">
+        <div v-for="section in displaySections" :key="section.key" class="flex flex-col gap-2">
             <section
                 class="overflow-hidden rounded-xl border border-border/70 border-l-4 bg-card shadow-sm"
-                :class="STATUS_ACCENT[String(statusKey)] ?? STATUS_ACCENT.others"
+                :class="STATUS_ACCENT[section.key] ?? STATUS_ACCENT.others"
             >
                 <button
                     type="button"
                     class="flex w-full items-center gap-2 px-3 py-2.5 text-left hover:bg-muted/40"
-                    @click="toggleSection(String(statusKey))"
+                    @click="toggleSection(section.key)"
                 >
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-2">
-                            <span class="text-sm font-semibold capitalize">{{ sectionTitle(String(statusKey)) }}</span>
-                            <span class="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold tabular-nums">{{ apps.length }}</span>
+                            <span class="text-sm font-semibold capitalize">{{
+                                section.key === UNQUALIFIED_STATUS_KEY
+                                    ? $t('trans.ui_unqualified')
+                                    : sectionTitle(section.key)
+                            }}</span>
+                            <span class="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold tabular-nums">{{
+                                section.apps.length
+                            }}</span>
                         </div>
                         <p class="truncate text-[11px] text-muted-foreground">
                             {{
-                                statusKey === 'applications'
-                                    ? 'Ranked for class-list selection'
-                                    : getClassListTypeDescription(String(statusKey))
+                                section.key === UNQUALIFIED_STATUS_KEY
+                                    ? $t('trans.ui_unqualified_description')
+                                    : section.key === 'applications'
+                                      ? $t('trans.ui_ranked_for_class_list_selection')
+                                      : getClassListTypeDescription(section.key)
                             }}
                         </p>
                     </div>
                     <ChevronDown
                         class="h-4 w-4 shrink-0 text-muted-foreground transition-transform"
-                        :class="isSectionOpen(String(statusKey)) ? 'rotate-180' : ''"
+                        :class="isSectionOpen(section.key) ? 'rotate-180' : ''"
                     />
                 </button>
 
-                <div v-show="isSectionOpen(String(statusKey))" class="border-t border-border/60">
+                <div v-show="isSectionOpen(section.key)" class="border-t border-border/60">
                     <div class="overflow-x-auto">
                         <table class="w-full min-w-[640px] text-left text-xs">
                             <thead>
@@ -519,10 +593,13 @@ const addBypassNeeded = (app: EnrolmentApplication): boolean => {
                             </thead>
                             <tbody>
                                 <tr
-                                    v-for="(application, index) in apps"
+                                    v-for="(application, index) in section.apps"
                                     :key="application.applicationId"
                                     class="border-b border-border/40 last:border-0 hover:bg-muted/30"
-                                    :class="!classListCreated ? getRowClassList(index, classSize) : ''"
+                                    :class="[
+                                        section.rankRows ? getRowClassList(index, classSize) : '',
+                                        section.key === UNQUALIFIED_STATUS_KEY ? 'bg-red-50/80' : '',
+                                    ]"
                                 >
                                     <td class="px-2 py-1.5 text-center">
                                         <Checkbox
@@ -598,9 +675,15 @@ const addBypassNeeded = (app: EnrolmentApplication): boolean => {
                                             </span>
                                         </td>
                                         <td class="px-2 py-1.5 text-right">
-                                            <span class="inline-flex rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-bold tabular-nums">
+                                            <span
+                                                v-if="hasRankedScore(application, section.key)"
+                                                class="inline-flex rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-bold tabular-nums"
+                                            >
                                                 {{ application.totalScore }} pts
                                             </span>
+                                            <span v-else class="text-[10px] font-semibold text-red-800">{{
+                                                $t('trans.ui_error')
+                                            }}</span>
                                         </td>
                                     </template>
                                     <template v-else>

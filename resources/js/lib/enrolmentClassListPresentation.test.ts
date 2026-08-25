@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+    applicationsExcludedFromRanking,
     filterEnrolmentApplications,
     matchesEnrolmentApplicationSearch,
     toTitleCase,
@@ -78,5 +79,20 @@ describe('filterEnrolmentApplications', () => {
 
         expect(filterEnrolmentApplications(applications, 'whitney')).toHaveLength(1);
         expect(filterEnrolmentApplications(applications, '')).toHaveLength(2);
+    });
+});
+
+describe('applicationsExcludedFromRanking', () => {
+    it('returns applications dropped by ranking so they can still be listed', () => {
+        const ranked = sampleApplication({ applicationId: 10, studentName: 'Ranked Applicant' });
+        const unqualified = sampleApplication({ applicationId: 20, studentName: 'Missing Grades' });
+
+        expect(applicationsExcludedFromRanking([ranked, unqualified], [ranked])).toEqual([unqualified]);
+    });
+
+    it('returns an empty list when every application is ranked', () => {
+        const ranked = sampleApplication({ applicationId: 10 });
+
+        expect(applicationsExcludedFromRanking([ranked], [ranked])).toEqual([]);
     });
 });
