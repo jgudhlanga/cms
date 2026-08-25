@@ -49,6 +49,17 @@ export const filterEnrolmentApplications = (applications: EnrolmentApplication[]
     return applications.filter((application) => matchesEnrolmentApplicationSearch(application, q));
 };
 
+export const UNQUALIFIED_STATUS_KEY = 'unqualified';
+
+export const applicationsExcludedFromRanking = (
+    allApplications: EnrolmentApplication[],
+    rankedApplications: EnrolmentApplication[],
+): EnrolmentApplication[] => {
+    const rankedIds = new Set(rankedApplications.map((application) => Number(application.applicationId)));
+
+    return allApplications.filter((application) => !rankedIds.has(Number(application.applicationId)));
+};
+
 export const shortSubjectLabel = (name: string): string => {
     const map: Record<string, string> = {
         english: 'Eng',
