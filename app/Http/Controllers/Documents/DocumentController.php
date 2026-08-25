@@ -8,6 +8,7 @@ use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use App\Services\Finance\StudentFinancialStatementPdfService;
+use App\Services\Students\StudentOfferLetterService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -17,13 +18,23 @@ class DocumentController extends Controller
 {
     public function __construct(
         private readonly StudentFinancialStatementPdfService $studentFinancialStatementPdfService,
+        private readonly StudentOfferLetterService $studentOfferLetterService,
     ) {}
 
-    public function previewOfferLetter(StudentApplication $studentApplication)
+    public function previewOfferLetter(Request $request, StudentApplication $studentApplication)
     {
-        // Get the StudentApplication only if it has a verified class list
+        $actor = $request->user() instanceof User ? $request->user() : null;
+
+        abort_unless(
+            $this->studentOfferLetterService->isDownloadable($studentApplication, $actor),
+            Response::HTTP_NOT_FOUND,
+        );
+
         [$documentTemplate, $studentName, $studentIdNumber, $studentNumber, $intakePeriod, $department,
-            $level, $course, $modeOfStudy, $tuition, $offerLetterDate] = DocumentHelper::assembleOfferLetter($studentApplication);
+            $level, $course, $modeOfStudy, $tuition, $offerLetterDate] = DocumentHelper::assembleOfferLetter(
+                $studentApplication,
+                ! $this->studentOfferLetterService->canBypassDownloadGates($actor),
+            );
         // PDF Filename
         $fileName = Str::slug($studentName).'-offer-letter-'.time().'.pdf';
         // Generate PDF

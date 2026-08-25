@@ -25,6 +25,12 @@ class AssessmentCalendarResource extends JsonResource
                 ),
                 'startDate' => $this->resource->start_date?->format('Y-m-d'),
                 'endDate' => $this->resource->end_date?->format('Y-m-d'),
+                'firstNotificationDaysBefore' => (int) ($this->resource->first_notification_days_before ?? 10),
+                'secondNotificationDaysBefore' => (int) ($this->resource->second_notification_days_before ?? 5),
+                'dueNotificationDaysBefore' => (int) ($this->resource->due_notification_days_before ?? 0),
+                'firstNotificationDate' => $this->resource->first_notification_date?->format('Y-m-d'),
+                'secondNotificationDate' => $this->resource->second_notification_date?->format('Y-m-d'),
+                'dueNotificationDate' => $this->resource->due_notification_date?->format('Y-m-d'),
                 'type' => $typeValue,
                 'typeLabel' => is_string($typeValue) ? ucfirst($typeValue) : $typeValue,
                 $this->mergeWhen($request->routeIs('assessment-calendars.*'), [

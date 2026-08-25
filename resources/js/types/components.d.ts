@@ -68,6 +68,7 @@ declare module 'vue' {
     ApprenticeDetails: typeof import('./../components/students/update/ApprenticeDetails.vue')['default']
     AppSidebar: typeof import('./../components/core/sidebar/AppSidebar.vue')['default']
     Archived: typeof import('./../components/core/table/Archived.vue')['default']
+    AssessmentCalendarWindowsList: typeof import('./../components/assessments/AssessmentCalendarWindowsList.vue')['default']
     AssignClassTutorModal: typeof import('./../components/academicCalendars/AssignClassTutorModal.vue')['default']
     AuthBackground: typeof import('./../components/auth/AuthBackground.vue')['default']
     AuthCard: typeof import('./../components/auth/AuthCard.vue')['default']

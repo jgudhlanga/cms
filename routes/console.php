@@ -15,3 +15,5 @@ Schedule::command('statements:plan-fetch-windows')->dailyAt('00:00')->withoutOve
 Schedule::command('hms:expire-unpaid-applications')->dailyAt('01:00')->withoutOverlapping();
 
 Schedule::command('account-purge-archives:flush-expired')->dailyAt('02:00')->withoutOverlapping();
+
+Schedule::command('assessment-calendars:send-missing-marks-notifications')->dailyAt('06:00')->withoutOverlapping();

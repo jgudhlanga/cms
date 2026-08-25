@@ -7,9 +7,11 @@ use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
+use App\Models\Students\StudentEnrolment;
 use App\Models\Users\User;
-use App\Services\AcademicCalendars\CourseWorkAssessmentLockService;
 use App\Services\AcademicCalendars\ClassStaffingService;
+use App\Services\AcademicCalendars\CourseWorkAssessmentLockService;
+use App\Services\Assessments\AssessmentCalendarWindowService;
 
 class LecturerTeachingListService
 {
@@ -18,6 +20,7 @@ class LecturerTeachingListService
         private readonly ClassStaffingService $classStaffingService,
         private readonly LecturerTeachingClassesIndexService $classesIndexService,
         private readonly CourseWorkAssessmentLockService $courseWorkAssessmentLockService,
+        private readonly AssessmentCalendarWindowService $assessmentCalendarWindowService,
     ) {}
 
     /**
@@ -181,6 +184,23 @@ class LecturerTeachingListService
             ->whereNull('deleted_at')
             ->count();
 
+        $academicCalendarId = $this->resolveAcademicCalendarIdForClass($class);
+        $modeOfStudyId = (int) ($config?->mode_of_study_id ?? 0);
+        $assessmentWindows = $this->assessmentCalendarWindowService->windowsForClass(
+            $this->assessmentCalendarWindowService->windowsForAcademicCalendar($academicCalendarId),
+            $classId,
+            $modeOfStudyId,
+        );
+        $missingBanner = collect($assessmentWindows)
+            ->filter(fn (array $window): bool => ($window['isInNotificationWindow'] ?? false) && (int) ($window['missingCount'] ?? 0) > 0)
+            ->map(fn (array $window): string => __('assessments.class_banner_missing_marks', [
+                'count' => $window['missingCount'],
+                'assessment' => $window['assessmentTypeName'],
+                'end_date' => $window['endDate'],
+            ]))
+            ->values()
+            ->all();
+
         return [
             'id' => $classId,
             'name' => (string) $class->name,
@@ -196,6 +216,8 @@ class LecturerTeachingListService
             'studentCount' => $studentCount,
             'students' => $this->studentsPayloadForAcademicCalendarClass($class),
             'modules' => $modules,
+            'assessmentWindows' => $assessmentWindows,
+            'missingMarksBanners' => $missingBanner,
         ];
     }
 
@@ -286,5 +308,25 @@ class LecturerTeachingListService
             })
             ->values()
             ->all();
+    }
+
+    private function resolveAcademicCalendarIdForClass(AcademicCalendarClass $class): int
+    {
+        if (request()->filled('academic_calendar_id') && request()->integer('academic_calendar_id') > 0) {
+            return request()->integer('academic_calendar_id');
+        }
+
+        $enrolmentCalendarId = StudentEnrolment::query()
+            ->whereHas(
+                'academicCalendarStudentEnrolment',
+                fn ($query) => $query->where('academic_calendar_class_id', $class->id),
+            )
+            ->value('academic_calendar_id');
+
+        if ($enrolmentCalendarId !== null) {
+            return (int) $enrolmentCalendarId;
+        }
+
+        return (int) Helper::resolveAcademicCalendar()->id;
     }
 }

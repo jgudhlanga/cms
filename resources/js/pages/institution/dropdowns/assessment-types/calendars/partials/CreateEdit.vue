@@ -2,14 +2,17 @@
 import AcademicCalendarComboSelect from '@/components/core/form/combobox/AcademicCalendarComboSelect.vue';
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import BaseDatePicker from '@/components/core/form/date/BaseDatePicker.vue';
+import BaseInput from '@/components/core/form/text/BaseInput.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
 import {
     buildCalendarTypeOptions,
     defaultAssessmentCalendarDates,
     defaultCalendarTypeOption,
+    defaultNotificationIntervals,
     filterAcademicCalendarsForType,
     findAcademicCalendarById,
     normalizeAssessmentCalendarRecords,
+    notificationDateFromEndDate,
     resolveAcademicCalendarOption,
     resolveCalendarTypeOption,
     useAssessmentCalendars,
@@ -23,6 +26,7 @@ import { AcademicCalendar } from '@/types/academic-calendar';
 import { AssessmentCalendar, AssessmentCalendarParams, AssessmentType } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -40,6 +44,9 @@ const form = useForm<AssessmentCalendarParams>({
     academic_calendar_id: '',
     start_date: '',
     end_date: '',
+    first_notification_days_before: defaultNotificationIntervals().first_notification_days_before,
+    second_notification_days_before: defaultNotificationIntervals().second_notification_days_before,
+    due_notification_days_before: defaultNotificationIntervals().due_notification_days_before,
     type: 'semester',
 });
 
@@ -80,11 +87,24 @@ watch(modals!, () => {
         calendarTypeOption.value = resolveCalendarTypeOption(assessmentCalendar.value.attributes?.type);
         form.start_date = assessmentCalendar.value.attributes?.startDate ?? '';
         form.end_date = assessmentCalendar.value.attributes?.endDate ?? '';
+        form.first_notification_days_before =
+            assessmentCalendar.value.attributes?.firstNotificationDaysBefore
+            ?? defaultNotificationIntervals().first_notification_days_before;
+        form.second_notification_days_before =
+            assessmentCalendar.value.attributes?.secondNotificationDaysBefore
+            ?? defaultNotificationIntervals().second_notification_days_before;
+        form.due_notification_days_before =
+            assessmentCalendar.value.attributes?.dueNotificationDaysBefore
+            ?? defaultNotificationIntervals().due_notification_days_before;
     } else {
         academicCalendarOption.value = null;
         calendarTypeOption.value = defaultCalendarTypeOption();
         form.start_date = '';
         form.end_date = '';
+        const defaults = defaultNotificationIntervals();
+        form.first_notification_days_before = defaults.first_notification_days_before;
+        form.second_notification_days_before = defaults.second_notification_days_before;
+        form.due_notification_days_before = defaults.due_notification_days_before;
     }
 
     form.academic_calendar_id = academicCalendarOption.value ? String(academicCalendarOption.value.value) : '';
@@ -125,6 +145,18 @@ watch(academicCalendarOption, (nextOption, previousOption) => {
     }
 });
 
+const notificationPreview = computed(() => {
+    if (!form.end_date) {
+        return '';
+    }
+
+    return trans('trans.assessment_calendar_notification_preview', {
+        first: notificationDateFromEndDate(form.end_date, form.first_notification_days_before),
+        second: notificationDateFromEndDate(form.end_date, form.second_notification_days_before),
+        due: notificationDateFromEndDate(form.end_date, form.due_notification_days_before),
+    });
+});
+
 const save = () => {
     form.academic_calendar_id = academicCalendarOption.value ? String(academicCalendarOption.value.value) : '';
     form.type = String(calendarTypeOption.value?.value ?? 'semester');
@@ -142,6 +174,9 @@ const save = () => {
             academic_calendar_id: '',
             start_date: '',
             end_date: '',
+            first_notification_days_before: '',
+            second_notification_days_before: '',
+            due_notification_days_before: '',
             type: '',
         };
 
@@ -210,6 +245,38 @@ const save = () => {
                     @update:model-value="clearFormErrors(form, 'end_date')"
                 />
             </div>
+            <div class="grid grid-cols-3 gap-2">
+                <BaseInput
+                    input-id="first_notification_days_before"
+                    :label="$t('trans.assessment_calendar_first_notification_days')"
+                    v-model="form.first_notification_days_before"
+                    type="number"
+                    :is-required="true"
+                    :error="form.errors.first_notification_days_before"
+                    @input="clearFormErrors(form, 'first_notification_days_before')"
+                />
+                <BaseInput
+                    input-id="second_notification_days_before"
+                    :label="$t('trans.assessment_calendar_second_notification_days')"
+                    v-model="form.second_notification_days_before"
+                    type="number"
+                    :is-required="true"
+                    :error="form.errors.second_notification_days_before"
+                    @input="clearFormErrors(form, 'second_notification_days_before')"
+                />
+                <BaseInput
+                    input-id="due_notification_days_before"
+                    :label="$t('trans.assessment_calendar_due_notification_days')"
+                    v-model="form.due_notification_days_before"
+                    type="number"
+                    :is-required="true"
+                    :error="form.errors.due_notification_days_before"
+                    @input="clearFormErrors(form, 'due_notification_days_before')"
+                />
+            </div>
+            <p v-if="notificationPreview" class="text-xs text-muted-foreground">
+                {{ notificationPreview }}
+            </p>
         </template>
     </BaseModal>
 </template>

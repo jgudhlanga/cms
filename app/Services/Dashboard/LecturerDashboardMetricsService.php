@@ -7,17 +7,15 @@ use App\Helpers\Helper;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\AcademicCalendars\CourseWorkMark;
-use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Models\Institution\AssessmentType;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Users\User;
 use App\Services\AcademicCalendars\CourseWorkAggregationService;
+use App\Services\Assessments\AssessmentCalendarWindowService;
 use App\Services\Lecturer\LecturerAssignmentResolver;
 use App\Support\AcademicCalendars\CourseWorkGradeBand;
 use App\Support\Institution\CourseSyllabusModulePeriod;
-use Carbon\Carbon;
-use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -32,6 +30,7 @@ class LecturerDashboardMetricsService
     public function __construct(
         private readonly CourseWorkAggregationService $aggregationService,
         private readonly LecturerAssignmentResolver $assignmentResolver,
+        private readonly AssessmentCalendarWindowService $assessmentCalendarWindowService,
     ) {}
 
     /**
@@ -378,7 +377,31 @@ class LecturerDashboardMetricsService
         $alerts = $this->assessmentCalendarAlerts($resolved);
         $missing = $this->missingCourseWork($moduleResults);
 
-        if ($missing !== []) {
+        $typeSpecificMissing = collect($alerts)
+            ->filter(fn (array $alert): bool => ($alert['kind'] ?? '') === 'assessment_calendar' && (int) ($alert['missingCount'] ?? 0) > 0)
+            ->sum(fn (array $alert): int => (int) ($alert['missingCount'] ?? 0));
+
+        if ($typeSpecificMissing > 0) {
+            $topMissing = collect($alerts)
+                ->filter(fn (array $alert): bool => (int) ($alert['missingCount'] ?? 0) > 0)
+                ->sortByDesc(fn (array $alert): int => (int) $alert['missingCount'])
+                ->first();
+
+            $alerts[] = [
+                'kind' => 'missing_marks',
+                'severity' => 'warning',
+                'message' => __('dashboard.lecturer_alert_missing_assessment_marks', [
+                    'count' => (int) ($topMissing['missingCount'] ?? $typeSpecificMissing),
+                    'assessment' => (string) ($topMissing['assessmentTypeName'] ?? ''),
+                    'end_date' => (string) ($topMissing['endDate'] ?? ''),
+                ]),
+                'updatedAt' => null,
+                'daysRemaining' => $topMissing['daysRemaining'] ?? null,
+                'endDate' => $topMissing['endDate'] ?? null,
+                'assessmentTypeName' => $topMissing['assessmentTypeName'] ?? null,
+                'missingCount' => $typeSpecificMissing,
+            ];
+        } elseif ($missing !== []) {
             $top = $missing[0];
             $alerts[] = [
                 'kind' => 'missing_marks',
@@ -462,89 +485,52 @@ class LecturerDashboardMetricsService
         }
 
         $academicCalendar = Helper::resolveAcademicCalendar();
-        $today = now()->startOfDay();
+        $windows = $this->assessmentCalendarWindowService->windowsForAcademicCalendar(
+            (int) $academicCalendar->id,
+            $modeIds,
+        );
         $alertsByTypeId = [];
 
-        $calendars = AssessmentCalendar::query()
-            ->where('academic_calendar_id', (int) $academicCalendar->id)
-            ->with('assessmentType')
-            ->get();
-
-        foreach ($calendars as $calendar) {
-            $assessmentType = $calendar->assessmentType;
-
-            if (! $assessmentType instanceof AssessmentType) {
+        foreach ($windows as $window) {
+            if (! $window['isOpen'] && ! $window['isInNotificationWindow']) {
                 continue;
             }
 
-            $typeModeIds = array_values(array_filter(
-                array_map('intval', $assessmentType->modes_of_study ?? []),
-                static fn (int $modeId): bool => $modeId > 0,
-            ));
-
-            if (array_intersect($modeIds, $typeModeIds) === []) {
-                continue;
-            }
-
-            $startDate = $calendar->start_date;
-            $endDate = $calendar->end_date;
-
-            if (! $startDate instanceof CarbonInterface || ! $endDate instanceof CarbonInterface) {
-                continue;
-            }
-
-            $start = Carbon::parse($startDate)->startOfDay();
-            $end = Carbon::parse($endDate)->startOfDay();
-
-            if (! $today->between($start, $end->copy()->endOfDay())) {
-                continue;
-            }
-
-            $daysRemaining = (int) $today->diffInDays($end, false);
-            $typeId = (int) $assessmentType->id;
-            $endDateFormatted = $end->format('Y-m-d');
+            $daysRemaining = $window['daysRemaining'];
+            $typeId = (int) $window['assessmentTypeId'];
 
             if (
                 isset($alertsByTypeId[$typeId])
-                && (int) $alertsByTypeId[$typeId]['daysRemaining'] <= $daysRemaining
+                && (int) $alertsByTypeId[$typeId]['daysRemaining'] <= (int) $daysRemaining
             ) {
                 continue;
             }
 
             $alertsByTypeId[$typeId] = [
                 'kind' => 'assessment_calendar',
-                'severity' => $this->assessmentAlertSeverity($daysRemaining),
+                'severity' => $window['severity'],
                 'message' => $daysRemaining === 0
                     ? __('dashboard.lecturer_alert_assessment_window_today', [
-                        'assessment' => (string) $assessmentType->name,
-                        'end_date' => $endDateFormatted,
+                        'assessment' => $window['assessmentTypeName'],
+                        'end_date' => $window['endDate'],
                     ])
-                    : trans_choice('dashboard.lecturer_alert_assessment_window', $daysRemaining, [
-                        'assessment' => (string) $assessmentType->name,
+                    : trans_choice('dashboard.lecturer_alert_assessment_window', (int) $daysRemaining, [
+                        'assessment' => $window['assessmentTypeName'],
                         'days' => $daysRemaining,
-                        'end_date' => $endDateFormatted,
+                        'end_date' => $window['endDate'],
                     ]),
                 'updatedAt' => null,
                 'daysRemaining' => $daysRemaining,
-                'endDate' => $endDateFormatted,
-                'assessmentTypeName' => (string) $assessmentType->name,
+                'endDate' => $window['endDate'],
+                'assessmentTypeName' => $window['assessmentTypeName'],
+                'missingCount' => $window['missingCount'],
+                'firstNotificationDaysBefore' => $window['firstNotificationDaysBefore'],
+                'secondNotificationDaysBefore' => $window['secondNotificationDaysBefore'],
+                'dueNotificationDaysBefore' => $window['dueNotificationDaysBefore'],
             ];
         }
 
         return array_values($alertsByTypeId);
-    }
-
-    private function assessmentAlertSeverity(int $daysRemaining): string
-    {
-        if ($daysRemaining <= 3) {
-            return 'critical';
-        }
-
-        if ($daysRemaining <= 7) {
-            return 'warning';
-        }
-
-        return 'info';
     }
 
     /**

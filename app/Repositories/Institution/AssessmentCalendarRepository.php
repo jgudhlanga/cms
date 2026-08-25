@@ -56,6 +56,9 @@ class AssessmentCalendarRepository extends BaseRepository implements IAssessment
             'academic_calendar_id' => $dto->academic_calendar_id,
             'start_date' => $dto->start_date,
             'end_date' => $dto->end_date,
+            'first_notification_days_before' => $dto->first_notification_days_before,
+            'second_notification_days_before' => $dto->second_notification_days_before,
+            'due_notification_days_before' => $dto->due_notification_days_before,
             'type' => $dto->type,
         ];
     }

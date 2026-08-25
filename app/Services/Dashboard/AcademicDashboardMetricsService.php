@@ -14,6 +14,7 @@ use App\Models\Institution\AssessmentType;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Students\StudentEnrolment;
 use App\Services\AcademicCalendars\CourseWorkAggregationService;
+use App\Services\Assessments\AssessmentCalendarWindowService;
 use App\Support\AcademicCalendars\CourseWorkGradeBand;
 use App\Support\Institution\CourseSyllabusModulePeriod;
 use Illuminate\Database\Eloquent\Builder;
@@ -43,6 +44,7 @@ class AcademicDashboardMetricsService
 
     public function __construct(
         private readonly CourseWorkAggregationService $aggregationService,
+        private readonly AssessmentCalendarWindowService $assessmentCalendarWindowService,
     ) {
         $this->isDepartmentUser = Helper::isDepartmentUser();
         $this->userDepartments = Helper::resolveUserDepartments() ?? [];
@@ -86,6 +88,16 @@ class AcademicDashboardMetricsService
             'attachmentTotal' => $attachmentStatus['total'] ?? null,
             'attachmentCalendarYear' => $attachmentStatus['calendarYear'] ?? Helper::resolveAcademicCalendar()->calendar_year,
             'atRiskStudentCount' => $this->atRiskStudentCountFromGraded($gradedResults),
+            'assessmentCalendars' => array_map(function (array $window): array {
+                unset($window['modeIds'], $window['missingByClassId']);
+
+                return $window;
+            }, $this->assessmentCalendarWindowService->windowsForAcademicCalendar(
+                (int) Helper::resolveAcademicCalendar()->id,
+            )),
+            'missingMarksReportUrl' => auth()->user()?->can('view:missing-marks-report')
+                ? route('missing-marks-report.index')
+                : null,
         ];
     }
 

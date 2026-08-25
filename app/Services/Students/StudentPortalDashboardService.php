@@ -6,9 +6,12 @@ namespace App\Services\Students;
 
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Helpers\StudentHelper;
+use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentEnrolment;
 use App\Models\Users\User;
+use App\Services\Assessments\MissingMarksQueryService;
 use App\Services\Finance\StudentLedgerService;
 use Illuminate\Support\Str;
 
@@ -22,6 +25,7 @@ class StudentPortalDashboardService
         protected StudentProgrammeDataService $programmeDataService,
         protected StudentLedgerService $ledgerService,
         protected StudentPortalTermDetailsService $termDetailsService,
+        protected MissingMarksQueryService $missingMarksQuery,
     ) {}
 
     /**
@@ -74,7 +78,7 @@ class StudentPortalDashboardService
             'pendingApplicationCount' => $applicationStats['pending'],
             'modules' => $dashboardModules,
             'activities' => $this->buildActivities($modules, $applicationStats['pendingPrograms']),
-            'notices' => [],
+            'notices' => $this->missingMarkNotices($student, $activeSemester),
             'currentTerm' => $termDetails['currentTerm'],
             'nextTerm' => $termDetails['nextTerm'],
         ];
@@ -270,5 +274,78 @@ class StudentPortalDashboardService
     private function isActiveEnrolmentStatus(?string $status): bool
     {
         return Str::lower(trim((string) $status)) === 'active';
+    }
+
+    /**
+     * @param  array<string, mixed>  $activeSemester
+     * @return list<array{id: string, title: string, message: string, publishedAt: string|null}>
+     */
+    private function missingMarkNotices(Student $student, array $activeSemester): array
+    {
+        $enrolment = $this->resolveEnrolment($student, $activeSemester);
+
+        if (! $enrolment instanceof StudentEnrolment || $enrolment->academic_calendar_id === null) {
+            return [];
+        }
+
+        $enrolment->loadMissing([
+            'student.user',
+            'institutionDepartment.department',
+            'academicCalendarStudentEnrolment.academicCalendarClass.classConfig',
+        ]);
+
+        $calendars = AssessmentCalendar::query()
+            ->where('academic_calendar_id', (int) $enrolment->academic_calendar_id)
+            ->with('assessmentType')
+            ->orderBy('end_date')
+            ->get();
+
+        $today = now()->startOfDay();
+        $notices = [];
+
+        foreach ($calendars as $calendar) {
+            if (! $calendar->isInNotificationWindow($today)) {
+                continue;
+            }
+
+            $rows = $this->missingMarksQuery->forStudentEnrolment($enrolment, $calendar);
+            $assessmentName = (string) ($calendar->assessmentType?->name ?? __('trans.assessment_type'));
+
+            foreach ($rows as $row) {
+                $notices[] = [
+                    'id' => 'missing-marks-'.$calendar->id.'-'.$row['moduleId'],
+                    'title' => __('assessments.student_notice_missing_marks_title', [
+                        'assessment' => $assessmentName,
+                    ]),
+                    'message' => __('assessments.student_notice_missing_marks', [
+                        'assessment' => $assessmentName,
+                        'module' => $row['moduleName'],
+                    ]),
+                    'publishedAt' => $calendar->first_notification_date?->toDateString(),
+                ];
+            }
+        }
+
+        return $notices;
+    }
+
+    /**
+     * @param  array<string, mixed>  $activeSemester
+     */
+    private function resolveEnrolment(Student $student, array $activeSemester): ?StudentEnrolment
+    {
+        $enrolmentId = $activeSemester['studentEnrolmentId'] ?? null;
+
+        if ($enrolmentId !== null) {
+            $enrolment = StudentEnrolment::query()->find($enrolmentId);
+
+            if ($enrolment instanceof StudentEnrolment) {
+                return $enrolment;
+            }
+        }
+
+        $student->loadMissing('latestEnrolment');
+
+        return $student->latestEnrolment;
     }
 }

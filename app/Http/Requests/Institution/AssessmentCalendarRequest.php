@@ -24,6 +24,9 @@ class AssessmentCalendarRequest extends FormRequest
             'academic_calendar_id' => ['required', 'integer', 'exists:academic_calendars,id'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'first_notification_days_before' => ['nullable', 'integer', 'min:0', 'max:365'],
+            'second_notification_days_before' => ['nullable', 'integer', 'min:0', 'max:365'],
+            'due_notification_days_before' => ['nullable', 'integer', 'min:0', 'max:365'],
             'type' => ['required', Rule::enum(AcademicCalendarTypeEnum::class)],
         ];
     }
@@ -100,6 +103,33 @@ class AssessmentCalendarRequest extends FormRequest
                     'opening' => $openingDate->toDateString(),
                     'closing' => $closingDate->toDateString(),
                 ]));
+            }
+
+            $firstDays = (int) ($this->input(
+                'first_notification_days_before',
+                AssessmentCalendar::DEFAULT_FIRST_NOTIFICATION_DAYS,
+            ));
+            $secondDays = (int) ($this->input(
+                'second_notification_days_before',
+                AssessmentCalendar::DEFAULT_SECOND_NOTIFICATION_DAYS,
+            ));
+            $dueDays = (int) ($this->input(
+                'due_notification_days_before',
+                AssessmentCalendar::DEFAULT_DUE_NOTIFICATION_DAYS,
+            ));
+
+            if ($firstDays < $secondDays) {
+                $validator->errors()->add(
+                    'first_notification_days_before',
+                    __('trans.assessment_calendar_notification_interval_order'),
+                );
+            }
+
+            if ($secondDays < $dueDays) {
+                $validator->errors()->add(
+                    'second_notification_days_before',
+                    __('trans.assessment_calendar_notification_interval_order'),
+                );
             }
 
             if ($validator->errors()->isNotEmpty()) {

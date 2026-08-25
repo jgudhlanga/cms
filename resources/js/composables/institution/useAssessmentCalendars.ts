@@ -123,6 +123,52 @@ export const resolveAcademicCalendarOption = (
     };
 };
 
+export const defaultNotificationIntervals = () => ({
+    first_notification_days_before: 10,
+    second_notification_days_before: 5,
+    due_notification_days_before: 0,
+});
+
+export const notificationDateFromEndDate = (endDate: string, daysBefore: number): string => {
+    if (!endDate) {
+        return '';
+    }
+
+    const date = new Date(`${endDate}T00:00:00`);
+
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    date.setDate(date.getDate() - Number(daysBefore || 0));
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+};
+
+export const formatAssessmentCalendarNotificationDates = (calendar: AssessmentCalendar): string => {
+    const first = calendar.attributes?.firstNotificationDate
+        ?? notificationDateFromEndDate(
+            calendar.attributes?.endDate ?? '',
+            calendar.attributes?.firstNotificationDaysBefore ?? 10,
+        );
+    const second = calendar.attributes?.secondNotificationDate
+        ?? notificationDateFromEndDate(
+            calendar.attributes?.endDate ?? '',
+            calendar.attributes?.secondNotificationDaysBefore ?? 5,
+        );
+    const due = calendar.attributes?.dueNotificationDate
+        ?? notificationDateFromEndDate(
+            calendar.attributes?.endDate ?? '',
+            calendar.attributes?.dueNotificationDaysBefore ?? 0,
+        );
+
+    return `${trans('trans.assessment_calendar_notification_lecturer')} ${first} · ${trans('trans.assessment_calendar_notification_lecturer_vp')} ${second} · ${trans('trans.assessment_calendar_notification_vp')} ${due}`;
+};
+
 export const defaultAssessmentCalendarDates = (calendar: AcademicCalendar) => ({
     start_date: calendar.attributes.openingDate,
     end_date: calendar.attributes.closingDate,
@@ -165,6 +211,12 @@ export const useAssessmentCalendars = (assessmentType: AssessmentType) => {
             },
             { header: trans('trans.start_date'), accessorKey: 'attributes.startDate' },
             { header: trans('trans.end_date'), accessorKey: 'attributes.endDate' },
+            {
+                header: trans('trans.assessment_calendar_notification_dates'),
+                accessorKey: 'attributes.firstNotificationDate',
+                cell: ({ row }: { row: { original: AssessmentCalendar } }) =>
+                    formatAssessmentCalendarNotificationDates(row.original),
+            },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',
@@ -245,11 +297,23 @@ export const useAssessmentCalendars = (assessmentType: AssessmentType) => {
                         message: trans('trans.date_must_be_valid', { field: trans('trans.end_date') }),
                     }),
                 type: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.type', 1) })),
+                first_notification_days_before: z.coerce.number().int().min(0).max(365),
+                second_notification_days_before: z.coerce.number().int().min(0).max(365),
+                due_notification_days_before: z.coerce.number().int().min(0).max(365),
             })
             .refine((data) => new Date(data.end_date) >= new Date(data.start_date), {
                 message: trans('trans.end_date_start_date_validation'),
                 path: ['end_date'],
             })
+            .refine(
+                (data) =>
+                    data.first_notification_days_before >= data.second_notification_days_before
+                    && data.second_notification_days_before >= data.due_notification_days_before,
+                {
+                    message: trans('trans.assessment_calendar_notification_interval_order'),
+                    path: ['first_notification_days_before'],
+                },
+            )
             .superRefine((data, ctx) => {
                 const selectedAcademicCalendar = context.academicCalendars.find(
                     (calendar) => String(calendar.id) === String(data.academic_calendar_id),

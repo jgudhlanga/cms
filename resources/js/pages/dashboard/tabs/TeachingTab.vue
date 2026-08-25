@@ -34,29 +34,33 @@ const formatCount = (value: number | null | undefined): string =>
 const formatMark = (value: number | null | undefined): string =>
     value === null || value === undefined ? notAvailable.value : String(value);
 
-const assessmentUrgencyLevel = (daysRemaining: number): number => {
-    if (daysRemaining <= 1) {
+const assessmentUrgencyLevel = (alert: LecturerPriorityAlert): number => {
+    if (alert.daysRemaining == null) {
+        return 0;
+    }
+
+    const due = alert.dueNotificationDaysBefore ?? 0;
+    const second = alert.secondNotificationDaysBefore ?? 5;
+    const first = alert.firstNotificationDaysBefore ?? 10;
+
+    if (alert.daysRemaining <= due) {
         return 4;
     }
 
-    if (daysRemaining <= 3) {
+    if (alert.daysRemaining <= second) {
         return 3;
     }
 
-    if (daysRemaining <= 7) {
+    if (alert.daysRemaining <= first) {
         return 2;
     }
 
-    if (daysRemaining <= 14) {
-        return 1;
-    }
-
-    return 0;
+    return 1;
 };
 
 const alertDotClass = (alert: LecturerPriorityAlert): string => {
     if (alert.daysRemaining != null) {
-        const urgency = assessmentUrgencyLevel(alert.daysRemaining);
+        const urgency = assessmentUrgencyLevel(alert);
 
         if (urgency >= 4) {
             return 'bg-rose-700';
@@ -93,7 +97,7 @@ const alertRowClass = (alert: LecturerPriorityAlert): string => {
         return 'border-b border-gray-100 py-2 last:border-0';
     }
 
-    const urgency = assessmentUrgencyLevel(alert.daysRemaining);
+    const urgency = assessmentUrgencyLevel(alert);
 
     if (urgency >= 4) {
         return 'border-b border-rose-100 bg-rose-50/80 py-2 last:border-0';
@@ -119,7 +123,7 @@ const alertTextClass = (alert: LecturerPriorityAlert): string => {
         return 'text-sm leading-snug text-gray-900';
     }
 
-    const urgency = assessmentUrgencyLevel(alert.daysRemaining);
+    const urgency = assessmentUrgencyLevel(alert);
 
     if (urgency >= 4) {
         return 'text-sm font-medium leading-snug text-rose-800';

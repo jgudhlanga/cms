@@ -13,7 +13,7 @@ class DepartmentDistributionResource extends JsonResource
             'institutionDepartmentId' => (int) $this->institution_department_id,
             'departmentId' => $this->department_id,
             'departmentName' => $this->department_name,
-            'colorCode' => $this->color_code,
+            'colorCode' => $this->color_code ?? null,
             'applicationCount' => $this->application_count,
             'fullTimeCount' => $this->full_time_count,
             'partTimeCount' => $this->part_time_count,

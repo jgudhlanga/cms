@@ -4,7 +4,10 @@ namespace App\JsonApi\V1\Students\StudentApplications;
 
 use App\JsonApi\V1\Students\StudentApplications\Filters\StudentFilter;
 use App\Models\Students\StudentApplication;
+use App\Models\Users\User;
+use App\Services\Students\StudentOfferLetterService;
 use LaravelJsonApi\Eloquent\Contracts\Paginator;
+use LaravelJsonApi\Eloquent\Fields\Boolean;
 use LaravelJsonApi\Eloquent\Fields\DateTime;
 use LaravelJsonApi\Eloquent\Fields\ID;
 use LaravelJsonApi\Eloquent\Fields\Number;
@@ -27,6 +30,7 @@ class StudentApplicationSchema extends Schema
         'workflowStep',
         'intakePeriod',
         'modeOfStudy',
+        'classList',
     ];
 
     protected ?array $defaultPagination = ['number' => 1, 'size' => 50];
@@ -64,6 +68,25 @@ class StudentApplicationSchema extends Schema
             Str::make('workflowStep')->extractUsing(
                 fn (StudentApplication $program) => $program->workflowStep?->name
             )->readOnly(),
+            Boolean::make('offerLetterAvailable')->extractUsing(
+                fn (StudentApplication $program): bool => $this->offerLetterService()
+                    ->isDownloadable($program, $this->actor())
+            )->readOnly(),
+            Boolean::make('offerLetterCurrentIntake')->extractUsing(
+                fn (StudentApplication $program): bool => $this->offerLetterService()
+                    ->isCurrentIntake($program)
+            )->readOnly(),
+            Str::make('offerLetterDownloadUrl')->extractUsing(
+                function (StudentApplication $program): ?string {
+                    $service = $this->offerLetterService();
+
+                    if (! $service->isDownloadable($program, $this->actor())) {
+                        return null;
+                    }
+
+                    return route('documents.offer-letter', ['student_application' => $program->id]);
+                }
+            )->readOnly(),
             DateTime::make('createdAt', 'created_at')->sortable()->readOnly(),
             DateTime::make('updatedAt', 'updated_at')->sortable()->readOnly(),
         ];
@@ -93,5 +116,15 @@ class StudentApplicationSchema extends Schema
     {
         return PagePagination::make()
             ->withDefaultPerPage(50);
+    }
+
+    private function offerLetterService(): StudentOfferLetterService
+    {
+        return app(StudentOfferLetterService::class);
+    }
+
+    private function actor(): ?User
+    {
+        return $this->offerLetterService()->actorFromRequest();
     }
 }

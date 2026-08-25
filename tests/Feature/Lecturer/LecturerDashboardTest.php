@@ -186,6 +186,7 @@ test('teaching classes index includes assessment windows for class mode of study
             ->has('classes.0.assessmentWindows', 1)
             ->where('classes.0.assessmentWindows.0.assessmentTypeName', $context['assessmentType']->name)
             ->where('classes.0.assessmentWindows.0.isOpen', true)
+            ->where('classes.0.assessmentWindows.0.firstNotificationDaysBefore', 10)
             ->where('summary.openAssessmentWindowCount', 1)
         );
 });
@@ -273,9 +274,11 @@ test('teaching dashboard priority alerts include applicable assessment calendars
             ->where('visibleTabs', ['academic'])
             ->has('teachingDashboard.priorityAlerts')
             ->where('teachingDashboard.priorityAlerts.0.kind', 'assessment_calendar')
-            ->where('teachingDashboard.priorityAlerts.0.severity', 'critical')
+            ->where('teachingDashboard.priorityAlerts.0.severity', 'warning')
             ->where('teachingDashboard.priorityAlerts.0.daysRemaining', 2)
             ->where('teachingDashboard.priorityAlerts.0.assessmentTypeName', $context['assessmentType']->name)
+            ->where('teachingDashboard.priorityAlerts.0.firstNotificationDaysBefore', 10)
+            ->where('teachingDashboard.priorityAlerts.0.secondNotificationDaysBefore', 5)
         );
 });
 

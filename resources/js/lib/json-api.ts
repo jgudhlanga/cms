@@ -417,6 +417,9 @@ export type JsonApiStudentApplicationAttributes = {
     intakePeriodStartDate?: string;
     applicationTrackingNumber?: string;
     workflowStep?: string;
+    offerLetterAvailable?: boolean;
+    offerLetterCurrentIntake?: boolean;
+    offerLetterDownloadUrl?: string | null;
     createdAt?: string;
     updatedAt?: string;
 };
@@ -453,6 +456,9 @@ export function mapJsonApiStudentApplicationToEnrolment(resource: JsonApiResourc
             tuitionFeeConfirmed: false,
             requiredLevelCompleted: false,
             readWriteAcknowledged: false,
+            offerLetterAvailable: attributes.offerLetterAvailable,
+            offerLetterCurrentIntake: attributes.offerLetterCurrentIntake,
+            offerLetterDownloadUrl: attributes.offerLetterDownloadUrl ?? null,
             createdAt: attributes.createdAt ?? '',
             updatedAt: attributes.updatedAt ?? '',
             deletedAt: '',

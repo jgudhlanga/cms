@@ -1,3 +1,5 @@
+import type { AssessmentCalendarWindow } from '@/types/assessments';
+
 export interface LecturerQuickAction {
     key: string;
     label: string;
@@ -13,6 +15,10 @@ export interface LecturerPriorityAlert {
     daysRemaining?: number | null;
     endDate?: string | null;
     assessmentTypeName?: string | null;
+    missingCount?: number | null;
+    firstNotificationDaysBefore?: number | null;
+    secondNotificationDaysBefore?: number | null;
+    dueNotificationDaysBefore?: number | null;
 }
 
 export interface LecturerStudentRow {
@@ -72,12 +78,7 @@ export interface LecturerModuleClass {
     name: string;
 }
 
-export interface TeachingClassAssessmentWindow {
-    assessmentTypeName: string;
-    startDate: string | null;
-    endDate: string | null;
-    isOpen: boolean;
-}
+export type TeachingClassAssessmentWindow = AssessmentCalendarWindow;
 
 export interface TeachingClassStats {
     assignedModuleCount: number;

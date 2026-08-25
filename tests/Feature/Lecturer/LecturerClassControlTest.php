@@ -1,12 +1,13 @@
 <?php
 
+use App\Enums\Rbac\RoleEnum;
+use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\CourseWorkMark;
-use App\Models\Rbac\Permission;
-use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
-use App\Models\Users\User;
+use App\Models\Rbac\Permission;
+use App\Models\Rbac\Role;
 use Database\Seeders\AcademicCalendars\ClassMetaDataTypeSeeder;
 use Laravel\Sanctum\Sanctum;
 
@@ -23,6 +24,18 @@ test('assigned lecturer can open teaching class show', function () {
     assignLecturerToClassModule($context, $staff);
     prepareLecturerCalendar($context);
 
+    AssessmentCalendar::query()->create([
+        'tenant_id' => $context['tenant']->id,
+        'assessment_type_id' => $context['assessmentType']->id,
+        'academic_calendar_id' => $context['studentEnrolment']->academic_calendar_id,
+        'start_date' => now()->subDays(20)->toDateString(),
+        'end_date' => now()->addDays(5)->toDateString(),
+        'type' => 'semester',
+        'first_notification_days_before' => 10,
+        'second_notification_days_before' => 5,
+        'due_notification_days_before' => 0,
+    ]);
+
     $this->actingAs($lecturerUser)
         ->get(route('teaching.classes.show', $context['academicCalendarClass']))
         ->assertSuccessful()
@@ -32,6 +45,8 @@ test('assigned lecturer can open teaching class show', function () {
             ->has('classDetail.students', 1)
             ->where('classDetail.students.0.studentEnrolmentId', $context['studentEnrolment']->id)
             ->has('classDetail.modules', 1)
+            ->has('classDetail.assessmentWindows', 1)
+            ->has('classDetail.missingMarksBanners', 1)
         );
 });
 
@@ -203,8 +218,8 @@ test('assigned lecturer can open import page for assigned module', function () {
 });
 
 test('lecturer role seeder includes create and export course work', function () {
-    $role = \App\Models\Rbac\Role::query()
-        ->where('name', \App\Enums\Rbac\RoleEnum::LECTURER->name())
+    $role = Role::query()
+        ->where('name', RoleEnum::LECTURER->name())
         ->firstOrFail();
 
     expect($role->hasPermissionTo('create:course-work'))->toBeTrue()

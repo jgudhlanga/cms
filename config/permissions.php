@@ -382,6 +382,10 @@ return [
             'import:assessment-calendar',
             'export:assessment-calendar',
             'viewAuditTrail:assessment-calendar',
+            'view:missing-marks-report',
+            'export:missing-marks-report',
+            'escalate:missing-marks',
+            'remind:missing-marks',
         ],
         'finance' => [
             'viewAny:finances',

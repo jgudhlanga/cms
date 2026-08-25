@@ -2,18 +2,18 @@
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\AcademicCalendars\ClassMetaDataTypeEnum;
-use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\EmploymentTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClassMetaData;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\ClassMetaDataType;
 use App\Models\AcademicCalendars\CourseWorkMark;
-use App\Models\Rbac\Permission;
-use App\Models\Rbac\Role;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Institution\Staff;
+use App\Models\Rbac\Permission;
+use App\Models\Rbac\Role;
 use App\Models\Shared\EmploymentType;
 use App\Models\Shared\Gender;
 use App\Models\Shared\MaritalStatus;
@@ -81,6 +81,8 @@ test('dashboard returns academic metrics for users with academic tab access', fu
             ->where('academicDashboard.gradeDistribution.segments.0.key', 'distinction')
             ->has('academicDashboard.passRateByDepartment', 1)
             ->has('academicDashboard.moduleFailureHotspots', 1)
+            ->has('academicDashboard.assessmentCalendars')
+            ->where('academicDashboard.missingMarksReportUrl', null)
         );
 });
 

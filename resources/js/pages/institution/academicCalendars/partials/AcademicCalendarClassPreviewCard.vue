@@ -34,6 +34,13 @@ const moduleShare = computed(() => {
     return Math.min(100, Math.round((staffed / total) * 100));
 });
 
+const missingCount = computed(() =>
+    (props.classPreview.assessmentWindows ?? []).reduce(
+        (total, window) => total + Number(window.missingCount ?? 0),
+        0,
+    ),
+);
+
 const rowClass = computed(() => {
     const base =
         'flex min-h-9 flex-wrap items-center gap-x-2 gap-y-1.5 rounded-lg bg-primary/5 px-2.5 py-1.5 transition-colors';
@@ -111,6 +118,12 @@ const onCardClick = (): void => {
                 <span class="h-1.5 w-1.5 rounded-full bg-pink-500" aria-hidden="true" />
                 <span class="tabular-nums">{{ femaleCount }}</span>
             </span>
+        </span>
+        <span
+            v-if="missingCount > 0"
+            class="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-px text-[10px] font-medium text-amber-800"
+        >
+            {{ $t('assessments.dashboard_missing_count', { count: missingCount }) }}
         </span>
         <span
             class="inline-flex items-center rounded-full border px-1.5 py-px text-[10px] font-medium"
