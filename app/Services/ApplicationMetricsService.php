@@ -340,6 +340,7 @@ class ApplicationMetricsService
             'institution_department_id' => 0,
             'department_id' => 0,
             'department_name' => __('trans.ui_unassigned'),
+            'color_code' => null,
             'application_count' => (int) $metrics->application_count,
             'male_count' => (int) $metrics->male_count,
             'female_count' => (int) $metrics->female_count,

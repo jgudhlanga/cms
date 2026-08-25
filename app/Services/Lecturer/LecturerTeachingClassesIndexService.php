@@ -5,14 +5,12 @@ namespace App\Services\Lecturer;
 use App\Helpers\Helper;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\ClassConfig;
-use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
-use App\Models\Institution\AssessmentType;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Users\User;
 use App\Services\AcademicCalendars\ClassStaffingService;
+use App\Services\Assessments\AssessmentCalendarWindowService;
 use App\Services\Dashboard\LecturerDashboardMetricsService;
 use App\Support\AcademicCalendars\CourseWorkGradeBand;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class LecturerTeachingClassesIndexService
@@ -21,6 +19,7 @@ class LecturerTeachingClassesIndexService
         private readonly LecturerAssignmentResolver $assignmentResolver,
         private readonly ClassStaffingService $classStaffingService,
         private readonly LecturerDashboardMetricsService $dashboardMetricsService,
+        private readonly AssessmentCalendarWindowService $assessmentCalendarWindowService,
     ) {}
 
     /**
@@ -71,7 +70,7 @@ class LecturerTeachingClassesIndexService
         $semesterModulesByClassId = $this->semesterModulesByClassId($classes);
         $assignedModuleIdsByClassId = $this->assignedModuleIdsByClassId($resolved['assignmentKeys']);
         $moduleCodeById = $this->moduleCodeById($semesterModulesByClassId, $assignedModuleIdsByClassId);
-        $assessmentWindowsByModeId = $this->assessmentWindowsByModeId((int) $academicCalendar->id);
+        $assessmentWindows = $this->assessmentCalendarWindowService->windowsForAcademicCalendar((int) $academicCalendar->id);
         $statsByClassId = $this->statsByClassId(
             $this->dashboardMetricsService->moduleResultsForResolved($resolved),
         );
@@ -84,7 +83,7 @@ class LecturerTeachingClassesIndexService
                 $semesterModulesByClassId,
                 $assignedModuleIdsByClassId,
                 $moduleCodeById,
-                $assessmentWindowsByModeId,
+                $assessmentWindows,
                 $statsByClassId,
             ): array {
                 $classId = (int) $class->id;
@@ -115,7 +114,11 @@ class LecturerTeachingClassesIndexService
                     'calendarYear' => (string) ($config?->calendar_year ?? ''),
                     'moduleCodes' => $moduleCodes,
                     'assignedModuleCodes' => $assignedModuleCodes,
-                    'assessmentWindows' => $assessmentWindowsByModeId[$modeOfStudyId] ?? [],
+                    'assessmentWindows' => $this->assessmentCalendarWindowService->windowsForClass(
+                        $assessmentWindows,
+                        $classId,
+                        $modeOfStudyId,
+                    ),
                     'stats' => $statsByClassId[$classId] ?? $this->emptyClassStats(count($assignedModuleIds)),
                 ];
             })
@@ -275,79 +278,6 @@ class LecturerTeachingClassesIndexService
             ->values()
             ->unique()
             ->all();
-    }
-
-    /**
-     * @return array<int, list<array{assessmentTypeName: string, startDate: string|null, endDate: string|null, isOpen: bool}>>
-     */
-    private function assessmentWindowsByModeId(int $academicCalendarId): array
-    {
-        $calendars = AssessmentCalendar::query()
-            ->where('academic_calendar_id', $academicCalendarId)
-            ->with('assessmentType')
-            ->get();
-
-        if ($calendars->isEmpty()) {
-            return [];
-        }
-
-        $today = now()->startOfDay();
-        $windowsByModeId = [];
-
-        foreach ($calendars as $calendar) {
-            $assessmentType = $calendar->assessmentType;
-
-            if (! $assessmentType instanceof AssessmentType) {
-                continue;
-            }
-
-            $startDate = $calendar->start_date?->format('Y-m-d');
-            $endDate = $calendar->end_date?->format('Y-m-d');
-            $isOpen = $calendar->start_date !== null
-                && $calendar->end_date !== null
-                && $today->between(
-                    Carbon::parse($calendar->start_date)->startOfDay(),
-                    Carbon::parse($calendar->end_date)->endOfDay(),
-                );
-
-            $window = [
-                'assessmentTypeName' => (string) $assessmentType->name,
-                'startDate' => $startDate,
-                'endDate' => $endDate,
-                'isOpen' => $isOpen,
-            ];
-
-            foreach (array_values(array_map('intval', $assessmentType->modes_of_study ?? [])) as $modeId) {
-                if ($modeId < 1) {
-                    continue;
-                }
-
-                $windowsByModeId[$modeId][] = $window;
-            }
-        }
-
-        foreach ($windowsByModeId as $modeId => $windows) {
-            $windowsByModeId[$modeId] = $this->sortAssessmentWindows($windows);
-        }
-
-        return $windowsByModeId;
-    }
-
-    /**
-     * @param  list<array{assessmentTypeName: string, startDate: string|null, endDate: string|null, isOpen: bool}>  $windows
-     * @return list<array{assessmentTypeName: string, startDate: string|null, endDate: string|null, isOpen: bool}>
-     */
-    private function sortAssessmentWindows(array $windows): array
-    {
-        usort($windows, function (array $left, array $right): int {
-            if ($left['isOpen'] !== $right['isOpen']) {
-                return $right['isOpen'] <=> $left['isOpen'];
-            }
-
-            return strcmp((string) ($left['startDate'] ?? ''), (string) ($right['startDate'] ?? ''));
-        });
-
-        return $windows;
     }
 
     /**

@@ -1,3 +1,5 @@
+import type { AssessmentCalendarWindow } from '@/types/assessments';
+
 export type DepartmentDistribution = {
     institutionDepartmentId: number;
     departmentId: number;
@@ -321,6 +323,8 @@ export type AcademicDashboard = {
     attachmentStatus: AcademicAttachmentStatus | null;
     attachmentTotal: number | null;
     attachmentCalendarYear: string;
+    assessmentCalendars?: AssessmentCalendarWindow[];
+    missingMarksReportUrl?: string | null;
 };
 
 export type OverviewDashboardSummary = {

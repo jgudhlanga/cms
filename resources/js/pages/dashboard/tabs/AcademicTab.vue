@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import Empty from '@/components/core/util/Empty.vue';
+import AssessmentCalendarWindowsList from '@/components/assessments/AssessmentCalendarWindowsList.vue';
 import type { AcademicDashboard } from '@/types/dashboard';
+import type { AssessmentCalendarWindow } from '@/types/assessments';
 import { Chart, registerables } from 'chart.js';
 import { trans } from 'laravel-vue-i18n';
 import { AlertTriangle, Award, Briefcase, Check, ClipboardList, TrendingDown, TrendingUp, UserMinus, X } from 'lucide-vue-next';
@@ -34,6 +36,12 @@ const {
     attachmentTotal,
     attachmentCalendarYear,
 } = props.academicDashboard;
+
+const assessmentCalendars = computed<AssessmentCalendarWindow[]>(
+    () => props.academicDashboard.assessmentCalendars ?? [],
+);
+
+const missingMarksReportUrl = computed(() => props.academicDashboard.missingMarksReportUrl ?? null);
 
 const notAvailable = computed(() => trans('dashboard.academic_not_available'));
 
@@ -242,6 +250,22 @@ watch(
                 <template #icon><Briefcase class="h-3.5 w-3.5" /></template>
             </MetricCard>
         </div>
+
+        <DashboardCard compact :title="$t('assessments.dashboard_assessment_calendars')">
+            <div v-if="assessmentCalendars.length === 0">
+                <Empty :message="$t('assessments.dashboard_no_assessment_calendars')" />
+            </div>
+            <div v-else class="space-y-3">
+                <AssessmentCalendarWindowsList :windows="assessmentCalendars" compact />
+                <a
+                    v-if="missingMarksReportUrl"
+                    :href="missingMarksReportUrl"
+                    class="inline-flex text-xs font-medium text-primary hover:underline"
+                >
+                    {{ $t('assessments.dashboard_view_missing_marks_report') }}
+                </a>
+            </div>
+        </DashboardCard>
 
         <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
             <DashboardCard compact :title="$t('dashboard.academic_grade_distribution')">

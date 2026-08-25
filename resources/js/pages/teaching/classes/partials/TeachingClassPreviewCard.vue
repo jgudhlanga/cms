@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AcademicCalendarClassTutorBadge from '@/components/academicCalendars/AcademicCalendarClassTutorBadge.vue';
+import AssessmentCalendarWindowsList from '@/components/assessments/AssessmentCalendarWindowsList.vue';
 import type { TeachingClassCard } from '@/types/lecturer';
 import { UserIcon, UserRoundIcon, Users } from '@lucide/vue';
 import { router } from '@inertiajs/vue3';
@@ -25,18 +26,6 @@ const metaLine = computed(() =>
         .filter((value) => value != null && String(value).trim() !== '')
         .join(' · '),
 );
-
-const formatDate = (value: string | null | undefined): string => {
-    if (!value) {
-        return '—';
-    }
-
-    return new Date(`${value}T00:00:00`).toLocaleDateString(undefined, {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    });
-};
 
 const onCardClick = (): void => {
     if (!isClickable.value || props.showUrl == null) {
@@ -111,41 +100,10 @@ const isAssignedCode = (code: string): boolean => props.classCard.assignedModule
                 </div>
             </div>
 
-            <div v-if="classCard.assessmentWindows.length > 0" class="space-y-1.5">
-                <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                    {{ $tChoice('trans.assessment_calendar', 2) }}
-                </p>
-                <div class="space-y-1">
-                    <div
-                        v-for="(window, index) in classCard.assessmentWindows"
-                        :key="`${window.assessmentTypeName}-${window.startDate}-${index}`"
-                        class="flex items-center justify-between gap-2 rounded-md border border-border/70 bg-muted/30 px-2 py-1.5"
-                    >
-                        <div class="min-w-0">
-                            <p class="truncate text-[11px] font-medium text-foreground">
-                                {{ window.assessmentTypeName }}
-                            </p>
-                            <p class="text-[10px] text-muted-foreground">
-                                {{ formatDate(window.startDate) }} – {{ formatDate(window.endDate) }}
-                            </p>
-                        </div>
-                        <span
-                            class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium"
-                            :class="
-                                window.isOpen
-                                    ? 'bg-green-50 text-green-700'
-                                    : 'bg-muted text-muted-foreground'
-                            "
-                        >
-                            {{
-                                window.isOpen
-                                    ? $t('dashboard.lecturer_assessment_window_open')
-                                    : $t('dashboard.lecturer_assessment_window_closed')
-                            }}
-                        </span>
-                    </div>
-                </div>
-            </div>
+            <AssessmentCalendarWindowsList
+                v-if="classCard.assessmentWindows.length > 0"
+                :windows="classCard.assessmentWindows"
+            />
 
             <div class="grid grid-cols-3 gap-1 rounded-lg bg-muted/60 px-2 py-1.5 text-center">
                 <div class="flex min-w-0 flex-1 flex-col items-center gap-0">

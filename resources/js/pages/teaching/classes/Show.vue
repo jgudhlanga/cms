@@ -5,12 +5,15 @@ import Empty from '@/components/core/util/Empty.vue';
 import { BaseButton } from '@/components/core/button';
 import { normalizeGender } from '@/composables/academicCalendars/useAcademicCalendarClassStudents';
 import PageContainer from '@/components/core/page/PageContainer.vue';
+import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import ComponentHeader from '@/pages/dashboard/components/ComponentHeader.vue';
 import DashboardCard from '@/pages/dashboard/components/DashboardCard.vue';
 import type { AcademicCalendar } from '@/types/academic-calendar';
+import type { AssessmentCalendarWindow } from '@/types/assessments';
 import type { BreadcrumbItemInterface } from '@/types/ui';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
+import { TypeVariant } from '@/enums/type-variants';
 import { Head, Link } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { computed } from 'vue';
@@ -54,6 +57,8 @@ interface ClassDetail {
     studentCount: number;
     students: ClassStudent[];
     modules: ClassModule[];
+    assessmentWindows?: AssessmentCalendarWindow[];
+    missingMarksBanners?: string[];
 }
 
 interface Props {
@@ -140,6 +145,14 @@ const sortedStudents = computed(() =>
                     </a>
                 </div>
             </div>
+
+            <BaseAlert
+                v-for="banner in classDetail.missingMarksBanners ?? []"
+                :key="banner"
+                :title="$t('assessments.dashboard_assessment_calendars')"
+                :description="banner"
+                :type="TypeVariant.warning"
+            />
 
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <DashboardCard :title="$tChoice('trans.department', 1)">

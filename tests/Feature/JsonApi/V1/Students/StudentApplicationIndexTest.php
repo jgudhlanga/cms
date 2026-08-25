@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
@@ -124,7 +125,37 @@ test('json api student programs index returns applications for student filter', 
         ->assertJsonPath('data.0.attributes.department', $department->name)
         ->assertJsonPath('data.0.attributes.course', $course->name)
         ->assertJsonPath('data.0.attributes.workflowStep', $workflowStep->name)
-        ->assertJsonPath('data.0.attributes.intakePeriod', 'Semester 1 JSON API');
+        ->assertJsonPath('data.0.attributes.intakePeriod', 'Semester 1 JSON API')
+        ->assertJsonPath('data.0.attributes.offerLetterAvailable', false);
+});
+
+test('json api student applications expose offer letters for super users on enrolled provisional applications', function () {
+    $studentApplication = createVerifiedStudentApplication('JSON-OFFER-'.strtoupper(str()->random(4)));
+    $enrolledStep = resolveWorkflowStep(WorkflowStepEnum::ENROLLED);
+
+    $studentApplication->update([
+        'workflow_step_id' => $enrolledStep->id,
+    ]);
+    $studentApplication->classList->update([
+        'type' => ClassListTypeEnum::PROVISIONAL->value,
+    ]);
+
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo(['view:student-applications', 'view:students', 'root:manage']);
+    Sanctum::actingAs($user);
+
+    $this
+        ->jsonApi('student-applications')
+        ->filter(['student' => (string) $studentApplication->student_id])
+        ->get(route('v1.json.students.student-applications.index'))
+        ->assertSuccessful()
+        ->assertJsonPath('data.0.id', (string) $studentApplication->id)
+        ->assertJsonPath('data.0.attributes.offerLetterAvailable', true)
+        ->assertJsonPath(
+            'data.0.attributes.offerLetterDownloadUrl',
+            route('documents.offer-letter', ['student_application' => $studentApplication->id]),
+        );
 });
 
 test('json api student programs index requires student filter', function () {

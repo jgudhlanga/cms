@@ -1,6 +1,7 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
 import { errorAlert, successAlert } from '@/lib/alerts';
+import { hasAbility } from '@/lib/permissions';
 import { Enrolment } from '@/types/enrolments';
 import { Student, StudentFiltersState, StudentStats } from '@/types/students';
 import { trans, trans_choice } from 'laravel-vue-i18n';
@@ -94,8 +95,13 @@ export const useStudents = () => {
         }
 
         const status = getApplicationStatus(application)?.toLowerCase();
-        if (status !== 'accepted') {
+        const isAcceptedOrEnrolled = status === 'accepted' || status === 'enrolled';
+        if (!isAcceptedOrEnrolled) {
             return false;
+        }
+
+        if (hasAbility('root:manage')) {
+            return true;
         }
 
         const intakePeriodId = String(application?.attributes?.intakePeriodId ?? '');

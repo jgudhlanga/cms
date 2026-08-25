@@ -29,6 +29,9 @@ class AssessmentCalendarFactory extends Factory
             ])->id,
             'start_date' => $startDate->format('Y-m-d'),
             'end_date' => fake()->dateTimeBetween($startDate, '+3 months')->format('Y-m-d'),
+            'first_notification_days_before' => AssessmentCalendar::DEFAULT_FIRST_NOTIFICATION_DAYS,
+            'second_notification_days_before' => AssessmentCalendar::DEFAULT_SECOND_NOTIFICATION_DAYS,
+            'due_notification_days_before' => AssessmentCalendar::DEFAULT_DUE_NOTIFICATION_DAYS,
             'type' => AcademicCalendarTypeEnum::SEMESTER->value,
         ];
     }

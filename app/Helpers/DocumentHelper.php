@@ -5,6 +5,7 @@ namespace App\Helpers;
 use App\Enums\Institution\DepartmentEnum;
 use App\Enums\Institution\LevelEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
+use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\DocumentTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\IdTypeEnum;
@@ -17,9 +18,11 @@ use App\Services\Students\StudentOfferLetterService;
 
 class DocumentHelper
 {
-    public static function assembleOfferLetter(StudentApplication $studentApplication): array
-    {
-        $studentApplication = StudentApplication::query()
+    public static function assembleOfferLetter(
+        StudentApplication $studentApplication,
+        bool $requireVerifiedClassList = true,
+    ): array {
+        $query = StudentApplication::query()
             ->with([
                 'student.user',
                 'intakePeriod',
@@ -28,8 +31,19 @@ class DocumentHelper
                 'departmentCourse.course',
                 'modeOfStudy',
             ])
-            ->where('id', $studentApplication->id)
-            ->whereHas('classList', fn ($q) => $q->whereIn('type', ['verified', 'final']))->firstOrFail();
+            ->where('id', $studentApplication->id);
+
+        if ($requireVerifiedClassList) {
+            $query->whereHas(
+                'classList',
+                fn ($q) => $q->whereIn('type', [
+                    ClassListTypeEnum::VERIFIED->value,
+                    ClassListTypeEnum::FINAL->value,
+                ]),
+            );
+        }
+
+        $studentApplication = $query->firstOrFail();
 
         $student = $studentApplication->student;
         $user = $student->user;

@@ -1,11 +1,11 @@
 <?php
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
-use App\Models\Rbac\Permission;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Models\Institution\AssessmentType;
 use App\Models\Institution\ModeOfStudy;
+use App\Models\Rbac\Permission;
 use App\Models\Users\User;
 use Carbon\Carbon;
 
@@ -582,4 +582,129 @@ test('store accepts assessment dates within academic calendar range', function (
             assessmentCalendarPayload($academicCalendar, AcademicCalendarTypeEnum::SEMESTER),
         )
         ->assertSuccessful();
+});
+
+test('store defaults notification intervals and computes notification dates', function () {
+    $user = User::factory()->create();
+    $assessmentType = AssessmentType::factory()->create([
+        'tenant_id' => $user->tenant_id,
+    ]);
+
+    grantCreateAssessmentCalendarPermission($user);
+
+    $academicCalendar = createAcademicCalendarForYear(AcademicCalendarTypeEnum::SEMESTER, 1);
+    $openingDate = Carbon::parse($academicCalendar->opening_date);
+
+    $this->actingAs($user)
+        ->post(
+            route('assessment-calendars.store', ['assessment_type' => $assessmentType->id]),
+            assessmentCalendarPayload($academicCalendar, AcademicCalendarTypeEnum::SEMESTER),
+        )
+        ->assertSuccessful();
+
+    $record = AssessmentCalendar::query()->latest('id')->first();
+
+    expect($record)->not->toBeNull()
+        ->and($record->first_notification_days_before)->toBe(10)
+        ->and($record->second_notification_days_before)->toBe(5)
+        ->and($record->due_notification_days_before)->toBe(0)
+        ->and($record->first_notification_date?->toDateString())->toBe(
+            $openingDate->copy()->addWeek()->subDays(10)->toDateString(),
+        )
+        ->and($record->second_notification_date?->toDateString())->toBe(
+            $openingDate->copy()->addWeek()->subDays(5)->toDateString(),
+        )
+        ->and($record->due_notification_date?->toDateString())->toBe(
+            $openingDate->copy()->addWeek()->toDateString(),
+        );
+});
+
+test('store persists custom notification intervals', function () {
+    $user = User::factory()->create();
+    $assessmentType = AssessmentType::factory()->create([
+        'tenant_id' => $user->tenant_id,
+    ]);
+
+    grantCreateAssessmentCalendarPermission($user);
+
+    $academicCalendar = createAcademicCalendarForYear(AcademicCalendarTypeEnum::SEMESTER, 1);
+    $payload = assessmentCalendarPayload($academicCalendar, AcademicCalendarTypeEnum::SEMESTER);
+    $payload['first_notification_days_before'] = 14;
+    $payload['second_notification_days_before'] = 7;
+    $payload['due_notification_days_before'] = 1;
+
+    $this->actingAs($user)
+        ->post(route('assessment-calendars.store', ['assessment_type' => $assessmentType->id]), $payload)
+        ->assertSuccessful();
+
+    $record = AssessmentCalendar::query()->latest('id')->first();
+
+    expect($record)->not->toBeNull()
+        ->and($record->first_notification_days_before)->toBe(14)
+        ->and($record->second_notification_days_before)->toBe(7)
+        ->and($record->due_notification_days_before)->toBe(1);
+});
+
+test('store rejects notification intervals that are out of order', function () {
+    $user = User::factory()->create();
+    $assessmentType = AssessmentType::factory()->create([
+        'tenant_id' => $user->tenant_id,
+    ]);
+
+    grantCreateAssessmentCalendarPermission($user);
+
+    $academicCalendar = createAcademicCalendarForYear(AcademicCalendarTypeEnum::SEMESTER, 1);
+    $payload = assessmentCalendarPayload($academicCalendar, AcademicCalendarTypeEnum::SEMESTER);
+    $payload['first_notification_days_before'] = 3;
+    $payload['second_notification_days_before'] = 8;
+    $payload['due_notification_days_before'] = 0;
+
+    $this->actingAs($user)
+        ->post(route('assessment-calendars.store', ['assessment_type' => $assessmentType->id]), $payload)
+        ->assertSessionHasErrors('first_notification_days_before');
+});
+
+test('assessment calendars index includes computed notification dates', function () {
+    $user = User::factory()->create();
+    $assessmentType = AssessmentType::factory()->create([
+        'tenant_id' => $user->tenant_id,
+    ]);
+
+    $academicCalendar = createAcademicCalendarForYear(AcademicCalendarTypeEnum::SEMESTER, 1);
+    $endDate = Carbon::parse($academicCalendar->opening_date)->addWeek();
+
+    AssessmentCalendar::factory()->create([
+        'tenant_id' => $user->tenant_id,
+        'assessment_type_id' => $assessmentType->id,
+        'academic_calendar_id' => $academicCalendar->id,
+        'start_date' => Carbon::parse($academicCalendar->opening_date)->toDateString(),
+        'end_date' => $endDate->toDateString(),
+        'type' => AcademicCalendarTypeEnum::SEMESTER->value,
+        'first_notification_days_before' => 10,
+        'second_notification_days_before' => 5,
+        'due_notification_days_before' => 0,
+    ]);
+
+    Permission::findOrCreate('viewAny:assessment-calendar', 'web');
+    $user->givePermissionTo('viewAny:assessment-calendar');
+
+    $this->actingAs($user)
+        ->get(route('assessment-calendars.index', ['assessment_type' => $assessmentType->id]))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->has('assessmentCalendars.data', 1)
+            ->where('assessmentCalendars.data.0.attributes.firstNotificationDaysBefore', 10)
+            ->where(
+                'assessmentCalendars.data.0.attributes.firstNotificationDate',
+                $endDate->copy()->subDays(10)->toDateString(),
+            )
+            ->where(
+                'assessmentCalendars.data.0.attributes.secondNotificationDate',
+                $endDate->copy()->subDays(5)->toDateString(),
+            )
+            ->where(
+                'assessmentCalendars.data.0.attributes.dueNotificationDate',
+                $endDate->toDateString(),
+            )
+        );
 });

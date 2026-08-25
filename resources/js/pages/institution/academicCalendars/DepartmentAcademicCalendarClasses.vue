@@ -26,6 +26,8 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { computed, toRefs } from 'vue';
 import AcademicCalendarClassPreviewCard from './partials/AcademicCalendarClassPreviewCard.vue';
 import AcademicCalendarClassStaffingSummaryCard from './partials/AcademicCalendarClassStaffingSummaryCard.vue';
+import AssessmentCalendarWindowsList from '@/components/assessments/AssessmentCalendarWindowsList.vue';
+import type { AssessmentCalendarWindow } from '@/types/assessments';
 
 const props = withDefaults(
     defineProps<{
@@ -47,11 +49,13 @@ const props = withDefaults(
         errors: object;
         canViewCourseWork?: boolean;
         canExportClassList?: boolean;
+        assessmentWindows?: AssessmentCalendarWindow[];
     }>(),
     {
         canAssignStaffing: false,
         canViewCourseWork: false,
         canExportClassList: false,
+        assessmentWindows: () => [],
         staffingSummary: () => ({
             tutorsAssigned: 0,
             classCount: 0,
@@ -289,6 +293,16 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                 :calendar-type="calendarType"
                 :semester-config-has-syllabi="semesterConfigHasSyllabi"
             />
+
+            <div
+                v-if="assessmentWindows.length > 0"
+                class="rounded-xl border border-border bg-card p-3"
+            >
+                <p class="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {{ $t('assessments.dashboard_assessment_calendars') }}
+                </p>
+                <AssessmentCalendarWindowsList :windows="assessmentWindows" compact />
+            </div>
 
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <DepartmentModeTotalsStrip

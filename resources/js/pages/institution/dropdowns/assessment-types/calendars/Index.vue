@@ -40,6 +40,14 @@ const disableCreate = computed(
 <template>
     <Head :title="$tChoice('trans.assessment_calendar', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('assessment-types.index')">
+        <div v-if="can['view:missing-marks-report']" class="mb-3">
+            <a
+                :href="route('missing-marks-report.index', { assessment_type_id: String(assessmentType.id) })"
+                class="text-sm font-medium text-primary hover:underline"
+            >
+                {{ $t('assessments.dashboard_view_missing_marks_report') }}
+            </a>
+        </div>
         <DataTable
             :data="assessmentCalendars.data"
             :trashed-count="trashedCount"

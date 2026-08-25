@@ -145,6 +145,12 @@ export type AssessmentCalendar = {
         academicCalendarName?: string;
         startDate: string;
         endDate: string;
+        firstNotificationDaysBefore: number;
+        secondNotificationDaysBefore: number;
+        dueNotificationDaysBefore: number;
+        firstNotificationDate?: string;
+        secondNotificationDate?: string;
+        dueNotificationDate?: string;
         type: string;
         typeLabel: string;
         createdAt?: string;
@@ -157,6 +163,9 @@ export type AssessmentCalendarParams = {
     academic_calendar_id: string;
     start_date: string;
     end_date: string;
+    first_notification_days_before: number;
+    second_notification_days_before: number;
+    due_notification_days_before: number;
     type: string;
 };
 

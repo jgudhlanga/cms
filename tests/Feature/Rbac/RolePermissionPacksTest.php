@@ -201,6 +201,13 @@ test('hostel policy blocks warden from unassigned hostel', function () {
         ->and($policy->update($user, $other))->toBeFalse();
 });
 
+test('vice principal academics pack includes missing marks report permissions', function () {
+    expect(PermissionHelper::vpAcademicsPermissions())->toContain('view:missing-marks-report')
+        ->and(PermissionHelper::vpAcademicsPermissions())->toContain('export:missing-marks-report')
+        ->and(PermissionHelper::vpAcademicsPermissions())->toContain('escalate:missing-marks')
+        ->and(PermissionHelper::vpAcademicsPermissions())->toContain('remind:missing-marks');
+});
+
 test('vice principal academics pack includes class list confirmation', function () {
     expect(PermissionHelper::vpAcademicsPermissions())->toContain('confirm:class-lists')
         ->and(PermissionHelper::vpAcademicsPermissions())->toContain('manage-final:class-lists');

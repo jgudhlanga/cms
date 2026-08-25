@@ -1,16 +1,18 @@
 <?php
 
-use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
+use App\Enums\Rbac\RoleEnum;
+use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\DocumentTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
+use App\Enums\Shared\WorkflowStepEnum;
 use App\Helpers\DocumentHelper;
-use App\Models\Institution\FeeStructure;
-use App\Models\Rbac\Role;
 use App\Models\Institution\DocumentTemplate;
+use App\Models\Institution\FeeStructure;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
+use App\Models\Rbac\Role;
 use App\Models\Shared\DocumentType;
 use App\Models\Shared\FeeType;
 use App\Models\Students\StudentApplication;
@@ -207,6 +209,104 @@ it('allows offer letter download while impersonating a student', function (): vo
     $response->assertSuccessful();
     expect($response->headers->get('content-type'))->toContain('application/pdf');
     expect($response->headers->get('content-disposition'))->toContain('attachment');
+});
+
+it('allows super users to download offer letters for enrolled applications without a verified class list', function (): void {
+    $studentApplication = createVerifiedStudentApplication('OFFER-SUPER-ENR-'.strtoupper(str()->random(4)));
+    $enrolledStep = resolveWorkflowStep(WorkflowStepEnum::ENROLLED);
+
+    $studentApplication->update([
+        'workflow_step_id' => $enrolledStep->id,
+    ]);
+    $studentApplication->classList->update([
+        'type' => ClassListTypeEnum::PROVISIONAL->value,
+    ]);
+    $studentApplication->intakePeriod->update([
+        'is_active' => false,
+        'status' => IntakePeriodStatusEnum::Closed,
+        'start_date' => now()->subYears(3)->startOfMonth()->toDateString(),
+        'end_date' => now()->subYears(3)->endOfMonth()->toDateString(),
+    ]);
+
+    IntakePeriod::query()->create([
+        'tenant_id' => $studentApplication->tenant_id,
+        'name' => 'Newer Intake '.strtoupper(str()->random(4)),
+        'start_date' => now()->startOfMonth()->toDateString(),
+        'end_date' => now()->addYear()->toDateString(),
+        'calendar_year' => '2026/2027',
+        'is_active' => true,
+        'status' => IntakePeriodStatusEnum::Open,
+    ]);
+
+    seedOfferLetterDocumentPrerequisites($studentApplication);
+
+    $superUser = User::factory()->create(['tenant_id' => $studentApplication->tenant_id]);
+    $superUser->givePermissionTo('root:manage');
+
+    $response = $this->actingAs($superUser)->get(route('documents.offer-letter', [
+        'student_application' => $studentApplication->id,
+    ]));
+
+    $response->assertSuccessful();
+    expect($response->headers->get('content-type'))->toContain('application/pdf');
+});
+
+it('allows super users to download offer letters for accepted applications without a verified class list', function (): void {
+    $studentApplication = createVerifiedStudentApplication('OFFER-SUPER-ACC-'.strtoupper(str()->random(4)));
+    $studentApplication->classList->update([
+        'type' => ClassListTypeEnum::PROVISIONAL->value,
+    ]);
+
+    seedOfferLetterDocumentPrerequisites($studentApplication);
+
+    $superUser = User::factory()->create(['tenant_id' => $studentApplication->tenant_id]);
+    $superUser->givePermissionTo('root:manage');
+
+    $response = $this->actingAs($superUser)->get(route('documents.offer-letter', [
+        'student_application' => $studentApplication->id,
+    ]));
+
+    $response->assertSuccessful();
+    expect($response->headers->get('content-type'))->toContain('application/pdf');
+});
+
+it('denies offer letter download for review applications even for super users', function (): void {
+    $studentApplication = createVerifiedStudentApplication('OFFER-SUPER-REV-'.strtoupper(str()->random(4)));
+    $reviewStep = resolveWorkflowStep(WorkflowStepEnum::REVIEW);
+
+    $studentApplication->update([
+        'workflow_step_id' => $reviewStep->id,
+    ]);
+
+    seedOfferLetterDocumentPrerequisites($studentApplication);
+
+    $superUser = User::factory()->create(['tenant_id' => $studentApplication->tenant_id]);
+    $superUser->givePermissionTo('root:manage');
+
+    $this->actingAs($superUser)->get(route('documents.offer-letter', [
+        'student_application' => $studentApplication->id,
+    ]))->assertNotFound();
+});
+
+it('denies offer letter download for enrolled provisional applications without super user privileges', function (): void {
+    $studentApplication = createVerifiedStudentApplication('OFFER-STAFF-ENR-'.strtoupper(str()->random(4)));
+    $enrolledStep = resolveWorkflowStep(WorkflowStepEnum::ENROLLED);
+
+    $studentApplication->update([
+        'workflow_step_id' => $enrolledStep->id,
+    ]);
+    $studentApplication->classList->update([
+        'type' => ClassListTypeEnum::PROVISIONAL->value,
+    ]);
+
+    seedOfferLetterDocumentPrerequisites($studentApplication);
+
+    $staff = User::factory()->create(['tenant_id' => $studentApplication->tenant_id]);
+    $staff->givePermissionTo(['view:students', 'view:student-applications']);
+
+    $this->actingAs($staff)->get(route('documents.offer-letter', [
+        'student_application' => $studentApplication->id,
+    ]))->assertNotFound();
 });
 
 it('assembles offer letters using the accepted date, application tuition, and intake-specific template', function (): void {

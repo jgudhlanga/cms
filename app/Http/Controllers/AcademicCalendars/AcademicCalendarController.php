@@ -44,6 +44,7 @@ use App\Services\AcademicCalendars\CourseWorkImportService;
 use App\Services\AcademicCalendars\CourseWorkImportTemplateService;
 use App\Services\AcademicCalendars\CourseWorkMarksheetDataService;
 use App\Services\AcademicCalendars\CourseWorkMarksheetPdfService;
+use App\Services\Assessments\AssessmentCalendarWindowService;
 use App\Services\Lecturer\LecturerCourseWorkAccess;
 use App\Services\Students\StudentEnrolmentProgressionService;
 use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
@@ -67,6 +68,7 @@ class AcademicCalendarController extends Controller
     public function __construct(
         private readonly AcademicCalendarClassNameFormatter $classNameFormatter,
         private readonly ClassStaffingService $classStaffingService,
+        private readonly AssessmentCalendarWindowService $assessmentCalendarWindowService,
         private readonly StudentEnrolmentProgressionService $enrolmentProgression,
         private readonly AdvanceToNextSemesterAction $advanceToNextSemester,
         private readonly CompleteLevelEnrolmentAction $completeLevelEnrolment,
@@ -188,10 +190,14 @@ class AcademicCalendarController extends Controller
             $populatedExistingClassCount
         );
 
+        $calendarWindows = $this->assessmentCalendarWindowService->windowsForAcademicCalendar((int) $academicCalendar->id);
+        $modeId = (int) ($mode?->id ?? 0);
         $staffingContext = $this->buildStaffingContextForPreviews(
             $classConfig,
             $previewClasses,
             $selectedSemesterId,
+            $calendarWindows,
+            $modeId,
         );
 
         return Inertia::render('institution/academicCalendars/DepartmentAcademicCalendarClasses', [
@@ -211,6 +217,7 @@ class AcademicCalendarController extends Controller
             'canAssignStaffing' => auth()->user()?->can('update', $academicCalendar) ?? false,
             'canViewCourseWork' => auth()->user()?->can('viewAny', CourseWorkMark::class) ?? false,
             'canExportClassList' => auth()->user()?->can('export', AcademicCalendar::class) ?? false,
+            'assessmentWindows' => $this->publicWindowsForMode($calendarWindows, $modeId),
         ]);
     }
 
@@ -1327,12 +1334,15 @@ class AcademicCalendarController extends Controller
 
     /**
      * @param  list<array<string, mixed>>  $previewClasses
+     * @param  list<array<string, mixed>>  $calendarWindows
      * @return array{previewClasses: list<array<string, mixed>>, staffingSummary: array<string, mixed>, semesterConfigHasSyllabi: bool}
      */
     private function buildStaffingContextForPreviews(
         ?ClassConfig $classConfig,
         array $previewClasses,
         ?int $semesterId,
+        array $calendarWindows = [],
+        int $modeOfStudyId = 0,
     ): array {
         $emptySummary = [
             'tutorsAssigned' => 0,
@@ -1368,6 +1378,8 @@ class AcademicCalendarController extends Controller
             $tutorsByClassId,
             $modules,
             $classModuleStaffIdsByClassId,
+            $calendarWindows,
+            $modeOfStudyId,
         ): array {
             $classId = $preview['academicCalendarClassId'] ?? null;
 
@@ -1383,6 +1395,13 @@ class AcademicCalendarController extends Controller
                 $modules,
                 $classModuleStaffIdsByClassId,
             );
+            $preview['assessmentWindows'] = $modeOfStudyId > 0
+                ? $this->assessmentCalendarWindowService->windowsForClass(
+                    $calendarWindows,
+                    (int) $classId,
+                    $modeOfStudyId,
+                )
+                : [];
 
             return $preview;
         }, $previewClasses);
@@ -1612,5 +1631,30 @@ class AcademicCalendarController extends Controller
         $moduleId = (int) $request->query('module', 0);
 
         return $moduleId > 0 ? $moduleId : null;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $windows
+     * @return list<array<string, mixed>>
+     */
+    private function publicWindowsForMode(array $windows, int $modeOfStudyId): array
+    {
+        if ($modeOfStudyId <= 0) {
+            return [];
+        }
+
+        $matched = [];
+
+        foreach ($windows as $window) {
+            if (! in_array($modeOfStudyId, $window['modeIds'] ?? [], true)) {
+                continue;
+            }
+
+            $publicWindow = $window;
+            unset($publicWindow['modeIds'], $publicWindow['missingByClassId']);
+            $matched[] = $publicWindow;
+        }
+
+        return $matched;
     }
 }

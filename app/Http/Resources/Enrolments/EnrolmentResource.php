@@ -8,6 +8,7 @@ use App\Http\Resources\Institution\DepartmentLevelRequirementResource;
 use App\Http\Resources\Integrations\LedgerResource;
 use App\Http\Resources\Shared\WorkflowStepResource;
 use App\Http\Resources\Students\AcademicLevelResource;
+use App\Models\Users\User;
 use App\Services\Students\StudentIdNumberValidationService;
 use App\Services\Students\StudentOfferLetterService;
 use Illuminate\Http\Request;
@@ -39,6 +40,8 @@ class EnrolmentResource extends JsonResource
 
         $contact = $this->student?->contacts?->first();
         $offerLetterService = app(StudentOfferLetterService::class);
+        $actor = $request->user() instanceof User ? $request->user() : null;
+        $offerLetterAvailable = $offerLetterService->isDownloadable($this->resource, $actor);
         $idNumberValidation = $this->student
             ? app(StudentIdNumberValidationService::class)->resolve($this->student, $request->user())
             : [
@@ -94,10 +97,10 @@ class EnrolmentResource extends JsonResource
                 'requiredLevelCompleted' => $this->required_level_completed,
                 'readWriteAcknowledged' => $this->read_write_acknowledged,
                 'disabilityStatus' => $this->student?->disability_status,
-                'offerLetterAvailable' => $offerLetterService->isDownloadable($this->resource),
+                'offerLetterAvailable' => $offerLetterAvailable,
                 'offerLetterCurrentIntake' => $offerLetterService->isCurrentIntake($this->resource),
                 'offerLetterIssuedAt' => $offerLetterService->issuedAt($this->resource)?->toIso8601String(),
-                'offerLetterDownloadUrl' => $offerLetterService->isDownloadable($this->resource)
+                'offerLetterDownloadUrl' => $offerLetterAvailable
                     ? route('documents.offer-letter', ['student_application' => $this->id])
                     : null,
                 'createdAt' => $this->created_at,

@@ -261,6 +261,7 @@ return [
     'lecturer_module_classes' => 'Assigned classes',
     'lecturer_export_class_list' => 'Export class list',
     'lecturer_alert_missing_marks' => ':count incomplete marks in :module (:class)',
+    'lecturer_alert_missing_assessment_marks' => ':count missing :assessment marks (due :end_date)',
     'lecturer_alert_risky_students' => ':count students are at risk (failing 2+ modules)',
     'lecturer_alert_high_fail_rate' => 'Fail rate is :rate% across graded results',
     'lecturer_alert_assessment_window' => '{1} :assessment assessment window closes in :days day (:end_date)|[2,*] :assessment assessment window closes in :days days (:end_date)',

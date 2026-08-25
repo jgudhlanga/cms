@@ -160,8 +160,8 @@ onMounted(async () => {
                                 classes="cursor-default"
                             />
                             <a
-                                v-if="application.attributes?.offerLetterDownloadUrl"
-                                :href="application.attributes.offerLetterDownloadUrl"
+                                v-if="application.attributes?.offerLetterAvailable || application.attributes?.offerLetterDownloadUrl"
+                                :href="application.attributes?.offerLetterDownloadUrl || route('documents.offer-letter', { student_application: application.id })"
                                 class="inline-flex items-center rounded-full border border-primary px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10"
                                 target="_blank"
                                 rel="noopener noreferrer"

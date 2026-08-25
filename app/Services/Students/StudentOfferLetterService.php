@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services\Students;
 
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentApplication;
+use App\Models\Users\User;
 use Carbon\CarbonInterface;
 use Spatie\Activitylog\Models\Activity;
 
@@ -47,25 +49,58 @@ class StudentOfferLetterService
         return $application->updated_at;
     }
 
-    public function isDownloadable(StudentApplication $application): bool
+    public function isDownloadable(StudentApplication $application, ?User $user = null): bool
     {
-        $application->loadMissing(['classList', 'workflowStep']);
+        if (! $this->isAcceptedOrEnrolled($application)) {
+            return false;
+        }
+
+        if ($this->canBypassDownloadGates($user)) {
+            return true;
+        }
+
+        $application->loadMissing(['classList']);
 
         $classListType = $application->classList?->type?->value ?? $application->classList?->type;
-        $status = strtolower((string) $application->workflowStep?->name);
 
         return in_array($classListType, [
             ClassListTypeEnum::VERIFIED->value,
             ClassListTypeEnum::FINAL->value,
-        ], true) && in_array($status, [
-            strtolower(WorkflowStepEnum::ACCEPTED->name()),
-            strtolower(WorkflowStepEnum::ENROLLED->name()),
         ], true);
+    }
+
+    public function canBypassDownloadGates(?User $user): bool
+    {
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        return $user->hasRole(RoleEnum::SUPER_USER->name())
+            || $user->can('root:manage');
     }
 
     public function isCurrentIntake(StudentApplication $application): bool
     {
         return $this->intakePeriodResolver->isCurrentOfferIntake($application);
+    }
+
+    public function actorFromRequest(): ?User
+    {
+        $user = request()->user();
+
+        return $user instanceof User ? $user : null;
+    }
+
+    private function isAcceptedOrEnrolled(StudentApplication $application): bool
+    {
+        $application->loadMissing(['workflowStep']);
+
+        $status = strtolower((string) $application->workflowStep?->name);
+
+        return in_array($status, [
+            strtolower(WorkflowStepEnum::ACCEPTED->name()),
+            strtolower(WorkflowStepEnum::ENROLLED->name()),
+        ], true);
     }
 
     private function acceptedWorkflowStepId(): ?int

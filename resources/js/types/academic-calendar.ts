@@ -1,3 +1,5 @@
+import type { AssessmentCalendarWindow } from '@/types/assessments';
+
 export type AcademicCalendar = {
     type: string;
     id: string;
@@ -146,6 +148,7 @@ export type AcademicCalendarClassPreview = {
     students: AcademicCalendarClassPreviewStudent[];
     tutor?: ClassTutorSummary;
     moduleStaffing?: ClassModuleStaffingSummary;
+    assessmentWindows?: AssessmentCalendarWindow[];
 };
 
 export type AcademicCalendarClassMoveTarget = {
