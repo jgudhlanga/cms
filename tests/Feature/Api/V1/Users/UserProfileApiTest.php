@@ -48,7 +48,38 @@ test('authenticated user can fetch their own caused activities', function () {
             'data',
             'links',
             'meta',
+            'log_names',
         ]);
+});
+
+test('me activities can be searched by property values', function () {
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+    activity()
+        ->causedBy($user)
+        ->performedOn($user)
+        ->useLog('User')
+        ->withProperties([
+            'attributes' => ['phone_number' => '0778881111'],
+        ])
+        ->log('updated');
+
+    activity()
+        ->causedBy($user)
+        ->performedOn($user)
+        ->useLog('User')
+        ->withProperties([
+            'attributes' => ['phone_number' => '0770000000'],
+        ])
+        ->log('updated');
+
+    Sanctum::actingAs($user);
+
+    $this->getJson(route('v1.me.activities', ['search' => '0778881111']))
+        ->assertSuccessful()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.attributes.properties.phone_number', '0778881111');
 });
 
 test('activity endpoints filter by event description', function () {

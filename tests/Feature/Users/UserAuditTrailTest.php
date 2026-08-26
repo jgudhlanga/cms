@@ -158,3 +158,132 @@ test('root manage user can lookup users for activity trail', function () {
             'email' => $match->email,
         ]);
 });
+
+test('caused activities can be searched by log name and property values', function () {
+    $user = User::factory()->create();
+
+    activity()
+        ->causedBy($user)
+        ->performedOn($user)
+        ->useLog('User')
+        ->withProperties([
+            'attributes' => ['phone_number' => '0771110001'],
+        ])
+        ->log('updated');
+
+    activity()
+        ->causedBy($user)
+        ->performedOn($user)
+        ->useLog('StudentApplication')
+        ->withProperties([
+            'attributes' => ['application_number' => 'APP-999'],
+        ])
+        ->log('updated');
+
+    Sanctum::actingAs($user);
+
+    $this->getJson(route('v1.users.caused-activities', [
+        'user' => $user->id,
+        'search' => 'APP-999',
+    ]))
+        ->assertSuccessful()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.attributes.logName', 'StudentApplication');
+});
+
+test('caused activities can be filtered by log name', function () {
+    $user = User::factory()->create();
+
+    activity()
+        ->causedBy($user)
+        ->performedOn($user)
+        ->useLog('User')
+        ->log('updated');
+
+    activity()
+        ->causedBy($user)
+        ->performedOn($user)
+        ->useLog('StudentApplication')
+        ->log('created');
+
+    Sanctum::actingAs($user);
+
+    $this->getJson(route('v1.users.caused-activities', [
+        'user' => $user->id,
+        'log_name' => 'StudentApplication',
+    ]))
+        ->assertSuccessful()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.attributes.logName', 'StudentApplication')
+        ->assertJsonPath('log_names', fn ($names): bool => collect($names)->contains('User')
+            && collect($names)->contains('StudentApplication'));
+});
+
+test('caused activities can be filtered by date range', function () {
+    $user = User::factory()->create();
+
+    $old = activity()
+        ->causedBy($user)
+        ->performedOn($user)
+        ->useLog('User')
+        ->log('updated');
+    $old->created_at = now()->subDays(40);
+    $old->save();
+
+    activity()
+        ->causedBy($user)
+        ->performedOn($user)
+        ->useLog('User')
+        ->log('created');
+
+    Sanctum::actingAs($user);
+
+    $this->getJson(route('v1.users.caused-activities', [
+        'user' => $user->id,
+        'from' => now()->subDays(7)->toDateString(),
+        'to' => now()->toDateString(),
+    ]))
+        ->assertSuccessful()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.attributes.description', 'created');
+});
+
+test('caused activities reject invalid filter values', function () {
+    $user = User::factory()->create();
+
+    Sanctum::actingAs($user);
+
+    $this->getJson(route('v1.users.caused-activities', [
+        'user' => $user->id,
+        'event' => 'not-an-event',
+        'to' => '2026-01-01',
+        'from' => '2026-02-01',
+    ]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['event', 'to']);
+});
+
+test('caused activities filter by event column or description', function () {
+    $user = User::factory()->create();
+
+    activity()
+        ->causedBy($user)
+        ->performedOn($user)
+        ->event('updated')
+        ->log('user updated a record');
+
+    activity()
+        ->causedBy($user)
+        ->performedOn($user)
+        ->log('deleted');
+
+    Sanctum::actingAs($user);
+
+    $this->getJson(route('v1.users.caused-activities', [
+        'user' => $user->id,
+        'event' => 'updated',
+    ]))
+        ->assertSuccessful()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.attributes.description', 'user updated a record');
+});

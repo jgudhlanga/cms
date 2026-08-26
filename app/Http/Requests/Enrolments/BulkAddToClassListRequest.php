@@ -17,8 +17,10 @@ class BulkAddToClassListRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'application_ids' => ['required', 'array', 'min:1'],
-            'application_ids.*' => ['required', 'integer', 'exists:student_applications,id'],
+            'application_ids' => ['present', 'array'],
+            'application_ids.*' => ['integer', 'exists:student_applications,id'],
+            'waiting_application_ids' => ['sometimes', 'array'],
+            'waiting_application_ids.*' => ['integer', 'exists:student_applications,id'],
             'type' => ['required', new Enum(ClassListTypeEnum::class)],
             'note' => ['nullable', 'string', 'max:1000'],
             'bypass_ranking' => ['sometimes', 'boolean'],
@@ -35,6 +37,23 @@ class BulkAddToClassListRequest extends FormRequest
         $validator->after(function (Validator $validator): void {
             if ($validator->errors()->isNotEmpty()) {
                 return;
+            }
+
+            $provisionalIds = $this->input('application_ids', []);
+            $waitingIds = $this->input('waiting_application_ids', []);
+
+            if (! is_array($provisionalIds)) {
+                $provisionalIds = [];
+            }
+            if (! is_array($waitingIds)) {
+                $waitingIds = [];
+            }
+
+            if (count($provisionalIds) === 0 && count($waitingIds) === 0) {
+                $validator->errors()->add(
+                    'application_ids',
+                    'Select at least one application for the provisional or waiting list.',
+                );
             }
 
             if ($this->boolean('bypass_ranking') && strlen(trim((string) $this->input('note', ''))) < 10) {

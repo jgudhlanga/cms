@@ -90,19 +90,16 @@ onMounted(async () => {
 <template>
     <Head :title="$t('trans.audit_trail')" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-4">
-            <div v-if="canPickUser" class="max-w-md">
+        <UserCausedActivity :user-id="selectedUserId" searchable>
+            <template v-if="canPickUser" #filtersLeading>
                 <BaseCombobox
                     v-model="selectedUser"
-                    :label="resolveUiLabel('trans.switch_user', trans)"
-                    :vertical-layout="false"
+                    :placeholder="resolveUiLabel('trans.switch_user', trans)"
                     :options="options"
                     :is-loading="isLoadingUsers"
                     :on-search="async (search: string) => await whenSearch(search)"
                 />
-            </div>
-
-            <UserCausedActivity :user-id="selectedUserId" />
-        </div>
+            </template>
+        </UserCausedActivity>
     </PageContainer>
 </template>

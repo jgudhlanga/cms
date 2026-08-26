@@ -1290,6 +1290,7 @@ return [
     'priority' => 'Priority',
     'from' => 'From',
     'reason' => 'Reason',
+    'comment' => 'Comment',
     'nav_groups' => [
         'overview' => 'Overview',
         'lecturer' => 'Teaching',

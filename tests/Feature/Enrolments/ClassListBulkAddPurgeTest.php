@@ -3,6 +3,7 @@
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Models\Enrolments\ClassList;
+use App\Models\Institution\DepartmentIntakeClassSize;
 use App\Models\Rbac\Permission;
 use App\Models\Users\User;
 use Illuminate\Support\Facades\Queue;
@@ -375,4 +376,81 @@ it('forbids purge without delete permission', function () {
             'note' => 'Attempted purge without permission should fail.',
         ])
         ->assertForbidden();
+});
+
+it('bulk adds provisional and waiting application ids in one request', function () {
+    Queue::fake();
+
+    $provisional = createVerifiedStudentApplication('BULK-MIX-PROV');
+    ClassList::query()->where('student_application_id', $provisional->id)->forceDelete();
+
+    $waiting = createVerifiedStudentApplication('BULK-MIX-WAIT');
+    ClassList::query()->where('student_application_id', $waiting->id)->forceDelete();
+
+    $user = makeClassListMutationUser(['create:class-lists']);
+
+    $this->actingAs($user)
+        ->post(route('enrolments.bulk-add-to-class-list'), [
+            'application_ids' => [$provisional->id],
+            'waiting_application_ids' => [$waiting->id],
+            'type' => ClassListTypeEnum::PROVISIONAL->value,
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect(ClassList::query()->where('student_application_id', $provisional->id)->value('type'))
+        ->toBe(ClassListTypeEnum::PROVISIONAL)
+        ->and(ClassList::query()->where('student_application_id', $waiting->id)->value('type'))
+        ->toBe(ClassListTypeEnum::WAITING);
+});
+
+it('allows waiting list add without note when provisional seats already fill the intake limit', function () {
+    Queue::fake();
+
+    $seatHolder = createVerifiedStudentApplication('WAIT-OVER-SEAT');
+    ClassList::query()->where('student_application_id', $seatHolder->id)->update([
+        'type' => ClassListTypeEnum::PROVISIONAL->value,
+    ]);
+
+    $waitingApplicant = createVerifiedStudentApplication('WAIT-OVER-ADD');
+    ClassList::query()->where('student_application_id', $waitingApplicant->id)->forceDelete();
+
+    // Align the waiting applicant onto the same intake context as the seat holder.
+    $waitingApplicant->update([
+        'institution_department_id' => $seatHolder->institution_department_id,
+        'department_level_id' => $seatHolder->department_level_id,
+        'department_course_id' => $seatHolder->department_course_id,
+        'intake_period_id' => $seatHolder->intake_period_id,
+        'mode_of_study_id' => $seatHolder->mode_of_study_id,
+    ]);
+
+    DepartmentIntakeClassSize::query()->create([
+        'tenant_id' => $seatHolder->tenant_id,
+        'institution_department_id' => $seatHolder->institution_department_id,
+        'department_course_id' => $seatHolder->department_course_id,
+        'department_level_id' => $seatHolder->department_level_id,
+        'intake_period_id' => $seatHolder->intake_period_id,
+        'mode_of_study_id' => $seatHolder->mode_of_study_id,
+        'class_size' => 1,
+    ]);
+
+    $user = makeClassListMutationUser(['create:class-lists']);
+
+    $this->actingAs($user)
+        ->post(route('enrolments.bulk-add-to-class-list'), [
+            'application_ids' => [],
+            'waiting_application_ids' => [$waitingApplicant->id],
+            'type' => ClassListTypeEnum::PROVISIONAL->value,
+            'institution_department_id' => $seatHolder->institution_department_id,
+            'department_level_id' => $seatHolder->department_level_id,
+            'department_course_id' => $seatHolder->department_course_id,
+            'intake_period_id' => $seatHolder->intake_period_id,
+            'mode_of_study_id' => $seatHolder->mode_of_study_id,
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('success')
+        ->assertSessionDoesntHaveErrors();
+
+    expect(ClassList::query()->where('student_application_id', $waitingApplicant->id)->value('type'))
+        ->toBe(ClassListTypeEnum::WAITING);
 });

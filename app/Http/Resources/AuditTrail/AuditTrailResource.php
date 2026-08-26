@@ -58,9 +58,15 @@ class AuditTrailResource extends JsonResource
 
     private function getCauserName(): string
     {
-        return User::find($this->resource->causer_id)?->full_name
-            ?? User::find(User::SUPER_ADMINISTRATOR)?->full_name
-            ?? '';
+        $causer = $this->resource->relationLoaded('causer')
+            ? $this->resource->getRelation('causer')
+            : $this->resource->causer;
+
+        if ($causer instanceof User) {
+            return $causer->full_name;
+        }
+
+        return User::query()->find(User::SUPER_ADMINISTRATOR)?->full_name ?? '';
     }
 
     /**

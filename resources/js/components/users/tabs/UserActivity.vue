@@ -1,88 +1,46 @@
 <script setup lang="ts">
 import ActivityTimeline from '@/components/audit/ActivityTimeline.vue';
+import ActivityTrailFilters from '@/components/audit/ActivityTrailFilters.vue';
+import { useActivityTrail } from '@/composables/users/useActivityTrail';
 import type { ActivityEventFilter } from '@/lib/activityTimeline';
-import HttpService from '@/services/http.service';
-import ToastService from '@/services/toast.service';
-import type { Audit } from '@/types/audit';
-import type { ApiFilterResponse } from '@/types/data-pagination';
 import type { User } from '@/types/users';
-import { onMounted, ref, watch } from 'vue';
+import { trans } from 'laravel-vue-i18n';
+import { watch } from 'vue';
 
-interface Props {
+const props = defineProps<{
     user: User;
-}
+}>();
 
-const props = defineProps<Props>();
-
-const isLoading = ref(true);
-const activities = ref<Audit[]>([]);
-const page = ref(1);
-const hasMore = ref(false);
-const filter = ref<ActivityEventFilter>('all');
-
-const buildUrl = (): string => {
-    const params = new URLSearchParams({ page: String(page.value) });
-
-    if (filter.value !== 'all') {
-        params.set('event', filter.value);
-    }
-
-    return `${route('v1.users.activities', { user: props.user.id })}?${params.toString()}`;
-};
-
-const loadActivities = async (): Promise<void> => {
-    isLoading.value = true;
-
-    try {
-        const response = (await HttpService.get(buildUrl())) as ApiFilterResponse;
-        const nextPage = (response.data ?? []) as Audit[];
-
-        activities.value = page.value === 1 ? nextPage : [...activities.value, ...nextPage];
-        hasMore.value = Boolean(response.links?.next);
-    } catch {
-        ToastService.error('Failed to load activity log.');
-    } finally {
-        isLoading.value = false;
-    }
-};
-
-const loadMore = async (): Promise<void> => {
-    page.value += 1;
-    await loadActivities();
-};
+const { activities, emptyUsesFilterCopy, filters, hasMore, isLoading, logNameOptions, applyFilters, loadMore, resetAndLoad } = useActivityTrail(
+    (params) => `${route('v1.users.activities', { user: props.user.id })}?${params.toString()}`,
+    { searchable: true },
+);
 
 const onFilterChange = async (value: ActivityEventFilter): Promise<void> => {
-    filter.value = value;
-    page.value = 1;
-    activities.value = [];
-    await loadActivities();
+    await applyFilters({ ...filters.value, event: value });
 };
-
-onMounted(async () => {
-    page.value = 1;
-    await loadActivities();
-});
 
 watch(
     () => props.user.id,
     async () => {
-        filter.value = 'all';
-        page.value = 1;
-        activities.value = [];
-        await loadActivities();
+        await resetAndLoad();
     },
 );
 </script>
 
 <template>
-    <ActivityTimeline
-        :activities="activities"
-        :is-loading="isLoading"
-        :has-more="hasMore"
-        :filter="filter"
-        :show-causer="true"
-        :empty-message="$t('trans.not_provided')"
-        @update:filter="onFilterChange"
-        @load-more="loadMore"
-    />
+    <div class="flex flex-col gap-4">
+        <ActivityTrailFilters :filters="filters" :log-name-options="logNameOptions" @change="applyFilters" />
+
+        <ActivityTimeline
+            :activities="activities"
+            :is-loading="isLoading"
+            :has-more="hasMore"
+            :filter="filters.event"
+            :show-causer="true"
+            :empty-message="emptyUsesFilterCopy ? trans('dashboard.activity_no_matches') : $t('trans.not_provided')"
+            @update:filter="onFilterChange"
+            @load-more="loadMore"
+        />
+    </div>
 </template>

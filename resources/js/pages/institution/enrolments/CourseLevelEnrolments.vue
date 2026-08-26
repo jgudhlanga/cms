@@ -6,6 +6,10 @@ import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { closeModal, errorAlert, forbiddenAlert, openModal } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
+import {
+    getClassListTypeFromRank,
+    occupiesIntakeSeat,
+} from '@/lib/enrolmentClassListPresentation';
 import { hasAbility } from '@/lib/permissions';
 import ClassListActionDialog from '@/pages/institution/enrolments/partials/ClassListActionDialog.vue';
 import type { ClassListActionPayload } from '@/pages/institution/enrolments/partials/ClassListActionDialog.vue';
@@ -14,13 +18,14 @@ import DeficitInClassSize from '@/pages/institution/enrolments/partials/DeficitI
 import EnrolmentApplicationsBrowser from '@/pages/institution/enrolments/partials/EnrolmentApplicationsBrowser.vue';
 import GenderEnrolmentAccordionItem from '@/pages/institution/enrolments/partials/GenderEnrolmentAccordionItem.vue';
 import ScoringFormula from '@/pages/institution/enrolments/partials/ScoringFormula.vue';
+import { useEnrolmentClassListUiStore } from '@/store/enrolments/useEnrolmentClassListUiStore';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentLevel } from '@/types/department-meta-data';
 import { EnrolmentApplication, EnrolmentGroup, EnrolmentGroupResponse } from '@/types/enrolments';
 import { InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
 import { WorkflowStep } from '@/types/settings';
 import { Link as BreadcrumbLink } from '@/types/ui';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { trans } from 'laravel-vue-i18n';
 
@@ -41,9 +46,10 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { department, level, enrolments, intakePeriod, modeOfStudy, course } = props;
+const { department, level, intakePeriod, modeOfStudy, course } = props;
+const enrolments = computed(() => props.enrolments);
 const { isItTrue } = useUtils();
-const { allocateClassSlots, classListIsCreated } = useEnrolments();
+const { allocateClassSlots, classListIsCreatedForGroup, applyPolicyAlgorithmToApplications } = useEnrolments();
 
 const intakeLimit = ref(Number(props.classSize) || 0);
 watch(
@@ -67,8 +73,28 @@ const GROUP_ICONS: Record<(typeof genderGroups)[number], IconName> = {
     males: IconName.mars,
 };
 
-const firstNonEmptyGroup = genderGroups.find((group) => (enrolments.groups?.[group]?.length ?? 0) > 0) ?? '';
-const openGenderGroup = ref(firstNonEmptyGroup);
+const enrolmentUiStore = useEnrolmentClassListUiStore();
+const enrolmentContextKey = computed(() =>
+    enrolmentUiStore.contextKey({
+        departmentId: department.id,
+        levelId: level.id,
+        courseId: course?.department_course_id,
+        intakePeriodId: intakePeriod.id,
+        modeOfStudyId: modeOfStudy.id,
+    }),
+);
+
+const firstNonEmptyGroup =
+    genderGroups.find((group) => (enrolments.value.groups?.[group]?.length ?? 0) > 0) ?? '';
+
+const openGenderGroup = computed({
+    get: () => enrolmentUiStore.getOpenGenderGroup(enrolmentContextKey.value, firstNonEmptyGroup),
+    set: (group: string) => enrolmentUiStore.setOpenGenderGroup(enrolmentContextKey.value, group),
+});
+
+if (!enrolmentUiStore.openGenderGroupByContext[enrolmentContextKey.value] && firstNonEmptyGroup) {
+    enrolmentUiStore.setOpenGenderGroup(enrolmentContextKey.value, firstNonEmptyGroup);
+}
 
 const backUrl = computed(() =>
     route('institution-departments.show', {
@@ -88,14 +114,17 @@ const breadcrumbs: Array<BreadcrumbLink> = [
 ];
 
 const levelRequirements = computed(() => level?.relationships?.requirement);
+const isOLevel = computed(() => isItTrue(levelRequirements.value?.attributes?.isOLevelRequired));
 
 const allApplications = computed((): EnrolmentApplication[] =>
-    genderGroups.flatMap((group) => enrolments.groups?.[group] ?? []),
+    genderGroups.flatMap((group) => enrolments.value.groups?.[group] ?? []),
 );
 
 const eligibleApplications = computed(() => allApplications.value.filter((app) => !app.inClassList));
 
-const alreadyInClassCount = computed(() => allApplications.value.filter((app) => app.inClassList).length);
+const alreadyInClassCount = computed(() =>
+    allApplications.value.filter((app) => app.inClassList && occupiesIntakeSeat(app.classListType)).length,
+);
 
 const selectedCount = computed(() => selectedIds.value.size);
 
@@ -168,23 +197,80 @@ const remainingSeats = computed(() => Math.max(intakeLimit.value - alreadyInClas
 
 const deficit = computed(() => remainingSeats.value);
 
-const exceedsClassSize = computed(() => selectedForAdd.value.length > remainingSeats.value);
+const rankedGroupApplications = (group: EnrolmentGroup): EnrolmentApplication[] => {
+    const apps = enrolments.value.groups?.[group] ?? [];
+    if (isOLevel.value) {
+        return applyPolicyAlgorithmToApplications(apps, level);
+    }
+
+    return [...apps].sort(
+        (a, b) => new Date(a.applicationDate).getTime() - new Date(b.applicationDate).getTime(),
+    );
+};
+
+const splitSelectedForAdd = (): { provisionalIds: number[]; waitingIds: number[] } => {
+    const provisionalIds: number[] = [];
+    const waitingIds: number[] = [];
+
+    genderGroups.forEach((group) => {
+        const ranked = rankedGroupApplications(group);
+        const slot = getGroupSlot(group);
+        const groupListCreated = classListIsCreatedForGroup(enrolments.value, group);
+
+        ranked.forEach((app, index) => {
+            if (!selectedIds.value.has(Number(app.applicationId)) || app.inClassList) {
+                return;
+            }
+
+            if (groupListCreated) {
+                provisionalIds.push(Number(app.applicationId));
+                return;
+            }
+
+            if (group === 'disabled') {
+                provisionalIds.push(Number(app.applicationId));
+                return;
+            }
+
+            const type = getClassListTypeFromRank(index, slot);
+            if (type === 'provisional') {
+                provisionalIds.push(Number(app.applicationId));
+            } else if (type === 'waiting') {
+                waitingIds.push(Number(app.applicationId));
+            }
+        });
+    });
+
+    return { provisionalIds, waitingIds };
+};
+
+const reloadEnrolmentsView = () => {
+    router.reload({
+        only: ['enrolments', 'classSize'],
+        preserveScroll: true,
+        preserveState: true,
+    });
+};
 
 const noData = computed(
     () =>
-        (enrolments.groups?.disabled?.length ?? 0) === 0 &&
-        (enrolments.groups?.females?.length ?? 0) === 0 &&
-        (enrolments.groups?.males?.length ?? 0) === 0,
+        (enrolments.value.groups?.disabled?.length ?? 0) === 0 &&
+        (enrolments.value.groups?.females?.length ?? 0) === 0 &&
+        (enrolments.value.groups?.males?.length ?? 0) === 0,
 );
 
 const totalApplications = computed(() => {
-    return (enrolments.groups?.disabled?.length ?? 0) + (enrolments.groups?.females?.length ?? 0) + (enrolments.groups?.males?.length ?? 0);
+    return (
+        (enrolments.value.groups?.disabled?.length ?? 0) +
+        (enrolments.value.groups?.females?.length ?? 0) +
+        (enrolments.value.groups?.males?.length ?? 0)
+    );
 });
 
-const groupCount = (group: EnrolmentGroup): number => enrolments.groups?.[group]?.length ?? 0;
+const groupCount = (group: EnrolmentGroup): number => enrolments.value.groups?.[group]?.length ?? 0;
 
 const getGroupSlot = (group: EnrolmentGroup): number => {
-    const groups = enrolments?.groups ?? { disabled: [], females: [], males: [] };
+    const groups = enrolments.value?.groups ?? { disabled: [], females: [], males: [] };
     if (totalApplications.value > intakeLimit.value) {
         const { disabled, females, males } = allocateClassSlots(
             intakeLimit.value,
@@ -261,6 +347,7 @@ const mutationContext = () => ({
 
 const bulkAddForm = useForm({
     application_ids: [] as number[],
+    waiting_application_ids: [] as number[],
     type: 'provisional',
     note: '' as string | undefined,
     bypass_ranking: false,
@@ -286,26 +373,36 @@ const openActionDialog = (action: ClassListActionPayload) => {
     openModal({ name: APP_MODULE_KEYS.class_list_action, edit: action });
 };
 
-const queueAdd = (applicationIds: number[], bypassRanking: boolean) => {
+const queueAdd = (
+    applicationIds: number[],
+    bypassRanking: boolean,
+    waitingApplicationIds: number[] = [],
+) => {
     if (!hasAbility('create:class-lists')) {
         forbiddenAlert();
         return;
     }
-    if (applicationIds.length === 0) {
+    if (applicationIds.length === 0 && waitingApplicationIds.length === 0) {
         errorAlert(trans('trans.ui_select_all_eligible'));
         return;
     }
 
-    const overLimit = alreadyInClassCount.value + applicationIds.length > intakeLimit.value && intakeLimit.value > 0;
+    const overLimit =
+        alreadyInClassCount.value + applicationIds.length > intakeLimit.value && intakeLimit.value > 0;
     const needsBypass = bypassRanking || overLimit;
-    const count = applicationIds.length;
+    const count = applicationIds.length + waitingApplicationIds.length;
+    const waitingNote =
+        waitingApplicationIds.length > 0
+            ? ` (${waitingApplicationIds.length} waiting)`
+            : '';
 
     openActionDialog({
         kind: 'add',
         applicationIds,
+        waitingApplicationIds,
         bypassRanking: needsBypass,
         title: trans('trans.ui_add_to_class_list'),
-        description: `Add ${count} application${count === 1 ? '' : 's'} to the provisional class list.`,
+        description: `Add ${count} application${count === 1 ? '' : 's'} to the class list${waitingNote}.`,
         confirmLabel: trans('trans.ui_add_to_class_list'),
         requireNote: needsBypass,
         bypassWarning: needsBypass
@@ -379,11 +476,10 @@ const queuePurge = (applicationIds: number[]) => {
 };
 
 async function bulkAddSelected() {
-    const overLimit = exceedsClassSize.value;
-    queueAdd(
-        selectedForAdd.value.map((app) => app.applicationId),
-        overLimit || classListIsCreated(enrolments),
-    );
+    const { provisionalIds, waitingIds } = splitSelectedForAdd();
+    const overLimit = provisionalIds.length > remainingSeats.value;
+
+    queueAdd(provisionalIds, overLimit, waitingIds);
 }
 
 function openPurgeDialog() {
@@ -402,6 +498,7 @@ function confirmPendingAction(note: string) {
         pendingAction.value = null;
         closeModal(APP_MODULE_KEYS.class_list_action);
         clearSelection();
+        reloadEnrolmentsView();
     };
     const onError = (errors: Record<string, string>) => {
         const messageText = Object.keys(errors).length ? Object.values(errors).join('\n') : 'Action failed';
@@ -410,6 +507,7 @@ function confirmPendingAction(note: string) {
 
     if (action.kind === 'add') {
         bulkAddForm.application_ids = action.applicationIds;
+        bulkAddForm.waiting_application_ids = action.waitingApplicationIds ?? [];
         bulkAddForm.type = 'provisional';
         bulkAddForm.note = note || undefined;
         bulkAddForm.bypass_ranking = action.bypassRanking;
@@ -455,8 +553,13 @@ function confirmPendingAction(note: string) {
     });
 }
 
-const onAddOne = (application: EnrolmentApplication, bypassRanking: boolean) => {
-    queueAdd([application.applicationId], bypassRanking || application.inClassList === false);
+const onAddOne = (application: EnrolmentApplication, bypassRanking: boolean, listType?: string) => {
+    if (listType === 'waiting') {
+        queueAdd([], bypassRanking, [application.applicationId]);
+        return;
+    }
+
+    queueAdd([application.applicationId], bypassRanking);
 };
 
 const onRowTransition = (application: EnrolmentApplication, toType: string) => {
@@ -507,7 +610,7 @@ const onRowPurge = (application: EnrolmentApplication) => {
                     <DeficitInClassSize :deficit="deficit" />
                 </div>
 
-                <ScoringFormula v-if="isItTrue(levelRequirements?.attributes?.isOLevelRequired)" />
+                <ScoringFormula v-if="isOLevel" />
             </template>
 
             <ClassListActionDialog
@@ -528,13 +631,16 @@ const onRowPurge = (application: EnrolmentApplication) => {
                     :is-open="openGenderGroup === group"
                 >
                     <EnrolmentApplicationsBrowser
+                        :key="group"
                         :level="level"
                         :department-id="String(department?.id)"
-                        :applications="enrolments.groups[group]"
+                        :applications="enrolments.groups?.[group] ?? []"
                         :class-size="intakeLimit"
                         :slot-size="getGroupSlot(group)"
-                        :is-o-level="isItTrue(levelRequirements?.attributes?.isOLevelRequired)"
-                        :class-list-created="classListIsCreated(enrolments)"
+                        :enrolment-group="group"
+                        :is-o-level="isOLevel"
+                        :class-list-created="classListIsCreatedForGroup(enrolments, group)"
+                        :ui-context-key="enrolmentContextKey"
                         :listed-count="alreadyInClassCount"
                         :selected-ids="selectedIds"
                         :is-selected="isSelected"

@@ -16,12 +16,19 @@ import {
     UNQUALIFIED_STATUS_KEY,
     applicationsExcludedFromRanking,
     filterEnrolmentApplications,
+    getClassListTypeFromRank,
+    getClassListTypeRowClass,
+    getDisabledQualifiedRowClass,
+    isDisabledEnrolmentGroup,
+    isWithinSelectableBand,
 } from '@/lib/enrolmentClassListPresentation';
 import { hasAbility } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
+import { useEnrolmentClassListUiStore } from '@/store/enrolments/useEnrolmentClassListUiStore';
 import { DepartmentLevel } from '@/types/department-meta-data';
-import { EnrolmentApplication } from '@/types/enrolments';
-import { ChevronDown, Lock, MoreHorizontal, Search } from 'lucide-vue-next';
+import { EnrolmentApplication, EnrolmentGroup } from '@/types/enrolments';
+import { ChevronDown, Lock, MoreHorizontal, Plus, Search } from 'lucide-vue-next';
+import { trans } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
 
 interface Props {
@@ -30,9 +37,11 @@ interface Props {
     applications: EnrolmentApplication[];
     classSize: number;
     slotSize: number;
+    enrolmentGroup: EnrolmentGroup;
     isOLevel: boolean;
     classListCreated: boolean;
     listedCount?: number;
+    uiContextKey?: string;
     selectedIds?: Set<number>;
     isSelected?: (applicationId: number) => boolean;
     selectedCount?: number;
@@ -51,12 +60,13 @@ const props = withDefaults(defineProps<Props>(), {
     canBulkAdd: false,
     canBulkPurge: false,
     actionProcessing: false,
+    uiContextKey: '',
 });
 
 const emit = defineEmits<{
     toggle: [applicationId: number, checked: boolean];
     selectGroup: [applications: EnrolmentApplication[], checked: boolean];
-    addOne: [application: EnrolmentApplication, bypassRanking: boolean];
+    addOne: [application: EnrolmentApplication, bypassRanking: boolean, listType?: string];
     transitionOne: [application: EnrolmentApplication, toType: string];
     purgeOne: [application: EnrolmentApplication];
     clearSelection: [];
@@ -65,13 +75,16 @@ const emit = defineEmits<{
     bulkPurge: [];
 }>();
 
-const STATUS_ORDER = ['final', 'verified', 'waiting', 'provisional', 'failed', 'others'] as const;
+const STATUS_ORDER = ['provisional', 'waiting', 'failed', 'others', 'verified', 'final'] as const;
+
+/** Filter chip order (after the fixed "All" chip). */
+const FILTER_PILL_ORDER = ['provisional', 'waiting', 'failed', 'others'] as const;
 
 const STATUS_PILL: Record<string, string> = {
     final: 'bg-emerald-100 text-emerald-900 border-emerald-200',
     verified: 'bg-primary/15 text-primary border-primary/25',
     waiting: 'bg-violet-100 text-violet-900 border-violet-200',
-    provisional: 'bg-orange-100 text-orange-900 border-orange-200',
+    provisional: 'bg-green-100 text-green-900 border-green-200',
     failed: 'bg-red-100 text-red-900 border-red-200',
     others: 'bg-muted text-muted-foreground border-border',
     [UNQUALIFIED_STATUS_KEY]: 'bg-red-50 text-red-800 border-red-200',
@@ -81,7 +94,7 @@ const STATUS_ACCENT: Record<string, string> = {
     final: 'border-l-emerald-500',
     verified: 'border-l-primary',
     waiting: 'border-l-violet-400',
-    provisional: 'border-l-orange-400',
+    provisional: 'border-l-green-500',
     failed: 'border-l-red-400',
     others: 'border-l-muted-foreground/40',
     [UNQUALIFIED_STATUS_KEY]: 'border-l-red-600',
@@ -99,7 +112,53 @@ const { formatDate, isItTrue } = useUtils();
 
 const search = ref('');
 const activeStatus = ref<string>('all');
-const openStatuses = ref<Record<string, boolean>>({});
+const enrolmentUiStore = useEnrolmentClassListUiStore();
+
+const openStatuses = computed({
+    get: () => {
+        if (!props.uiContextKey) {
+            return {} as Record<string, boolean>;
+        }
+
+        return enrolmentUiStore.getOpenStatusSections(props.uiContextKey, props.enrolmentGroup);
+    },
+    set: (sections: Record<string, boolean>) => {
+        if (!props.uiContextKey) {
+            return;
+        }
+
+        enrolmentUiStore.setOpenStatusSections(props.uiContextKey, props.enrolmentGroup, sections);
+    },
+});
+
+watch(
+    () =>
+        props.applications
+            .map((app) => `${app.applicationId}:${app.inClassList ? 1 : 0}:${app.classListType ?? ''}`)
+            .join('|'),
+    () => {
+        if (activeStatus.value === 'all') {
+            return;
+        }
+
+        // Recompute quickly from current applications so stale filters reset after reload.
+        const hasMatch = props.applications.some((app) => {
+            if (activeStatus.value === UNQUALIFIED_STATUS_KEY) {
+                return false;
+            }
+            const key =
+                app.classListType && STATUS_ORDER.includes(app.classListType as (typeof STATUS_ORDER)[number])
+                    ? app.classListType
+                    : 'others';
+
+            return key === activeStatus.value;
+        });
+
+        if (!hasMatch && activeStatus.value !== UNQUALIFIED_STATUS_KEY) {
+            activeStatus.value = 'all';
+        }
+    },
+);
 
 const levelRequirements = computed(() => props.level?.relationships?.requirement);
 const requirementSubjects = computed(() => levelRequirements.value?.relationships?.subjects ?? []);
@@ -155,7 +214,15 @@ const statusCounts = computed(() => {
 });
 
 const visibleStatusPills = computed(() => {
-    const pills = STATUS_ORDER.filter((key) => (statusCounts.value[key] ?? 0) > 0 || activeStatus.value === key);
+    const pills: string[] = FILTER_PILL_ORDER.filter(
+        (key) => (statusCounts.value[key] ?? 0) > 0 || activeStatus.value === key,
+    );
+
+    STATUS_ORDER.filter((key) => !(FILTER_PILL_ORDER as readonly string[]).includes(key)).forEach((key) => {
+        if ((statusCounts.value[key] ?? 0) > 0 || activeStatus.value === key) {
+            pills.push(key);
+        }
+    });
 
     if ((statusCounts.value[UNQUALIFIED_STATUS_KEY] ?? 0) > 0 || activeStatus.value === UNQUALIFIED_STATUS_KEY) {
         pills.push(UNQUALIFIED_STATUS_KEY);
@@ -163,6 +230,20 @@ const visibleStatusPills = computed(() => {
 
     return pills;
 });
+
+const statusPillLabel = (status: string): string => {
+    if (status === UNQUALIFIED_STATUS_KEY) {
+        return trans('trans.ui_unqualified');
+    }
+    if (status === 'failed') {
+        return 'Rejected/Failed';
+    }
+    if (status === 'others') {
+        return 'Applications';
+    }
+
+    return status.charAt(0).toUpperCase() + status.slice(1);
+};
 
 const groupedForDisplay = computed(() => {
     if (activeStatus.value === UNQUALIFIED_STATUS_KEY) {
@@ -186,17 +267,27 @@ const groupedForDisplay = computed(() => {
     }
 
     if (props.classListCreated) {
-        const grouped = groupByClassListType(source);
-        if (!props.isOLevel) {
-            return grouped;
+        const listed = source.filter((app) => app.inClassList);
+        const unlisted = source.filter((app) => !app.inClassList);
+        const result: Record<string, EnrolmentApplication[]> = {};
+
+        if (listed.length > 0) {
+            const grouped = groupByClassListType(listed);
+
+            Object.entries(grouped).forEach(([key, apps]) => {
+                result[key] = props.isOLevel ? applyPolicyAlgorithmToApplications(apps, props.level) : apps;
+            });
         }
 
-        const ranked: Record<string, EnrolmentApplication[]> = {};
-        Object.entries(grouped).forEach(([key, apps]) => {
-            ranked[key] = applyPolicyAlgorithmToApplications(apps, props.level);
-        });
+        if (unlisted.length > 0) {
+            result.applications = props.isOLevel
+                ? applyPolicyAlgorithmToApplications(unlisted, props.level)
+                : [...unlisted].sort(
+                      (a, b) => new Date(a.applicationDate).getTime() - new Date(b.applicationDate).getTime(),
+                  );
+        }
 
-        return ranked;
+        return result;
     }
 
     return { applications: source } as Record<string, EnrolmentApplication[]>;
@@ -214,7 +305,7 @@ const displaySections = computed(() => {
         .map(([key, apps]) => ({
             key,
             apps,
-            rankRows: !props.classListCreated,
+            rankRows: key === 'applications',
         }));
 
     if (showUnqualifiedSection.value) {
@@ -229,7 +320,25 @@ const displaySections = computed(() => {
 });
 
 const selectableInView = computed(() =>
-    displaySections.value.flatMap((section) => section.apps).filter((app) => app.classListType !== 'final'),
+    displaySections.value.flatMap((section) => {
+        if (section.key === UNQUALIFIED_STATUS_KEY) {
+            return props.classListCreated
+                ? section.apps.filter((app) => app.classListType !== 'final')
+                : [];
+        }
+
+        if (section.rankRows) {
+            if (isDisabledEnrolmentGroup(props.enrolmentGroup)) {
+                return section.apps.filter((app) => !app.inClassList && app.classListType !== 'final');
+            }
+
+            return section.apps
+                .filter((app) => !app.inClassList && app.classListType !== 'final')
+                .filter((_, index) => isWithinSelectableBand(index, props.slotSize));
+        }
+
+        return section.apps.filter((app) => app.classListType !== 'final');
+    }),
 );
 
 const selectedInThisGroup = computed(
@@ -265,9 +374,10 @@ const ensureOpenDefaults = () => {
     if (keys.length === 0) {
         return;
     }
-    const hasOpen = keys.some((key) => openStatuses.value[key]);
+    const current = openStatuses.value;
+    const hasOpen = keys.some((key) => current[key]);
     if (!hasOpen) {
-        openStatuses.value = { ...openStatuses.value, [keys[0]]: true };
+        openStatuses.value = { ...current, [keys[0]]: true };
     }
 };
 
@@ -276,6 +386,11 @@ watch(displaySections, ensureOpenDefaults, { immediate: true });
 const isSectionOpen = (key: string) => openStatuses.value[key] ?? false;
 
 const toggleSection = (key: string) => {
+    if (props.uiContextKey) {
+        enrolmentUiStore.toggleStatusSection(props.uiContextKey, props.enrolmentGroup, key);
+        return;
+    }
+
     openStatuses.value = { ...openStatuses.value, [key]: !isSectionOpen(key) };
 };
 
@@ -319,11 +434,8 @@ const sectionTitle = (key: string): string => {
     if (key === 'applications') {
         return 'Applications';
     }
-    if (key === UNQUALIFIED_STATUS_KEY) {
-        return 'Unqualified';
-    }
 
-    return key;
+    return statusPillLabel(key);
 };
 
 const canCreate = computed(() => hasAbility('create:class-lists'));
@@ -360,17 +472,100 @@ const transitionOptions = (app: EnrolmentApplication): Array<{ to: string; label
 
 const isFinalLocked = (app: EnrolmentApplication): boolean => app.classListType === 'final';
 
-const addBypassNeeded = (app: EnrolmentApplication): boolean => {
+const canSelectApplication = (application: EnrolmentApplication, sectionKey: string, index: number): boolean => {
+    if (isFinalLocked(application)) {
+        return false;
+    }
+
+    if (sectionKey === UNQUALIFIED_STATUS_KEY) {
+        return false;
+    }
+
+    if (sectionKey === 'applications') {
+        if (isDisabledEnrolmentGroup(props.enrolmentGroup)) {
+            return !application.inClassList;
+        }
+
+        return !application.inClassList && isWithinSelectableBand(index, props.slotSize);
+    }
+
+    if (props.classListCreated) {
+        return true;
+    }
+
+    if (isDisabledEnrolmentGroup(props.enrolmentGroup)) {
+        return true;
+    }
+
+    return isWithinSelectableBand(index, props.slotSize);
+};
+
+const rowClassForApplication = (application: EnrolmentApplication, sectionKey: string, index: number): string => {
+    if (sectionKey === UNQUALIFIED_STATUS_KEY) {
+        return 'bg-red-50/80';
+    }
+
+    if (sectionKey === 'applications' && props.classListCreated) {
+        return '';
+    }
+
+    if (!props.classListCreated) {
+        if (isDisabledEnrolmentGroup(props.enrolmentGroup)) {
+            return getDisabledQualifiedRowClass(application.classListType);
+        }
+
+        return getRowClassList(index, props.slotSize);
+    }
+
+    if (isDisabledEnrolmentGroup(props.enrolmentGroup)) {
+        return getDisabledQualifiedRowClass(application.classListType);
+    }
+
+    return getClassListTypeRowClass(application.classListType);
+};
+
+const addBypassNeeded = (app: EnrolmentApplication, listType?: string, sectionKey?: string): boolean => {
     if (unqualifiedIdSet.value.has(Number(app.applicationId))) {
         return true;
     }
-    if (props.classListCreated) {
+    if (app.inClassList) {
         return true;
+    }
+    if (listType === 'waiting') {
+        return false;
+    }
+    if (sectionKey === 'applications' || !props.classListCreated) {
+        if (props.classSize > 0 && props.listedCount + 1 > props.classSize) {
+            return true;
+        }
+
+        return false;
     }
     if (props.classSize > 0 && props.listedCount + 1 > props.classSize) {
         return true;
     }
     return !app.classListType || app.classListType === 'others';
+};
+
+const resolveAddType = (sectionKey: string, index: number): string => {
+    if (sectionKey === UNQUALIFIED_STATUS_KEY) {
+        return 'provisional';
+    }
+
+    if (sectionKey !== 'applications' && props.classListCreated) {
+        return 'provisional';
+    }
+
+    if (isDisabledEnrolmentGroup(props.enrolmentGroup)) {
+        return 'provisional';
+    }
+
+    return getClassListTypeFromRank(index, props.slotSize) || 'provisional';
+};
+
+const onAddOneClick = (application: EnrolmentApplication, sectionKey: string, index: number) => {
+    const listType = resolveAddType(sectionKey, index);
+    emit('addOne', application, addBypassNeeded(application, listType, sectionKey), listType);
 };
 
 const hasRankedScore = (application: EnrolmentApplication, statusKey: string): boolean =>
@@ -418,7 +613,7 @@ const hasRankedScore = (application: EnrolmentApplication, statusKey: string): b
                 "
                 @click="activeStatus = status"
             >
-                {{ status === UNQUALIFIED_STATUS_KEY ? $t('trans.ui_unqualified') : status }}
+                {{ statusPillLabel(status) }}
                 {{ statusCounts[status] ?? 0 }}
             </button>
             <div class="ml-auto flex items-center gap-2">
@@ -595,21 +790,18 @@ const hasRankedScore = (application: EnrolmentApplication, statusKey: string): b
                                 <tr
                                     v-for="(application, index) in section.apps"
                                     :key="application.applicationId"
-                                    class="border-b border-border/40 last:border-0 hover:bg-muted/30"
-                                    :class="[
-                                        section.rankRows ? getRowClassList(index, classSize) : '',
-                                        section.key === UNQUALIFIED_STATUS_KEY ? 'bg-red-50/80' : '',
-                                    ]"
+                                    class="border-b border-border/40 last:border-0"
+                                    :class="rowClassForApplication(application, section.key, index)"
                                 >
                                     <td class="px-2 py-1.5 text-center">
                                         <Checkbox
-                                            v-if="!isFinalLocked(application)"
+                                            v-if="canSelectApplication(application, section.key, index)"
                                             :checked="isSelected(application.applicationId)"
                                             :aria-label="application.studentName"
                                             @update:checked="(checked) => emit('toggle', application.applicationId, checked === true)"
                                         />
                                         <span
-                                            v-else
+                                            v-else-if="isFinalLocked(application)"
                                             class="inline-flex items-center justify-center text-emerald-700"
                                             title="Final class list entries are locked"
                                         >
@@ -706,12 +898,14 @@ const hasRankedScore = (application: EnrolmentApplication, statusKey: string): b
                                     </template>
                                     <td class="px-2 py-1.5 text-center">
                                         <button
-                                            v-if="!application.inClassList && canCreate"
+                                            v-if="!application.inClassList && canCreate && (section.key === 'applications' ? (isDisabledEnrolmentGroup(enrolmentGroup) || isWithinSelectableBand(index, slotSize)) : classListCreated)"
                                             type="button"
-                                            class="text-[10px] font-semibold text-primary hover:underline"
-                                            @click="emit('addOne', application, addBypassNeeded(application))"
+                                            class="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary transition-colors hover:bg-primary/20"
+                                            :aria-label="$t('trans.ui_add_to_class_list')"
+                                            :title="$t('trans.ui_add_to_class_list')"
+                                            @click="onAddOneClick(application, section.key, index)"
                                         >
-                                            Add
+                                            <Plus class="h-3.5 w-3.5" aria-hidden="true" />
                                         </button>
                                         <span
                                             v-else-if="isFinalLocked(application)"
