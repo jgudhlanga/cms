@@ -168,6 +168,112 @@ export const activityFieldChanges = (
     return { changed, unchangedCount };
 };
 
+export type ActivityTrailFiltersState = {
+    event: ActivityEventFilter;
+    search: string;
+    logName: string | null;
+    from: string | null;
+    to: string | null;
+};
+
+export const defaultActivityTrailFilters = (): ActivityTrailFiltersState => ({
+    event: 'all',
+    search: '',
+    logName: null,
+    from: null,
+    to: null,
+});
+
+export const defaultSearchableActivityTrailFilters = (now: Date = new Date()): ActivityTrailFiltersState => {
+    const [from, to] = defaultActivityDateRange(now);
+
+    return {
+        ...defaultActivityTrailFilters(),
+        from,
+        to,
+    };
+};
+
+export const defaultActivityDateRange = (now: Date = new Date()): [string, string] => {
+    const end = startOfLocalDay(now);
+    const start = new Date(end);
+    start.setDate(start.getDate() - 29);
+
+    return [localDateKey(start), localDateKey(end)];
+};
+
+export const activityTrailSearchParams = (filters: ActivityTrailFiltersState, page: number): URLSearchParams => {
+    const params = new URLSearchParams({ page: String(page) });
+
+    if (filters.event !== 'all') {
+        params.set('event', filters.event);
+    }
+
+    const search = filters.search.trim();
+
+    if (search !== '') {
+        params.set('search', search);
+    }
+
+    if (filters.logName) {
+        params.set('log_name', filters.logName);
+    }
+
+    if (filters.from) {
+        params.set('from', filters.from);
+    }
+
+    if (filters.to) {
+        params.set('to', filters.to);
+    }
+
+    return params;
+};
+
+export const parseActivityDateRange = (value: unknown): { from: string | null; to: string | null } => {
+    if (!Array.isArray(value) || value.length < 2) {
+        return { from: null, to: null };
+    }
+
+    return {
+        from: toDateKey(value[0]),
+        to: toDateKey(value[1]),
+    };
+};
+
+export const activityDateRangeValue = (from: string | null, to: string | null): [string, string] | null => {
+    if (!from || !to) {
+        return null;
+    }
+
+    return [from, to];
+};
+
+export const activityTrailFiltersEqual = (left: ActivityTrailFiltersState, right: ActivityTrailFiltersState): boolean =>
+    left.event === right.event &&
+    left.search.trim() === right.search.trim() &&
+    left.logName === right.logName &&
+    left.from === right.from &&
+    left.to === right.to;
+
+export const activityTrailHasNarrowingFilters = (filters: ActivityTrailFiltersState): boolean => {
+    return filters.event !== 'all' || filters.search.trim() !== '' || Boolean(filters.logName);
+};
+
+const toDateKey = (value: unknown): string | null => {
+    if (typeof value === 'string') {
+        const match = value.trim().match(/^(\d{4}-\d{2}-\d{2})/);
+
+        return match?.[1] ?? null;
+    }
+
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+        return localDateKey(value);
+    }
+
+    return null;
+};
+
 export const groupActivitiesByDate = <T extends { attributes: { createdAt: string } }>(
     activities: T[],
     now: Date = new Date(),
@@ -273,7 +379,7 @@ const startOfLocalDay = (value: Date): Date => {
     return new Date(value.getFullYear(), value.getMonth(), value.getDate());
 };
 
-const localDateKey = (value: Date): string => {
+export const localDateKey = (value: Date): string => {
     const year = value.getFullYear();
     const month = String(value.getMonth() + 1).padStart(2, '0');
     const day = String(value.getDate()).padStart(2, '0');

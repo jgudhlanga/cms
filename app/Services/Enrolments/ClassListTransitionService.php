@@ -84,7 +84,13 @@ class ClassListTransitionService
         }
 
         $intakeMeta = $this->resolveIntakeMeta($context);
-        $wouldExceedLimit = $intakeMeta['intake_limit'] > 0
+        $occupiesSeat = in_array($type, [
+            ClassListTypeEnum::PROVISIONAL->value,
+            ClassListTypeEnum::VERIFIED->value,
+            ClassListTypeEnum::FINAL->value,
+        ], true);
+        $wouldExceedLimit = $occupiesSeat
+            && $intakeMeta['intake_limit'] > 0
             && ($intakeMeta['listed_count'] + $toAdd->count()) > $intakeMeta['intake_limit'];
 
         $this->assertNoteWhenRequired(
@@ -420,6 +426,11 @@ class ClassListTransitionService
         );
 
         $listedCount = ClassList::query()
+            ->whereIn('type', [
+                ClassListTypeEnum::PROVISIONAL->value,
+                ClassListTypeEnum::VERIFIED->value,
+                ClassListTypeEnum::FINAL->value,
+            ])
             ->whereHas('studentApplication', function ($query) use ($departmentId, $levelId, $courseId, $intakeId, $modeId): void {
                 $query->where('institution_department_id', $departmentId)
                     ->where('department_level_id', $levelId)

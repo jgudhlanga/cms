@@ -1,75 +1,36 @@
 <script setup lang="ts">
 import ActivityTimeline from '@/components/audit/ActivityTimeline.vue';
+import ActivityTrailFilters from '@/components/audit/ActivityTrailFilters.vue';
+import { useActivityTrail } from '@/composables/users/useActivityTrail';
 import type { ActivityEventFilter } from '@/lib/activityTimeline';
-import HttpService from '@/services/http.service';
-import ToastService from '@/services/toast.service';
-import type { Audit } from '@/types/audit';
-import type { ApiFilterResponse } from '@/types/data-pagination';
-import { onMounted, ref, watch } from 'vue';
+import { trans } from 'laravel-vue-i18n';
+import { watch } from 'vue';
 
-const props = defineProps<{
-    userId?: number | string | null;
-}>();
+const props = withDefaults(
+    defineProps<{
+        userId?: number | string | null;
+        searchable?: boolean;
+    }>(),
+    {
+        searchable: false,
+    },
+);
 
-const isLoading = ref(true);
-const activities = ref<Audit[]>([]);
-const page = ref(1);
-const hasMore = ref(false);
-const filter = ref<ActivityEventFilter>('all');
+const { activities, emptyUsesFilterCopy, filters, hasMore, isLoading, logNameOptions, applyFilters, loadMore, resetAndLoad, searchable } =
+    useActivityTrail(
+        (params) => {
+            if (props.userId != null && props.userId !== '') {
+                return `${route('v1.users.caused-activities', { user: props.userId })}?${params.toString()}`;
+            }
 
-const buildUrl = (): string => {
-    const params = new URLSearchParams({ page: String(page.value) });
-
-    if (filter.value !== 'all') {
-        params.set('event', filter.value);
-    }
-
-    if (props.userId != null && props.userId !== '') {
-        return `${route('v1.users.caused-activities', { user: props.userId })}?${params.toString()}`;
-    }
-
-    return `${route('v1.me.activities')}?${params.toString()}`;
-};
-
-const loadActivities = async (): Promise<void> => {
-    isLoading.value = true;
-
-    try {
-        const response = (await HttpService.get(buildUrl())) as ApiFilterResponse;
-        const nextPage = (response.data ?? []) as Audit[];
-
-        activities.value = page.value === 1 ? nextPage : [...activities.value, ...nextPage];
-        hasMore.value = Boolean(response.links?.next);
-    } catch {
-        ToastService.error('Failed to load activity log.');
-    } finally {
-        isLoading.value = false;
-    }
-};
-
-const resetAndLoad = async (): Promise<void> => {
-    filter.value = 'all';
-    page.value = 1;
-    activities.value = [];
-    await loadActivities();
-};
-
-const loadMore = async (): Promise<void> => {
-    page.value += 1;
-    await loadActivities();
-};
+            return `${route('v1.me.activities')}?${params.toString()}`;
+        },
+        { searchable: () => props.searchable },
+    );
 
 const onFilterChange = async (value: ActivityEventFilter): Promise<void> => {
-    filter.value = value;
-    page.value = 1;
-    activities.value = [];
-    await loadActivities();
+    await applyFilters({ ...filters.value, event: value });
 };
-
-onMounted(async () => {
-    page.value = 1;
-    await loadActivities();
-});
 
 watch(
     () => props.userId,
@@ -80,12 +41,21 @@ watch(
 </script>
 
 <template>
-    <ActivityTimeline
-        :activities="activities"
-        :is-loading="isLoading"
-        :has-more="hasMore"
-        :filter="filter"
-        @update:filter="onFilterChange"
-        @load-more="loadMore"
-    />
+    <div class="flex flex-col gap-4">
+        <ActivityTrailFilters v-if="searchable" :filters="filters" :log-name-options="logNameOptions" @change="applyFilters">
+            <template v-if="$slots.filtersLeading" #leading>
+                <slot name="filtersLeading" />
+            </template>
+        </ActivityTrailFilters>
+
+        <ActivityTimeline
+            :activities="activities"
+            :is-loading="isLoading"
+            :has-more="hasMore"
+            :filter="filters.event"
+            :empty-message="emptyUsesFilterCopy ? trans('dashboard.activity_no_matches') : undefined"
+            @update:filter="onFilterChange"
+            @load-more="loadMore"
+        />
+    </div>
 </template>

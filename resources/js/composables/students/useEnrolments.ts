@@ -1,5 +1,11 @@
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
 import { errorAlert, successAlert } from '@/lib/alerts';
+import {
+    getClassListTypeFromRank,
+    getClassListTypeRowClass,
+    getRankBandClassList,
+    isWithinSelectableBand,
+} from '@/lib/enrolmentClassListPresentation';
 import type { DepartmentLevel } from '@/types/department-meta-data';
 import { ClassSizeSlot, EnrolmentApplication, EnrolmentGroup, EnrolmentGroupResponse, OLeveResult } from '@/types/enrolments';
 import { router, useForm } from '@inertiajs/vue3';
@@ -246,9 +252,18 @@ export const useEnrolments = () => {
         return grades;
     };
 
+    const classListIsCreatedForGroup = (enrolments: EnrolmentGroupResponse, group: EnrolmentGroup): boolean => {
+        const applications = enrolments?.groups?.[group] ?? [];
+
+        return applications.some((enrolment) => enrolment.inClassList);
+    };
+
     const classListIsCreated = (enrolments: EnrolmentGroupResponse) => {
         const groups = enrolments?.groups ?? { disabled: [], females: [], males: [] };
-        return ['disabled', 'females', 'males'].some((group) => groups[group as EnrolmentGroup].some((enrolment) => enrolment.inClassList));
+
+        return (['disabled', 'females', 'males'] as EnrolmentGroup[]).some((group) =>
+            classListIsCreatedForGroup(enrolments, group),
+        );
     };
 
     const addToClassList = async (studentApplicationId: string, type: string) => {
@@ -279,13 +294,9 @@ export const useEnrolments = () => {
     };
 
     const getRowClassList = (rowIndex: number, slotSize: number) => {
-        if (rowIndex + 1 <= slotSize) {
-            return 'bg-green-100';
-        }
-        if (rowIndex + 1 > slotSize && rowIndex + 1 <= slotSize * 2) {
-            return 'bg-purple-100';
-        }
-        return 'j-tr';
+        const band = getRankBandClassList(rowIndex, slotSize);
+
+        return band || 'j-tr';
     };
 
     const getClassListIconClass = (rowIndex: number, slotSize: number) => {
@@ -298,21 +309,12 @@ export const useEnrolments = () => {
         return '';
     };
 
-    const getClassListType = (rowIndex: number, slotSize: number) => {
-        if (rowIndex + 1 <= slotSize) {
-            return 'provisional';
-        }
-        if (rowIndex + 1 > slotSize && rowIndex + 1 <= slotSize * 2) {
-            return 'waiting';
-        }
-        return '';
-    };
-    const showAddToClassListBtn = (rowIndex: number, slotSize: number) => {
-        return rowIndex + 1 <= slotSize * 2;
-    };
+    const getClassListType = (rowIndex: number, slotSize: number) => getClassListTypeFromRank(rowIndex, slotSize);
+
+    const showAddToClassListBtn = (rowIndex: number, slotSize: number) => isWithinSelectableBand(rowIndex, slotSize);
 
     function groupByClassListType(applicants: EnrolmentApplication[]) {
-        const order = ['final', 'verified', 'waiting', 'provisional', 'failed', 'others'];
+        const order = ['provisional', 'waiting', 'failed', 'others', 'verified', 'final'];
 
         const groups = applicants.reduce((groups: Record<string, EnrolmentApplication[]>, applicant) => {
             const key = applicant.classListType && order.includes(applicant.classListType) ? applicant.classListType : 'others';
@@ -343,7 +345,7 @@ export const useEnrolments = () => {
             case 'verified':
                 return 'bg-primary/15 text-primary border-primary';
             case 'provisional':
-                return 'bg-yellow-100 text-yellow-800 border-yellow-800';
+                return 'bg-green-100 text-green-800 border-green-800';
             case 'waiting':
                 return 'bg-purple-100 text-purple-800 border-purple-800';
             case 'failed':
@@ -378,8 +380,10 @@ export const useEnrolments = () => {
         getMainSubjectGrade,
         getOtherSubjectGrades,
         classListIsCreated,
+        classListIsCreatedForGroup,
         addToClassList,
         getRowClassList,
+        getClassListTypeRowClass,
         getClassListIconClass,
         getClassListType,
         showAddToClassListBtn,

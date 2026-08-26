@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Utils\ApiDropdownController;
 use App\Http\Filters\Users\UserFilter;
 use App\Http\Requests\Preferences\UserPreferenceRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
+use App\Http\Requests\Users\UserActivityIndexRequest;
 use App\Http\Requests\Users\UserRequest;
 use App\Http\Resources\AuditTrail\AuditTrailResource;
 use App\Http\Resources\Preferences\UserPreferenceResource;
@@ -17,8 +18,11 @@ use App\Http\Resources\Rbac\PermissionResource;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Preferences\UserPreference;
 use App\Models\Users\User;
+use App\Queries\Users\UserActivityQuery;
 use App\Repositories\Users\interface\IUserRepository;
 use App\Traits\HttpUtil;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Inertia\Inertia;
 use Spatie\Activitylog\Models\Activity;
 
@@ -26,7 +30,10 @@ class UserController extends ApiDropdownController
 {
     use HttpUtil;
 
-    public function __construct(protected IUserRepository $repository) {}
+    public function __construct(
+        protected IUserRepository $repository,
+        protected UserActivityQuery $activityQuery,
+    ) {}
 
     public function index(UserFilter $filters)
     {
@@ -125,39 +132,30 @@ class UserController extends ApiDropdownController
         return PermissionResource::collection($permissions);
     }
 
-    public function getUserActivities(User $user)
+    public function getUserActivities(UserActivityIndexRequest $request, User $user): AnonymousResourceCollection
     {
         $this->authorize('view', $user);
 
-        $activities = $this->applyActivityEventFilter($user->activities())
-            ->with('subject')
-            ->latest()
-            ->paginate(request()->integer('per_page', 20));
-
-        return AuditTrailResource::collection($activities);
+        return $this->activityCollection(
+            Activity::query()
+                ->where('subject_type', $user->getMorphClass())
+                ->where('subject_id', $user->getKey()),
+            $request,
+        );
     }
 
-    public function getMyActivities()
+    public function getMyActivities(UserActivityIndexRequest $request): AnonymousResourceCollection
     {
-        $user = request()->user();
+        $user = $request->user();
 
         abort_unless($user instanceof User, 401);
 
-        $activities = $this->applyActivityEventFilter(
-            Activity::query()
-                ->where('causer_type', $user->getMorphClass())
-                ->where('causer_id', $user->getKey())
-        )
-            ->with('subject')
-            ->latest()
-            ->paginate(request()->integer('per_page', 20));
-
-        return AuditTrailResource::collection($activities);
+        return $this->activityCollection($this->causedByQuery($user), $request);
     }
 
-    public function getUserCausedActivities(User $user)
+    public function getUserCausedActivities(UserActivityIndexRequest $request, User $user): AnonymousResourceCollection
     {
-        $actor = request()->user();
+        $actor = $request->user();
         abort_unless($actor instanceof User, 401);
 
         abort_unless(
@@ -165,16 +163,7 @@ class UserController extends ApiDropdownController
             403
         );
 
-        $activities = $this->applyActivityEventFilter(
-            Activity::query()
-                ->where('causer_type', $user->getMorphClass())
-                ->where('causer_id', $user->getKey())
-        )
-            ->with('subject')
-            ->latest()
-            ->paginate(request()->integer('per_page', 20));
-
-        return AuditTrailResource::collection($activities);
+        return $this->activityCollection($this->causedByQuery($user), $request);
     }
 
     public function activityLookup()
@@ -210,15 +199,26 @@ class UserController extends ApiDropdownController
         return response()->json(['data' => $users]);
     }
 
-    private function applyActivityEventFilter(mixed $query): mixed
+    /**
+     * @param  Builder<Activity>  $query
+     */
+    private function activityCollection(Builder $query, UserActivityIndexRequest $request): AnonymousResourceCollection
     {
-        $event = request()->string('event')->toString();
+        return AuditTrailResource::collection(
+            $this->activityQuery->paginate($query->clone(), $request->filters())
+        )->additional([
+            'log_names' => $this->activityQuery->logNames($query),
+        ]);
+    }
 
-        if (in_array($event, ['created', 'updated', 'deleted'], true)) {
-            $query->where('description', $event);
-        }
-
-        return $query;
+    /**
+     * @return Builder<Activity>
+     */
+    private function causedByQuery(User $user): Builder
+    {
+        return Activity::query()
+            ->where('causer_type', $user->getMorphClass())
+            ->where('causer_id', $user->getKey());
     }
 
     public function updateUserPreferences(UserPreferenceRequest $request, User $user)

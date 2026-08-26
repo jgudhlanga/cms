@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Enrolments;
 
+use App\Actions\Students\UpsertYearStudentEnrolmentAction;
 use App\DTO\Enrolments\ClassListDto;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
@@ -33,11 +34,9 @@ use App\Models\Institution\InstitutionDepartment;
 use App\Models\Shared\FeeType;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentApplication;
-use App\Models\Students\StudentEnrolment;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Services\DepartmentEnrolmentService;
 use App\Services\Enrolments\ClassListTransitionService;
-use App\Actions\Students\UpsertYearStudentEnrolmentAction;
 use App\Services\Students\StudentIdNumberValidationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
@@ -101,20 +100,44 @@ class ClassListController extends Controller
     public function bulkAdd(BulkAddToClassListRequest $request): RedirectResponse
     {
         try {
-            $result = $this->classListTransitionService->add(
-                applicationIds: $request->input('application_ids', []),
-                type: (string) $request->input('type', ClassListTypeEnum::PROVISIONAL->value),
-                actor: $request->user(),
-                note: $request->input('note'),
-                bypassRanking: $request->boolean('bypass_ranking'),
-                context: $request->context(),
-            );
+            $provisionalIds = array_values(array_map('intval', $request->input('application_ids', [])));
+            $waitingIds = array_values(array_map('intval', $request->input('waiting_application_ids', [])));
+            $note = $request->input('note');
+            $bypassRanking = $request->boolean('bypass_ranking');
+            $context = $request->context();
+            $actor = $request->user();
 
-            if ($result['added'] === 0) {
+            $added = 0;
+
+            if ($provisionalIds !== []) {
+                $result = $this->classListTransitionService->add(
+                    applicationIds: $provisionalIds,
+                    type: (string) $request->input('type', ClassListTypeEnum::PROVISIONAL->value),
+                    actor: $actor,
+                    note: $note,
+                    bypassRanking: $bypassRanking,
+                    context: $context,
+                );
+                $added += $result['added'];
+            }
+
+            if ($waitingIds !== []) {
+                $result = $this->classListTransitionService->add(
+                    applicationIds: $waitingIds,
+                    type: ClassListTypeEnum::WAITING->value,
+                    actor: $actor,
+                    note: $note,
+                    bypassRanking: $bypassRanking,
+                    context: $context,
+                );
+                $added += $result['added'];
+            }
+
+            if ($added === 0) {
                 return back()->with('success', 'No new applications to add; selected rows are already on a class list.');
             }
 
-            return back()->with('success', $result['added'].' application(s) added to the class list.');
+            return back()->with('success', $added.' application(s) added to the class list.');
         } catch (ValidationException $e) {
             throw $e;
         } catch (Throwable $e) {

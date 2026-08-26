@@ -13,6 +13,7 @@ import { computed, ref, watch } from 'vue';
 export type ClassListActionPayload = {
     kind: 'add' | 'transition' | 'purge';
     applicationIds: number[];
+    waitingApplicationIds?: number[];
     toType?: string;
     bypassRanking: boolean;
     title: string;
@@ -100,7 +101,11 @@ const handleClose = () => {
         <template #body>
             <p class="text-sm text-muted-foreground">
                 {{ action?.description }}
-                <span class="font-semibold text-foreground">({{ action?.applicationIds?.length ?? 0 }})</span>
+                <span class="font-semibold text-foreground"
+                    >({{
+                        (action?.applicationIds?.length ?? 0) + (action?.waitingApplicationIds?.length ?? 0)
+                    }})</span
+                >
             </p>
             <div
                 v-if="action?.bypassWarning"
@@ -110,7 +115,7 @@ const handleClose = () => {
             </div>
             <div v-if="needsNote" class="flex flex-col">
                 <label class="mb-2.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {{ $t('trans.reason') }}
+                    {{ $t('trans.comment') }}
                 </label>
                 <Textarea v-model="note" rows="4" :aria-invalid="Boolean(noteError)" :disabled="processing" />
                 <p v-if="noteError" class="mt-2 text-xs text-destructive">{{ noteError }}</p>

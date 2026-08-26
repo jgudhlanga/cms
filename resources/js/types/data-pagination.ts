@@ -12,8 +12,8 @@ export interface AuthObject {
 }
 
 export interface DataFilters {
-	search?: string | null;
-	trashed?: any;
+    search?: string | null;
+    trashed?: any;
 }
 
 export type PaginationMeta = {
@@ -45,4 +45,5 @@ export type ApiFilterResponse = {
     links?: PaginationRootLink | null;
     filters?: DataFilters | null;
     trashedCount?: any;
+    log_names?: string[];
 };

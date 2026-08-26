@@ -1,11 +1,19 @@
 import {
+    activityDateRangeValue,
     activityEventKind,
     activityFieldChanges,
     activityGlyph,
     activityPropertyEntries,
     activityPropertyLabel,
     activitySubjectLabel,
+    activityTrailFiltersEqual,
+    activityTrailHasNarrowingFilters,
+    activityTrailSearchParams,
+    defaultActivityDateRange,
+    defaultActivityTrailFilters,
+    defaultSearchableActivityTrailFilters,
     groupActivitiesByDate,
+    parseActivityDateRange,
 } from '@/lib/activityTimeline';
 import type { Audit } from '@/types/audit';
 import { describe, expect, it } from 'vitest';
@@ -137,5 +145,44 @@ describe('activityTimeline helpers', () => {
             ['yesterday', 'Aug 21', ['2']],
             ['date', 'Aug 19', ['3']],
         ]);
+    });
+
+    it('builds a 30-day default date range and search params', () => {
+        expect(defaultActivityDateRange(new Date(2026, 7, 26, 9, 0, 0))).toEqual(['2026-07-28', '2026-08-26']);
+        expect(
+            activityTrailSearchParams(
+                {
+                    event: 'updated',
+                    search: '  APP-999  ',
+                    logName: 'StudentApplication',
+                    from: '2026-08-01',
+                    to: '2026-08-26',
+                },
+                2,
+            ).toString(),
+        ).toBe('page=2&event=updated&search=APP-999&log_name=StudentApplication&from=2026-08-01&to=2026-08-26');
+    });
+
+    it('parses date range picker values', () => {
+        expect(parseActivityDateRange(['2026-08-01', '2026-08-26'])).toEqual({ from: '2026-08-01', to: '2026-08-26' });
+        expect(parseActivityDateRange([new Date(2026, 7, 1), new Date(2026, 7, 26)])).toEqual({
+            from: '2026-08-01',
+            to: '2026-08-26',
+        });
+        expect(parseActivityDateRange(null)).toEqual({ from: null, to: null });
+        expect(activityDateRangeValue('2026-08-01', '2026-08-26')).toEqual(['2026-08-01', '2026-08-26']);
+        expect(activityTrailHasNarrowingFilters(defaultSearchableActivityTrailFilters(new Date(2026, 7, 26)))).toBe(false);
+        expect(
+            activityTrailHasNarrowingFilters({
+                ...defaultActivityTrailFilters(),
+                search: '077',
+            }),
+        ).toBe(true);
+        expect(
+            activityTrailFiltersEqual(
+                defaultSearchableActivityTrailFilters(new Date(2026, 7, 26)),
+                defaultSearchableActivityTrailFilters(new Date(2026, 7, 26)),
+            ),
+        ).toBe(true);
     });
 });
