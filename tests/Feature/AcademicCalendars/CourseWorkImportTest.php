@@ -1,6 +1,5 @@
 <?php
 
-use App\Exports\AcademicCalendars\CourseWorkImportTemplateExport;
 use App\Models\AcademicCalendars\CourseWorkAuditLog;
 use App\Models\AcademicCalendars\CourseWorkImportLog;
 use App\Models\AcademicCalendars\CourseWorkMark;
@@ -9,70 +8,9 @@ use App\Models\Institution\ModeOfStudy;
 use App\Services\AcademicCalendars\CourseWorkImportTemplateService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
-use Maatwebsite\Excel\Facades\Excel;
 use Spatie\Permission\Models\Permission;
 
 require_once __DIR__.'/../JsonApi/V1/AcademicCalendars/CourseWorkMarkTest.php';
-
-/**
- * @param  array<string, mixed>  $context
- * @return array<string, mixed>
- */
-function courseWorkImportRouteParams(array $context): array
-{
-    $classConfig = $context['academicCalendarClass']->classConfig;
-
-    return [
-        'institution_department' => $classConfig->institution_department_id,
-        'calendar_year' => $classConfig->calendar_year,
-        'class_config_id' => $classConfig->id,
-        'department_course_id' => $classConfig->department_course_id,
-        'department_level_id' => $classConfig->department_level_id,
-        'mode_of_study_id' => $classConfig->mode_of_study_id,
-    ];
-}
-
-/**
- * @param  array<string, mixed>  $context
- */
-function courseWorkImportPreviewAndProcess(UploadedFile $file, array $context, int $moduleId): void
-{
-    test()->actingAs($context['user']);
-
-    $previewResponse = test()->post(route('academic-calendars.department-classes.course-work-import.preview', courseWorkImportRouteParams($context)), [
-        'module' => $moduleId,
-        'file' => $file,
-    ]);
-
-    $previewResponse->assertSuccessful();
-
-    $previewToken = $previewResponse->json('previewToken');
-    expect($previewToken)->not->toBeEmpty();
-
-    test()->post(route('academic-calendars.department-classes.course-work-import.process', courseWorkImportRouteParams($context)), [
-        'module' => $moduleId,
-        'preview_token' => $previewToken,
-    ])->assertRedirect();
-}
-
-/**
- * @param  array<string, mixed>  $data
- */
-function setCourseWorkWideImportMark(array &$data, int $assessmentTypeId, mixed $mark, int $studentRowIndex = 0): void
-{
-    $data['rows'][$studentRowIndex]['marks'][$assessmentTypeId] = $mark;
-}
-
-/**
- * @param  array<string, mixed>  $data
- */
-function storeCourseWorkImportFile(array $data): UploadedFile
-{
-    $relativePath = 'test-course-work-import-'.uniqid().'.xlsx';
-    Excel::store(new CourseWorkImportTemplateExport($data), $relativePath, 'local');
-
-    return new UploadedFile(storage_path('app/'.$relativePath), 'course-work-import.xlsx', null, null, true);
-}
 
 test('course work import page requires import permission', function () {
     $context = createCourseWorkJsonApiContext();
