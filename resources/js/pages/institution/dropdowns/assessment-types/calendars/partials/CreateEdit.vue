@@ -4,6 +4,7 @@ import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import BaseDatePicker from '@/components/core/form/date/BaseDatePicker.vue';
 import BaseInput from '@/components/core/form/text/BaseInput.vue';
 import BaseModal from '@/components/core/modal/BaseModal.vue';
+import { SizeVariant } from '@/enums/sizes';
 import {
     buildCalendarTypeOptions,
     defaultAssessmentCalendarDates,
@@ -201,6 +202,7 @@ const save = () => {
         :title="`${assessmentCalendar ? $t('trans.edit') : $t('trans.create')} ${$tChoice('trans.assessment_calendar', 1)}`"
         :on-form-action="() => save()"
         :form="form"
+        :size="SizeVariant.lg"
     >
         <template #body>
             <BaseCombobox
