@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Importers\HMS;
 
+use App\Helpers\DateHelper;
+use DateTimeInterface;
 use RuntimeException;
 use Spatie\SimpleExcel\SimpleExcelReader;
 
@@ -90,11 +92,7 @@ class HostelOccupantImporter
             $rowNumber = $headerRowNumber + $index + 1;
             $values = $this->extractRowValues($row, $columnMap);
 
-            if ($this->isBlankRow($values)) {
-                continue;
-            }
-
-            if ($this->isSecondaryHeaderRow($values)) {
+            if ($this->isIncompleteRow($values) || $this->isSecondaryHeaderRow($values)) {
                 continue;
             }
 
@@ -146,7 +144,7 @@ class HostelOccupantImporter
         $normalizedHeaders = [];
 
         foreach (array_values($row) as $index => $value) {
-            $normalizedHeaders[$index] = $this->normalizeHeader((string) $value);
+            $normalizedHeaders[$index] = $this->normalizeHeader((string) (self::normalizeCellValue($value) ?? ''));
         }
 
         $columnMap = [
@@ -198,6 +196,27 @@ class HostelOccupantImporter
         ];
     }
 
+    public static function normalizeCellValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if ($value instanceof DateTimeInterface) {
+            return DateHelper::formatDate($value, 'Y-m-d H:i:s');
+        }
+
+        if (is_int($value) || is_float($value)) {
+            $stringValue = (string) $value;
+
+            return $stringValue === '' ? null : $stringValue;
+        }
+
+        $stringValue = trim((string) $value);
+
+        return $stringValue === '' ? null : $stringValue;
+    }
+
     /**
      * @param  list<mixed>  $values
      */
@@ -207,24 +226,23 @@ class HostelOccupantImporter
             return null;
         }
 
-        $value = trim((string) $values[$index]);
-
-        return $value === '' ? null : $value;
+        return self::normalizeCellValue($values[$index]);
     }
 
     /**
      * @param  array<string, string|null>  $values
      */
-    private function isBlankRow(array $values): bool
+    private function isIncompleteRow(array $values): bool
     {
-        return $values['student_number'] === null
-            && $values['id_number'] === null
-            && $values['passport_number'] === null
-            && $values['disability'] === null
-            && $values['hostel'] === null
-            && $values['floor'] === null
-            && $values['room'] === null
-            && $values['section'] === null;
+        $hasIdentifier = $values['student_number'] !== null
+            || $values['id_number'] !== null
+            || $values['passport_number'] !== null;
+
+        return ! $hasIdentifier
+            || $values['hostel'] === null
+            || $values['floor'] === null
+            || $values['room'] === null
+            || $values['section'] === null;
     }
 
     /**

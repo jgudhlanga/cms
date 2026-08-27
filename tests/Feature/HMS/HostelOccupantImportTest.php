@@ -7,6 +7,7 @@ use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\IdTypeEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Helpers\PermissionHelper;
+use App\Importers\HMS\HostelOccupantImporter;
 use App\Models\HMS\Hostel;
 use App\Models\HMS\HostelApplication;
 use App\Models\HMS\HostelRoom;
@@ -23,6 +24,10 @@ use App\Models\Users\User;
 use App\Services\HMS\HostelOccupantImportTemplateService;
 use App\Services\HMS\HostelRoomSectionService;
 use Illuminate\Http\UploadedFile;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 function actingAsHostelOccupantImporter(array $permissions = [
     'viewAny:hostels',
@@ -67,6 +72,34 @@ function storeHostelOccupantImportFile(array $rows): UploadedFile
     fclose($handle);
 
     return new UploadedFile($fullPath, 'occupants.csv', 'text/csv', null, true);
+}
+
+/**
+ * @param  list<list<string|int|null>>  $rows
+ */
+function storeHostelOccupantImportXlsx(array $rows, string $hostelName = 'Dean House'): UploadedFile
+{
+    $relativePath = 'test-hostel-occupant-import-'.uniqid().'.xlsx';
+    $fullPath = storage_path('app/'.$relativePath);
+    $spreadsheet = new Spreadsheet;
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('Occupants');
+    $sheet->setCellValue('A1', 'Hostel Occupant Import Template');
+    $sheet->setCellValue('A2', 'Generated');
+    $sheet->setCellValue('B2', ExcelDate::PHPToExcel(new DateTimeImmutable('2026-08-18 22:09:39')));
+    $sheet->getStyle('B2')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_DATE_DATETIME);
+    $sheet->setCellValue('A3', 'Hostel');
+    $sheet->setCellValue('B3', $hostelName);
+    $sheet->fromArray(HostelOccupantImporter::COLUMNS, null, 'A5');
+
+    foreach ($rows as $index => $row) {
+        $sheet->fromArray($row, null, 'A'.(6 + $index));
+    }
+
+    (new Xlsx($spreadsheet))->save($fullPath);
+    $spreadsheet->disconnectWorksheets();
+
+    return new UploadedFile($fullPath, 'occupants.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
 }
 
 function hostelOccupantImportRoom(string $hostelName = 'Dean House', string $roomName = 'DH-01', string $type = 'male'): array
@@ -576,7 +609,9 @@ it('assembles occupant import template columns', function (): void {
         'Floor',
         'Room',
         'Section',
-    ])->and($data['header']['hostelName'])->toBe($context['hostel']->name);
+    ])
+        ->and($data['header']['hostelName'])->toBe($context['hostel']->name)
+        ->and($data['header']['generatedAt'])->toBe(now()->format('d M Y'));
 });
 
 it('rejects unknown hostels, floors, rooms, and sections', function (): void {
@@ -708,4 +743,52 @@ it('shows sponsored and apprentice flags in preview', function (): void {
         ->and($apprenticePreview['isApprentice'])->toBeTrue()
         ->and($apprenticePreview['isSponsored'])->toBeFalse()
         ->and($apprenticePreview['paymentSource'])->toBe('apprentice');
+});
+
+it('normalizes DateTimeImmutable occupant import cells', function (): void {
+    expect(HostelOccupantImporter::normalizeCellValue(new DateTimeImmutable('2026-08-18 22:09:39')))
+        ->toBe('2026-08-18 22:09:39')
+        ->and(HostelOccupantImporter::normalizeCellValue(0))->toBe('0')
+        ->and(HostelOccupantImporter::normalizeCellValue('  E002 '))->toBe('E002');
+});
+
+it('parses occupant templates that contain generated datetime cells', function (): void {
+    $context = hostelOccupantImportRoom();
+    $student = hostelOccupantImportStudent('HMS-IMP-XLSX')['student'];
+    actingAsHostelOccupantImporter();
+
+    $file = storeHostelOccupantImportXlsx([
+        hostelOccupantImportCsvRow($student, $context),
+        [null, null, null, 'No', $context['hostel']->name, '0', $context['room']->name, 'B'],
+    ], $context['hostel']->name);
+
+    $this->post(route('hostels.occupants.import.preview', $context['hostel']), [
+        'file' => $file,
+    ])->assertSuccessful()
+        ->assertJsonPath('summary.total', 1)
+        ->assertJsonPath('summary.selectable', 1)
+        ->assertJsonPath('rows.0.studentId', $student->id)
+        ->assertJsonPath('rows.0.section', 'A');
+});
+
+it('skips occupant rows that are missing required information', function (): void {
+    $context = hostelOccupantImportRoom();
+    $student = hostelOccupantImportStudent('HMS-IMP-SKIP')['student'];
+    $idOnly = hostelOccupantImportStudent('HMS-IMP-IDONLY')['student'];
+    actingAsHostelOccupantImporter();
+
+    $file = storeHostelOccupantImportFile([
+        hostelOccupantImportCsvRow($student, $context),
+        [null, null, null, 'No', $context['hostel']->name, '0', $context['room']->name, 'B'],
+        hostelOccupantImportCsvRow($idOnly, $context, studentNumber: '', section: 'B'),
+        [$student->student_number, $student->id_number, null, 'No', $context['hostel']->name, '0', $context['room']->name, null],
+    ]);
+
+    $this->post(route('hostels.occupants.import.preview', $context['hostel']), [
+        'file' => $file,
+    ])->assertSuccessful()
+        ->assertJsonPath('summary.total', 2)
+        ->assertJsonPath('rows.0.studentId', $student->id)
+        ->assertJsonPath('rows.1.studentId', $idOnly->id)
+        ->assertJsonPath('rows.1.matchedBy', 'id_number');
 });
