@@ -19,7 +19,7 @@ class HostelOccupantImportTemplateService
     {
         return [
             'header' => [
-                'generatedAt' => now()->toDateTimeString(),
+                'generatedAt' => now()->format('d M Y'),
                 'hostelName' => $hostel->name,
             ],
             'rows' => [

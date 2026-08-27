@@ -1,11 +1,42 @@
 <script setup lang="ts">
 import type { HostelFloorChartData } from '@/composables/hms/useHostelShow';
-import { Chart, registerables, type Chart as ChartInstance } from 'chart.js';
+import { Chart, registerables, type Chart as ChartInstance, type ScriptableContext } from 'chart.js';
 import { BarChart3 } from '@lucide/vue';
 import { trans } from 'laravel-vue-i18n';
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue';
 
 Chart.register(...registerables);
+
+const BAR_CORNER_RADIUS = 6;
+
+const datasetNumber = (data: unknown, index: number): number => {
+    if (!Array.isArray(data)) {
+        return 0;
+    }
+
+    const value = data[index];
+
+    return typeof value === 'number' ? value : 0;
+};
+
+const stackedBarBorderRadius = (datasetIndex: number) => {
+    return (ctx: ScriptableContext<'bar'>): number | { topLeft: number; topRight: number; bottomLeft: number; bottomRight: number } => {
+        const occupied = datasetNumber(ctx.chart.data.datasets[0]?.data, ctx.dataIndex);
+        const available = datasetNumber(ctx.chart.data.datasets[1]?.data, ctx.dataIndex);
+        const isTopSegment = datasetIndex === 1;
+        const isOnlyVisibleSegment = isTopSegment ? occupied <= 0 : available <= 0;
+
+        if (isOnlyVisibleSegment) {
+            return BAR_CORNER_RADIUS;
+        }
+
+        if (isTopSegment) {
+            return { topLeft: BAR_CORNER_RADIUS, topRight: BAR_CORNER_RADIUS, bottomLeft: 0, bottomRight: 0 };
+        }
+
+        return { topLeft: 0, topRight: 0, bottomLeft: BAR_CORNER_RADIUS, bottomRight: BAR_CORNER_RADIUS };
+    };
+};
 
 interface Props {
     chartData: HostelFloorChartData;
@@ -49,14 +80,14 @@ const renderChart = (): void => {
                     label: trans('hms.show_chart_occupied'),
                     data: props.chartData.occupied,
                     backgroundColor: '#EC4899',
-                    borderRadius: 6,
+                    borderRadius: stackedBarBorderRadius(0),
                     borderSkipped: false,
                 },
                 {
                     label: trans('hms.show_chart_available'),
                     data: props.chartData.available,
                     backgroundColor: '#60A5FA',
-                    borderRadius: 6,
+                    borderRadius: stackedBarBorderRadius(1),
                     borderSkipped: false,
                 },
             ],
