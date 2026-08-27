@@ -43,6 +43,7 @@ yarn-error.log
 /.mcp.json
 /boost.json
 .DS_Store
+/docs/
 /storage/data/staff-imports/previews/
 /storage/data/course-syllabus-imports/previews/
 /storage/data/course-work-imports/previews/
