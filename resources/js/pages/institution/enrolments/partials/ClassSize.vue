@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { hasAbility } from '@/lib/permissions';
+import BaseIcon from '@/components/core/icon/BaseIcon.vue';
+import { IconName } from '@/enums/icons';
 import { errorAlert } from '@/lib/alerts';
+import { hasAbility } from '@/lib/permissions';
 import { useForm } from '@inertiajs/vue3';
 import { computed, nextTick, ref, watch } from 'vue';
 
@@ -142,5 +144,11 @@ function onKeydown(event: KeyboardEvent) {
             />
         </template>
         <span v-else class="font-bold tabular-nums">{{ classSize }}</span>
+        <BaseIcon
+            v-if="canEdit && !editing"
+            :name="IconName.edit"
+            class="h-3 w-3 shrink-0 text-current"
+            aria-hidden="true"
+        />
     </div>
 </template>
