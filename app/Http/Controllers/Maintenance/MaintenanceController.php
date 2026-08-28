@@ -16,8 +16,6 @@ use App\Http\Requests\Maintenance\ApprenticeImportPreviewRequest;
 use App\Http\Requests\Maintenance\ApprenticeImportProcessRequest;
 use App\Http\Requests\Maintenance\ApprenticeImportRefreshRowRequest;
 use App\Http\Requests\Maintenance\DispatchBulkFinaliseEnrolmentsRequest;
-use App\Http\Requests\Maintenance\ExportApplicationRequest;
-use App\Http\Requests\Maintenance\ExportStudentEnrollmentRequest;
 use App\Http\Requests\Maintenance\FixFaultyStudentIdNumbersBulkRequest;
 use App\Http\Requests\Maintenance\FixStudentIdNumberRequest;
 use App\Http\Requests\Maintenance\MaintenanceUserBulkPurgeRequest;
@@ -34,9 +32,7 @@ use App\Http\Resources\Maintenance\FaultyStudentIdNumberResource;
 use App\Http\Resources\Maintenance\NonEnrolledStudentUserResource;
 use App\Http\Resources\Maintenance\StudentAccountMergePreviewResource;
 use App\Http\Resources\Maintenance\VerifiedStudentForFinalEnrolmentResource;
-use App\Jobs\Applications\ExportApplicationJob;
 use App\Jobs\Enrolments\BulkFinaliseEnrolmentsJob;
-use App\Jobs\Enrolments\ExportStudentEnrollmentJob;
 use App\Models\AccountPurge\AccountPurgeArchive;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
@@ -191,38 +187,6 @@ class MaintenanceController extends Controller
         );
 
         return response()->json($result);
-    }
-
-    public function exportStudentEnrollment(ExportStudentEnrollmentRequest $request)
-    {
-        $intakeYear = $request->validated('intake_year');
-        $intakeYear = is_string($intakeYear) && $intakeYear !== '' ? $intakeYear : null;
-
-        /** @var list<string> $recipientEmails */
-        $recipientEmails = $request->validated('recipient_emails');
-
-        ExportStudentEnrollmentJob::dispatch($intakeYear, $recipientEmails)->withoutDelay();
-
-        return back()->with(
-            'success',
-            __('trans.maintenance_export_queued_message'),
-        );
-    }
-
-    public function exportApplication(ExportApplicationRequest $request)
-    {
-        $intakeYear = $request->validated('intake_year');
-        $intakeYear = is_string($intakeYear) && $intakeYear !== '' ? $intakeYear : null;
-
-        /** @var list<string> $recipientEmails */
-        $recipientEmails = $request->validated('recipient_emails');
-
-        ExportApplicationJob::dispatch($intakeYear, $recipientEmails)->withoutDelay();
-
-        return back()->with(
-            'success',
-            __('trans.maintenance_export_application_queued_message'),
-        );
     }
 
     public function downloadStaffImportTemplate(StaffImportTemplateService $templateService): BinaryFileResponse

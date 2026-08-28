@@ -43,6 +43,8 @@ class StudentResource extends JsonResource
             'latestEnrolment.semester',
             'latestEnrolment.academicCalendar',
             'latestEnrolment.academicCalendarStudentEnrolment.academicCalendarClass.classConfig.syllabus',
+            'latestEnrolment.studentApplication.workflowStep',
+            'latestEnrolment.studentApplication.intakePeriod',
             'latestApplication.student.user',
             'latestApplication.institutionDepartment.department',
             'latestApplication.departmentLevel.level',
@@ -159,7 +161,7 @@ class StudentResource extends JsonResource
                 'course' => $enrolment->departmentCourse?->course?->name,
                 'modeOfStudy' => $enrolment->modeOfStudy?->name,
                 'enrolmentStatus' => $enrolment->studentEnrolmentStatus?->name,
-                'applicationStatus' => null,
+                'applicationStatus' => $this->resolveApplicationStatus($enrolment),
                 'intakePeriod' => null,
                 'applicationTrackingNumber' => null,
                 'profileContext' => 'enrolled',
@@ -202,6 +204,27 @@ class StudentResource extends JsonResource
             'applicationTrackingNumber' => null,
             'profileContext' => null,
         ];
+    }
+
+    /**
+     * Admissions workflow status for the enrolment shown in the header, falling back
+     * to the latest application when the enrolment has no linked application.
+     */
+    private function resolveApplicationStatus(StudentEnrolment $enrolment): ?string
+    {
+        $application = $enrolment->studentApplication;
+
+        if ($application instanceof StudentApplication) {
+            $application->loadMissing('workflowStep');
+
+            $status = $application->workflowStep?->name;
+
+            if ($status !== null) {
+                return $status;
+            }
+        }
+
+        return $this->latestApplication?->workflowStep?->name;
     }
 
     /**

@@ -1,59 +1,41 @@
 <script setup lang="ts">
-import GenericButton from '@/components/core/button/GenericButton.vue';
-import BaseInput from '@/components/core/form/text/BaseInput.vue';
-import { Separator } from '@/components/ui/separator';
-import { useUtils } from '@/composables/core/useUtils';
+import { BaseButton } from '@/components/core/button';
+import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { IconName } from '@/enums/icons';
-import { successAlert, warningDialog } from '@/lib/alerts';
+import { useUtils } from '@/composables/core/useUtils';
 import HttpService from '@/services/http.service';
-import { AuthObject } from '@/types/data-pagination';
 import type { MaintenanceExportCounts } from '@/types/maintenance-exports';
-import { useDebounceFn } from '@vueuse/core';
-import { useForm, usePage } from '@inertiajs/vue3';
-import { ChevronRight } from 'lucide-vue-next';
+import {
+    AlertTriangle,
+    Award,
+    ChevronRight,
+    FileSpreadsheet,
+    FileText,
+    ListChecks,
+    Mail,
+    Workflow,
+} from 'lucide-vue-next';
 import { trans } from 'laravel-vue-i18n';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
     exportCounts?: MaintenanceExportCounts;
 }>();
 
-const page = usePage<{ auth: AuthObject }>();
 const { navigateTo } = useUtils();
-const defaultRecipientEmail = page.props.auth?.user?.attributes?.email ?? '';
 
-const form = useForm({
-    intake_year: '',
-    recipient_emails: defaultRecipientEmail,
-});
-
-const faultyStudentIdsCount = ref(props.exportCounts?.faultyStudentIds ?? 0);
-
-const isLoadingCounts = ref(false);
-
-const loadExportCounts = async (intakeYear?: string) => {
-    isLoadingCounts.value = true;
-
-    try {
-        const params = intakeYear ? { intake_year: intakeYear } : undefined;
-        const response = (await HttpService.get(route('maintenance.exports.counts'), { params })) as MaintenanceExportCounts;
-        faultyStudentIdsCount.value = response.faultyStudentIds;
-    } finally {
-        isLoadingCounts.value = false;
-    }
-};
-
-const debouncedLoadExportCounts = useDebounceFn((intakeYear: string) => {
-    void loadExportCounts(intakeYear || undefined);
-}, 400);
-
-watch(
-    () => form.intake_year,
-    (intakeYear) => {
-        void debouncedLoadExportCounts(intakeYear);
+const counts = ref<MaintenanceExportCounts>(
+    props.exportCounts ?? {
+        studentEnrolments: 0,
+        applications: 0,
+        faultyStudentIds: 0,
+        faultyApplications: 0,
     },
 );
+
+const loadExportCounts = async (): Promise<void> => {
+    counts.value = (await HttpService.get(route('maintenance.exports.counts'))) as MaintenanceExportCounts;
+};
 
 onMounted(() => {
     if (!props.exportCounts) {
@@ -61,210 +43,136 @@ onMounted(() => {
     }
 });
 
-const recipientEmailsError = computed(() => {
-    if (form.errors.recipient_emails) {
-        return form.errors.recipient_emails;
-    }
+const exports = computed(() => [
+    {
+        key: 'student-enrolments',
+        icon: FileSpreadsheet,
+        title: trans('trans.maintenance_export_student_enrolments'),
+        description: trans('trans.maintenance_export_student_enrolments_description'),
+        href: route('maintenance.exports.student-enrollment.preview'),
+    },
+    {
+        key: 'applications',
+        icon: FileText,
+        title: trans('trans.maintenance_export_applications'),
+        description: trans('trans.maintenance_export_applications_description'),
+        href: route('maintenance.exports.application.preview'),
+    },
+]);
 
-    return Object.entries(form.errors)
-        .filter(([key]) => key.startsWith('recipient_emails.'))
-        .map(([, message]) => message)
-        .join(' ');
-});
+const dataManagementItems = computed(() => [
+    {
+        key: 'verified-students',
+        icon: ListChecks,
+        title: trans('trans.maintenance_verified_students_final_enrolment'),
+        description: trans('trans.maintenance_verified_students_final_enrolment_description'),
+        href: route('maintenance.verified-students-final-enrolment'),
+        count: 0,
+    },
+    {
+        key: 'apprentices',
+        icon: Workflow,
+        title: trans('trans.maintenance_apprentice_management'),
+        description: trans('trans.maintenance_apprentice_management_description'),
+        href: route('maintenance.apprentice-management'),
+        count: 0,
+    },
+    {
+        key: 'sponsored-students',
+        icon: Award,
+        title: trans('trans.maintenance_sponsored_students'),
+        description: trans('trans.maintenance_sponsored_students_description'),
+        href: route('maintenance.sponsored-students'),
+        count: 0,
+    },
+    {
+        key: 'faulty-ids',
+        icon: AlertTriangle,
+        title: trans('trans.maintenance_faulty_data'),
+        description: trans('trans.maintenance_faulty_data_description'),
+        href: route('maintenance.faulty-student-ids'),
+        count: counts.value.faultyStudentIds,
+    },
+    {
+        key: 'faulty-applications',
+        icon: AlertTriangle,
+        title: trans('trans.maintenance_faulty_applications'),
+        description: trans('trans.maintenance_faulty_applications_description'),
+        href: route('maintenance.faulty-applications'),
+        count: counts.value.faultyApplications,
+    },
+]);
 
-const submitEnrollmentExport = () => {
-    form.post(route('maintenance.exports.student-enrollment'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            successAlert(trans('trans.maintenance_export_queued_message'));
-            form.reset('intake_year');
-        },
-    });
-};
-
-const submitApplicationExport = () => {
-    form.post(route('maintenance.exports.application'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            successAlert(trans('trans.maintenance_export_application_queued_message'));
-            form.reset('intake_year');
-        },
-    });
-};
-
-const confirmEnrollmentExport = () => {
-    warningDialog(
-        () => {
-            submitEnrollmentExport();
-            return true;
-        },
-        trans('trans.maintenance_export_confirm_message'),
-        trans('trans.warning'),
-        trans('trans.maintenance_export_student_enrolments'),
-    );
-};
-
-const confirmApplicationExport = () => {
-    warningDialog(
-        () => {
-            submitApplicationExport();
-            return true;
-        },
-        trans('trans.maintenance_export_application_confirm_message'),
-        trans('trans.warning'),
-        trans('trans.maintenance_export_applications'),
-    );
-};
-
-const goToFaultyData = () => navigateTo(route('maintenance.faulty-student-ids'));
-const goToVerifiedStudentsFinalEnrolment = () => navigateTo(route('maintenance.verified-students-final-enrolment'));
-const goToApprenticeManagement = () => navigateTo(route('maintenance.apprentice-management'));
-const goToSponsoredStudents = () => navigateTo(route('maintenance.sponsored-students'));
+const sectionLabelClass = 'text-[0.63rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground';
 </script>
 
 <template>
-    <div class="space-y-4">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div class="space-y-1">
-                <BaseInput
-                    v-model="form.recipient_emails"
-                    name="recipient_emails"
-                    :label="trans('trans.maintenance_export_recipient_emails_label')"
-                    :placeholder="trans('trans.maintenance_export_recipient_emails_placeholder')"
-                    :error="recipientEmailsError"
-                />
-                <p class="text-xs text-muted-foreground">
-                    {{ trans('trans.maintenance_export_recipient_emails_help') }}
-                </p>
-            </div>
+    <div class="w-full min-w-0 space-y-6">
+        <section class="space-y-2">
+            <h2 :class="sectionLabelClass">{{ trans('trans.maintenance_bulk_exports') }}</h2>
 
-            <BaseInput
-                v-model="form.intake_year"
-                name="intake_year"
-                :label="trans('trans.maintenance_intake_year_label')"
-                :placeholder="trans('trans.maintenance_intake_year_placeholder')"
-                :error="form.errors.intake_year"
-            />
-        </div>
+            <div class="divide-y divide-border rounded-xl border border-border bg-card">
+                <div
+                    v-for="exportItem in exports"
+                    :key="exportItem.key"
+                    class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                    <div class="flex min-w-0 flex-1 items-start gap-3">
+                        <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <component :is="exportItem.icon" class="h-4 w-4" />
+                        </span>
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium text-foreground">{{ exportItem.title }}</p>
+                            <p class="text-xs text-muted-foreground">{{ exportItem.description }}</p>
+                        </div>
+                    </div>
 
-        <Separator />
-
-        <div class="flex flex-wrap items-center justify-between gap-3 py-1">
-            <div class="min-w-0 flex-1">
-                <p class="text-sm font-medium text-foreground">
-                    {{ trans('trans.maintenance_export_student_enrolments') }}
-                </p>
-                <p class="text-xs text-muted-foreground">
-                    {{ trans('trans.maintenance_export_student_enrolments_description') }}
-                </p>
-            </div>
-            <GenericButton
-                :icon="IconName.export"
-                :variant="ColorVariant.primary_outline"
-                :title="trans('trans.export')"
-                :disabled="form.processing || isLoadingCounts"
-                @click="confirmEnrollmentExport"
-            />
-        </div>
-
-        <Separator />
-
-        <div class="flex flex-wrap items-center justify-between gap-3 py-1">
-            <div class="min-w-0 flex-1">
-                <p class="text-sm font-medium text-foreground">
-                    {{ trans('trans.maintenance_export_applications') }}
-                </p>
-                <p class="text-xs text-muted-foreground">
-                    {{ trans('trans.maintenance_export_applications_description') }}
-                </p>
-            </div>
-            <GenericButton
-                :icon="IconName.export"
-                :variant="ColorVariant.primary_outline"
-                :title="trans('trans.export')"
-                :disabled="form.processing || isLoadingCounts"
-                @click="confirmApplicationExport"
-            />
-        </div>
-
-        <Separator />
-
-        <button
-            type="button"
-            class="flex w-full cursor-pointer items-center justify-between gap-3 rounded-md py-1 text-left transition-colors hover:bg-muted/50"
-            @click="goToVerifiedStudentsFinalEnrolment"
-        >
-            <div class="min-w-0 flex-1">
-                <p class="text-sm font-medium text-foreground">
-                    {{ trans('trans.maintenance_verified_students_final_enrolment') }}
-                </p>
-                <p class="text-xs text-muted-foreground">
-                    {{ trans('trans.maintenance_verified_students_final_enrolment_description') }}
-                </p>
-            </div>
-            <ChevronRight class="h-4 w-4 shrink-0 text-muted-foreground" />
-        </button>
-
-        <Separator />
-
-        <button
-            type="button"
-            class="flex w-full cursor-pointer items-center justify-between gap-3 rounded-md py-1 text-left transition-colors hover:bg-muted/50"
-            @click="goToApprenticeManagement"
-        >
-            <div class="min-w-0 flex-1">
-                <p class="text-sm font-medium text-foreground">
-                    {{ trans('trans.maintenance_apprentice_management') }}
-                </p>
-                <p class="text-xs text-muted-foreground">
-                    {{ trans('trans.maintenance_apprentice_management_description') }}
-                </p>
-            </div>
-            <ChevronRight class="h-4 w-4 shrink-0 text-muted-foreground" />
-        </button>
-
-        <Separator />
-
-        <button
-            type="button"
-            class="flex w-full cursor-pointer items-center justify-between gap-3 rounded-md py-1 text-left transition-colors hover:bg-muted/50"
-            @click="goToSponsoredStudents"
-        >
-            <div class="min-w-0 flex-1">
-                <p class="text-sm font-medium text-foreground">
-                    {{ trans('trans.maintenance_sponsored_students') }}
-                </p>
-                <p class="text-xs text-muted-foreground">
-                    {{ trans('trans.maintenance_sponsored_students_description') }}
-                </p>
-            </div>
-            <ChevronRight class="h-4 w-4 shrink-0 text-muted-foreground" />
-        </button>
-
-        <Separator />
-
-        <button
-            type="button"
-            class="flex w-full cursor-pointer items-center justify-between gap-3 rounded-md py-1 text-left transition-colors hover:bg-muted/50"
-            @click="goToFaultyData"
-        >
-            <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                    <p class="text-sm font-medium text-foreground">
-                        {{ trans('trans.maintenance_faulty_data') }}
-                    </p>
-                    <span
-                        v-if="faultyStudentIdsCount > 0"
-                        class="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-medium text-destructive-foreground"
+                    <BaseButton
+                        type="button"
+                        class="shrink-0"
+                        :size="ButtonSize.sm"
+                        :variant="ColorVariant.shade"
+                        @click="navigateTo(exportItem.href)"
                     >
-                        {{ faultyStudentIdsCount }}
-                    </span>
+                        <Mail class="mr-2 h-4 w-4" />
+                        {{ trans('trans.maintenance_email_export') }}
+                    </BaseButton>
                 </div>
-                <p class="text-xs text-muted-foreground">
-                    {{ trans('trans.maintenance_faulty_data_description') }}
-                </p>
             </div>
-            <ChevronRight class="h-4 w-4 shrink-0 text-muted-foreground" />
-        </button>
+        </section>
+
+        <section class="space-y-2">
+            <h2 :class="sectionLabelClass">{{ trans('trans.maintenance_data_management') }}</h2>
+
+            <div class="divide-y divide-border rounded-xl border border-border bg-card">
+                <button
+                    v-for="item in dataManagementItems"
+                    :key="item.key"
+                    type="button"
+                    class="flex w-full cursor-pointer items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-muted/50"
+                    @click="navigateTo(item.href)"
+                >
+                    <div class="flex min-w-0 flex-1 items-start gap-3">
+                        <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                            <component :is="item.icon" class="h-4 w-4" />
+                        </span>
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium text-foreground">{{ item.title }}</p>
+                            <p class="text-xs text-muted-foreground">{{ item.description }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex shrink-0 items-center gap-3">
+                        <span
+                            v-if="item.count > 0"
+                            class="rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-medium text-destructive"
+                        >
+                            {{ trans('trans.maintenance_records_count', { count: String(item.count) }) }}
+                        </span>
+                        <ChevronRight class="h-4 w-4 text-muted-foreground" />
+                    </div>
+                </button>
+            </div>
+        </section>
     </div>
 </template>

@@ -1,12 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import BaseTag from '@/components/core/util/BaseTag.vue';
 import StudentDisabilityIcon from '@/components/students/StudentDisabilityIcon.vue';
+import { IconName } from '@/enums/icons';
+import { applicationStatusVariant } from '@/lib/applicationStatusPresentation';
+import { hasAbility } from '@/lib/permissions';
 import { StudentHeader } from '@/types/students';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 
 interface Props {
   data: StudentHeader | null;
 }
+
+const emit = defineEmits<{
+  (event: 'edit-student-number'): void;
+  (event: 'edit-status'): void;
+}>();
 
 interface HeaderFact {
   label: string;
@@ -44,6 +53,11 @@ const trackingBadge = computed(() => {
 
   return props.data?.applicationTrackingNumber?.trim() || '';
 });
+
+const applicationStatus = computed(() => props.data?.applicationStatus?.trim() || '');
+const statusVariant = computed(() => applicationStatusVariant(applicationStatus.value));
+const canEditStudentNumber = computed(() => Boolean(props.data?.studentId) && hasAbility('change-student-number:students'));
+const canEditStatus = computed(() => Boolean(props.data?.studentId) && hasAbility('change-student-status:students'));
 
 const programmeFacts = computed<HeaderFact[]>(() => {
   const facts: HeaderFact[] = [];
@@ -142,23 +156,41 @@ const hasSponsoredFacts = computed(() => sponsorName.value !== '');
             {{ data?.studentName }}
           </h1>
           <StudentDisabilityIcon :status="data?.disabilityStatus" />
-          <span
-            v-if="data?.enrolmentStatus"
-            class="inline-flex shrink-0 items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-1.5 py-px text-[10px] font-semibold leading-none text-emerald-600 dark:text-emerald-400"
-          >
-            {{ data.enrolmentStatus }}
+          <span class="inline-flex shrink-0 items-center gap-0.5">
+            <BaseTag
+              v-if="applicationStatus"
+              :title="applicationStatus"
+              :variant="statusVariant"
+              classes="cursor-default text-[10px] font-semibold leading-none py-px"
+            />
+            <button
+              v-if="canEditStatus"
+              type="button"
+              class="inline-flex size-5 shrink-0 items-center justify-center rounded-full leading-none text-muted-foreground hover:bg-accent hover:text-foreground"
+              :title="$t('students.change_status_action')"
+              :aria-label="$t('students.change_status_action')"
+              @click="emit('edit-status')"
+            >
+              <BaseIcon :name="IconName.edit" size="14" class="block" />
+            </button>
           </span>
-          <span
-            v-else-if="data?.applicationStatus"
-            class="inline-flex shrink-0 items-center rounded-full border border-amber-500/30 bg-amber-500/15 px-1.5 py-px text-[10px] font-semibold leading-none text-amber-700 dark:text-amber-400"
-          >
-            {{ data.applicationStatus }}
-          </span>
-          <span
-            v-if="trackingBadge"
-            class="shrink-0 rounded-full bg-muted px-1.5 py-px font-mono text-[10px] leading-none tracking-wide text-foreground"
-          >
-            {{ trackingBadge }}
+          <span class="inline-flex shrink-0 items-center gap-0.5">
+            <span
+              v-if="trackingBadge"
+              class="shrink-0 rounded-full bg-muted px-1.5 py-px font-mono text-[10px] leading-none tracking-wide text-foreground"
+            >
+              {{ trackingBadge }}
+            </span>
+            <button
+              v-if="canEditStudentNumber"
+              type="button"
+              class="inline-flex size-5 shrink-0 items-center justify-center rounded-full leading-none text-muted-foreground hover:bg-accent hover:text-foreground"
+              :title="$t('students.change_student_number_action')"
+              :aria-label="$t('students.change_student_number_action')"
+              @click="emit('edit-student-number')"
+            >
+              <BaseIcon :name="IconName.edit" size="14" class="block" />
+            </button>
           </span>
         </div>
         <div v-if="$slots.actions" class="shrink-0">

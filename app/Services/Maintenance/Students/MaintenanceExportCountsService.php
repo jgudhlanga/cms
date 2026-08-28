@@ -6,6 +6,7 @@ namespace App\Services\Maintenance\Students;
 
 use App\Queries\Applications\ApplicationExportQuery;
 use App\Queries\Enrolments\StudentEnrollmentExportQuery;
+use App\Queries\Maintenance\FaultyApplicationsQuery;
 use App\Queries\Maintenance\FaultyStudentIdNumbersQuery;
 
 class MaintenanceExportCountsService
@@ -14,17 +15,20 @@ class MaintenanceExportCountsService
         protected StudentEnrollmentExportQuery $studentEnrollmentExportQuery,
         protected ApplicationExportQuery $applicationExportQuery,
         protected FaultyStudentIdNumbersQuery $faultyStudentIdNumbersQuery,
+        protected FaultyApplicationsQuery $faultyApplicationsQuery,
     ) {}
 
     /**
-     * @return array{studentEnrolments: int, applications: int, faultyStudentIds: int}
+     * @param  array<string, mixed>|string|null  $filters
+     * @return array{studentEnrolments: int, applications: int, faultyStudentIds: int, faultyApplications: int}
      */
-    public function resolve(?string $intakeYear = null): array
+    public function resolve(array|string|null $filters = null): array
     {
         return [
-            'studentEnrolments' => $this->studentEnrollmentExportQuery->count($intakeYear),
-            'applications' => $this->applicationExportQuery->count($intakeYear),
+            'studentEnrolments' => $this->studentEnrollmentExportQuery->count($filters),
+            'applications' => $this->applicationExportQuery->count($filters),
             'faultyStudentIds' => $this->faultyStudentIdNumbersQuery->count(),
+            'faultyApplications' => $this->faultyApplicationsQuery->count(),
         ];
     }
 }

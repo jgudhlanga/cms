@@ -304,6 +304,8 @@ return [
             'forceDelete:students',
             'import:students',
             'uploadIdPhoto:students',
+            'change-student-number:students',
+            'change-student-status:students',
             'export:students',
             'crud-settings:students',
             'viewAuditTrail:students',

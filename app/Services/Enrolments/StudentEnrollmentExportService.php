@@ -60,14 +60,21 @@ class StudentEnrollmentExportService
         protected StudentExportRowMapper $studentExportRowMapper,
     ) {}
 
-    public function export(?string $intakeYear = null, array $recipientEmails = []): string
+    /**
+     * @param  array<string, mixed>|string|null  $filters
+     * @param  list<string>  $recipientEmails
+     */
+    public function export(array|string|null $filters = null, array $recipientEmails = []): string
     {
+        $intakeYear = is_array($filters) ? ($filters['intake_year'] ?? null) : $filters;
+        $intakeYear = is_string($intakeYear) && $intakeYear !== '' ? $intakeYear : null;
+
         $relativePath = $this->csvExportWriter->write(
             self::OUTPUT_PATH,
             self::HEADERS,
-            function ($handle) use ($intakeYear): void {
+            function ($handle) use ($filters): void {
                 $this->query
-                    ->baseQuery($intakeYear)
+                    ->baseQuery($filters)
                     ->chunkById(200, function (Collection $enrolments) use ($handle): void {
                         foreach ($enrolments as $enrolment) {
                             /** @var StudentEnrolment $enrolment */
@@ -79,7 +86,7 @@ class StudentEnrollmentExportService
 
         logger()->info('Student enrollment CSV export completed.', [
             'path' => $relativePath,
-            'intake_year' => $intakeYear,
+            'filters' => is_array($filters) ? $filters : ['intake_year' => $intakeYear],
             'recipient_emails' => $recipientEmails,
         ]);
 

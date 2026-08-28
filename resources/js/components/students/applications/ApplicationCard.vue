@@ -58,19 +58,34 @@ const applicationDate = computed(() => {
 
 const modeOfStudy = computed(() => props.application.attributes?.modeOfStudy?.trim() ?? '');
 const showMetadata = computed(() => Boolean(applicationDate.value || modeOfStudy.value));
+const isMissingLevel = computed(
+    () => props.application.attributes?.missingLevel === true
+        || props.application.attributes?.isInvalid === true
+        || !props.application.attributes?.level?.trim(),
+);
 </script>
 
 <template>
     <div
-        class="overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm transition-colors hover:border-primary/30"
+        class="overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-colors"
+        :class="isMissingLevel ? 'border-destructive' : 'border-border hover:border-primary/30'"
     >
         <div class="border-b border-border bg-muted/30 px-3 py-3 sm:px-4">
             <div class="flex flex-wrap items-start justify-between gap-2">
                 <div class="min-w-0 flex-1">
                     <div class="flex flex-wrap items-center gap-2">
-                        <h3 class="text-xs font-semibold uppercase tracking-tight text-foreground sm:text-sm">
+                        <h3
+                            v-if="!isMissingLevel"
+                            class="text-xs font-semibold uppercase tracking-tight text-foreground sm:text-sm"
+                        >
                             {{ application.attributes?.level }}
                         </h3>
+                        <span
+                            v-else
+                            class="inline-flex rounded-md border border-destructive bg-destructive/5 px-2 py-0.5 text-xs font-semibold uppercase tracking-tight text-destructive sm:text-sm"
+                        >
+                            {{ $tChoice('trans.level', 1) }}
+                        </span>
                         <BaseTag
                             v-if="showStatusBadge"
                             :title="statusLabel"
@@ -108,6 +123,11 @@ const showMetadata = computed(() => Boolean(applicationDate.value || modeOfStudy
             class="flex flex-col gap-3 px-3 py-3 sm:px-4"
             :class="compact ? 'text-xs' : 'text-sm'"
         >
+            <BaseAlert
+                v-if="isMissingLevel"
+                :description="$t('students.application_invalid_missing_level')"
+                :type="TypeVariant.danger"
+            />
             <div
                 v-if="showMetadata"
                 class="grid grid-cols-1 gap-2 sm:grid-cols-2"

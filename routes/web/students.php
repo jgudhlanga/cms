@@ -30,6 +30,10 @@ Route::prefix('students')->middleware('auth')->group(function () {
     Route::get('export', [StudentController::class, 'export'])->name('students.export');
     Route::patch('{student}/id-number', [StudentController::class, 'updateIdNumber'])
         ->name('students.id-number.update');
+    Route::patch('{student}/student-number', [StudentController::class, 'updateStudentNumber'])
+        ->name('students.student-number.update');
+    Route::patch('{student}/status', [StudentController::class, 'updateStatus'])
+        ->name('students.status.update');
     Route::patch('{student}/enrolments/{student_enrolment}/status', [StudentEnrolmentProgressController::class, 'updateStatus'])
         ->name('students.enrolments.status.update');
     Route::patch('{student}/student-semesters/{student_semester}/status', [StudentEnrolmentProgressController::class, 'updateSemesterStatus'])
