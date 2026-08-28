@@ -17,11 +17,11 @@ function actingAsRootMaintenanceUser(): User
     return $user;
 }
 
-function actingAsDataMaintenanceUser(): User
+function actingAsDataMaintenanceUser(?int $tenantId = null): User
 {
     Permission::findOrCreate('manage:data-maintenance', 'web');
 
-    $user = User::factory()->create();
+    $user = User::factory()->create($tenantId !== null ? ['tenant_id' => $tenantId] : []);
     $user->givePermissionTo('manage:data-maintenance');
     test()->actingAs($user);
 
