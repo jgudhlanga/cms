@@ -81,6 +81,8 @@ class EnrolmentResource extends JsonResource
                 'departmentLevelId' => $this->department_level_id,
                 'level' => $this->departmentLevel?->level?->name,
                 'levelId' => $this->departmentLevel?->level?->id,
+                'missingLevel' => $this->missingLevel(),
+                'isInvalid' => $this->missingLevel(),
                 'intakePeriod' => $this->intakePeriod?->name,
                 'intakePeriodId' => $this->intakePeriod?->id,
                 'intakePeriodCalendarYear' => $this->intakePeriod?->calendar_year,
@@ -117,6 +119,18 @@ class EnrolmentResource extends JsonResource
                 'courseRequirements' => $courseRequirement ? CourseRequirementResource::make($courseRequirement) : null,
             ],
         ];
+    }
+
+    /**
+     * An application without a level cannot be processed and is flagged in the UI.
+     */
+    private function missingLevel(): bool
+    {
+        if ($this->department_level_id === null) {
+            return true;
+        }
+
+        return trim((string) $this->departmentLevel?->level?->name) === '';
     }
 
     private function idPhotoThumbUrl(): ?string

@@ -30,6 +30,8 @@ export type Enrolment = {
         department: string;
         level: string;
         levelId: string | number;
+        missingLevel?: boolean;
+        isInvalid?: boolean;
         intakePeriod: string;
         intakePeriodId: string | number;
         intakePeriodCalendarYear?: string;

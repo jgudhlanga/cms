@@ -52,6 +52,16 @@ class StudentPolicy
         return $user->can('uploadIdPhoto:students') || $user->can('update:students');
     }
 
+    public function changeStudentNumber(User $user, Student $student): bool
+    {
+        return $this->view($user, $student) && $user->can('change-student-number:students');
+    }
+
+    public function changeStudentStatus(User $user, Student $student): bool
+    {
+        return $this->view($user, $student) && $user->can('change-student-status:students');
+    }
+
     public function manageGallery(User $user, Student $student): bool
     {
         if (! $this->moduleState->isEnabled(ModuleEnum::GALLERY->slug())) {

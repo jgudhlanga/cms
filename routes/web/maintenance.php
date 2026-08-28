@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\Maintenance\ApplicationExportController;
+use App\Http\Controllers\Maintenance\FaultyApplicationsController;
 use App\Http\Controllers\Maintenance\MaintenanceController;
+use App\Http\Controllers\Maintenance\StudentEnrollmentExportController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('maintenance')->middleware(['auth', 'can:accessDataMaintenance'])->group(function (): void {
@@ -19,10 +22,18 @@ Route::prefix('maintenance')->middleware(['auth', 'can:accessDataMaintenance'])-
         ->name('maintenance.non-enrolled-student-users.purge');
     Route::get('/exports/counts', [MaintenanceController::class, 'exportCounts'])
         ->name('maintenance.exports.counts');
-    Route::post('/exports/student-enrollment', [MaintenanceController::class, 'exportStudentEnrollment'])
+    Route::get('/exports/student-enrollment', [StudentEnrollmentExportController::class, 'index'])
+        ->name('maintenance.exports.student-enrollment.preview');
+    Route::post('/exports/student-enrollment', [StudentEnrollmentExportController::class, 'store'])
         ->name('maintenance.exports.student-enrollment');
-    Route::post('/exports/application', [MaintenanceController::class, 'exportApplication'])
+    Route::get('/exports/application', [ApplicationExportController::class, 'index'])
+        ->name('maintenance.exports.application.preview');
+    Route::post('/exports/application', [ApplicationExportController::class, 'store'])
         ->name('maintenance.exports.application');
+    Route::get('/faulty-applications', [FaultyApplicationsController::class, 'index'])
+        ->name('maintenance.faulty-applications');
+    Route::get('/faulty-applications/data', [FaultyApplicationsController::class, 'data'])
+        ->name('maintenance.faulty-applications.data');
     Route::get('/verified-students-final-enrolment', [MaintenanceController::class, 'verifiedStudentsFinalEnrolment'])
         ->name('maintenance.verified-students-final-enrolment');
     Route::get('/verified-students-final-enrolment/data', [MaintenanceController::class, 'verifiedStudentsFinalEnrolmentData'])

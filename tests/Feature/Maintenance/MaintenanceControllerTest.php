@@ -49,7 +49,8 @@ it('renders maintenance index for root users', function (): void {
             ->component('maintenance/Index')
             ->has('exportCounts.studentEnrolments')
             ->has('exportCounts.applications')
-            ->has('exportCounts.faultyStudentIds'));
+            ->has('exportCounts.faultyStudentIds')
+            ->has('exportCounts.faultyApplications'));
 });
 
 it('renders maintenance index for data maintenance users', function (): void {
@@ -61,7 +62,8 @@ it('renders maintenance index for data maintenance users', function (): void {
             ->component('maintenance/Index')
             ->has('exportCounts.studentEnrolments')
             ->has('exportCounts.applications')
-            ->has('exportCounts.faultyStudentIds'));
+            ->has('exportCounts.faultyStudentIds')
+            ->has('exportCounts.faultyApplications'));
 });
 
 it('redirects guests from maintenance export counts endpoint', function (): void {
@@ -120,7 +122,7 @@ it('queues student enrollment export for root users', function (): void {
         ->assertSessionHas('success', __('trans.maintenance_export_queued_message'));
 
     Queue::assertPushed(ExportStudentEnrollmentJob::class, function (ExportStudentEnrollmentJob $job): bool {
-        return $job->intakeYear === null
+        return $job->filters === []
             && $job->recipientEmails === ['exports@example.test'];
     });
 });
@@ -138,7 +140,7 @@ it('queues student enrollment export with intake year and multiple recipient ema
         ->assertSessionHas('success');
 
     Queue::assertPushed(ExportStudentEnrollmentJob::class, function (ExportStudentEnrollmentJob $job): bool {
-        return $job->intakeYear === '2025/2026'
+        return $job->filters === ['intake_year' => '2025/2026']
             && $job->recipientEmails === ['one@example.test', 'two@example.test'];
     });
 });
@@ -175,7 +177,7 @@ it('queues application export for root users', function (): void {
         ->assertSessionHas('success', __('trans.maintenance_export_application_queued_message'));
 
     Queue::assertPushed(ExportApplicationJob::class, function (ExportApplicationJob $job): bool {
-        return $job->intakeYear === null
+        return $job->filters === []
             && $job->recipientEmails === ['exports@example.test'];
     });
 });
@@ -193,7 +195,7 @@ it('queues application export with intake year and multiple recipient emails', f
         ->assertSessionHas('success');
 
     Queue::assertPushed(ExportApplicationJob::class, function (ExportApplicationJob $job): bool {
-        return $job->intakeYear === '2025/2026'
+        return $job->filters === ['intake_year' => '2025/2026']
             && $job->recipientEmails === ['one@example.test', 'two@example.test'];
     });
 });

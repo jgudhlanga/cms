@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Students;
 
+use App\Actions\Students\UpdateStudentNumberAction;
+use App\Actions\Students\UpdateStudentProfileStatusAction;
 use App\DTO\Students\UpdateStudentDto;
 use App\Exceptions\Maintenance\StudentIdNumberConflictException;
 use App\Exports\Students\StudentListExport;
@@ -9,6 +11,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Students\ExportStudentListRequest;
 use App\Http\Requests\Students\FixStudentIdNumberRequest;
 use App\Http\Requests\Students\PurgeStudentAccountRequest;
+use App\Http\Requests\Students\UpdateStudentNumberRequest;
+use App\Http\Requests\Students\UpdateStudentProfileStatusRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
 use App\Http\Requests\Students\UploadStudentIdCardPhotoRequest;
 use App\Http\Resources\Students\StudentResource;
@@ -25,6 +29,7 @@ use App\Services\Maintenance\Students\FixStudentIdNumberService;
 use App\Services\Students\IntakePeriodResolver;
 use App\Services\Students\StudentIdCardPhotoService;
 use App\Services\Students\StudentListExportService;
+use App\Support\Students\StudentApplicationStatusMapper;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -84,12 +89,14 @@ class StudentController extends Controller
         $intakePeriodResolver = app(IntakePeriodResolver::class);
         $activeIntakePeriodIds = $intakePeriodResolver->activeIntakePeriodIds();
         $offerLetterIntakePeriodIds = $intakePeriodResolver->offerLetterIntakePeriodIds();
+        $studentStatusOptions = app(StudentApplicationStatusMapper::class)->options();
 
         return Inertia::render('students/Show', compact(
             'user',
             'student',
             'activeIntakePeriodIds',
             'offerLetterIntakePeriodIds',
+            'studentStatusOptions',
         ));
     }
 
@@ -123,6 +130,36 @@ class StudentController extends Controller
             'message' => __('trans.item_saved', ['item' => __('trans.id_number')]),
             'data' => StudentResource::make($student),
         ]);
+    }
+
+    public function updateStudentNumber(
+        UpdateStudentNumberRequest $request,
+        Student $student,
+        UpdateStudentNumberAction $updateStudentNumber,
+    ): RedirectResponse {
+        $updateStudentNumber->execute(
+            $student,
+            (string) $request->validated('student_number'),
+            (string) $request->validated('reason'),
+            Auth::user(),
+        );
+
+        return back()->with('success', __('students.change_student_number_updated'));
+    }
+
+    public function updateStatus(
+        UpdateStudentProfileStatusRequest $request,
+        Student $student,
+        UpdateStudentProfileStatusAction $updateStatus,
+    ): RedirectResponse {
+        $updateStatus->execute(
+            $student,
+            (string) $request->validated('status'),
+            (string) $request->validated('reason'),
+            Auth::user(),
+        );
+
+        return back()->with('success', __('students.change_status_updated'));
     }
 
     public function uploadIdPhoto(

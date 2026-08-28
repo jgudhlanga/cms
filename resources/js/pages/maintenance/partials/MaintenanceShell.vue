@@ -27,7 +27,9 @@ const activeSection = computed(() => props.tabs.find((tab) => tab.value === prop
 
 const sectionDescription = computed(() => activeSection.value?.transDescription?.() ?? '');
 
-const isFullBleedSection = computed(() => props.activeTab === 'users' || props.activeTab === 'staff' || props.activeTab === 'archives');
+const fullBleedSections = ['users', 'staff', 'students', 'archives'];
+
+const isFullBleedSection = computed(() => fullBleedSections.includes(props.activeTab));
 
 const contentWrapperClass = computed(() =>
     cn(

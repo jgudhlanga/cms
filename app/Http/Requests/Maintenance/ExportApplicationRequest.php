@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Maintenance;
 
+use App\Support\Maintenance\MaintenanceExportFilters;
 use App\Support\RecipientEmailParser;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,15 +23,23 @@ class ExportApplicationRequest extends FormRequest
     }
 
     /**
-     * @return array<string, list<string>>
+     * @return array<string, list<mixed>>
      */
     public function rules(): array
     {
         return [
-            'intake_year' => ['nullable', 'string', 'max:20'],
+            ...MaintenanceExportFilters::applicationRules(),
             'recipient_emails' => ['required', 'array', 'min:1'],
             'recipient_emails.*' => ['required', 'email'],
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function exportFilters(): array
+    {
+        return MaintenanceExportFilters::normalizeForApplications($this->validated());
     }
 
     /**
