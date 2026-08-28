@@ -17,13 +17,18 @@ use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
 use App\Services\DepartmentEnrolmentService;
+use App\Services\Institution\ProgrammeLinkUsageGuard;
 use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DepartmentLevelController extends Controller
 {
-    public function __construct(protected IDepartmentLevelRepository $repository, protected DepartmentEnrolmentService $departmentEnrolmentService) {}
+    public function __construct(
+        protected IDepartmentLevelRepository $repository,
+        protected DepartmentEnrolmentService $departmentEnrolmentService,
+        protected ProgrammeLinkUsageGuard $usageGuard,
+    ) {}
 
     /**
      * @throws AuthorizationException
@@ -40,6 +45,7 @@ class DepartmentLevelController extends Controller
     public function destroy(DepartmentLevel $departmentLevel): void
     {
         $this->authorize('deleteDepartmentMetaData');
+        $this->usageGuard->assertLevelsUnused([(int) $departmentLevel->id]);
         $this->repository->delete($departmentLevel);
     }
 
@@ -59,6 +65,7 @@ class DepartmentLevelController extends Controller
     public function forceDelete(DepartmentLevel $departmentLevel): void
     {
         $this->authorize('forceDeleteDepartmentMetaData');
+        $this->usageGuard->assertLevelsUnused([(int) $departmentLevel->id]);
         $this->repository->delete($departmentLevel, true);
     }
 

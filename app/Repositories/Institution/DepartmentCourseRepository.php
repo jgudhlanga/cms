@@ -9,37 +9,64 @@ use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
+use App\Services\Institution\ProgrammeLinkUsageGuard;
+use Illuminate\Support\Facades\DB;
 
 class DepartmentCourseRepository extends BaseRepository implements IDepartmentCourseRepository
 {
-    public function __construct(protected DepartmentCourse $departmentCourse)
-    {
+    public function __construct(
+        protected DepartmentCourse $departmentCourse,
+        protected ProgrammeLinkUsageGuard $usageGuard,
+    ) {
         parent::__construct($this->departmentCourse);
     }
 
     public function syncDepartmentCourses(InstitutionDepartment $institutionDepartment, DepartmentCourseDto $dto): void
     {
-        // Get existing course_ids linked to this department
-        $existing = $this->departmentCourse
-            ->where('institution_department_id', $institutionDepartment->id)
-            ->pluck('course_id')
-            ->toArray();
+        DB::transaction(function () use ($institutionDepartment, $dto) {
+            $newIds = array_values(array_unique(array_filter(
+                array_map('intval', $dto->course_ids),
+                fn (int $courseId): bool => $courseId > 0,
+            )));
 
-        $newIds = $dto->course_ids;
+            // Trashed links are kept in view so a course that is checked again is
+            // restored on its original id instead of orphaning existing records.
+            $links = $this->departmentCourse
+                ->withTrashed()
+                ->where('institution_department_id', $institutionDepartment->id)
+                ->get();
 
-        // Determine which IDs to add and which to remove
-        $toAdd = array_diff($newIds, $existing);
-        $toRemove = array_diff($existing, $newIds);
+            $activeCourseIds = $links->whereNull('deleted_at')->pluck('course_id')->map('intval')->all();
+            $toRemove = array_values(array_diff($activeCourseIds, $newIds));
 
-        // Delete removed courses
-        if (! empty($toRemove)) {
-            $this->departmentCourse->whereIn('course_id', $toRemove)->delete();
-        }
+            if ($toRemove !== []) {
+                $removable = $links->whereNull('deleted_at')
+                    ->whereIn('course_id', $toRemove);
 
-        // Add new courses
-        foreach ($toAdd as $courseId) {
-            $this->departmentCourse->create(['institution_department_id' => $institutionDepartment->id, 'course_id' => $courseId]);
-        }
+                $this->usageGuard->assertCoursesUnused($removable->pluck('id')->map('intval')->all());
+
+                $this->departmentCourse
+                    ->whereIn('id', $removable->pluck('id')->all())
+                    ->delete();
+            }
+
+            foreach ($newIds as $courseId) {
+                $existing = $links->firstWhere('course_id', $courseId);
+
+                if ($existing === null) {
+                    $this->departmentCourse->create([
+                        'institution_department_id' => $institutionDepartment->id,
+                        'course_id' => $courseId,
+                    ]);
+
+                    continue;
+                }
+
+                if ($existing->trashed()) {
+                    $existing->restore();
+                }
+            }
+        });
     }
 
     public function update(DepartmentCourse $departmentCourse, DepartmentCourseUpdateDto $dto)

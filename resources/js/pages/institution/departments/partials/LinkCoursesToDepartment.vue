@@ -7,6 +7,7 @@ import { useDepartmentCourses } from '@/composables/institution/useDepartmentCou
 import { SizeVariant } from '@/enums/sizes';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
+import { toIdList } from '@/lib/utils';
 import { useModalStore } from '@/store/core/useModalStore';
 import { DepartmentCourseParams } from '@/types/department-meta-data';
 import { Course } from '@/types/institution';
@@ -30,7 +31,7 @@ const selectAll = () => {
         form.course_ids = [];
         allSelected.value = false;
     } else {
-        form.course_ids = courses.value?.map((item: Course) => item['id']);
+        form.course_ids = toIdList(courses.value?.map((item: Course) => item['id']));
         allSelected.value = true;
     }
 };
@@ -40,7 +41,7 @@ const updateModel = () => {
 const { modals } = useModalStore();
 
 watch(modals!, async () => {
-    form.course_ids = getModalEdit(APP_MODULE_KEYS.department_courses);
+    form.course_ids = toIdList(getModalEdit(APP_MODULE_KEYS.department_courses));
     await listCourses();
     form.defaults();
 });
@@ -56,6 +57,7 @@ watch(modals!, async () => {
     >
         <template #body>
             <div class="flex flex-col space-y-3">
+                <p v-if="form.errors.course_ids" class="text-destructive text-sm" role="alert">{{ form.errors.course_ids }}</p>
                 <template v-if="isLoading">
                     <SpinnerComponent class="w-full" />
                 </template>

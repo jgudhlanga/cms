@@ -21,7 +21,7 @@ export type DepartmentLevel = {
 };
 
 export type DepartmentLevelParams = {
-    level_ids: Array<string | undefined | null> | null;
+    level_ids: number[];
 };
 
 export type DepartmentCourse = {
@@ -52,7 +52,7 @@ export type DepartmentCourseLevel = {
 };
 
 export type DepartmentCourseParams = {
-    course_ids: Array<string | undefined | null> | null;
+    course_ids: number[];
 };
 
 export type DepartmentCourseUpdateParams = {

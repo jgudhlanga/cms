@@ -155,7 +155,7 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
                     successAlert(success);
                     closeModal(APP_MODULE_KEYS.department_courses);
                 },
-                onError: () => errorAlert(error),
+                onError: (errors) => errorAlert(errors?.course_ids ?? error),
             });
         } catch (error: any) {
             form.setError(error.format());
