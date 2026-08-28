@@ -17,13 +17,16 @@ use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\ModeOfStudy;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
-use Illuminate\Auth\Access\AuthorizationException;
+use App\Services\Institution\ProgrammeLinkUsageGuard;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DepartmentCourseController extends Controller
 {
-    public function __construct(protected IDepartmentCourseRepository $repository) {}
+    public function __construct(
+        protected IDepartmentCourseRepository $repository,
+        protected ProgrammeLinkUsageGuard $usageGuard,
+    ) {}
 
     public function syncDepartmentCourses(InstitutionDepartment $institutionDepartment, DepartmentCourseRequest $request): void
     {
@@ -98,6 +101,7 @@ class DepartmentCourseController extends Controller
     public function destroy(DepartmentCourse $departmentCourse)
     {
         $this->authorize('deleteDepartmentMetaData');
+        $this->usageGuard->assertCoursesUnused([(int) $departmentCourse->id]);
         $this->repository->delete($departmentCourse);
     }
 
@@ -111,6 +115,7 @@ class DepartmentCourseController extends Controller
     public function forceDelete(DepartmentCourse $departmentCourse)
     {
         $this->authorize('forceDeleteDepartmentMetaData');
+        $this->usageGuard->assertCoursesUnused([(int) $departmentCourse->id]);
         $this->repository->delete($departmentCourse, true);
     }
 }

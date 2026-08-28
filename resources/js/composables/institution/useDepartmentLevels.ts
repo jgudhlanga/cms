@@ -50,7 +50,7 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
                     successAlert(success);
                     closeModal(APP_MODULE_KEYS.department_levels);
                 },
-                onError: () => errorAlert(error),
+                onError: (errors) => errorAlert(errors?.level_ids ?? error),
             });
         } catch (error: any) {
             form.setError(error.format());

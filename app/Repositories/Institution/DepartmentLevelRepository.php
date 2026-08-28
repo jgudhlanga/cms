@@ -8,13 +8,16 @@ use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
+use App\Services\Institution\ProgrammeLinkUsageGuard;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class DepartmentLevelRepository extends BaseRepository implements IDepartmentLevelRepository
 {
-    public function __construct(protected DepartmentLevel $departmentLevel)
-    {
+    public function __construct(
+        protected DepartmentLevel $departmentLevel,
+        protected ProgrammeLinkUsageGuard $usageGuard,
+    ) {
         parent::__construct($this->departmentLevel);
     }
 
@@ -26,27 +29,47 @@ class DepartmentLevelRepository extends BaseRepository implements IDepartmentLev
         DepartmentLevelDto $dto
     ): void {
         DB::transaction(function () use ($institutionDepartment, $dto) {
-            $newIds = $dto->level_ids;
-            $existing = $this->departmentLevel
+            $newIds = array_values(array_unique(array_filter(
+                array_map('intval', $dto->level_ids),
+                fn (int $levelId): bool => $levelId > 0,
+            )));
+
+            // Trashed links are kept in view so a level that is checked again is
+            // restored on its original id instead of orphaning existing records.
+            $links = $this->departmentLevel
+                ->withTrashed()
                 ->where('institution_department_id', $institutionDepartment->id)
-                ->pluck('level_id')
-                ->toArray();
+                ->get();
 
-            $toAdd = array_diff($newIds, $existing);
-            $toRemove = array_diff($existing, $newIds);
+            $activeLevelIds = $links->whereNull('deleted_at')->pluck('level_id')->map('intval')->all();
+            $toRemove = array_values(array_diff($activeLevelIds, $newIds));
 
-            if (! empty($toRemove)) {
+            if ($toRemove !== []) {
+                $removable = $links->whereNull('deleted_at')
+                    ->whereIn('level_id', $toRemove);
+
+                $this->usageGuard->assertLevelsUnused($removable->pluck('id')->map('intval')->all());
+
                 $this->departmentLevel
-                    ->where('institution_department_id', $institutionDepartment->id)
-                    ->whereIn('level_id', $toRemove)
+                    ->whereIn('id', $removable->pluck('id')->all())
                     ->delete();
             }
 
-            foreach ($toAdd as $levelId) {
-                $this->departmentLevel->create([
-                    'institution_department_id' => $institutionDepartment->id,
-                    'level_id' => $levelId,
-                ]);
+            foreach ($newIds as $levelId) {
+                $existing = $links->firstWhere('level_id', $levelId);
+
+                if ($existing === null) {
+                    $this->departmentLevel->create([
+                        'institution_department_id' => $institutionDepartment->id,
+                        'level_id' => $levelId,
+                    ]);
+
+                    continue;
+                }
+
+                if ($existing->trashed()) {
+                    $existing->restore();
+                }
             }
         });
     }

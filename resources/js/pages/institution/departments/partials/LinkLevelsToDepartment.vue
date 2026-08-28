@@ -7,6 +7,7 @@ import { useLevels } from '@/composables/institution/useLevels';
 import { SizeVariant } from '@/enums/sizes';
 import { getModalEdit } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
+import { toIdList } from '@/lib/utils';
 import { useModalStore } from '@/store/core/useModalStore';
 import { DepartmentLevelParams } from '@/types/department-meta-data';
 import { Level } from '@/types/institution';
@@ -31,7 +32,7 @@ const selectAll = () => {
         form.level_ids = [];
         allSelected.value = false;
     } else {
-        form.level_ids = levels.value?.map((item: Level) => item['id']);
+        form.level_ids = toIdList(levels.value?.map((item: Level) => item['id']));
         allSelected.value = true;
     }
 };
@@ -41,8 +42,7 @@ const updateModel = () => {
 const { modals } = useModalStore();
 
 watch(modals!, async () => {
-    const data = getModalEdit(APP_MODULE_KEYS.department_levels);
-    form.level_ids = Array.isArray(data) ? (data[0] ?? data) : (data ?? []);
+    form.level_ids = toIdList(getModalEdit(APP_MODULE_KEYS.department_levels));
     await listLevels();
     form.defaults();
 });
@@ -58,6 +58,7 @@ watch(modals!, async () => {
     >
         <template #body>
             <div class="flex flex-col space-y-3">
+                <p v-if="form.errors.level_ids" class="text-destructive text-sm" role="alert">{{ form.errors.level_ids }}</p>
                 <template v-if="isLoading">
                     <SpinnerComponent class="w-full" />
                 </template>
