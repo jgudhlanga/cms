@@ -1,6 +1,6 @@
 import { useDataTables } from '@/composables/core/useDataTables';
 import { errorAlert } from '@/lib/alerts';
-import { buildStudentShowUrl } from '@/lib/studentShowNavigation';
+import { buildProgramEditUrl, buildStudentShowUrl } from '@/lib/studentShowNavigation';
 import HttpService from '@/services/http.service';
 import type { ApiFilterResponse } from '@/types/data-pagination';
 import type {
@@ -19,6 +19,12 @@ export const useFaultyApplications = () => {
     const isLoading = ref(false);
 
     const textCell = (value: string | null | undefined) => h('span', { class: 'text-sm' }, value || '---');
+
+    const applicationEditUrl = (applicationId: number): string =>
+        buildProgramEditUrl(applicationId, {
+            from: 'maintenance',
+            return: route('maintenance.faulty-applications'),
+        });
 
     const createFaultyApplicationColumns = () => [
         {
@@ -93,6 +99,14 @@ export const useFaultyApplications = () => {
                         ),
                     ),
                 ),
+        },
+        {
+            header: trans_choice('trans.action', 2),
+            accessorKey: 'actions',
+            enableSorting: false,
+            meta: { align: 'right' },
+            cell: ({ row }: { row: { original: FaultyApplication } }) =>
+                textLink(applicationEditUrl(row.original.id), trans('trans.maintenance_faulty_applications_edit')),
         },
     ];
 

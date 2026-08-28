@@ -115,6 +115,15 @@ describe('buildProgramEditUrl', () => {
             '/students/program/99/edit?from=users&return=%2Fusers',
         );
     });
+
+    it('returns to faulty applications from maintenance', () => {
+        expect(
+            buildProgramEditUrl(99, {
+                from: 'maintenance',
+                return: '/maintenance/faulty-applications',
+            }),
+        ).toBe('/students/program/99/edit?from=maintenance&return=%2Fmaintenance%2Ffaulty-applications');
+    });
 });
 
 describe('resolveStudentShowBackUrl', () => {

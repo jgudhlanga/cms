@@ -18,6 +18,7 @@ import { Enrolment } from '@/types/enrolments';
 import { Student, StudentApplicationEdit } from '@/types/students';
 import { Link } from '@/types/ui';
 import { User } from '@/types/users';
+import type { SelectOption } from '@/types/utils';
 
 interface Props {
     user: User;
@@ -30,11 +31,27 @@ interface Props {
 const props = defineProps<Props>();
 const { student, program } = props;
 
-const { query, navigationOptions } = useStudentShowNavigation();
+const { query, navigationOptions, backUrl } = useStudentShowNavigation();
 
 const studentShowUrl = computed(() =>
     student ? buildStudentShowUrl(student.id, { ...navigationOptions.value, tab: 'applications' }) : route('students.index'),
 );
+
+const exitUrl = computed(() => (query.value.return ? backUrl.value : studentShowUrl.value));
+
+const toSelectOption = (id: string | number | null | undefined, label: string | null | undefined): SelectOption | null => {
+    if (id === null || id === undefined || id === '') {
+        return null;
+    }
+
+    const value = Number(id);
+
+    if (!Number.isFinite(value) || value <= 0) {
+        return null;
+    }
+
+    return { value, label: label ?? '' };
+};
 
 const breadcrumbs = computed((): Array<Link> => {
     const parentCrumbs = buildStudentShowBreadcrumbs(query.value.from).slice(0, -1);
@@ -62,14 +79,11 @@ const form = useForm<StudentApplicationEdit>({
     modeOfStudy: null,
 });
 
-onMounted(async () => {
-    form.modeOfStudy = { value: Number(program?.attributes?.modeOfStudyId), label: program?.attributes?.modeOfStudy ?? '' };
-    form.department = { value: Number(program?.attributes?.institutionDepartmentId), label: program?.attributes?.department ?? '' };
-    form.level = { value: Number(program?.attributes?.departmentLevelId), label: program?.attributes?.level ?? '' };
-    form.course = {
-        value: Number(program?.attributes?.departmentCourseId),
-        label: program?.attributes?.course ?? '',
-    };
+onMounted(() => {
+    form.modeOfStudy = toSelectOption(program?.attributes?.modeOfStudyId, program?.attributes?.modeOfStudy);
+    form.department = toSelectOption(program?.attributes?.institutionDepartmentId, program?.attributes?.department);
+    form.level = toSelectOption(program?.attributes?.departmentLevelId, program?.attributes?.level);
+    form.course = toSelectOption(program?.attributes?.departmentCourseId, program?.attributes?.course);
 });
 
 const save = async () => {
@@ -112,7 +126,7 @@ watch(
 
 <template>
     <Head :title="$tChoice('student', 2)" />
-    <PageContainer :breadcrumbs="breadcrumbs" :back-url="studentShowUrl">
+    <PageContainer :breadcrumbs="breadcrumbs" :back-url="exitUrl">
         <form @submit.prevent="() => save()">
             <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
                 <AdminInstitutionDepartmentComboSelect :form="form" v-model="form.department" :error="form.errors.department" :is-required="true" />
@@ -134,7 +148,7 @@ watch(
             </div>
             <div class="my-6 flex flex-col justify-center space-y-3 space-x-3 md:flex-row">
                 <BaseButton
-                    @click="navigateTo(studentShowUrl)"
+                    @click="navigateTo(exitUrl)"
                     type="button"
                     :variant="ColorVariant.shade"
                     class="w-full md:w-50"

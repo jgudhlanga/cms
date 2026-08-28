@@ -39,7 +39,7 @@ class StudentApplicationPolicy
 
     public function update(User $user, StudentApplication $studentApplication): bool
     {
-        if ($user->can('root:manage')) {
+        if ($user->can('root:manage') || $user->can('manage:data-maintenance')) {
             return true;
         }
 

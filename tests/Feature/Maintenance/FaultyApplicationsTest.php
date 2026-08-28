@@ -102,3 +102,35 @@ it('counts faulty applications on the maintenance hub', function (): void {
         ->assertSuccessful()
         ->assertJsonPath('faultyApplications', 1);
 });
+
+it('lets a data maintenance user open the programme editor for a faulty application', function (): void {
+    $application = createVerifiedStudentApplication('STU-FAULTY-EDIT');
+    breakApplicationProgramme($application, 'missing_mode_of_study');
+    actingAsDataMaintenanceUser($application->tenant_id);
+
+    $this->get(route('students.program-edit', [
+        'student_application' => $application,
+        'from' => 'maintenance',
+        'return' => route('maintenance.faulty-applications', absolute: false),
+    ]))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page->component('students/EditStudentApplication'));
+});
+
+it('lets a data maintenance user restore a missing mode of study', function (): void {
+    $application = createVerifiedStudentApplication('STU-FAULTY-FIX');
+    $modeOfStudyId = $application->mode_of_study_id;
+    breakApplicationProgramme($application, 'missing_mode_of_study');
+    actingAsDataMaintenanceUser($application->tenant_id);
+
+    $this->put(route('students.program-update', $application), [
+        'institution_department_id' => $application->institution_department_id,
+        'department_level_id' => $application->department_level_id,
+        'department_course_id' => $application->department_course_id,
+        'mode_of_study_id' => $modeOfStudyId,
+    ])->assertSuccessful();
+
+    $this->get(route('maintenance.faulty-applications.data'))
+        ->assertSuccessful()
+        ->assertJsonCount(0, 'data');
+});
