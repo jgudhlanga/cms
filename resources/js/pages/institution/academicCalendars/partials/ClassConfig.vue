@@ -32,6 +32,7 @@ const form = useForm<AcademicClassConfigPayload>({
     department_course_id: null,
     mode_of_study_id: null,
     semester_id: null,
+    programme_semester_id: null,
     class_config_id: null,
     named_classes_count: 0,
     course_syllabus_ids: [],
@@ -107,6 +108,7 @@ watch(
         form.mode_of_study_id = edit.mode_of_study_id ?? null;
         form.students_per_class = edit.students_per_class ?? null;
         form.semester_id = null;
+        form.programme_semester_id = edit.programme_semester_id ?? null;
         form.class_config_id = edit.class_config_id ?? null;
         form.named_classes_count = edit.named_classes_count ?? 0;
         form.course_syllabus_ids = [];
@@ -135,12 +137,27 @@ watch(
         } else {
             form.semester_id = null;
         }
+        syncProgrammeSemesterId(form.semester_id);
 
         await loadSyllabusOptions(edit.department_course_id, edit.department_level_id);
         const prefSyllabus = (edit.course_syllabus_ids ?? []).map((id) => String(id));
         form.course_syllabus_ids = prefSyllabus.filter((id) => syllabusOptions.value.some((o) => o.value === id));
     },
 );
+
+const syncProgrammeSemesterId = (optionId: string | number | null | undefined): void => {
+    const periods = config.value?.remaining_periods ?? [];
+    const period = periods.find((item) => String(item.id) === String(optionId ?? ''));
+    if (period?.programmeSemesterId != null) {
+        form.programme_semester_id = period.programmeSemesterId;
+        return;
+    }
+
+    const fallback = config.value?.programme_semester_id;
+    form.programme_semester_id = optionId != null && fallback != null && String(optionId) === String(fallback)
+        ? fallback
+        : null;
+};
 
 const submitForm = async (): Promise<void> => {
     const calendarId = String(form.academic_calendar_id ?? config.value?.academic_calendar_id ?? '').trim();
@@ -202,7 +219,12 @@ const submitForm = async (): Promise<void> => {
                 :loading="yearOptionsLoading"
                 v-model="form.semester_id"
                 :is-searchable="false"
-                @update:modelValue="clearFormErrors(form, 'semester_id')"
+                @update:modelValue="
+                    (value) => {
+                        clearFormErrors(form, 'semester_id');
+                        syncProgrammeSemesterId(value);
+                    }
+                "
                 :error="form.errors.semester_id"
             />
             <BaseSelect

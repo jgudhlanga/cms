@@ -89,18 +89,13 @@ const canExportClassLists = computed(
 
 const classConfigQuery = computed((): Record<string, string> => {
     const context = generationContext.value;
-    const query: Record<string, string> = {
+
+    return {
         class_config_id: String(context.classConfigId ?? classConfig.value?.id ?? ''),
         department_course_id: String(context.departmentCourseId ?? ''),
         department_level_id: String(context.departmentLevelId ?? ''),
         mode_of_study_id: String(context.modeOfStudyId ?? ''),
     };
-
-    if (props.selectedSemesterId != null) {
-        query.semester_id = String(props.selectedSemesterId);
-    }
-
-    return query;
 });
 
 const courseWorkMarksheetUrl = computed(() =>
@@ -214,27 +209,28 @@ const classShowUrl = (classPreview: AcademicCalendarClassPreview): string | null
 
 const computedTitle = computed(() => classConfig.value?.attributes?.departmentCourse ?? '');
 
+const hasClassConfigPeriod = computed(
+    () =>
+        props.selectedSemesterId != null
+        || classConfig.value?.attributes?.semesterId != null
+        || classConfig.value?.attributes?.programmeSemesterId != null
+        || Boolean(classConfig.value?.attributes?.periodLabel),
+);
+
 const enrolmentLegend = computed(() => {
-    const placed = previewClasses.value.reduce(
-        (totals, classPreview) => ({
-            male: totals.male + Number(classPreview.genderCounts?.male ?? 0),
-            female: totals.female + Number(classPreview.genderCounts?.female ?? 0),
-        }),
-        { male: 0, female: 0 },
-    );
-    const unplaced = generationContext.value.newStudentGenderCounts;
+    const totals = generationContext.value.finalStudentGenderCounts;
 
     return [
         {
             id: 'male',
             label: trans_choice('general.male', 2),
-            count: placed.male + Number(unplaced.male ?? 0),
+            count: Number(totals?.male ?? 0),
             colorClass: 'bg-blue-600',
         },
         {
             id: 'female',
             label: trans_choice('general.female', 2),
-            count: placed.female + Number(unplaced.female ?? 0),
+            count: Number(totals?.female ?? 0),
             colorClass: 'bg-pink-500',
         },
         {
@@ -290,7 +286,6 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                 :class-config="classConfig"
                 :staffing-summary="staffingSummary"
                 :selected-semester-id="selectedSemesterId"
-                :calendar-type="calendarType"
                 :semester-config-has-syllabi="semesterConfigHasSyllabi"
             />
 
@@ -353,7 +348,7 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                     :class-preview="classPreview"
                     :show-url="classShowUrl(classPreview)"
                     :can-assign-staffing="canAssignStaffing"
-                    :show-module-staffing="selectedSemesterId != null"
+                    :show-module-staffing="hasClassConfigPeriod"
                     @assign-tutor="onAssignTutor"
                     @remove-tutor="onRemoveTutor"
                 />

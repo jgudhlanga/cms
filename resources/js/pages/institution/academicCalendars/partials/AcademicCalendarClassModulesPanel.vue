@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import SelectSemesterSelect from '@/components/core/form/select/SelectSemesterSelect.vue';
 import BaseButton from '@/components/core/button/BaseButton.vue';
 import AcademicCalendarClassModuleAccordionItem from '@/pages/institution/academicCalendars/partials/AcademicCalendarClassModuleAccordionItem.vue';
 import { useClassModuleLecturerSave } from '@/composables/academicCalendars/useClassModuleLecturerSave';
@@ -8,22 +7,27 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { errorAlert, successAlert } from '@/lib/alerts';
 import type { ClassSemesterModule } from '@/types/academic-calendar';
-import { router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ChevronDown } from 'lucide-vue-next';
 import { computed, reactive, ref, watch } from 'vue';
 
-const props = defineProps<{
-    institutionDepartmentId: number;
-    calendarYear: string;
-    academicCalendarClassId: number;
-    semesterModules: ClassSemesterModule[];
-    selectedSemesterId: number | null;
-    calendarType: 'term' | 'semester' | 'abma';
-    semesterConfigHasSyllabi: boolean;
-    canAssignStaffing: boolean;
-    embedded?: boolean;
-}>();
+const props = withDefaults(
+    defineProps<{
+        institutionDepartmentId: number;
+        calendarYear: string;
+        academicCalendarClassId: number;
+        semesterModules: ClassSemesterModule[];
+        selectedSemesterId: number | null;
+        periodLabel?: string | null;
+        semesterConfigHasSyllabi: boolean;
+        canAssignStaffing: boolean;
+        embedded?: boolean;
+    }>(),
+    {
+        periodLabel: null,
+        embedded: false,
+    },
+);
 
 const { open: openConfirmDialog } = useCustomConfirmDialog();
 
@@ -83,20 +87,7 @@ watch(
     { deep: true },
 );
 
-const selectedSemester = computed({
-    get: () => props.selectedSemesterId,
-    set: (value: number | null) => {
-        const currentUrl = new URL(window.location.href);
-
-        if (value == null) {
-            currentUrl.searchParams.delete('semester_id');
-        } else {
-            currentUrl.searchParams.set('semester_id', String(value));
-        }
-
-        router.get(currentUrl.pathname + currentUrl.search, {}, { preserveScroll: true, preserveState: false });
-    },
-});
+const hasPeriod = computed(() => props.selectedSemesterId != null || Boolean(props.periodLabel));
 
 const handleSaveModule = async (module: ClassSemesterModule): Promise<void> => {
     const staffIds = moduleStaffIds[module.moduleId] ?? [];
@@ -164,19 +155,19 @@ const moduleCountLabel = computed(
                 @click="isOpen = !isOpen"
             >
                 <span class="text-xs font-semibold uppercase text-foreground">{{ $t('academic_calendar.module_lecturers') }}</span>
-                <span v-if="selectedSemesterId != null" class="truncate text-[11px] text-muted-foreground">
+                <span v-if="hasPeriod" class="truncate text-[11px] text-muted-foreground">
                     {{ moduleCountLabel }}
                 </span>
             </button>
             <div class="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-                <div class="w-40 shrink-0">
-                    <SelectSemesterSelect
-                        v-model="selectedSemester"
-                        :calendar-type="calendarType"
-                    />
-                </div>
+                <span
+                    v-if="periodLabel"
+                    class="inline-flex items-center rounded-full border border-border bg-background px-2 py-0.5 text-[11px] font-medium text-foreground"
+                >
+                    {{ periodLabel }}
+                </span>
                 <BaseButton
-                    v-if="canAssignStaffing && selectedSemesterId != null && semesterConfigHasSyllabi"
+                    v-if="canAssignStaffing && hasPeriod && semesterConfigHasSyllabi"
                     type="button"
                     :title="$t('academic_calendar.copy_syllabus_defaults')"
                     :variant="ColorVariant.primary_outline"
@@ -199,19 +190,19 @@ const moduleCountLabel = computed(
 
         <div v-if="isOpen" class="space-y-2 border-t border-border/50 px-2.5 py-2">
             <p
-                v-if="selectedSemesterId != null && !semesterConfigHasSyllabi"
+                v-if="hasPeriod && !semesterConfigHasSyllabi"
                 class="text-xs text-amber-700"
             >
                 {{ $t('academic_calendar.semester_config_missing') }}
             </p>
 
             <Empty
-                v-else-if="selectedSemesterId != null && !hasModules"
+                v-else-if="hasPeriod && !hasModules"
                 :message="$t('academic_calendar.no_modules_for_semester')"
             />
 
             <div
-                v-else-if="selectedSemesterId != null && hasModules"
+                v-else-if="hasPeriod && hasModules"
                 class="grid grid-cols-1 gap-1.5 sm:grid-cols-2"
             >
                 <AcademicCalendarClassModuleAccordionItem

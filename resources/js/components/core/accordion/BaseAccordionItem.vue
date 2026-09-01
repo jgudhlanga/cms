@@ -5,6 +5,7 @@ interface Props {
     value: string;
     title: string;
     description?: string;
+    id?: string;
 }
 
 defineProps<Props>();
@@ -12,6 +13,7 @@ defineProps<Props>();
 
 <template>
     <AccordionItem
+        :id="id"
         :value="value"
         class="overflow-hidden rounded-lg border border-border border-b-0 bg-card shadow-sm"
     >

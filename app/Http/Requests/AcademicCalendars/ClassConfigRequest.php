@@ -8,6 +8,8 @@ use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\ProgrammeSemester;
+use App\Services\Institution\ProgrammeSemesterResolver;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -27,7 +29,7 @@ class ClassConfigRequest extends FormRequest
             $merge['students_per_class'] = (int) $this->input('students_per_class');
         }
 
-        foreach (['department_level_id', 'department_course_id', 'mode_of_study_id', 'semester_id', 'class_config_id'] as $key) {
+        foreach (['department_level_id', 'department_course_id', 'mode_of_study_id', 'semester_id', 'class_config_id', 'programme_semester_id'] as $key) {
             if ($this->has($key) && $this->input($key) !== '' && $this->input($key) !== null) {
                 $merge[$key] = (int) $this->input($key);
             }
@@ -46,6 +48,7 @@ class ClassConfigRequest extends FormRequest
         }
 
         $this->merge($merge);
+        $this->merge($this->resolvedProgrammeSemesterPeriod());
     }
 
     public function rules(): array
@@ -82,10 +85,26 @@ class ClassConfigRequest extends FormRequest
                 ),
             ],
             'semester_id' => [
-                'required',
+                Rule::requiredIf(fn (): bool => ! $this->filled('programme_semester_id')),
+                'nullable',
                 'integer',
                 Rule::exists('semesters', 'id')->where(function ($query): void {
                     $query->whereIn('slug', $this->resolveCalendarType()->allowedSemesterSlugs());
+                }),
+            ],
+            'programme_semester_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('programme_semesters', 'id')->where(function ($query): void {
+                    $departmentLevelCourseId = $this->resolveDepartmentLevelCourseId();
+                    if ($departmentLevelCourseId === null) {
+                        $query->whereRaw('1 = 0');
+
+                        return;
+                    }
+
+                    $query->where('department_level_course_id', $departmentLevelCourseId)
+                        ->whereNull('deleted_at');
                 }),
             ],
             'course_syllabus_ids' => ['nullable', 'array'],
@@ -149,21 +168,26 @@ class ClassConfigRequest extends FormRequest
             return;
         }
 
-        $collision = ClassConfig::query()
+        $collisionQuery = ClassConfig::query()
             ->where('calendar_year', (string) $academicCalendar->calendar_year)
             ->where('institution_department_id', $institutionDepartment->id)
             ->where('department_course_id', (int) $this->input('department_course_id'))
             ->where('department_level_id', (int) $this->input('department_level_id'))
             ->where('mode_of_study_id', (int) $this->input('mode_of_study_id'))
-            ->where('semester_id', (int) $this->input('semester_id'))
             ->whereNull('deleted_at')
             ->when(
                 $classConfigId !== null && $classConfigId > 0,
                 fn ($query) => $query->where('id', '!=', $classConfigId),
-            )
-            ->exists();
+            );
 
-        if ($collision) {
+        $programmeSemesterId = $this->input('programme_semester_id');
+        if (is_numeric($programmeSemesterId) && (int) $programmeSemesterId > 0) {
+            $collisionQuery->where('programme_semester_id', (int) $programmeSemesterId);
+        } else {
+            $collisionQuery->where('semester_id', (int) $this->input('semester_id'));
+        }
+
+        if ($collisionQuery->exists()) {
             $validator->errors()->add('semester_id', __('academic_calendar.class_config_semester_collision'));
         }
     }
@@ -190,7 +214,7 @@ class ClassConfigRequest extends FormRequest
         }
 
         $calendarType = $this->resolveCalendarType();
-        $max = $calendarType->maxAssessmentCalendarsPerYear();
+        $max = $this->maxClassConfigsForOffering($calendarType);
 
         $existingCount = ClassConfig::query()
             ->where('calendar_year', (string) $academicCalendar->calendar_year)
@@ -232,6 +256,83 @@ class ClassConfigRequest extends FormRequest
             ->value('id');
 
         return $id !== null ? (int) $id : null;
+    }
+
+    /**
+     * @return array{programme_semester_id?: int, semester_id?: int|null}
+     */
+    private function resolvedProgrammeSemesterPeriod(): array
+    {
+        $programmeSemester = $this->offeringProgrammeSemester($this->positiveInt('programme_semester_id'))
+            ?? $this->offeringProgrammeSemester($this->positiveInt('semester_id'));
+
+        if (! $programmeSemester instanceof ProgrammeSemester) {
+            return [];
+        }
+
+        $departmentLevelCourseId = $this->resolveDepartmentLevelCourseId();
+        $departmentLevelCourse = $departmentLevelCourseId !== null
+            ? DepartmentLevelCourse::query()
+                ->with(['departmentLevel.level', 'programmeSemesters'])
+                ->find($departmentLevelCourseId)
+            : null;
+
+        $calendarSemester = $departmentLevelCourse instanceof DepartmentLevelCourse
+            ? app(ProgrammeSemesterResolver::class)->calendarSemesterForClassConfig(
+                $departmentLevelCourse,
+                $programmeSemester,
+            )
+            : null;
+
+        return [
+            'programme_semester_id' => (int) $programmeSemester->id,
+            'semester_id' => $calendarSemester?->id,
+        ];
+    }
+
+    private function offeringProgrammeSemester(?int $id): ?ProgrammeSemester
+    {
+        if ($id === null) {
+            return null;
+        }
+
+        $departmentLevelCourseId = $this->resolveDepartmentLevelCourseId();
+        if ($departmentLevelCourseId === null) {
+            return null;
+        }
+
+        return ProgrammeSemester::query()
+            ->whereKey($id)
+            ->where('department_level_course_id', $departmentLevelCourseId)
+            ->first();
+    }
+
+    private function positiveInt(string $key): ?int
+    {
+        $value = $this->input($key);
+        if ($value === null || $value === '' || ! is_numeric($value)) {
+            return null;
+        }
+
+        $id = (int) $value;
+
+        return $id > 0 ? $id : null;
+    }
+
+    private function maxClassConfigsForOffering(AcademicCalendarTypeEnum $calendarType): int
+    {
+        $departmentLevelCourseId = $this->resolveDepartmentLevelCourseId();
+        if ($departmentLevelCourseId !== null) {
+            $programmeSemesterCount = ProgrammeSemester::query()
+                ->where('department_level_course_id', $departmentLevelCourseId)
+                ->count();
+
+            if ($programmeSemesterCount > 0) {
+                return $programmeSemesterCount;
+            }
+        }
+
+        return $calendarType->maxAssessmentCalendarsPerYear();
     }
 
     /**

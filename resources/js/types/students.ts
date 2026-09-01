@@ -169,10 +169,47 @@ export type StudentProgramme = {
     semesters: StudentProgrammeSemester[];
 };
 
+export type CoursePathwayStepState = 'completed' | 'current' | 'blocked' | 'locked';
+
+export type CoursePathwayStep = {
+    programmeSemesterId: number;
+    name: string;
+    kind: string;
+    state: CoursePathwayStepState;
+};
+
+export type CoursePathwayStageStatus = 'completed' | 'current' | 'locked';
+
+export type CoursePathwayStage = {
+    departmentLevelId: number;
+    levelName: string | null;
+    studentApplicationId?: number | null;
+    impliedComplete: boolean;
+    structureMissing: boolean;
+    status: CoursePathwayStageStatus;
+    years: number;
+    steps: CoursePathwayStep[];
+};
+
+export type CoursePathway = {
+    departmentCourseId: number;
+    course: string | null;
+    yearsCompleted: number;
+    yearsTotal: number;
+    stepsCompleted: number;
+    stepsTotal: number;
+    stages: CoursePathwayStage[];
+};
+
+export type StudentProgrammesApiResult = {
+    programmes: StudentProgramme[];
+    pathways: CoursePathway[];
+};
+
 export type StudentProgrammesApiResponse = {
     success: boolean;
     message: string;
-    result: StudentProgramme[];
+    result: StudentProgramme[] | StudentProgrammesApiResult;
 };
 
 

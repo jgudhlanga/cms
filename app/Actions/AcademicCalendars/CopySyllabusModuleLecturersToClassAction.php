@@ -17,13 +17,9 @@ class CopySyllabusModuleLecturersToClassAction
     public function execute(
         AcademicCalendarClass $academicCalendarClass,
         ClassConfig $allocationConfig,
-        int $semesterId,
         int $tenantId,
     ): void {
-        $semesterConfig = $this->classStaffingService->resolveSemesterClassConfig(
-            $allocationConfig,
-            $semesterId,
-        );
+        $semesterConfig = $this->classStaffingService->classConfigForStaffing($allocationConfig);
 
         abort_unless($semesterConfig instanceof ClassConfig, 422, __('academic_calendar.semester_config_missing'));
 

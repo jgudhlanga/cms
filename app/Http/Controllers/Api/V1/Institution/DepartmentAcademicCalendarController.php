@@ -211,6 +211,15 @@ class DepartmentAcademicCalendarController extends Controller
         return "{$departmentCourseId}_{$departmentLevelId}_{$suffix}";
     }
 
+    private function classConfigLookupKey(ClassConfig $config): string
+    {
+        $periodSuffix = $config->programme_semester_id !== null
+            ? 'ps:'.(int) $config->programme_semester_id
+            : ($config->semester_id !== null ? 's:'.(int) $config->semester_id : 'none');
+
+        return (int) $config->department_course_id.'_'.(int) $config->department_level_id.'_'.$periodSuffix;
+    }
+
     private function courseLevelPairLookupKey(int $departmentCourseId, int $departmentLevelId): string
     {
         return "{$departmentCourseId}_{$departmentLevelId}";
@@ -239,11 +248,7 @@ class DepartmentAcademicCalendarController extends Controller
         $lookup = [];
 
         foreach ($configs as $config) {
-            $key = $this->courseLevelOptionLookupKey(
-                (int) $config->department_course_id,
-                (int) $config->department_level_id,
-                $config->semester_id !== null ? (int) $config->semester_id : null,
-            );
+            $key = $this->classConfigLookupKey($config);
             $optionId = $config->semester_id !== null ? (int) $config->semester_id : null;
             $syllabusIds = array_values(array_unique(array_filter(
                 array_map(static fn ($id): int => (int) $id, $config->course_syllabus_ids ?? []),
@@ -285,11 +290,7 @@ class DepartmentAcademicCalendarController extends Controller
         $byPair = [];
 
         foreach ($configs as $config) {
-            $key = $this->courseLevelOptionLookupKey(
-                (int) $config->department_course_id,
-                (int) $config->department_level_id,
-                $config->semester_id !== null ? (int) $config->semester_id : null,
-            );
+            $key = $this->classConfigLookupKey($config);
             $pairKey = $this->courseLevelPairLookupKey(
                 (int) $config->department_course_id,
                 (int) $config->department_level_id,
@@ -326,12 +327,9 @@ class DepartmentAcademicCalendarController extends Controller
         $lookup = [];
 
         foreach ($configs as $config) {
-            $key = $this->courseLevelOptionLookupKey(
-                (int) $config->department_course_id,
-                (int) $config->department_level_id,
-                $config->semester_id !== null ? (int) $config->semester_id : null,
-            );
+            $key = $this->classConfigLookupKey($config);
             $count = (int) ($countsByConfigId[$config->id] ?? 0);
+            $lookup['id:'.$config->id] = $count;
             $lookup[$key] = $count;
             $pairKey = $this->courseLevelPairLookupKey(
                 (int) $config->department_course_id,
@@ -452,9 +450,10 @@ class DepartmentAcademicCalendarController extends Controller
             $configs[] = [
                 'classConfigId' => $configData['id'],
                 'semesterId' => $semesterId,
+                'programmeSemesterId' => $configData['programmeSemesterId'] ?? null,
                 'semester' => $configData['semester'] ?? $this->semesterName($semesterId),
                 'studentsPerClass' => (int) ($configData['students_per_class'] ?? 0),
-                'classesCount' => (int) ($lookups['classesCount'][$configKey] ?? 0),
+                'classesCount' => (int) ($lookups['classesCount']['id:'.$configData['id']] ?? $lookups['classesCount'][$configKey] ?? 0),
                 'totalnClass' => (int) ($lookups['totalnClass'][$nClassKey] ?? $lookups['totalnClass'][$pairKey] ?? 0),
                 'courseSyllabusIds' => $configData['courseSyllabusIds'] ?? [],
                 'courseSyllabusCodes' => $configData['courseSyllabusCodes'] ?? [],

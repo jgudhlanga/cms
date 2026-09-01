@@ -1,49 +1,17 @@
 <script setup lang="ts">
 import LevelCodeBadge from '@/components/core/util/LevelCodeBadge.vue';
-import BaseSelect from '@/components/core/form/select/BaseSelect.vue';
-import { useSemestersByCalendarType } from '@/composables/academicCalendars/useSemestersByCalendarType';
 import { formatLevelBadge } from '@/lib/levelBadge';
 import type { ClassConfig, ClassStaffingSummary } from '@/types/academic-calendar';
-import { router } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
-import { computed, onMounted, watch } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps<{
     title: string;
     classConfig: ClassConfig | null;
     staffingSummary: ClassStaffingSummary;
     selectedSemesterId: number | null;
-    calendarType: 'term' | 'semester' | 'abma';
     semesterConfigHasSyllabi: boolean;
 }>();
-
-const { yearOptions, yearOptionsLoading, loadYearOptions } = useSemestersByCalendarType();
-
-onMounted(() => {
-    void loadYearOptions(props.calendarType);
-});
-
-watch(
-    () => props.calendarType,
-    (calendarType) => {
-        void loadYearOptions(calendarType);
-    },
-);
-
-const selectedSemester = computed({
-    get: () => (props.selectedSemesterId != null ? String(props.selectedSemesterId) : ''),
-    set: (value: string) => {
-        const currentUrl = new URL(window.location.href);
-
-        if (value === '') {
-            currentUrl.searchParams.delete('semester_id');
-        } else {
-            currentUrl.searchParams.set('semester_id', value);
-        }
-
-        router.get(currentUrl.pathname + currentUrl.search, {}, { preserveScroll: true, preserveState: false });
-    },
-});
 
 const courseName = computed(() => props.classConfig?.attributes?.departmentCourse ?? props.title);
 const levelName = computed(() => String(props.classConfig?.attributes?.departmentLevel ?? '').trim());
@@ -51,6 +19,7 @@ const levelBadge = computed(() => (levelName.value !== '' ? formatLevelBadge(lev
 const codesLabel = computed(() => (props.classConfig?.attributes?.courseSyllabusCodes ?? []).filter((code) => String(code).trim() !== '').join(', '));
 const modeLabel = computed(() => String(props.classConfig?.attributes?.modeOfStudy ?? '').trim());
 const yearLabel = computed(() => String(props.classConfig?.attributes?.calendarYear ?? '').trim());
+const periodLabel = computed(() => String(props.classConfig?.attributes?.periodLabel ?? '').trim());
 const classSizeLabel = computed(() => {
     const size = props.classConfig?.attributes?.studentsPerClass;
     if (size == null || String(size).trim() === '') {
@@ -59,6 +28,14 @@ const classSizeLabel = computed(() => {
 
     return `${trans_choice('academic_calendar.class_unit_size', 1)} ${String(size)}`;
 });
+
+const hasPeriod = computed(
+    () =>
+        props.selectedSemesterId != null
+        || props.classConfig?.attributes?.semesterId != null
+        || props.classConfig?.attributes?.programmeSemesterId != null
+        || periodLabel.value !== '',
+);
 
 const metaBits = computed(() =>
     [codesLabel.value, modeLabel.value, yearLabel.value !== '' ? yearLabel.value : '', classSizeLabel.value].filter((bit) => bit !== ''),
@@ -89,8 +66,6 @@ const modulesComplete = computed(
         props.staffingSummary.modulesTotal > 0
         && props.staffingSummary.moduleSlotsStaffed >= props.staffingSummary.modulesTotal,
 );
-
-const showSemesterHelper = computed(() => props.selectedSemesterId == null);
 </script>
 
 <template>
@@ -107,6 +82,12 @@ const showSemesterHelper = computed(() => props.selectedSemesterId == null);
             </p>
         </div>
         <span
+            v-if="periodLabel"
+            class="inline-flex items-center rounded-full border border-border bg-background px-2 py-0.5 text-[11px] font-medium text-foreground"
+        >
+            {{ periodLabel }}
+        </span>
+        <span
             class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium"
             :class="
                 tutorsComplete
@@ -119,7 +100,7 @@ const showSemesterHelper = computed(() => props.selectedSemesterId == null);
             {{ tutorsProgressLabel }}
         </span>
         <span
-            v-if="selectedSemesterId != null"
+            v-if="hasPeriod"
             class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium"
             :class="
                 modulesComplete
@@ -131,23 +112,8 @@ const showSemesterHelper = computed(() => props.selectedSemesterId == null);
         >
             {{ modulesProgressLabel }}
         </span>
-        <div class="min-w-0 sm:w-48">
-            <BaseSelect
-                v-model="selectedSemester"
-                label=""
-                :options="yearOptions"
-                :loading="yearOptionsLoading"
-                :placeholder="$t('trans.select')"
-                :is-clearable="true"
-                :vertical-layout="false"
-                class="min-w-0 w-full"
-            />
-        </div>
-        <p v-if="showSemesterHelper" class="w-full text-[11px] text-muted-foreground">
-            {{ $t('academic_calendar.select_semester_for_modules') }}
-        </p>
         <p
-            v-else-if="selectedSemesterId != null && !semesterConfigHasSyllabi"
+            v-if="hasPeriod && !semesterConfigHasSyllabi"
             class="w-full text-[11px] text-amber-700"
         >
             {{ $t('academic_calendar.semester_config_missing') }}

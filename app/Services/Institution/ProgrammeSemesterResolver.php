@@ -156,10 +156,51 @@ class ProgrammeSemesterResolver
         }
 
         $ordinal = (int) $index + 1;
-        $prefix = $calendarType->value;
 
         return Semester::query()
-            ->where('slug', "{$prefix}-{$ordinal}")
+            ->where('slug', "{$calendarType->value}-{$ordinal}")
+            ->first();
+    }
+
+    /**
+     * Map a programme phase onto the calendar period of the same type in a given year.
+     * Year 2 Sem 1 dual-writes to semester-1, not a non-existent semester-3.
+     */
+    public function calendarSemesterForClassConfig(
+        DepartmentLevelCourse $dlc,
+        ProgrammeSemester $programmeSemester,
+    ): ?Semester {
+        $dlc->loadMissing(['departmentLevel.level', 'programmeSemesters']);
+
+        $calendarType = $dlc->departmentLevel?->level?->calendar_type;
+
+        if (! $calendarType instanceof AcademicCalendarTypeEnum) {
+            $calendarType = AcademicCalendarTypeEnum::tryFrom((string) $calendarType)
+                ?? AcademicCalendarTypeEnum::SEMESTER;
+        }
+
+        if (! $programmeSemester->isTaught()) {
+            return null;
+        }
+
+        $taughtSemesters = $dlc->programmeSemesters
+            ->filter(fn (ProgrammeSemester $ps): bool => $ps->isTaught())
+            ->sortBy('position')
+            ->values();
+
+        $index = $taughtSemesters->search(
+            fn (ProgrammeSemester $ps): bool => (int) $ps->id === (int) $programmeSemester->id,
+        );
+
+        if ($index === false) {
+            return null;
+        }
+
+        $periodsPerYear = max(1, $calendarType->maxAssessmentCalendarsPerYear());
+        $ordinal = ((int) $index % $periodsPerYear) + 1;
+
+        return Semester::query()
+            ->where('slug', "{$calendarType->value}-{$ordinal}")
             ->first();
     }
 
@@ -238,14 +279,23 @@ class ProgrammeSemesterResolver
             return false;
         }
 
+        $completion = $this->completionProgrammeSemesterForOffering($dlc);
+
+        return $completion instanceof ProgrammeSemester
+            && (int) $completion->id === (int) $programmeSemester->id;
+    }
+
+    public function completionProgrammeSemesterForOffering(DepartmentLevelCourse $dlc): ?ProgrammeSemester
+    {
+        $dlc->loadMissing('programmeSemesters');
+
         if ((bool) $dlc->includes_industrial_attachment && (int) $dlc->attachment_semester_count > 0) {
             $lastAttachment = $dlc->programmeSemesters
                 ->filter(fn (ProgrammeSemester $ps): bool => $ps->isIndustrialAttachment())
                 ->sortByDesc('position')
                 ->first();
 
-            return $lastAttachment instanceof ProgrammeSemester
-                && (int) $lastAttachment->id === (int) $programmeSemester->id;
+            return $lastAttachment instanceof ProgrammeSemester ? $lastAttachment : null;
         }
 
         $lastTaught = $dlc->programmeSemesters
@@ -253,8 +303,7 @@ class ProgrammeSemesterResolver
             ->sortByDesc('position')
             ->first();
 
-        return $lastTaught instanceof ProgrammeSemester
-            && (int) $lastTaught->id === (int) $programmeSemester->id;
+        return $lastTaught instanceof ProgrammeSemester ? $lastTaught : null;
     }
 
     /**

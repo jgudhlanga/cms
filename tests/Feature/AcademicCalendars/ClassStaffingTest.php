@@ -310,7 +310,7 @@ test('copy defaults returns json with semester modules when accept header is app
         ->each->toBeString()->not->toBeEmpty();
 });
 
-test('department classes page includes tutor and staffing summary when semester is selected', function () {
+test('department classes page pins staffing to the class config period', function () {
     $context = buildClassStaffingContext();
     $tutor = makeSyllabusModuleLecturerStaff($context);
     $lecturerTypeId = ClassMetaDataType::query()
@@ -331,7 +331,6 @@ test('department classes page includes tutor and staffing summary when semester 
         'department_course_id' => $context['departmentCourse']->id,
         'mode_of_study_id' => $context['modeOfStudy']->id,
         'class_config_id' => $context['classConfig']->id,
-        'semester_id' => $context['semesterOne']->id,
     ]));
 
     $response->assertSuccessful();
@@ -342,11 +341,16 @@ test('department classes page includes tutor and staffing summary when semester 
 
     expect(data_get($page, 'props.staffingSummary.tutorsAssigned'))->toBe(1)
         ->and(data_get($previewClass, 'tutor.id'))->toBe($tutor->id)
-        ->and(data_get($page, 'props.selectedSemesterId'))->toBe($context['semesterOne']->id);
+        ->and(data_get($page, 'props.selectedSemesterId'))->toBe($context['semesterOne']->id)
+        ->and(data_get($page, 'props.classConfig.attributes.periodLabel'))->toBe($context['semesterOne']->name);
 });
 
-test('department classes page auto selects the current period when semester is omitted', function () {
+test('department classes page ignores a semester query and keeps the class config period', function () {
     $context = buildClassStaffingContext();
+    $semesterTwo = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-2'],
+        ['name' => 'Semester 2', 'description' => null],
+    );
 
     $response = $this->actingAs($context['user'])->get(route('academic-calendars.department-classes', [
         'institution_department' => $context['institutionDepartment']->id,
@@ -355,15 +359,17 @@ test('department classes page auto selects the current period when semester is o
         'department_course_id' => $context['departmentCourse']->id,
         'mode_of_study_id' => $context['modeOfStudy']->id,
         'class_config_id' => $context['classConfig']->id,
+        'semester_id' => $semesterTwo->id,
     ]));
 
     $response->assertSuccessful();
     $page = $response->viewData('page');
 
-    expect(data_get($page, 'props.selectedSemesterId'))->toBe($context['semesterOne']->id);
+    expect(data_get($page, 'props.selectedSemesterId'))->toBe($context['semesterOne']->id)
+        ->and(data_get($page, 'props.classConfig.attributes.periodLabel'))->toBe($context['semesterOne']->name);
 });
 
-test('class detail page auto selects the current semester for module lecturers', function () {
+test('class detail page pins module lecturers to the class config period', function () {
     $context = buildClassStaffingContext();
 
     $response = $this->actingAs($context['user'])->get(route('academic-calendars.department-classes.show', [
@@ -376,10 +382,11 @@ test('class detail page auto selects the current semester for module lecturers',
     $page = $response->viewData('page');
 
     expect(data_get($page, 'props.selectedSemesterId'))->toBe($context['semesterOne']->id)
-        ->and(data_get($page, 'props.semesterModules.0.moduleId'))->toBe($context['module']->id);
+        ->and(data_get($page, 'props.semesterModules.0.moduleId'))->toBe($context['module']->id)
+        ->and(data_get($page, 'props.classConfig.attributes.periodLabel'))->toBe($context['semesterOne']->name);
 });
 
-test('class detail page keeps an explicit semester query over the current semester', function () {
+test('class detail page ignores a semester query and keeps the class config period', function () {
     $context = buildClassStaffingContext();
     $semesterTwo = Semester::query()->firstOrCreate(
         ['slug' => 'semester-2'],
@@ -396,5 +403,7 @@ test('class detail page keeps an explicit semester query over the current semest
     $response->assertSuccessful();
     $page = $response->viewData('page');
 
-    expect(data_get($page, 'props.selectedSemesterId'))->toBe($semesterTwo->id);
+    expect(data_get($page, 'props.selectedSemesterId'))->toBe($context['semesterOne']->id)
+        ->and(data_get($page, 'props.semesterModules.0.moduleId'))->toBe($context['module']->id)
+        ->and(data_get($page, 'props.classConfig.attributes.periodLabel'))->toBe($context['semesterOne']->name);
 });

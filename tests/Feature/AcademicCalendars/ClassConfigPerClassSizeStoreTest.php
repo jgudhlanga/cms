@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Institution\SyncProgrammeSemestersForOfferingAction;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Institution\CourseSyllabusStatusEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
@@ -13,9 +14,11 @@ use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Level;
 use App\Models\Institution\ModeOfStudy;
+use App\Models\Institution\ProgrammeSemester;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
+use Illuminate\Support\Collection;
 
 test('per class size store rejects course syllabus from another department level course', function () {
     $tenant = Tenant::query()->firstOrFail();
@@ -602,3 +605,187 @@ test('per class size store rejects a fifth abma config for the same year', funct
         'course_syllabus_ids' => [],
     ])->assertSessionHasErrors(['semester_id']);
 });
+
+test('per class size store accepts a programme semester id from the class config picker', function () {
+    $context = buildProgrammeClassConfigStoreContext(2);
+    $yearOneSemOne = $context['programmeSemesters']->first();
+
+    expect($yearOneSemOne)->toBeInstanceOf(ProgrammeSemester::class)
+        ->and($yearOneSemOne?->name)->toBe('Year 1 Sem 1');
+
+    $this->actingAs($context['user']);
+
+    $this->from(route('institution-departments.show', $context['institutionDepartment']->id))->post($context['storeUrl'], [
+        'students_per_class' => 35,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'semester_id' => $yearOneSemOne->id,
+        'course_syllabus_ids' => [],
+    ])->assertSessionHasNoErrors();
+
+    $saved = ClassConfig::query()
+        ->where('department_course_id', $context['departmentCourse']->id)
+        ->first();
+
+    expect($saved)->not->toBeNull()
+        ->and((int) $saved->programme_semester_id)->toBe((int) $yearOneSemOne->id)
+        ->and((int) $saved->semester_id)->toBe((int) $context['semesterOne']->id)
+        ->and($saved->name)->toBe('Year 1 Sem 1')
+        ->and((int) $saved->students_per_class)->toBe(35);
+});
+
+test('per class size store can create year 1 and year 2 configs that share a calendar semester', function () {
+    $context = buildProgrammeClassConfigStoreContext(4);
+    $yearOneSemOne = $context['programmeSemesters']->firstWhere('name', 'Year 1 Sem 1');
+    $yearTwoSemOne = $context['programmeSemesters']->firstWhere('name', 'Year 2 Sem 1');
+
+    expect($yearOneSemOne)->toBeInstanceOf(ProgrammeSemester::class)
+        ->and($yearTwoSemOne)->toBeInstanceOf(ProgrammeSemester::class);
+
+    $this->actingAs($context['user']);
+    $from = route('institution-departments.show', $context['institutionDepartment']->id);
+
+    $this->from($from)->post($context['storeUrl'], [
+        'students_per_class' => 20,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'semester_id' => $yearOneSemOne->id,
+        'course_syllabus_ids' => [],
+    ])->assertSessionHasNoErrors();
+
+    $this->from($from)->post($context['storeUrl'], [
+        'students_per_class' => 22,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'semester_id' => $yearTwoSemOne->id,
+        'course_syllabus_ids' => [],
+    ])->assertSessionHasNoErrors();
+
+    $configs = ClassConfig::query()
+        ->where('department_course_id', $context['departmentCourse']->id)
+        ->orderBy('id')
+        ->get();
+
+    expect($configs)->toHaveCount(2)
+        ->and($configs->pluck('programme_semester_id')->map(fn ($id): int => (int) $id)->all())
+        ->toEqualCanonicalizing([(int) $yearOneSemOne->id, (int) $yearTwoSemOne->id])
+        ->and($configs->pluck('semester_id')->map(fn ($id): int => (int) $id)->unique()->all())
+        ->toEqual([(int) $context['semesterOne']->id]);
+});
+
+test('per class size store rejects a duplicate programme semester for the same year', function () {
+    $context = buildProgrammeClassConfigStoreContext(2);
+    $yearOneSemOne = $context['programmeSemesters']->first();
+
+    ClassConfig::query()->create([
+        'calendar_year' => '2026',
+        'semester_id' => $context['semesterOne']->id,
+        'programme_semester_id' => $yearOneSemOne->id,
+        'name' => 'Year 1 Sem 1',
+        'institution_department_id' => $context['institutionDepartment']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 15,
+    ]);
+
+    $this->actingAs($context['user']);
+
+    $this->from(route('institution-departments.show', $context['institutionDepartment']->id))->post($context['storeUrl'], [
+        'students_per_class' => 18,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'semester_id' => $yearOneSemOne->id,
+        'course_syllabus_ids' => [],
+    ])->assertSessionHasErrors(['semester_id']);
+});
+
+/**
+ * @return array{
+ *     user: User,
+ *     institutionDepartment: InstitutionDepartment,
+ *     departmentCourse: DepartmentCourse,
+ *     departmentLevel: DepartmentLevel,
+ *     modeOfStudy: ModeOfStudy,
+ *     calendar: AcademicCalendar,
+ *     semesterOne: Semester,
+ *     semesterTwo: Semester,
+ *     programmeSemesters: Collection<int, ProgrammeSemester>,
+ *     storeUrl: string
+ * }
+ */
+function buildProgrammeClassConfigStoreContext(int $taughtSemesterCount = 2): array
+{
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+    $user->givePermissionTo(['viewAny:academic-calendars', 'update:academic-calendars']);
+
+    $department = Department::factory()->create();
+    $institutionDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $tenant->id,
+        'department_id' => $department->id,
+        'department_code' => 'pcs-prog-'.$taughtSemesterCount,
+        'description' => 'Programme semester class config',
+    ]);
+
+    $course = Course::factory()->create();
+    $departmentCourse = DepartmentCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'course_id' => $course->id,
+    ]);
+
+    $level = Level::factory()->create(['calendar_type' => AcademicCalendarTypeEnum::SEMESTER]);
+    $departmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'level_id' => $level->id,
+    ]);
+
+    $dlc = DepartmentLevelCourse::query()->create([
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
+        'duration_years' => (int) ceil($taughtSemesterCount / 2),
+        'taught_semester_count' => $taughtSemesterCount,
+        'includes_industrial_attachment' => false,
+        'attachment_semester_count' => 0,
+    ]);
+
+    $programmeSemesters = app(SyncProgrammeSemestersForOfferingAction::class)->execute($dlc->fresh() ?? $dlc);
+
+    $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Full Time Programme Config '.$taughtSemesterCount]);
+    $calendar = AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-01-01',
+        'closing_date' => '2026-06-30',
+    ]);
+    $semesterOne = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-1'],
+        ['name' => 'Semester 1', 'description' => null],
+    );
+    $semesterTwo = Semester::query()->firstOrCreate(
+        ['slug' => 'semester-2'],
+        ['name' => 'Semester 2', 'description' => null],
+    );
+
+    return [
+        'user' => $user,
+        'institutionDepartment' => $institutionDepartment,
+        'departmentCourse' => $departmentCourse,
+        'departmentLevel' => $departmentLevel,
+        'modeOfStudy' => $modeOfStudy,
+        'calendar' => $calendar,
+        'semesterOne' => $semesterOne,
+        'semesterTwo' => $semesterTwo,
+        'programmeSemesters' => $programmeSemesters,
+        'storeUrl' => route('academic-calendars.classes-config.per-class-size.store', [
+            'institution_department' => $institutionDepartment->id,
+            'academic_calendar' => $calendar->id,
+        ]),
+    ];
+}

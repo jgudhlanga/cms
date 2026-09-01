@@ -38,11 +38,13 @@ export type ClassConfigPeriodOption = {
     id: number | string;
     name: string;
     isCurrent?: boolean;
+    programmeSemesterId?: number | null;
 };
 
 export type ClassLevelConfigSummary = {
     classConfigId: number;
     semesterId: number | string | null;
+    programmeSemesterId?: number | string | null;
     semester: string | null;
     studentsPerClass: number;
     classesCount: number;
@@ -70,6 +72,7 @@ export type AcademicClassConfigPayload = {
     students_per_class: string | number | null;
     calendarType?: 'term' | 'semester' | 'abma' | null;
     semester_id?: string | number | null;
+    programme_semester_id?: string | number | null;
     semester?: string | null;
     class_config_id?: string | number | null;
     named_classes_count?: number;
@@ -90,6 +93,9 @@ export type ClassConfig = {
         modeOfStudy: string | null;
         courseSyllabusIds?: number[];
         courseSyllabusCodes?: string[];
+        semesterId?: number | null;
+        programmeSemesterId?: number | null;
+        periodLabel?: string | null;
     };
 };
 
@@ -175,6 +181,11 @@ export type AcademicCalendarClassGenerationContext = {
     studentsPerClass: number | null;
     finalStudentCount: number;
     newFinalStudentCount: number;
+    finalStudentGenderCounts: {
+        male: number;
+        female: number;
+        unknown: number;
+    };
     newStudentGenderCounts: {
         male: number;
         female: number;
