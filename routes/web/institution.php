@@ -12,6 +12,7 @@ use App\Http\Controllers\Institution\Departments\CourseSyllabusController;
 use App\Http\Controllers\Institution\Departments\CourseSyllabusModuleController;
 use App\Http\Controllers\Institution\Departments\DepartmentClassSizeController;
 use App\Http\Controllers\Institution\Departments\DepartmentCourseController;
+use App\Http\Controllers\Institution\Departments\DepartmentLevelController;
 use App\Http\Controllers\Institution\Departments\DepartmentLevelCourseProgrammeStructureController;
 use App\Http\Controllers\Institution\Departments\InstitutionDepartmentController;
 use App\Http\Controllers\Institution\DocumentTemplates\DocumentTemplateController;
