@@ -129,7 +129,6 @@ class AcademicCalendarClassController extends Controller
         $syncModuleLecturersAction->execute(
             $academicCalendarClass,
             $classConfig,
-            (int) $validated['semester_id'],
             $module,
             $staffIds,
             $tenantId,
@@ -173,17 +172,14 @@ class AcademicCalendarClassController extends Controller
 
         $tenantId = (int) ($academicCalendarClass->tenant_id ?? auth()->user()?->tenant_id);
 
-        $semesterId = (int) $request->validated('semester_id');
-
         $copyDefaultsAction->execute(
             $academicCalendarClass,
             $classConfig,
-            $semesterId,
             $tenantId,
         );
 
         if ($request->wantsJson()) {
-            $semesterConfig = $classStaffingService->resolveSemesterClassConfig($classConfig, $semesterId);
+            $semesterConfig = $classStaffingService->classConfigForStaffing($classConfig);
             $modules = $semesterConfig instanceof ClassConfig
                 ? $classStaffingService->resolveSemesterModules($semesterConfig)
                 : collect();

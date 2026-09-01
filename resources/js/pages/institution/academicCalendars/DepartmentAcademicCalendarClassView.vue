@@ -86,7 +86,6 @@ const { departmentClassesUrl, moveStudentsUrl, addStudentsUrl, removeStudentsUrl
     mode,
     classConfig,
     academicCalendarClass,
-    selectedSemesterId,
 );
 
 const { sortedStudents } = useAcademicCalendarClassStudents(academicCalendarClass);
@@ -286,7 +285,7 @@ const onRemoveStudent = async (student: AcademicCalendarClassPreviewStudent): Pr
                     :academic-calendar-class-id="academicCalendarClass.id"
                     :semester-modules="semesterModules"
                     :selected-semester-id="selectedSemesterId"
-                    :calendar-type="calendarType"
+                    :period-label="classConfig?.attributes?.periodLabel ?? null"
                     :semester-config-has-syllabi="semesterConfigHasSyllabi"
                     :can-assign-staffing="canAssignStaffing"
                 />

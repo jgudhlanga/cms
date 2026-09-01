@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Institution\SyncProgrammeSemestersForOfferingAction;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Institution\CourseSyllabusStatusEnum;
 use App\Enums\Shared\ClassListTypeEnum;
@@ -1182,4 +1183,76 @@ test('department academic calendar includes mode totals with course rows when mo
     expect($response->json('data'))->not->toBeEmpty()
         ->and(collect($response->json('meta.modeTotals'))->firstWhere('modeOfStudyId', $context['modeOfStudy']->id)['count'] ?? 0)
         ->toBe(2);
+});
+
+test('department academic calendar remaining periods use programme semester ids when the offering has them', function () {
+    $this->travelTo('2026-05-15');
+
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+    $department = Department::factory()->create();
+    $institutionDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $tenant->id,
+        'department_id' => $department->id,
+        'department_code' => 'cal-api-prog-remaining',
+        'description' => 'Programme semester remaining periods',
+    ]);
+
+    $course = Course::factory()->create();
+    $departmentCourse = DepartmentCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'course_id' => $course->id,
+    ]);
+
+    $level = Level::factory()->create([
+        'name' => 'NC Programme',
+        'calendar_type' => AcademicCalendarTypeEnum::SEMESTER,
+    ]);
+    $departmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'level_id' => $level->id,
+    ]);
+    $dlc = DepartmentLevelCourse::query()->create([
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
+        'duration_years' => 1,
+        'taught_semester_count' => 2,
+        'includes_industrial_attachment' => false,
+        'attachment_semester_count' => 0,
+    ]);
+    $programmeSemesters = app(SyncProgrammeSemestersForOfferingAction::class)->execute($dlc->fresh() ?? $dlc);
+    $yearOneSemOne = $programmeSemesters->firstWhere('name', 'Year 1 Sem 1');
+    $yearOneSemTwo = $programmeSemesters->firstWhere('name', 'Year 1 Sem 2');
+
+    $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Full Time Programme Remaining']);
+    AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-01-15',
+        'closing_date' => '2026-06-30',
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->getJson("/api/v1/departments/{$institutionDepartment->id}/academic-calendars?academic_year=2026&mode_of_study_id={$modeOfStudy->id}");
+
+    $response->assertOk();
+    $levelRow = $response->json('data.0.levels.0');
+    expect($levelRow['remainingPeriods'])->toEqual([
+        [
+            'id' => $yearOneSemOne->id,
+            'programmeSemesterId' => $yearOneSemOne->id,
+            'name' => 'Year 1 Sem 1',
+            'isCurrent' => false,
+        ],
+        [
+            'id' => $yearOneSemTwo->id,
+            'programmeSemesterId' => $yearOneSemTwo->id,
+            'name' => 'Year 1 Sem 2',
+            'isCurrent' => false,
+        ],
+    ]);
 });

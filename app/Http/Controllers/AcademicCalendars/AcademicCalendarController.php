@@ -35,6 +35,7 @@ use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\ModeOfStudy;
+use App\Models\Institution\ProgrammeSemester;
 use App\Models\Students\StudentEnrolment;
 use App\Queries\AcademicCalendars\UnassignedClassConfigStudentsQuery;
 use App\Queries\Enrolments\ConfirmedStudentsQuery;
@@ -49,7 +50,6 @@ use App\Services\AcademicCalendars\CourseWorkMarksheetPdfService;
 use App\Services\Assessments\AssessmentCalendarWindowService;
 use App\Services\Lecturer\LecturerCourseWorkAccess;
 use App\Services\Students\StudentEnrolmentProgressionService;
-use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -128,12 +128,16 @@ class AcademicCalendarController extends Controller
         $level = DepartmentLevel::find($departmentLevelId);
         $mode = ModeOfStudy::find($modeOfStudyId);
         $level?->loadMissing('level');
-        $selectedSemesterId = $this->resolveSelectedSemesterId(
-            $level,
-            (string) $academicCalendar->calendar_year,
-        );
         $classConfigId = request()->query('class_config_id');
         $classConfig = ClassConfig::query()
+            ->with([
+                'semester',
+                'programmeSemester',
+                'institutionDepartment.department',
+                'departmentCourse.course',
+                'departmentLevel.level',
+                'modeOfStudy',
+            ])
             ->when($classConfigId, fn ($query) => $query->where('id', $classConfigId))
             ->when(! $classConfigId && $departmentLevelId && $departmentCourseId && $modeOfStudyId, function ($query) use (
                 $academicCalendar,
@@ -151,6 +155,7 @@ class AcademicCalendarController extends Controller
                     ->whereNull('semester_id');
             })
             ->first();
+        $selectedSemesterId = $this->classConfigSemesterId($classConfig);
         $calendarIdsForYear = AcademicCalendar::idsForStartedCalendarYear((string) $academicCalendar->calendar_year);
         $finalStudentApplications = $this->resolveFinalStudentApplications(
             $institutionDepartment,
@@ -200,7 +205,6 @@ class AcademicCalendarController extends Controller
         $staffingContext = $this->buildStaffingContextForPreviews(
             $classConfig,
             $previewClasses,
-            $selectedSemesterId,
             $calendarWindows,
             $modeId,
         );
@@ -466,8 +470,11 @@ class AcademicCalendarController extends Controller
         $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
 
         $academicCalendarClass->loadMissing([
-            'classConfig.departmentCourse',
-            'classConfig.departmentLevel',
+            'classConfig.semester',
+            'classConfig.programmeSemester',
+            'classConfig.institutionDepartment.department',
+            'classConfig.departmentCourse.course',
+            'classConfig.departmentLevel.level',
             'classConfig.modeOfStudy',
             'lecturerMetaData.staff.user',
         ]);
@@ -488,14 +495,10 @@ class AcademicCalendarController extends Controller
         $students = $this->studentsPayloadForAcademicCalendarClass($academicCalendarClass);
 
         $level?->loadMissing('level');
-        $selectedSemesterId = $this->resolveSelectedSemesterId(
-            $level,
-            (string) $academicCalendar->calendar_year,
-        );
+        $selectedSemesterId = $this->classConfigSemesterId($classConfig);
         $staffingContext = $this->buildStaffingContextForClass(
             $academicCalendarClass,
             $classConfig,
-            $selectedSemesterId,
         );
 
         $siblingClassesCollection = AcademicCalendarClass::query()
@@ -848,22 +851,11 @@ class AcademicCalendarController extends Controller
         return AcademicCalendarTypeEnum::tryFrom((string) $calendarType) ?? AcademicCalendarTypeEnum::SEMESTER;
     }
 
-    private function resolveSelectedSemesterId(?DepartmentLevel $level, string $calendarYear): ?int
-    {
-        if (request()->filled('semester_id')) {
-            return (int) request()->query('semester_id');
-        }
-
-        return AcademicCalendarPeriodResolver::currentSemesterIdForYear(
-            $calendarYear,
-            $this->calendarTypeForLevel($level),
-        );
-    }
-
     public function storePerClassSizeConfig(InstitutionDepartment $institutionDepartment, AcademicCalendar $academicCalendar, ClassConfigRequest $request)
     {
         $validated = $request->validated();
         $classConfigId = isset($validated['class_config_id']) ? (int) $validated['class_config_id'] : 0;
+        $attributes = $this->classConfigPersistedAttributes($validated);
 
         if ($classConfigId > 0) {
             $classConfig = ClassConfig::query()
@@ -876,29 +868,26 @@ class AcademicCalendarController extends Controller
                 return back()->withErrors(['class_config_id' => __('academic_calendar.class_config_not_found')]);
             }
 
-            $classConfig->update([
-                'students_per_class' => (int) $validated['students_per_class'],
-                'semester_id' => (int) $validated['semester_id'],
-                'course_syllabus_ids' => $validated['course_syllabus_ids'] ?? [],
-            ]);
+            $classConfig->update($attributes);
 
             return back()->with('success', __('academic_calendar.class_config_saved'));
         }
 
-        ClassConfig::query()->updateOrCreate(
-            [
-                'calendar_year' => (string) $academicCalendar->calendar_year,
-                'institution_department_id' => $institutionDepartment->id,
-                'department_course_id' => (int) $validated['department_course_id'],
-                'department_level_id' => (int) $validated['department_level_id'],
-                'mode_of_study_id' => (int) $validated['mode_of_study_id'],
-                'semester_id' => (int) $validated['semester_id'],
-            ],
-            [
-                'students_per_class' => (int) $validated['students_per_class'],
-                'course_syllabus_ids' => $validated['course_syllabus_ids'] ?? [],
-            ],
-        );
+        $match = [
+            'calendar_year' => (string) $academicCalendar->calendar_year,
+            'institution_department_id' => $institutionDepartment->id,
+            'department_course_id' => (int) $validated['department_course_id'],
+            'department_level_id' => (int) $validated['department_level_id'],
+            'mode_of_study_id' => (int) $validated['mode_of_study_id'],
+        ];
+
+        if (isset($attributes['programme_semester_id'])) {
+            $match['programme_semester_id'] = $attributes['programme_semester_id'];
+        } else {
+            $match['semester_id'] = (int) $validated['semester_id'];
+        }
+
+        ClassConfig::query()->updateOrCreate($match, $attributes);
 
         return back()->with('success', __('academic_calendar.class_config_saved'));
     }
@@ -1071,6 +1060,35 @@ class AcademicCalendarController extends Controller
         }
 
         return (int) $classConfig->semester_id;
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function classConfigPersistedAttributes(array $validated): array
+    {
+        $attributes = [
+            'students_per_class' => (int) $validated['students_per_class'],
+            'course_syllabus_ids' => $validated['course_syllabus_ids'] ?? [],
+        ];
+
+        if (array_key_exists('semester_id', $validated)) {
+            $attributes['semester_id'] = $validated['semester_id'] !== null
+                ? (int) $validated['semester_id']
+                : null;
+        }
+
+        if (isset($validated['programme_semester_id'])) {
+            $programmeSemesterId = (int) $validated['programme_semester_id'];
+            $attributes['programme_semester_id'] = $programmeSemesterId;
+            $name = ProgrammeSemester::query()->whereKey($programmeSemesterId)->value('name');
+            if (is_string($name) && $name !== '') {
+                $attributes['name'] = $name;
+            }
+        }
+
+        return $attributes;
     }
 
     /**
@@ -1321,6 +1339,32 @@ class AcademicCalendarController extends Controller
         return $classChunks;
     }
 
+    /**
+     * @return array{male: int, female: int, unknown: int}
+     */
+    private function genderCountsForStudents(Collection $students): array
+    {
+        $counts = [
+            'male' => 0,
+            'female' => 0,
+            'unknown' => 0,
+        ];
+
+        foreach ($students as $student) {
+            $normalizedGender = $this->normalizeGenderValue($student->gender_title ?? null);
+
+            if ($normalizedGender === GenderEnum::MALE->value) {
+                $counts['male']++;
+            } elseif ($normalizedGender === GenderEnum::FEMALE->value) {
+                $counts['female']++;
+            } else {
+                $counts['unknown']++;
+            }
+        }
+
+        return $counts;
+    }
+
     private function normalizeGenderValue(mixed $rawGender): ?string
     {
         $gender = str((string) $rawGender)->lower()->trim()->toString();
@@ -1391,7 +1435,6 @@ class AcademicCalendarController extends Controller
     private function buildStaffingContextForPreviews(
         ?ClassConfig $classConfig,
         array $previewClasses,
-        ?int $semesterId,
         array $calendarWindows = [],
         int $modeOfStudyId = 0,
     ): array {
@@ -1419,7 +1462,7 @@ class AcademicCalendarController extends Controller
         )));
 
         $tutorsByClassId = $this->classStaffingService->tutorsByClassId($classIds);
-        $semesterConfig = $this->classStaffingService->resolveSemesterClassConfig($classConfig, $semesterId);
+        $semesterConfig = $this->classStaffingService->classConfigForStaffing($classConfig);
         $modules = $semesterConfig instanceof ClassConfig
             ? $this->classStaffingService->resolveSemesterModules($semesterConfig)
             : collect();
@@ -1476,14 +1519,10 @@ class AcademicCalendarController extends Controller
     private function buildStaffingContextForClass(
         AcademicCalendarClass $academicCalendarClass,
         ClassConfig $allocationConfig,
-        ?int $semesterId,
     ): array {
         $classId = (int) $academicCalendarClass->id;
         $tutorsByClassId = $this->classStaffingService->tutorsByClassId([$classId]);
-        $semesterConfig = $this->classStaffingService->resolveSemesterClassConfig(
-            $allocationConfig,
-            $semesterId,
-        );
+        $semesterConfig = $this->classStaffingService->classConfigForStaffing($allocationConfig);
         $modules = $semesterConfig instanceof ClassConfig
             ? $this->classStaffingService->resolveSemesterModules($semesterConfig)
             : collect();
@@ -1515,23 +1554,7 @@ class AcademicCalendarController extends Controller
         bool $hasExistingClasses,
         int $populatedExistingClassCount,
     ): array {
-        $newStudentGenderCounts = [
-            'male' => 0,
-            'female' => 0,
-            'unknown' => 0,
-        ];
-
-        foreach ($unassignedFinalStudentApplications as $student) {
-            $normalizedGender = $this->normalizeGenderValue($student->gender_title ?? null);
-
-            if ($normalizedGender === GenderEnum::MALE->value) {
-                $newStudentGenderCounts['male']++;
-            } elseif ($normalizedGender === GenderEnum::FEMALE->value) {
-                $newStudentGenderCounts['female']++;
-            } else {
-                $newStudentGenderCounts['unknown']++;
-            }
-        }
+        $newStudentGenderCounts = $this->genderCountsForStudents($unassignedFinalStudentApplications);
 
         return [
             'institutionDepartmentId' => $institutionDepartment->id,
@@ -1542,6 +1565,7 @@ class AcademicCalendarController extends Controller
             'classConfigId' => $classConfig?->id,
             'studentsPerClass' => $classConfig?->students_per_class,
             'finalStudentCount' => $finalStudentApplications->count(),
+            'finalStudentGenderCounts' => $this->genderCountsForStudents($finalStudentApplications),
             'newFinalStudentCount' => $unassignedFinalStudentApplications->count(),
             'newStudentGenderCounts' => $newStudentGenderCounts,
             'hasExistingClasses' => $hasExistingClasses,

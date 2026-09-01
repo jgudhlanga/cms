@@ -126,20 +126,21 @@ const levelBadge = (levelName: string): string => {
 
 const periodOptionsForModal = (level: ClassLevelSummary, config?: ClassLevelConfigSummary): ClassConfigPeriodOption[] => {
     const remaining = level.remainingPeriods ?? [];
-    if (config == null || config.semesterId == null) {
+    const selectedId = String(config?.programmeSemesterId ?? config?.semesterId ?? '');
+    if (config == null || selectedId === '') {
         return remaining;
     }
 
-    const selectedId = String(config.semesterId);
     if (remaining.some((period) => String(period.id) === selectedId)) {
         return remaining;
     }
 
     return [
         {
-            id: config.semesterId,
+            id: config.programmeSemesterId ?? config.semesterId,
+            programmeSemesterId: config.programmeSemesterId ?? undefined,
             name: config.semester ?? '',
-            isCurrent: String(level.currentSemesterId ?? '') === selectedId,
+            isCurrent: String(level.currentSemesterId ?? '') === String(config.semesterId ?? ''),
         },
         ...remaining,
     ];
@@ -158,6 +159,7 @@ const openCreateConfigModal = (stats: DepartmentCourseClassCount, level: ClassLe
         students_per_class: null,
         calendarType: level.calendarType ?? 'semester',
         semester_id: period.id,
+        programme_semester_id: period.programmeSemesterId ?? null,
         semester: period.name,
         class_config_id: null,
         named_classes_count: 0,
@@ -174,7 +176,8 @@ const openEditConfigModal = (stats: DepartmentCourseClassCount, level: ClassLeve
         mode_of_study_id: props.modeOfStudyId,
         students_per_class: String(config.studentsPerClass ?? ''),
         calendarType: level.calendarType ?? 'semester',
-        semester_id: config.semesterId ?? null,
+        semester_id: config.programmeSemesterId ?? config.semesterId ?? null,
+        programme_semester_id: config.programmeSemesterId ?? null,
         semester: config.semester,
         class_config_id: config.classConfigId,
         named_classes_count: Number(config.classesCount ?? 0),

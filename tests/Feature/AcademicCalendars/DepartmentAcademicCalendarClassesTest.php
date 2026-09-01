@@ -17,7 +17,7 @@ test('department classes page returns generation context and preview classes', f
     $context = buildDepartmentClassContext();
     createFinalStudentApplication($context, 'student-one@example.com');
     createFinalStudentApplication($context, 'student-two@example.com');
-    createFinalStudentApplication($context, 'student-three@example.com');
+    createFinalStudentApplication($context, 'student-three@example.com', 'Female');
 
     $this->actingAs($context['user']);
     $response = $this->get(route('academic-calendars.department-classes', [
@@ -37,9 +37,12 @@ test('department classes page returns generation context and preview classes', f
     expect(data_get($page, 'props.generationContext.newFinalStudentCount'))->toBe(3);
     expect(data_get($page, 'props.generationContext.hasExistingClasses'))->toBeFalse();
     expect(data_get($page, 'props.generationContext.populatedExistingClassCount'))->toBe(0);
-    expect(data_get($page, 'props.generationContext.newStudentGenderCounts.male'))->toBeInt();
-    expect(data_get($page, 'props.generationContext.newStudentGenderCounts.female'))->toBeInt();
-    expect(data_get($page, 'props.generationContext.newStudentGenderCounts.unknown'))->toBeInt();
+    expect(data_get($page, 'props.generationContext.finalStudentGenderCounts.male'))->toBe(2)
+        ->and(data_get($page, 'props.generationContext.finalStudentGenderCounts.female'))->toBe(1)
+        ->and(data_get($page, 'props.generationContext.finalStudentGenderCounts.unknown'))->toBe(0);
+    expect(data_get($page, 'props.generationContext.newStudentGenderCounts.male'))->toBe(2)
+        ->and(data_get($page, 'props.generationContext.newStudentGenderCounts.female'))->toBe(1)
+        ->and(data_get($page, 'props.generationContext.newStudentGenderCounts.unknown'))->toBe(0);
     expect(data_get($page, 'props.previewClasses'))->toHaveCount(2);
     expect(data_get($page, 'props.previewClasses.0.name'))->toBe('LEVEL-1-FULL-TIME-1');
     expect(data_get($page, 'props.previewClasses.1.name'))->toBe('LEVEL-1-FULL-TIME-2');
@@ -364,6 +367,11 @@ test('department classes page shows existing classes when all final students are
     $page = $response->viewData('page');
 
     expect(data_get($page, 'props.generationContext.newFinalStudentCount'))->toBe(0);
+    expect(data_get($page, 'props.generationContext.finalStudentCount'))->toBe(3);
+    expect(data_get($page, 'props.generationContext.finalStudentGenderCounts.male'))->toBe(3)
+        ->and(data_get($page, 'props.generationContext.finalStudentGenderCounts.female'))->toBe(0);
+    expect(data_get($page, 'props.generationContext.newStudentGenderCounts.male'))->toBe(0)
+        ->and(data_get($page, 'props.generationContext.newStudentGenderCounts.female'))->toBe(0);
     expect(data_get($page, 'props.generationContext.populatedExistingClassCount'))->toBe(2);
     expect(data_get($page, 'props.previewClasses'))->toHaveCount(2);
     expect(data_get($page, 'props.previewClasses.0.academicCalendarClassId'))->toBeInt();

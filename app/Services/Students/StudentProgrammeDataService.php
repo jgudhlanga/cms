@@ -31,7 +31,19 @@ class StudentProgrammeDataService
         protected StudentEnrolmentProgressionService $progression,
         protected ExamResultEnrolmentStatusResolver $examResultResolver,
         protected SyncStudentSemesterStatusesFromExamResultsService $syncSemesterStatusesFromExamResults,
+        protected StudentCoursePathwayProgressService $pathwayProgress,
     ) {}
+
+    /**
+     * @return array{programmes: list<array<string, mixed>>, pathways: list<array<string, mixed>>}
+     */
+    public function buildProfilePayload(Student $student): array
+    {
+        return [
+            'programmes' => $this->buildProgrammesForStudent($student),
+            'pathways' => $this->pathwayProgress->buildForStudent($student),
+        ];
+    }
 
     /**
      * @return list<array<string, mixed>>

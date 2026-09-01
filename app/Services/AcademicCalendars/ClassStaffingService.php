@@ -19,27 +19,16 @@ use Illuminate\Support\Facades\DB;
 
 class ClassStaffingService
 {
-    public function resolveSemesterClassConfig(
-        ClassConfig $allocationConfig,
-        ?int $semesterId,
-        ?int $programmeSemesterId = null,
-    ): ?ClassConfig {
-        if (($semesterId === null || $semesterId < 1) && ($programmeSemesterId === null || $programmeSemesterId < 1)) {
+    public function classConfigForStaffing(?ClassConfig $classConfig): ?ClassConfig
+    {
+        if (
+            ! $classConfig instanceof ClassConfig
+            || ($classConfig->semester_id === null && $classConfig->programme_semester_id === null)
+        ) {
             return null;
         }
 
-        $query = ClassConfig::query()
-            ->where('calendar_year', $allocationConfig->calendar_year)
-            ->where('institution_department_id', $allocationConfig->institution_department_id)
-            ->where('department_course_id', $allocationConfig->department_course_id)
-            ->where('department_level_id', $allocationConfig->department_level_id)
-            ->where('mode_of_study_id', $allocationConfig->mode_of_study_id);
-
-        if ($programmeSemesterId !== null && $programmeSemesterId > 0) {
-            return $query->where('programme_semester_id', $programmeSemesterId)->first();
-        }
-
-        return $query->where('semester_id', $semesterId)->first();
+        return $classConfig;
     }
 
     /**

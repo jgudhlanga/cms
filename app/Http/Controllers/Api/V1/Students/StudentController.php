@@ -70,7 +70,7 @@ class StudentController
     {
         abort_unless(request()->user()?->can('view', $student) ?? false, 403);
 
-        return $this->success($this->programmeDataService->buildProgrammesForStudent($student));
+        return $this->success($this->programmeDataService->buildProfilePayload($student));
     }
 
     // ====== STUDENT ===========

@@ -9,12 +9,13 @@ import {
 } from '@/composables/students/studentProgrammeDisplay';
 import { errorAlert } from '@/lib/alerts';
 import HttpService from '@/services/http.service';
-import type { StudentProgramme, StudentProgrammesApiResponse } from '@/types/students';
+import type { CoursePathway, StudentProgramme, StudentProgrammesApiResponse } from '@/types/students';
 import { trans } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 export function useStudentProgrammes() {
     const programmes = ref<StudentProgramme[]>([]);
+    const pathways = ref<CoursePathway[]>([]);
     const isLoading = ref(false);
     const loadError = ref(false);
 
@@ -26,10 +27,19 @@ export function useStudentProgrammes() {
                 route('v1.students.student-enrolements', { student: studentId }),
             ) as StudentProgrammesApiResponse;
 
-            programmes.value = Array.isArray(response?.result) ? response.result : [];
+            const result = response?.result;
+
+            if (Array.isArray(result)) {
+                programmes.value = result;
+                pathways.value = [];
+            } else {
+                programmes.value = Array.isArray(result?.programmes) ? result.programmes : [];
+                pathways.value = Array.isArray(result?.pathways) ? result.pathways : [];
+            }
         } catch {
             loadError.value = true;
             programmes.value = [];
+            pathways.value = [];
             errorAlert(trans('students.programmes_load_failure'));
         } finally {
             isLoading.value = false;
@@ -38,6 +48,7 @@ export function useStudentProgrammes() {
 
     return {
         programmes,
+        pathways,
         isLoading,
         loadError,
         fetchProgrammes,
