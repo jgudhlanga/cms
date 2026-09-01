@@ -17,7 +17,18 @@ class DepartmentLevelCourse extends Model
 {
     use LogsActivity;
 
-    protected $fillable = ['department_course_id', 'department_level_id'];
+    protected $fillable = ['department_course_id', 'department_level_id',
+        'duration_years', 'taught_semester_count', 'includes_industrial_attachment', 'attachment_semester_count'];
+
+    protected function casts(): array
+    {
+        return [
+            'duration_years' => 'integer',
+            'taught_semester_count' => 'integer',
+            'includes_industrial_attachment' => 'boolean',
+            'attachment_semester_count' => 'integer',
+        ];
+    }
 
     public function departmentLevel(): BelongsTo
     {
@@ -32,6 +43,12 @@ class DepartmentLevelCourse extends Model
     public function courseSyllabuses(): HasMany
     {
         return $this->hasMany(CourseSyllabus::class, 'department_level_course_id');
+    }
+
+    public function programmeSemesters(): HasMany
+    {
+        return $this->hasMany(ProgrammeSemester::class, 'department_level_course_id')
+            ->orderBy('position');
     }
 
     public function getActivitylogOptions(): LogOptions

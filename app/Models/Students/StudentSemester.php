@@ -6,6 +6,7 @@ namespace App\Models\Students;
 
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\Semester;
+use App\Models\Institution\ProgrammeSemester;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,6 +21,7 @@ class StudentSemester extends Model
     protected $fillable = [
         'student_enrolment_id',
         'semester_id',
+        'programme_semester_id',
         'student_enrolment_status_id',
         'course_syllabus_ids',
     ];
@@ -36,6 +38,11 @@ class StudentSemester extends Model
     public function semester(): BelongsTo
     {
         return $this->belongsTo(Semester::class, 'semester_id');
+    }
+
+    public function programmeSemester(): BelongsTo
+    {
+        return $this->belongsTo(ProgrammeSemester::class, 'programme_semester_id');
     }
 
     public function studentEnrolmentStatus(): BelongsTo

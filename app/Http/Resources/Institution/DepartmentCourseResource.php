@@ -15,7 +15,7 @@ class DepartmentCourseResource extends JsonResource
         $this->resource->loadMissing([
             'course',
             'departmentCourseLevels.departmentLevel.level',
-            'departmentCourseLevels.departmentCourse.course',
+            'departmentCourseLevels.programmeSemesters',
         ]);
 
         return [

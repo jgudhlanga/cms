@@ -12,13 +12,19 @@ interface Props {
     form: InertiaForm<any>;
     disallowedDepartments?: string[] | number[];
     label?: string;
+    isAcademic?: boolean | number;
 }
 
-const { isLoading, departments, listDepartments } = useInstitutionDepartments();
-onMounted(async () => {
-    await listDepartments(route('v1.institution-departments.index', { is_academic: 1, page_size: 'all' }));
+const props = withDefaults(defineProps<Props>(), {
+    isAcademic: 1,
 });
-const props = defineProps<Props>();
+
+const { isLoading, departments, listDepartments } = useInstitutionDepartments();
+const isAcademicFilter = computed(() => (Number(props.isAcademic) === 1 ? 1 : 0));
+
+onMounted(async () => {
+    await listDepartments(route('v1.institution-departments.index', { is_academic: isAcademicFilter.value, page_size: 'all' }));
+});
 
 const options = computed(() => {
     return departments.value?.data
@@ -26,7 +32,7 @@ const options = computed(() => {
             if (!props.disallowedDepartments?.length) return true;
 
             const departmentId = Number(item.attributes.departmentId);
-            // ✅ exclude if departmentId is in disallowedDepartments
+
             return !props.disallowedDepartments.map(Number).includes(departmentId);
         })
         .map(
@@ -40,7 +46,9 @@ const options = computed(() => {
 
 const whenSearch = debounce(async (search: string) => {
     clearFormErrors(props.form, 'department');
-    await listDepartments(route('v1.institution-departments.index', { is_academic: 1, page_size: 'all', search }));
+    await listDepartments(
+        route('v1.institution-departments.index', { is_academic: isAcademicFilter.value, page_size: 'all', search }),
+    );
 }, 600);
 </script>
 

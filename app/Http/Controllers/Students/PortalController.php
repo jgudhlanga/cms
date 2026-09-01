@@ -46,6 +46,7 @@ use App\Models\Institution\Level;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Shared\AcademicLevel;
 use App\Models\Shared\Status;
+use App\Models\Students\ApplicationFee;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentApprentice;
@@ -568,9 +569,13 @@ class PortalController extends Controller
         session(['application.level_id' => $level->id]);
 
         if ($this->eligibility->trackRequiresApplicationFee($track, $level, $request->user())) {
-            $this->applicationFeeService->ensureForFeeRequiredLevel($request->user(), $level, $intakePeriod);
+            $applicationFee = $this->applicationFeeService->ensureForFeeRequiredLevel(
+                $request->user(),
+                $level,
+                $intakePeriod,
+            );
 
-            return to_route('portal.application.fee-payment');
+            return $this->redirectAfterApplicationFee($request->user(), $applicationFee);
         }
 
         $this->applicationFeeService->abandonUnpaidApplicationFee($request->user());
@@ -1338,10 +1343,10 @@ class PortalController extends Controller
                 ? IntakePeriod::query()->findOrFail($intakePeriodId)
                 : $this->eligibility->resolveIntakeForTrack($track, null);
 
-            $this->applicationFeeService->ensureForFeeRequiredLevel($user, $level, $intakePeriod);
+            $applicationFee = $this->applicationFeeService->ensureForFeeRequiredLevel($user, $level, $intakePeriod);
             $this->intentSession->clear();
 
-            return to_route('portal.application.fee-payment');
+            return $this->redirectAfterApplicationFee($user, $applicationFee);
         }
 
         $this->applicationFeeService->abandonUnpaidApplicationFee($user);
@@ -1387,6 +1392,19 @@ class PortalController extends Controller
         }
 
         return to_route('portal.application.level-options');
+    }
+
+    private function redirectAfterApplicationFee(User $user, ApplicationFee $applicationFee): RedirectResponse
+    {
+        session(['application.level_id' => $applicationFee->level_id]);
+
+        if ($applicationFee->isPaid() || $applicationFee->hasPaidReceipt()) {
+            return $user->has_student_profile
+                ? to_route('portal.application.returning')
+                : to_route('portal.application.create');
+        }
+
+        return to_route('portal.application.fee-payment');
     }
 
     private function redirectIfTransferCollegeMissing(): ?RedirectResponse
@@ -1512,9 +1530,13 @@ class PortalController extends Controller
         }
 
         if (PaymentHelper::levelRequiresApplicationFeePayment($level, $request->user())) {
-            $this->applicationFeeService->ensureForFeeRequiredLevel($request->user(), $level, $intakePeriod);
+            $applicationFee = $this->applicationFeeService->ensureForFeeRequiredLevel(
+                $request->user(),
+                $level,
+                $intakePeriod,
+            );
 
-            return to_route('portal.application.fee-payment');
+            return $this->redirectAfterApplicationFee($request->user(), $applicationFee);
         }
 
         $this->applicationFeeService->abandonUnpaidApplicationFee($request->user());

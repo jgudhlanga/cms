@@ -11,8 +11,12 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class CourseSyllabusModulePeriod
 {
-    public static function matchesPeriod(CourseSyllabusModule $module, int $semesterId): bool
+    public static function matchesPeriod(CourseSyllabusModule $module, int $semesterId, ?int $programmeSemesterId = null): bool
     {
+        if ($programmeSemesterId !== null && (int) $module->programme_semester_id === $programmeSemesterId) {
+            return true;
+        }
+
         if ((int) $module->semester_id === $semesterId) {
             return true;
         }
@@ -43,10 +47,15 @@ final class CourseSyllabusModulePeriod
         Builder $query,
         int $semesterId,
         string $slugPrefix,
+        ?int $programmeSemesterId = null,
     ): Builder {
-        return $query->where(function (Builder $periodQuery) use ($semesterId, $slugPrefix): void {
+        return $query->where(function (Builder $periodQuery) use ($semesterId, $slugPrefix, $programmeSemesterId): void {
+            if ($programmeSemesterId !== null) {
+                $periodQuery->where('programme_semester_id', $programmeSemesterId);
+            }
+
             $periodQuery
-                ->where('semester_id', $semesterId)
+                ->orWhere('semester_id', $semesterId)
                 ->orWhere(function (Builder $allSemestersQuery) use ($slugPrefix): void {
                     $allSemestersQuery
                         ->where('all_semesters', true)

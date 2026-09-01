@@ -30,6 +30,7 @@ use App\Services\Students\StudentExamResultAccessService;
 use App\Services\Students\StudentFeeClearanceService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -267,6 +268,21 @@ class PaymentController extends Controller
      */
     public function checkPaymentStatusForCurrenUser(Request $request): JsonResponse
     {
+        $user = $request->user();
+        $feeType = $request->filled('feeTypeId')
+            ? FeeType::query()->find($request->integer('feeTypeId'))
+            : null;
+        $feeTypeEnum = $feeType ? FeeTypeEnum::fromFeeType($feeType) : null;
+
+        if (
+            $user
+            && $feeTypeEnum === FeeTypeEnum::APPLICATION_FEE
+            && $this->applicationFeeService->paidUnusedFee($user) !== null
+        ) {
+            return response()->json(['status' => 'paid']);
+        }
+
+        $ledgerable = $this->resolveLedgerableForCurrentUserStatusCheck($request, $feeType, $feeTypeEnum);
         $invoice = null;
         $receipt = null;
 
@@ -275,52 +291,44 @@ class PaymentController extends Controller
 
         if ($orderReference) {
             ['invoice' => $invoice, 'receipt' => $receipt] = PaymentHelper::getLedgerPairByOrderReference($orderReference);
-        }
 
-        if ($invoice === null && $request->filled('feeTypeId')) {
-            $feeType = FeeType::query()->find($request->integer('feeTypeId'));
-            $feeTypeEnum = $feeType ? FeeTypeEnum::fromFeeType($feeType) : null;
-            $user = $request->user();
-
-            if ($feeTypeEnum && $user) {
-                $ledgerable = match ($feeTypeEnum->ledgerableClass()) {
-                    ApplicationFee::class => $this->paymentContextResolver->resolveForInitiate(
-                        $request->merge(['feeTypeId' => $feeType->id])
-                    )->ledgerable,
-                    HostelApplication::class => $this->paymentContextResolver->resolveForInitiate(
-                        $request->merge(['feeTypeId' => $feeType->id])
-                    )->ledgerable,
-                    StudentApplication::class => $this->paymentContextResolver->resolveForInitiate(
-                        $request->merge(['feeTypeId' => $feeType->id])
-                    )->ledgerable,
-                    default => $user,
-                };
-
-                $invoice = PaymentHelper::getLatestLedgerRecordForLedgerable(
-                    $ledgerable,
-                    $feeTypeEnum->slug(),
-                    'invoice',
-                );
-                $receipt = PaymentHelper::getLatestLedgerRecordForLedgerable(
-                    $ledgerable,
-                    $feeTypeEnum->slug(),
-                    'receipt',
-                );
+            if ($ledgerable !== null && ! $this->ledgerBelongsToLedgerable($invoice, $ledgerable)) {
+                $invoice = null;
+                $receipt = null;
             }
         }
 
+        if ($invoice === null && $ledgerable !== null && $feeTypeEnum !== null) {
+            $intakePeriod = $ledgerable instanceof ApplicationFee ? $ledgerable->intakePeriod : null;
+            $invoice = PaymentHelper::getPaidOrLatestLedgerRecordForLedgerable(
+                $ledgerable,
+                $feeTypeEnum->slug(),
+                'invoice',
+                $intakePeriod,
+            );
+            $receipt = PaymentHelper::getPaidOrLatestLedgerRecordForLedgerable(
+                $ledgerable,
+                $feeTypeEnum->slug(),
+                'receipt',
+                $intakePeriod,
+            );
+        }
+
         if ($invoice === null) {
-            $applicationFee = $this->applicationFeeService->forUserAndIntake($request->user());
+            $applicationFee = $this->applicationFeeService->activeApplicationFee($request->user())
+                ?? $this->applicationFeeService->forUserAndIntake($request->user());
             if ($applicationFee !== null) {
-                $invoice = PaymentHelper::getLatestLedgerRecordForLedgerable(
+                $invoice = PaymentHelper::getPaidOrLatestLedgerRecordForLedgerable(
                     $applicationFee,
                     FeeTypeEnum::APPLICATION_FEE->slug(),
                     'invoice',
+                    $applicationFee->intakePeriod,
                 );
-                $receipt = PaymentHelper::getLatestLedgerRecordForLedgerable(
+                $receipt = PaymentHelper::getPaidOrLatestLedgerRecordForLedgerable(
                     $applicationFee,
                     FeeTypeEnum::APPLICATION_FEE->slug(),
                     'receipt',
+                    $applicationFee->intakePeriod,
                 );
             }
         }
@@ -336,17 +344,16 @@ class PaymentController extends Controller
 
         $receipt ??= PaymentHelper::getLedgerPairByOrderReference($invoice->system_reference)['receipt'];
 
-        $check = $this->checkStatus($invoice->system_reference);
-
-        if (! empty($check['status']) && Str::lower($check['status']) === 'paid') {
-            $this->syncLedgerPaymentStatus($invoice, $receipt, $check);
-
-            return response()->json(['status' => $check['status']]);
+        if ($this->ledgerIsPaid($invoice) || $this->ledgerIsPaid($receipt)) {
+            return response()->json(['status' => 'paid']);
         }
 
-        $status = $check['status'] ?? 'pending';
-        $invoice->update(['payment_status' => $status]);
-        $receipt?->update(['payment_status' => $status]);
+        $check = $this->checkStatus($invoice->system_reference);
+        $this->syncLedgerPaymentStatus($invoice, $receipt, $check);
+
+        if ($this->gatewayPaymentStatus($check) === 'paid' || $this->ledgerIsPaid($invoice->fresh()) || $this->ledgerIsPaid($receipt?->fresh())) {
+            return response()->json(['status' => 'paid']);
+        }
 
         return response()->json(['status' => 'not paid']);
     }
@@ -428,6 +435,14 @@ class PaymentController extends Controller
             session(['application.level_id' => $applicationFee->level_id]);
 
             return to_route('portal.application.create');
+        }
+
+        if ($applicationFee->isPaid() || $applicationFee->hasPaidReceipt()) {
+            session(['application.level_id' => $applicationFee->level_id]);
+
+            return $user->has_student_profile
+                ? to_route('portal.profile.applications', ['fee_paid' => 1])
+                : to_route('portal.application.create');
         }
 
         $applicationFee->load(['level', 'intakePeriod']);
@@ -610,21 +625,102 @@ class PaymentController extends Controller
 
     private function syncLedgerPaymentStatus(Ledger $invoice, ?Ledger $receipt, array $check): ?Ledger
     {
-        if (! empty($check['status']) && Str::lower($check['status']) === 'paid' && $receipt !== null) {
+        $check = $this->normalizeGatewayCheck($check, $invoice, $receipt);
+        $status = $this->gatewayPaymentStatus($check);
+        $alreadyPaid = $this->ledgerIsPaid($invoice) || $this->ledgerIsPaid($receipt);
+
+        if ($alreadyPaid && $status !== 'paid') {
+            return $receipt;
+        }
+
+        if ($status === 'paid' && $receipt !== null) {
             $receipt = PaymentHelper::updateReceiptEntry(
                 $receipt,
                 PaymentHelper::assembleReceiptUpdateData($check),
             );
-            $invoice->update(['payment_status' => $check['status']]);
+            $invoice->update(['payment_status' => 'paid']);
             PaymentHelper::deleteNotPaidLedgerEntries($invoice->system_reference);
 
             return $receipt;
         }
 
-        $invoice->update(['payment_status' => $check['status'] ?? 'pending']);
-        $receipt?->update(['payment_status' => $check['status'] ?? 'pending']);
+        if ($alreadyPaid) {
+            return $receipt;
+        }
+
+        $invoice->update(['payment_status' => $status ?? 'pending']);
+        $receipt?->update(['payment_status' => $status ?? 'pending']);
 
         return $receipt;
+    }
+
+    /**
+     * @param  array<string, mixed>  $check
+     * @return array<string, mixed>
+     */
+    private function normalizeGatewayCheck(array $check, Ledger $invoice, ?Ledger $receipt): array
+    {
+        $status = $this->gatewayPaymentStatus($check);
+
+        if ($status !== null) {
+            $check['status'] = $status;
+        }
+
+        $check['paymentOption'] ??= $receipt?->payment_option ?? 'card';
+        $check['createdDate'] ??= now()->toDateString();
+        $check['amount'] ??= $receipt?->amount ?? $invoice->amount ?? 0;
+        $check['orderReference'] ??= $invoice->system_reference;
+        $check['reference'] ??= $receipt?->payment_reference ?? $invoice->payment_reference;
+        $check['currency'] ??= 'USD';
+        $check['clientFee'] ??= 0;
+        $check['merchantFee'] ??= 0;
+
+        return $check;
+    }
+
+    private function gatewayPaymentStatus(array $check): ?string
+    {
+        $status = $check['status'] ?? $check['paymentStatus'] ?? null;
+
+        if (! is_string($status) || $status === '') {
+            return null;
+        }
+
+        return strtolower($status);
+    }
+
+    private function ledgerIsPaid(?Ledger $ledger): bool
+    {
+        return $ledger !== null && strtolower((string) $ledger->payment_status) === 'paid';
+    }
+
+    private function ledgerBelongsToLedgerable(?Ledger $ledger, Model $ledgerable): bool
+    {
+        if ($ledger === null) {
+            return false;
+        }
+
+        return $ledger->ledgerable_type === $ledgerable::class
+            && (int) $ledger->ledgerable_id === (int) $ledgerable->getKey();
+    }
+
+    private function resolveLedgerableForCurrentUserStatusCheck(
+        Request $request,
+        ?FeeType $feeType,
+        ?FeeTypeEnum $feeTypeEnum,
+    ): ?Model {
+        $user = $request->user();
+
+        if ($feeType === null || $feeTypeEnum === null || $user === null) {
+            return null;
+        }
+
+        return match ($feeTypeEnum->ledgerableClass()) {
+            ApplicationFee::class, HostelApplication::class, StudentApplication::class => $this->paymentContextResolver
+                ->resolveForInitiate($request->merge(['feeTypeId' => $feeType->id]))
+                ->ledgerable,
+            default => $user,
+        };
     }
 
     private function profileStudent(): Student

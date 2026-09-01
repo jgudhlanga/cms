@@ -1,16 +1,16 @@
 <?php
 
-use App\Enums\Rbac\RoleEnum;
 use App\Enums\Institution\IntakePeriodStatusEnum;
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Helpers\PaymentHelper;
-use App\Models\Rbac\Role;
 use App\Models\Institution\FeeStructure;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Ledgers\Ledger;
+use App\Models\Rbac\Role;
 use App\Models\Shared\FeeType;
 use App\Models\Shared\Gender;
 use App\Models\Shared\IdType;
@@ -20,7 +20,9 @@ use App\Models\Students\ApplicationFee;
 use App\Models\Students\Student;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
+use App\Services\Integrations\OnlinePaymentContextResolver;
 use App\Services\Students\ApplicationFeeService;
+use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
     Role::findOrCreate(RoleEnum::STUDENT->name(), 'web');
@@ -560,4 +562,265 @@ test('payment result webhook rejects invalid credentials when configured', funct
         'orderReference' => 'ORD-INVALID',
         'paymentStatus' => 'paid',
     ])->assertUnauthorized();
+});
+
+function createSecondOpenRegularIntake(): IntakePeriod
+{
+    return IntakePeriod::query()->create([
+        'tenant_id' => Tenant::query()->firstOrFail()->id,
+        'name' => 'Second Open Intake '.uniqid(),
+        'start_date' => now()->startOfMonth()->toDateString(),
+        'end_date' => now()->addYears(2)->toDateString(),
+        'calendar_year' => '2026/2027',
+        'is_active' => true,
+        'status' => IntakePeriodStatusEnum::Open->value,
+        'is_continuous' => false,
+    ]);
+}
+
+function applicationFeeType(): FeeType
+{
+    return FeeType::query()->firstOrCreate(
+        ['slug' => FeeTypeEnum::APPLICATION_FEE->slug()],
+        [
+            'name' => FeeTypeEnum::APPLICATION_FEE->name(),
+            'description' => FeeTypeEnum::APPLICATION_FEE->description(),
+            'position' => FeeTypeEnum::APPLICATION_FEE->position(),
+        ],
+    );
+}
+
+test('selecting a different intake after paying reuses the paid fee and skips payment', function () {
+    $user = createPortalUserWithoutProfile();
+    $level = feeRequiredLevel();
+    $paidIntake = createTestIntakePeriod();
+    $otherIntake = createSecondOpenRegularIntake();
+
+    $paidFee = ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $paidIntake->id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::PAID,
+    ]);
+
+    $this->actingAs($user)
+        ->withSession(regularTrackSession())
+        ->post(route('portal.application.select-level'), [
+            'level_id' => $level->id,
+            'intake_period_id' => $otherIntake->id,
+        ])
+        ->assertRedirect(route('portal.application.create'));
+
+    expect(ApplicationFee::query()->where('user_id', $user->id)->count())->toBe(1)
+        ->and($paidFee->fresh()->status)->toBe(ApplicationFeeStatusEnum::PAID)
+        ->and($paidFee->fresh()->intake_period_id)->toBe($paidIntake->id)
+        ->and(app(ApplicationFeeService::class)->activeApplicationFee($user)?->id)->toBe($paidFee->id);
+});
+
+test('newer unpaid fee does not hide a paid unused fee on login', function () {
+    $user = createPortalUserWithoutProfile();
+    $level = feeRequiredLevel();
+    $paidIntake = createTestIntakePeriod();
+    $otherIntake = createSecondOpenRegularIntake();
+
+    $paidFee = ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $paidIntake->id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::PAID,
+    ]);
+
+    ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $otherIntake->id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::AWAITING_PAYMENT,
+    ]);
+
+    expect(app(ApplicationFeeService::class)->activeApplicationFee($user)?->id)->toBe($paidFee->id);
+    expect(PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $otherIntake))->toBeTrue();
+
+    $this->post(route('login'), [
+        'email' => $user->email,
+        'password' => 'Password1!',
+    ])->assertRedirect(route('portal.application.create'));
+});
+
+test('fee payment page redirects when a paid unused fee exists beside an unpaid one', function () {
+    $user = createPortalUserWithoutProfile();
+    $level = feeRequiredLevel();
+    $paidIntake = createTestIntakePeriod();
+    $otherIntake = createSecondOpenRegularIntake();
+
+    ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $paidIntake->id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::PAID,
+    ]);
+
+    ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $otherIntake->id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::AWAITING_PAYMENT,
+    ]);
+
+    $this->actingAs($user)
+        ->withSession(regularTrackSession())
+        ->get(route('portal.application.fee-payment'))
+        ->assertRedirect(route('portal.application.create'));
+});
+
+test('current user payment check ignores a stale pending order on another fee', function () {
+    $user = createPortalUserWithoutProfile();
+    $level = feeRequiredLevel();
+    $paidIntake = createTestIntakePeriod();
+    $otherIntake = createSecondOpenRegularIntake();
+    $feeType = applicationFeeType();
+
+    $paidFee = ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $paidIntake->id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::PAID,
+    ]);
+
+    [$paidInvoice, $paidReceipt] = createApplicationFeeLedgerPair(
+        $paidFee,
+        $feeType,
+        'ORD-PAID-KEEP',
+        $paidIntake->id,
+        $user->tenant_id,
+        'paid',
+    );
+    $paidReceipt->update(['amount' => 20]);
+
+    $staleFee = ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $otherIntake->id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::AWAITING_PAYMENT,
+    ]);
+
+    createApplicationFeeLedgerPair(
+        $staleFee,
+        $feeType,
+        'ORD-STALE-PENDING',
+        $otherIntake->id,
+        $user->tenant_id,
+        'pending',
+    );
+
+    Http::fake();
+
+    $this->actingAs($user)
+        ->withSession([
+            ...regularTrackSession(),
+            OnlinePaymentContextResolver::SESSION_ORDER_REFERENCE_KEY => 'ORD-STALE-PENDING',
+        ])
+        ->postJson(route('check-payment-status-for-current-user'), [
+            'feeTypeId' => $feeType->id,
+            'ledgerableId' => $paidFee->id,
+        ])
+        ->assertOk()
+        ->assertJson(['status' => 'paid']);
+
+    expect($paidInvoice->fresh()->payment_status)->toBe('paid')
+        ->and($paidReceipt->fresh()->payment_status)->toBe('paid')
+        ->and($paidFee->fresh()->status)->toBe(ApplicationFeeStatusEnum::PAID);
+
+    Http::assertNothingSent();
+});
+
+test('payment feedback does not revert a paid application fee when the gateway omits status', function () {
+    $user = createPortalUserWithoutProfile();
+    $level = feeRequiredLevel();
+    $intake = createTestIntakePeriod();
+    $feeType = applicationFeeType();
+
+    $applicationFee = ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $intake->id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::PAID,
+    ]);
+
+    [$invoice, $receipt] = createApplicationFeeLedgerPair(
+        $applicationFee,
+        $feeType,
+        'ORD-PAID-NO-GATEWAY-STATUS',
+        $intake->id,
+        $user->tenant_id,
+        'paid',
+    );
+    $receipt->update(['amount' => 20]);
+
+    Http::fake([
+        '*' => Http::response([]),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('integrations.payments.feedback', [
+            'orderReference' => 'ORD-PAID-NO-GATEWAY-STATUS',
+        ]))
+        ->assertOk();
+
+    expect($invoice->fresh()->payment_status)->toBe('paid')
+        ->and($receipt->fresh()->payment_status)->toBe('paid')
+        ->and($applicationFee->fresh()->status)->toBe(ApplicationFeeStatusEnum::PAID);
+});
+
+test('payment feedback treats gateway paymentStatus as paid', function () {
+    $user = createPortalUserWithoutProfile();
+    $level = feeRequiredLevel();
+    $intake = createTestIntakePeriod();
+    $feeType = applicationFeeType();
+
+    $applicationFee = ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $intake->id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::AWAITING_PAYMENT,
+    ]);
+
+    [$invoice, $receipt] = createApplicationFeeLedgerPair(
+        $applicationFee,
+        $feeType,
+        'ORD-PAYMENT-STATUS-KEY',
+        $intake->id,
+        $user->tenant_id,
+    );
+
+    Http::fake([
+        '*' => Http::response([
+            'paymentStatus' => 'paid',
+            'paymentOption' => 'card',
+            'createdDate' => now()->toDateString(),
+            'amount' => 20,
+            'orderReference' => 'ORD-PAYMENT-STATUS-KEY',
+            'reference' => 'PAY-STATUS-KEY',
+            'currency' => 'USD',
+            'clientFee' => 0,
+            'merchantFee' => 0,
+        ]),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('integrations.payments.feedback', [
+            'orderReference' => 'ORD-PAYMENT-STATUS-KEY',
+        ]))
+        ->assertOk();
+
+    expect($invoice->fresh()->payment_status)->toBe('paid')
+        ->and($receipt->fresh()->payment_status)->toBe('paid');
 });

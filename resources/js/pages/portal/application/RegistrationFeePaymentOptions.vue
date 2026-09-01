@@ -74,6 +74,17 @@ const formData = {
     email: user.attributes.email ?? '',
 };
 
+const isAlreadyPaid = computed(() => props.applicationFeeStatus === 'paid');
+
+const continueAfterPaid = () => {
+    const studentId = user.attributes?.studentId;
+    if (Number(studentId) > 0) {
+        window.location.href = route('portal.profile.applications', { fee_paid: 1 });
+        return;
+    }
+    window.location.href = route('portal.application.create');
+};
+
 const checkPaymentStatus = async () => {
     isCheckingPayment.value = true;
     try {
@@ -107,14 +118,13 @@ const submit = async () => {
 
 onMounted(async () => {
     redirectIfClosed();
+    if (isAlreadyPaid.value) {
+        continueAfterPaid();
+        return;
+    }
     await checkPaymentStatus();
-    const studentId = user.attributes?.studentId;
     if (String(checkData?.value?.status)?.toLowerCase() === 'paid') {
-        if (Number(studentId) > 0) {
-            window.location.href = route('portal.profile.applications', { fee_paid: 1 });
-            return;
-        }
-        window.location.href = route('portal.application.create');
+        continueAfterPaid();
     }
 });
 </script>
@@ -188,7 +198,7 @@ onMounted(async () => {
                         </div>
                     </div>
 
-                    <div class="mt-6 flex flex-col gap-3 sm:grid sm:grid-cols-2">
+                    <div v-if="!isAlreadyPaid" class="mt-6 flex flex-col gap-3 sm:grid sm:grid-cols-2">
                         <BaseButton
                             type="button"
                             class="order-1 w-full normal-case sm:order-2"

@@ -69,6 +69,7 @@ class DepartmentAcademicCalendarController extends Controller
             'departmentCourses.departmentCourseLevels.departmentLevel.level' => function ($query) {
                 $query->withTrashed();
             },
+            'departmentCourses.departmentCourseLevels.programmeSemesters',
         ])->findOrFail($institutionDepartment->id);
     }
 
@@ -93,6 +94,8 @@ class DepartmentAcademicCalendarController extends Controller
         $modeOfStudyId = is_numeric($modeOfStudyIdRaw) ? (int) $modeOfStudyIdRaw : null;
         $semesterIdRaw = request()->query('semester_id');
         $semesterId = is_numeric($semesterIdRaw) ? (int) $semesterIdRaw : null;
+        $programmeSemesterIdRaw = request()->query('programme_semester_id');
+        $programmeSemesterId = is_numeric($programmeSemesterIdRaw) ? (int) $programmeSemesterIdRaw : null;
 
         return [
             'calendarYear' => $academicYear,
@@ -100,6 +103,7 @@ class DepartmentAcademicCalendarController extends Controller
             'modeOfStudyId' => $modeOfStudyId !== null && $modeOfStudyId > 0 ? $modeOfStudyId : null,
             'calendarIdsForYear' => AcademicCalendar::idsForStartedCalendarYear($academicYear),
             'semesterId' => $semesterId !== null && $semesterId > 0 ? $semesterId : null,
+            'programmeSemesterId' => $programmeSemesterId !== null && $programmeSemesterId > 0 ? $programmeSemesterId : null,
         ];
     }
 
@@ -161,7 +165,7 @@ class DepartmentAcademicCalendarController extends Controller
             ->where('calendar_year', $context['calendarYear'])
             ->where('institution_department_id', $department->id)
             ->where('mode_of_study_id', $modeOfStudyId)
-            ->with('semester')
+            ->with(['semester', 'programmeSemester'])
             ->get();
 
         $lookup = $this->classConfigLookup($configs);
@@ -179,6 +183,7 @@ class DepartmentAcademicCalendarController extends Controller
             ),
             'totalFinalList' => $confirmedCounts,
             'filterSemesterId' => $context['semesterId'],
+            'filterProgrammeSemesterId' => $context['programmeSemesterId'] ?? null,
             'periodsByType' => $periodLookups['periodsByType'],
             'currentSemesterIdByType' => $periodLookups['currentSemesterIdByType'],
         ];
@@ -239,7 +244,8 @@ class DepartmentAcademicCalendarController extends Controller
                 'students_per_class' => $config->students_per_class ?? 0,
                 'id' => $config->id,
                 'semesterId' => $optionId,
-                'semester' => $config->semester?->name,
+                'programmeSemesterId' => $config->programme_semester_id !== null ? (int) $config->programme_semester_id : null,
+                'semester' => $config->name ?? $config->programmeSemester?->name ?? $config->semester?->name,
                 'courseSyllabusIds' => $syllabusIds,
                 'courseSyllabusCodes' => $codesOrdered,
             ];
@@ -402,8 +408,12 @@ class DepartmentAcademicCalendarController extends Controller
         $allConfigRows = $lookups['configsByPair'][$pairKey] ?? [];
         $configuredSemesterIds = [];
 
+        $configuredProgrammeSemesterIds = [];
+
         foreach ($allConfigRows as $configRow) {
-            if ($configRow['semesterId'] !== null) {
+            if (($configRow['programmeSemesterId'] ?? null) !== null) {
+                $configuredProgrammeSemesterIds[] = (int) $configRow['programmeSemesterId'];
+            } elseif ($configRow['semesterId'] !== null) {
                 $configuredSemesterIds[] = (int) $configRow['semesterId'];
             }
         }
@@ -440,7 +450,13 @@ class DepartmentAcademicCalendarController extends Controller
                 'totalFinalList' => (int) ($lookups['totalFinalList'][$pairKey] ?? 0),
                 'currentSemesterId' => $lookups['currentSemesterIdByType'][$calendarType->value] ?? null,
                 'configs' => $configs,
-                'remainingPeriods' => $this->remainingPeriods($calendarType, $configuredSemesterIds, $lookups),
+                'remainingPeriods' => $this->remainingPeriods(
+                    $calendarType,
+                    $configuredSemesterIds,
+                    $configuredProgrammeSemesterIds,
+                    $lookups,
+                    $levelCourse,
+                ),
             ],
         ]);
     }
@@ -486,11 +502,46 @@ class DepartmentAcademicCalendarController extends Controller
 
     /**
      * @param  list<int>  $configuredSemesterIds
-     * @param  array{filterSemesterId: int|null, periodsByType: array<string, list<array{id: int, name: string, slug: string}>>, currentSemesterIdByType: array<string, int|null>}  $lookups
-     * @return list<array{id: int, name: string, isCurrent: bool}>
+     * @param  list<int>  $configuredProgrammeSemesterIds
+     * @param  array{filterSemesterId: int|null, filterProgrammeSemesterId?: int|null, periodsByType: array<string, list<array{id: int, name: string, slug: string}>>, currentSemesterIdByType: array<string, int|null>}  $lookups
+     * @return list<array{id: int, name: string, isCurrent: bool, programmeSemesterId?: int|null}>
      */
-    private function remainingPeriods(AcademicCalendarTypeEnum $calendarType, array $configuredSemesterIds, array $lookups): array
-    {
+    private function remainingPeriods(
+        AcademicCalendarTypeEnum $calendarType,
+        array $configuredSemesterIds,
+        array $configuredProgrammeSemesterIds,
+        array $lookups,
+        DepartmentLevelCourse $levelCourse,
+    ): array {
+        $levelCourse->loadMissing('programmeSemesters');
+
+        if ($levelCourse->programmeSemesters !== null && $levelCourse->programmeSemesters->isNotEmpty()) {
+            $configured = array_fill_keys($configuredProgrammeSemesterIds, true);
+            $filterProgrammeSemesterId = $lookups['filterProgrammeSemesterId'] ?? null;
+            $remaining = [];
+
+            foreach ($levelCourse->programmeSemesters as $programmeSemester) {
+                $programmeSemesterId = (int) $programmeSemester->id;
+
+                if (isset($configured[$programmeSemesterId])) {
+                    continue;
+                }
+
+                if ($filterProgrammeSemesterId !== null && $programmeSemesterId !== $filterProgrammeSemesterId) {
+                    continue;
+                }
+
+                $remaining[] = [
+                    'id' => $programmeSemesterId,
+                    'programmeSemesterId' => $programmeSemesterId,
+                    'name' => (string) $programmeSemester->name,
+                    'isCurrent' => false,
+                ];
+            }
+
+            return $remaining;
+        }
+
         $configured = array_fill_keys($configuredSemesterIds, true);
         $currentSemesterId = $lookups['currentSemesterIdByType'][$calendarType->value] ?? null;
         $filterSemesterId = $lookups['filterSemesterId'] ?? null;

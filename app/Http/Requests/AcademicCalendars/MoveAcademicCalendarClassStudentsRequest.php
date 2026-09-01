@@ -71,7 +71,22 @@ class MoveAcademicCalendarClassStudentsRequest extends FormRequest
                 return;
             }
 
-            if ((int) $targetClass->class_config_id !== (int) $sourceClass->class_config_id) {
+            $targetClass->loadMissing('classConfig');
+            $targetConfig = $targetClass->classConfig;
+
+            if (! $targetConfig instanceof ClassConfig) {
+                $validator->errors()->add('target_academic_calendar_class_id', __('academic_calendar.move_students_invalid_source_class'));
+
+                return;
+            }
+
+            $sameOffering = (int) $targetConfig->department_course_id === (int) $sourceConfig->department_course_id
+                && (int) $targetConfig->department_level_id === (int) $sourceConfig->department_level_id
+                && (int) $targetConfig->mode_of_study_id === (int) $sourceConfig->mode_of_study_id
+                && (string) $targetConfig->calendar_year === (string) $sourceConfig->calendar_year
+                && (int) $targetConfig->institution_department_id === (int) $sourceConfig->institution_department_id;
+
+            if (! $sameOffering) {
                 $validator->errors()->add('target_academic_calendar_class_id', __('academic_calendar.move_students_target_wrong_config'));
 
                 return;

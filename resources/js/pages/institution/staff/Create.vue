@@ -10,6 +10,7 @@ interface Props {
     department: InstitutionDepartment;
     auth: AuthObject;
     errors: object;
+    allowedRoleSlugs: string[];
 }
 
 const props = defineProps<Props>();
@@ -26,6 +27,6 @@ const breadcrumbs: Array<Link> = [
 <template>
     <Head :title="$t('trans.create_staff')" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution-departments.show', institutionDepartmentId)">
-        <StaffForm :department="department" />
+        <StaffForm :department="department" :allowed-role-slugs="allowedRoleSlugs" />
     </PageContainer>
 </template>

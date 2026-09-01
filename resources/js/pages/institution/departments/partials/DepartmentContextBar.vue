@@ -12,10 +12,12 @@ interface Props {
     form: InertiaForm<{ department: null }>;
     modelValue: SelectOption;
     showSwitcher?: boolean;
+    isAcademic?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     showSwitcher: true,
+    isAcademic: true,
 });
 
 const emit = defineEmits<{
@@ -44,6 +46,7 @@ const departmentCode = computed(() => props.department.attributes?.departmentCod
                 label=""
                 :vertical-layout="false"
                 width-class="w-full"
+                :is-academic="isAcademic"
             />
         </div>
     </div>

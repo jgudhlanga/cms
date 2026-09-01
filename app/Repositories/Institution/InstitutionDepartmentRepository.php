@@ -17,8 +17,7 @@ class InstitutionDepartmentRepository extends BaseRepository implements IInstitu
         parent::__construct($this->institutionDepartment);
     }
 
-
-    public function allFilter($columns = ['*'], InstitutionDepartmentFilter $filters = null)
+    public function allFilter($columns = ['*'], ?InstitutionDepartmentFilter $filters = null)
     {
         $isDepartmentUser = Helper::isDepartmentUser();
         $userDepartments = Helper::resolveUserDepartments();
@@ -35,9 +34,10 @@ class InstitutionDepartmentRepository extends BaseRepository implements IInstitu
             ->withCount(['departmentCourses', 'staff'])
             ->select($columns)
             ->filter($filters);
-        if (!empty($userDepartments)) {
+        if (! empty($userDepartments)) {
             $query->whereIn('id', $userDepartments);
         }
+
         return $query->orderBy('created_at')
             ->orderBy('deleted_at')
             ->paginate()
@@ -48,27 +48,35 @@ class InstitutionDepartmentRepository extends BaseRepository implements IInstitu
     {
         $newIds = $dto->department_ids;
 
-        // Fetch all current and soft-deleted department links
         $allInstitutionDepartments = $this->institutionDepartment->withTrashed()
             ->whereHas('department', function ($query) use ($dto) {
                 $query->where('is_academic', $dto->is_academic);
             })->get();
-        // Build a map of department_id => model
-        $allByDepartmentId = $allInstitutionDepartments->keyBy('department_id');
 
-        // Extract current department IDs (including soft-deleted)
+        $allByDepartmentId = $allInstitutionDepartments
+            ->groupBy('department_id')
+            ->map(function ($group) {
+                $active = $group->filter(fn ($model) => ! $model->trashed());
+
+                if ($active->isNotEmpty()) {
+                    return $active->sortBy('id')->first();
+                }
+
+                return $group->sortBy('id')->first();
+            });
+
         $existing = $allByDepartmentId->keys()->toArray();
-
         $toRemove = array_diff($existing, $newIds);
 
-        // Remove unlinked departments (soft delete)
-        if (!empty($toRemove)) {
+        if (! empty($toRemove)) {
             $this->institutionDepartment
                 ->whereIn('department_id', $toRemove)
+                ->whereHas('department', function ($query) use ($dto) {
+                    $query->where('is_academic', $dto->is_academic);
+                })
                 ->delete();
         }
 
-        // Handle additions/restorations
         foreach ($newIds as $departmentId) {
             $existingLink = $allByDepartmentId->get($departmentId);
 
@@ -76,23 +84,36 @@ class InstitutionDepartmentRepository extends BaseRepository implements IInstitu
                 if ($existingLink->trashed()) {
                     $existingLink->restore();
                 }
-                // Already active, nothing to do
-            } else {
-                $usedColors = $this->institutionDepartment
-                    ->withTrashed()
-                    ->whereNotNull('color_code')
-                    ->pluck('color_code')
-                    ->map(fn (?string $color): string => strtoupper((string) $color))
-                    ->all();
 
-                $this->institutionDepartment->create([
-                    'department_id' => $departmentId,
-                    'color_code' => DepartmentColorPalette::normalize(
-                        DepartmentColorPalette::nextColor($usedColors),
-                    ),
-                ]);
+                continue;
             }
+
+            $anyExisting = $this->institutionDepartment->withTrashed()
+                ->where('department_id', $departmentId)
+                ->orderBy('id')
+                ->first();
+
+            if ($anyExisting) {
+                if ($anyExisting->trashed()) {
+                    $anyExisting->restore();
+                }
+
+                continue;
+            }
+
+            $usedColors = $this->institutionDepartment
+                ->withTrashed()
+                ->whereNotNull('color_code')
+                ->pluck('color_code')
+                ->map(fn (?string $color): string => strtoupper((string) $color))
+                ->all();
+
+            $this->institutionDepartment->create([
+                'department_id' => $departmentId,
+                'color_code' => DepartmentColorPalette::normalize(
+                    DepartmentColorPalette::nextColor($usedColors),
+                ),
+            ]);
         }
     }
-
 }
