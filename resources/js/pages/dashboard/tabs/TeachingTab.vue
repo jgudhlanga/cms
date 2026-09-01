@@ -94,54 +94,54 @@ const alertDotClass = (alert: LecturerPriorityAlert): string => {
 
 const alertRowClass = (alert: LecturerPriorityAlert): string => {
     if (alert.daysRemaining == null) {
-        return 'border-b border-gray-100 py-2 last:border-0';
+        return 'border-b border-border/60 py-1.5 last:border-0';
     }
 
     const urgency = assessmentUrgencyLevel(alert);
 
     if (urgency >= 4) {
-        return 'border-b border-rose-100 bg-rose-50/80 py-2 last:border-0';
+        return 'border-b border-rose-100 bg-rose-50/80 py-1.5 last:border-0 dark:border-rose-900/40 dark:bg-rose-950/50';
     }
 
     if (urgency === 3) {
-        return 'border-b border-rose-100 bg-rose-50/50 py-2 last:border-0';
+        return 'border-b border-rose-100 bg-rose-50/50 py-1.5 last:border-0 dark:border-rose-900/40 dark:bg-rose-950/30';
     }
 
     if (urgency === 2) {
-        return 'border-b border-orange-100 bg-orange-50/40 py-2 last:border-0';
+        return 'border-b border-orange-100 bg-orange-50/40 py-1.5 last:border-0 dark:border-orange-900/40 dark:bg-orange-950/30';
     }
 
     if (urgency === 1) {
-        return 'border-b border-amber-100 bg-amber-50/30 py-2 last:border-0';
+        return 'border-b border-amber-100 bg-amber-50/30 py-1.5 last:border-0 dark:border-amber-900/40 dark:bg-amber-950/20';
     }
 
-    return 'border-b border-sky-100 bg-sky-50/20 py-2 last:border-0';
+    return 'border-b border-sky-100 bg-sky-50/20 py-1.5 last:border-0 dark:border-sky-900/40 dark:bg-sky-950/20';
 };
 
 const alertTextClass = (alert: LecturerPriorityAlert): string => {
     if (alert.daysRemaining == null) {
-        return 'text-sm leading-snug text-gray-900';
+        return 'text-sm leading-snug text-foreground';
     }
 
     const urgency = assessmentUrgencyLevel(alert);
 
     if (urgency >= 4) {
-        return 'text-sm font-medium leading-snug text-rose-800';
+        return 'text-sm font-medium leading-snug text-rose-800 dark:text-rose-300';
     }
 
     if (urgency === 3) {
-        return 'text-sm font-medium leading-snug text-rose-700';
+        return 'text-sm font-medium leading-snug text-rose-700 dark:text-rose-300';
     }
 
     if (urgency === 2) {
-        return 'text-sm leading-snug text-orange-800';
+        return 'text-sm leading-snug text-orange-800 dark:text-orange-300';
     }
 
     if (urgency === 1) {
-        return 'text-sm leading-snug text-amber-800';
+        return 'text-sm leading-snug text-amber-800 dark:text-amber-300';
     }
 
-    return 'text-sm leading-snug text-sky-900';
+    return 'text-sm leading-snug text-sky-900 dark:text-sky-300';
 };
 
 const openAction = (url: string | null, enabled: boolean): void => {
@@ -156,8 +156,8 @@ const dashboard = computed(() => props.teachingDashboard);
 </script>
 
 <template>
-    <div class="mt-4 space-y-6">
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div class="mt-4 space-y-3">
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <MetricCard
                 :title="$t('dashboard.lecturer_attendance')"
                 :value="notAvailable"
@@ -236,7 +236,7 @@ const dashboard = computed(() => props.teachingDashboard);
             </MetricCard>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
             <DashboardCard :title="$t('dashboard.lecturer_priority_alerts')">
                 <Empty
                     v-if="dashboard.priorityAlerts.length === 0"
@@ -264,7 +264,7 @@ const dashboard = computed(() => props.teachingDashboard);
                         v-for="action in dashboard.quickActions"
                         :key="action.key"
                         type="button"
-                        class="rounded-lg border border-border px-3 py-2.5 text-left text-sm font-medium transition-colors"
+                        class="rounded-lg border border-border px-3 py-2.5 text-left text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                         :class="
                             action.enabled
                                 ? 'bg-card hover:bg-muted/40'
@@ -279,7 +279,7 @@ const dashboard = computed(() => props.teachingDashboard);
             </DashboardCard>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
             <DashboardCard :title="$t('dashboard.lecturer_top_performing')">
                 <Empty
                     v-if="dashboard.topPerformingStudents.length === 0"
@@ -289,10 +289,10 @@ const dashboard = computed(() => props.teachingDashboard);
                     <li
                         v-for="student in dashboard.topPerformingStudents"
                         :key="student.studentEnrolmentId"
-                        class="flex items-center justify-between py-2 text-sm"
+                        class="flex items-center justify-between py-1.5 text-sm"
                     >
                         <span class="text-foreground">{{ student.studentName }}</span>
-                        <span class="font-medium text-emerald-600">{{
+                        <span class="font-medium tabular-nums text-emerald-600">{{
                             formatMark(student.averageMark)
                         }}</span>
                     </li>
@@ -308,10 +308,10 @@ const dashboard = computed(() => props.teachingDashboard);
                     <li
                         v-for="student in dashboard.lowPerformingStudents"
                         :key="student.studentEnrolmentId"
-                        class="flex items-center justify-between py-2 text-sm"
+                        class="flex items-center justify-between py-1.5 text-sm"
                     >
                         <span class="text-foreground">{{ student.studentName }}</span>
-                        <span class="inline-flex items-center gap-1 font-medium text-rose-600">
+                        <span class="inline-flex items-center gap-1 font-medium tabular-nums text-rose-600">
                             <TrendingDown class="h-3.5 w-3.5" />
                             {{ formatMark(student.averageMark) }}
                         </span>
@@ -320,7 +320,7 @@ const dashboard = computed(() => props.teachingDashboard);
             </DashboardCard>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
             <DashboardCard :title="$t('dashboard.lecturer_risky_students')">
                 <Empty
                     v-if="dashboard.riskyStudents.length === 0"
@@ -330,7 +330,7 @@ const dashboard = computed(() => props.teachingDashboard);
                     <li
                         v-for="student in dashboard.riskyStudents"
                         :key="student.studentEnrolmentId"
-                        class="flex items-center justify-between py-2 text-sm"
+                        class="flex items-center justify-between py-1.5 text-sm"
                     >
                         <span class="text-foreground">{{ student.studentName }}</span>
                         <span class="text-amber-600">{{
@@ -351,7 +351,7 @@ const dashboard = computed(() => props.teachingDashboard);
                     <li
                         v-for="row in dashboard.missingCourseWork"
                         :key="`${row.academicCalendarClassId}-${row.moduleId}`"
-                        class="flex items-start justify-between gap-3 py-2 text-sm"
+                        class="flex items-start justify-between gap-3 py-1.5 text-sm"
                     >
                         <div>
                             <div class="font-medium text-foreground">{{ row.moduleName }}</div>
@@ -376,10 +376,10 @@ const dashboard = computed(() => props.teachingDashboard);
                 <table class="w-full text-left text-sm">
                     <thead>
                         <tr class="border-b border-border text-muted-foreground">
-                            <th class="py-2 pr-3 font-medium">{{ $tChoice('trans.module', 1) }}</th>
-                            <th class="py-2 pr-3 font-medium">{{ $tChoice('trans.class', 2) }}</th>
-                            <th class="py-2 pr-3 font-medium">{{ $t('dashboard.lecturer_pass_rate') }}</th>
-                            <th class="py-2 font-medium">{{ $t('dashboard.lecturer_average') }}</th>
+                            <th class="py-1.5 pr-3 font-medium">{{ $tChoice('trans.module', 1) }}</th>
+                            <th class="py-1.5 pr-3 font-medium">{{ $tChoice('trans.class', 2) }}</th>
+                            <th class="py-1.5 pr-3 font-medium">{{ $t('dashboard.lecturer_pass_rate') }}</th>
+                            <th class="py-1.5 font-medium">{{ $t('dashboard.lecturer_average') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -388,13 +388,13 @@ const dashboard = computed(() => props.teachingDashboard);
                             :key="module.moduleId"
                             class="border-b border-border/60 last:border-0"
                         >
-                            <td class="py-2 pr-3">
+                            <td class="py-1.5 pr-3">
                                 <div class="font-medium text-foreground">{{ module.moduleName }}</div>
                                 <div class="text-xs text-muted-foreground">{{ module.moduleCode }}</div>
                             </td>
-                            <td class="py-2 pr-3">{{ module.classesCount }}</td>
-                            <td class="py-2 pr-3">{{ formatRate(module.passRate) }}</td>
-                            <td class="py-2">{{ formatMark(module.averageMark) }}</td>
+                            <td class="py-1.5 pr-3 tabular-nums">{{ module.classesCount }}</td>
+                            <td class="py-1.5 pr-3 tabular-nums">{{ formatRate(module.passRate) }}</td>
+                            <td class="py-1.5 tabular-nums">{{ formatMark(module.averageMark) }}</td>
                         </tr>
                     </tbody>
                 </table>

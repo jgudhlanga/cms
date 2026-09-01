@@ -17,28 +17,32 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const cardClass = computed(() =>
-    props.compact ? 'border border-border/60 bg-card shadow-sm' : 'bg-gray-50/50',
+    props.compact
+        ? 'border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md hover:border-border'
+        : 'bg-muted/50 transition-shadow hover:shadow-sm',
 );
 
-const contentClass = computed(() => (props.compact ? 'p-3' : 'p-4'));
+const contentClass = computed(() => (props.compact ? 'p-2' : 'p-3.5'));
 
 const titleClass = computed(() =>
-    props.compact ? 'text-xs font-medium text-muted-foreground' : 'text-sm text-gray-500',
+    props.compact ? 'text-[11px] font-medium text-muted-foreground' : 'text-sm text-muted-foreground',
 );
 
 const valueClass = computed(() =>
-    props.compact ? 'text-xl leading-none font-semibold text-foreground' : 'text-2xl leading-none font-semibold text-gray-900',
+    props.compact
+        ? 'text-base leading-none font-semibold tabular-nums text-foreground'
+        : 'text-xl leading-none font-semibold tabular-nums text-foreground',
 );
 
 const iconWrapperClass = computed(() =>
-    props.compact ? `shrink-0 rounded-md p-1.5 ${props.accent}` : '',
+    props.compact ? `shrink-0 rounded-md p-1 ${props.accent}` : '',
 );
 </script>
 
 <template>
     <Card :class="cardClass">
         <CardContent :class="contentClass">
-            <div class="mb-1 flex items-center" :class="titleClass">
+            <div :class="[compact ? 'mb-0.5' : 'mb-1', 'flex items-center', titleClass]">
                 <div v-if="compact" :class="iconWrapperClass">
                     <slot name="icon"></slot>
                 </div>
@@ -47,15 +51,14 @@ const iconWrapperClass = computed(() =>
                 </template>
                 <span :class="compact ? 'ml-2 truncate' : 'ml-2'">{{ title }}</span>
             </div>
-            <div class="mb-1" :class="valueClass">{{ value }}</div>
+            <div :class="[compact ? 'mb-0.5' : 'mb-1', valueClass]">{{ value }}</div>
             <div
                 class="text-xs"
                 :class="{
                     'text-emerald-600': trend === 'up',
                     'text-rose-600': trend === 'down',
                     'text-amber-600': trend === 'warning',
-                    'text-gray-500': !compact && (trend === 'neutral' || !trend),
-                    'text-muted-foreground': compact && (trend === 'neutral' || !trend),
+                    'text-muted-foreground': trend === 'neutral' || !trend,
                 }"
             >
                 <div class="flex items-center">

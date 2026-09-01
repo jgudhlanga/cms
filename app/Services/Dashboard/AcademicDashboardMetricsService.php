@@ -45,6 +45,7 @@ class AcademicDashboardMetricsService
     public function __construct(
         private readonly CourseWorkAggregationService $aggregationService,
         private readonly AssessmentCalendarWindowService $assessmentCalendarWindowService,
+        private readonly StudentDashboardMetricsService $studentDashboardMetricsService,
     ) {
         $this->isDepartmentUser = Helper::isDepartmentUser();
         $this->userDepartments = Helper::resolveUserDepartments() ?? [];
@@ -68,6 +69,7 @@ class AcademicDashboardMetricsService
 
         return [
             'summary' => $this->summary($gradedResults, $moduleResults),
+            'studentBreakdown' => $this->studentDashboardMetricsService->breakdown(),
             'courseWorkStatus' => $this->courseWorkStatus($moduleResults),
             'gradeDistribution' => $this->gradeDistribution($gradedResults),
             'passRateByDepartment' => $this->passRateByDepartment($gradedResults),

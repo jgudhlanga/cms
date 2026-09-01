@@ -127,6 +127,8 @@ test('dashboard returns hostel metrics for users with hostel tab access', functi
             ->where('hostelDashboard.summary.occupiedBeds', 2)
             ->where('hostelDashboard.summary.availableBeds', 16)
             ->where('hostelDashboard.summary.vacantRooms', 1)
+            ->where('hostelDashboard.summary.totalMaxOccupancy', 8)
+            ->where('hostelDashboard.summary.disabledStudents', 0)
             ->where('hostelDashboard.genderSplit.male', 1)
             ->where('hostelDashboard.genderSplit.female', 1)
             ->where('hostelDashboard.queryStats.open', 1)

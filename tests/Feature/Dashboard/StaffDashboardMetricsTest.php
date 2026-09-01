@@ -3,10 +3,10 @@
 use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\EmploymentTypeEnum;
-use App\Models\Rbac\Permission;
-use App\Models\Rbac\Role;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\Staff;
+use App\Models\Rbac\Permission;
+use App\Models\Rbac\Role;
 use App\Models\Shared\EmploymentType;
 use App\Models\Shared\Gender;
 use App\Models\Shared\MaritalStatus;
@@ -81,9 +81,6 @@ test('dashboard returns staff metrics for users with staff tab access', function
             ->where('staffDashboard.summary.totalStaff', 2)
             ->where('staffDashboard.summary.academicCount', 1)
             ->where('staffDashboard.summary.adminCount', 1)
-            ->where('staffDashboard.summary.presentToday', null)
-            ->where('staffDashboard.summary.onLeaveToday', null)
-            ->where('staffDashboard.summary.unfilledSessions', null)
             ->where('staffDashboard.categoryBreakdown.fullTimeLecturers', 1)
             ->where('staffDashboard.categoryBreakdown.partTimeLecturers', 0)
             ->where('staffDashboard.categoryBreakdown.postgradQualified', null)

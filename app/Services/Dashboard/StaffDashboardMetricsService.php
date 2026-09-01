@@ -40,7 +40,7 @@ class StaffDashboardMetricsService
 
     /**
      * @return array{
-     *     summary: array<string, int|null>,
+     *     summary: array{totalStaff: int, academicCount: int, adminCount: int},
      *     lecturerRatios: list<array<string, mixed>>,
      *     categoryBreakdown: array<string, mixed>,
      *     academicGenderSplit: array{male: int, female: int, other: int},
@@ -61,7 +61,7 @@ class StaffDashboardMetricsService
     }
 
     /**
-     * @return array<string, int|null>
+     * @return array{totalStaff: int, academicCount: int, adminCount: int}
      */
     private function summary(): array
     {
@@ -83,9 +83,6 @@ class StaffDashboardMetricsService
             'totalStaff' => $staffMembers->count(),
             'academicCount' => $academicCount,
             'adminCount' => $adminCount,
-            'presentToday' => null,
-            'onLeaveToday' => null,
-            'unfilledSessions' => null,
         ];
     }
 

@@ -66,6 +66,8 @@ test('dashboard returns academic metrics for users with academic tab access', fu
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
+            ->has('academicDashboard')
+            ->has('academicDashboard.studentBreakdown')
             ->where('academicDashboard.summary.passRate', 100)
             ->where('academicDashboard.summary.failRate', 0)
             ->where('academicDashboard.summary.distinctionRate', 100)

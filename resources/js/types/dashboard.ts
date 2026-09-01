@@ -1,5 +1,31 @@
 import type { AssessmentCalendarWindow } from '@/types/assessments';
 
+import type { StudentStatBreakdown, StudentTypeStatBreakdown, StudentSponsoredStatBreakdown, StudentDisabilityStatBreakdown } from '@/types/students';
+
+export type StudentDashboardBreakdown = {
+    total: number;
+    male: number;
+    female: number;
+    byLevel: StudentStatBreakdown[];
+    byModeOfStudy: StudentStatBreakdown[];
+    byStudentType: StudentTypeStatBreakdown[];
+    bySponsored: StudentSponsoredStatBreakdown[];
+    byDisability: StudentDisabilityStatBreakdown[];
+};
+
+export const emptyStudentDashboardBreakdown = (): StudentDashboardBreakdown => ({
+    total: 0,
+    male: 0,
+    female: 0,
+    byLevel: [],
+    byModeOfStudy: [],
+    byStudentType: [],
+    bySponsored: [],
+    byDisability: [],
+});
+
+export const formatMetricCount = (value: number | null | undefined): string => (value ?? 0).toLocaleString();
+
 export type DepartmentDistribution = {
     institutionDepartmentId: number;
     departmentId: number;
@@ -49,6 +75,8 @@ export type HostelDashboardSummary = {
     availableBeds: number;
     occupancyRate: number;
     vacantRooms: number;
+    totalMaxOccupancy: number;
+    disabledStudents: number;
 };
 
 export type HostelDashboardBlock = {
@@ -126,9 +154,6 @@ export type StaffDashboardSummary = {
     totalStaff: number;
     academicCount: number;
     adminCount: number;
-    presentToday: number | null;
-    onLeaveToday: number | null;
-    unfilledSessions: number | null;
 };
 
 export type StaffLecturerRatio = {
@@ -302,6 +327,7 @@ export type AcademicAttachmentStatus = {
 
 export type AcademicDashboard = {
     summary: AcademicDashboardSummary;
+    studentBreakdown: StudentDashboardBreakdown;
     courseWorkStatus: AcademicCourseWorkStatus;
     gradeDistribution: {
         segments: AcademicGradeSegment[];
@@ -328,12 +354,6 @@ export type AcademicDashboard = {
 };
 
 export type OverviewDashboardSummary = {
-    passRate: number | null;
-    passRateSubtext: string | null;
-    markCompletionRate: number | null;
-    markCompletionSubtext: string | null;
-    atRiskStudents: number | null;
-    atRiskSubtext: string | null;
     hostelOccupancyRate: number | null;
     hostelAvailableBeds: number | null;
     hostelSubtext: string | null;
@@ -377,6 +397,7 @@ export type OverviewPriorityAlert = {
 
 export type OverviewDashboard = {
     summary: OverviewDashboardSummary;
+    studentBreakdown: StudentDashboardBreakdown;
     enrolmentFunnel: OverviewEnrolmentFunnel;
     academicSnapshot: OverviewAcademicSnapshot;
     quickInsights: OverviewQuickInsight[];

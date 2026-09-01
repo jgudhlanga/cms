@@ -8,17 +8,17 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    compact: false,
+    compact: true,
 });
 
-const headerClass = computed(() => (props.compact ? 'px-3 pt-3 pb-1' : 'px-4 pt-4 pb-2'));
-const contentClass = computed(() => (props.compact ? 'px-3 pb-3' : 'px-4 pb-4'));
+const headerClass = computed(() => (props.compact ? 'px-3 pt-2 pb-1' : 'px-4 pt-4 pb-2'));
+const contentClass = computed(() => (props.compact ? 'px-3 pb-2' : 'px-4 pb-4'));
 </script>
 
 <template>
-    <Card>
+    <Card class="transition-shadow hover:shadow-md">
         <CardHeader :class="headerClass">
-            <CardTitle class="text-xs font-medium tracking-wider text-gray-500 uppercase">{{ title }}</CardTitle>
+            <CardTitle class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{{ title }}</CardTitle>
         </CardHeader>
         <CardContent :class="contentClass">
             <slot></slot>
