@@ -129,71 +129,71 @@ const handleFilterChange = (option: SelectOption) => {
     <Head :title="$tChoice('trans.dashboard', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="flex w-full flex-col">
-            <div class="mb-4 border-b border-gray-200 pb-4">
-                <h1 class="flex items-center gap-2 text-base font-medium text-gray-900">
-                    <School class="h-5 w-5 text-gray-500" />
+            <div class="mb-4 border-b border-border pb-4">
+                <h1 class="flex items-center gap-2 text-base font-medium text-foreground">
+                    <School class="h-5 w-5 text-muted-foreground" />
                     {{ dashboardTitle }}
                 </h1>
-                <p class="mt-0.5 text-[11px] text-gray-500">
+                <p class="mt-0.5 text-[11px] text-muted-foreground">
                     {{ academicContextSubtitle }}
                 </p>
             </div>
 
             <Tabs v-model="resolvedActiveTab" class="w-full">
-                <TabsList class="flex h-auto w-fit flex-wrap justify-start rounded-md bg-gray-100/80 p-1">
+                <TabsList class="flex h-auto w-fit flex-wrap justify-start rounded-md bg-muted/80 p-1">
                     <TabsTrigger
                         v-if="showTab('overview')"
                         value="overview"
-                        class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
                     >
                         {{ $t('dashboard.overview') }}
                     </TabsTrigger>
                     <TabsTrigger
                         v-if="showTab('academic')"
                         value="academic"
-                        class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
                     >
                         {{ $t('trans.academic') }}
                     </TabsTrigger>
                     <TabsTrigger
                         v-if="showTab('enrolments')"
                         value="enrolments"
-                        class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
                     >
                         {{ $tChoice('trans.enrolment', 2) }}
                     </TabsTrigger>
                     <TabsTrigger
                         v-if="showTab('attendance')"
                         value="attendance"
-                        class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
                     >
                         {{ $t('dashboard.attendance') }}
                     </TabsTrigger>
                     <TabsTrigger
                         v-if="showTab('staff')"
                         value="staff"
-                        class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
                     >
                         {{ $t('trans.staff') }}
                     </TabsTrigger>
                     <TabsTrigger
                         v-if="showTab('finance')"
                         value="finance"
-                        class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
                     >
                         {{ $tChoice('trans.finance', 2) }}
                     </TabsTrigger>
                     <TabsTrigger
                         v-if="showTab('hostel')"
                         value="hostel"
-                        class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
                     >
                         {{ $t('dashboard.hostel') }}
                     </TabsTrigger>
                     <TabsTrigger
                         v-if="showTab('examinations')"
                         value="examinations"
-                        class="px-3 py-1.5 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
                     >
                         {{ $t('dashboard.exams') }}
                     </TabsTrigger>
@@ -208,7 +208,7 @@ const handleFilterChange = (option: SelectOption) => {
                 </TabsContent>
 
                 <TabsContent v-if="showTab('academic')" value="academic" class="mt-0">
-                    <div class="space-y-6">
+                    <div class="space-y-3">
                         <AcademicTab v-if="academicDashboard" :academic-dashboard="academicDashboard" />
                         <TeachingTab v-if="teachingDashboard" :teaching-dashboard="teachingDashboard" />
                     </div>

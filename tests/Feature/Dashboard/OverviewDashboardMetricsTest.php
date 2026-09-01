@@ -7,10 +7,10 @@ use App\Enums\HMS\HostelQueryStatusEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\CourseWorkMark;
-use App\Models\Rbac\Permission;
 use App\Models\Enrolments\ClassList;
 use App\Models\HMS\HostelQuery;
 use App\Models\Institution\DepartmentCourse;
+use App\Models\Rbac\Permission;
 use App\Models\Shared\Gender;
 use App\Models\Shared\IdType;
 use App\Models\Shared\MaritalStatus;
@@ -54,8 +54,7 @@ test('dashboard returns overview metrics for users with overview tab access', fu
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
             ->has('overviewDashboard')
-            ->where('overviewDashboard.summary.passRate', null)
-            ->where('overviewDashboard.summary.atRiskStudents', null)
+            ->has('overviewDashboard.studentBreakdown')
             ->has('overviewDashboard.summary.totalStaff')
             ->has('overviewDashboard.enrolmentFunnel')
             ->where('overviewDashboard.enrolmentFunnel.confirmed', 1)
@@ -67,7 +66,7 @@ test('dashboard returns overview metrics for users with overview tab access', fu
         );
 });
 
-test('dashboard overview reports pass rate and at-risk students from coursework data', function () {
+test('dashboard overview includes academic snapshot and priority alerts from coursework data', function () {
     $context = createCourseWorkJsonApiContext();
 
     $user = userWithFullOverviewDashboardPermission();
@@ -94,9 +93,7 @@ test('dashboard overview reports pass rate and at-risk students from coursework 
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
-            ->where('overviewDashboard.summary.passRate', 100)
-            ->where('overviewDashboard.summary.atRiskStudents', null)
-            ->has('overviewDashboard.summary.markCompletionRate')
+            ->has('overviewDashboard.studentBreakdown')
             ->has('overviewDashboard.academicSnapshot.gradeSegments')
             ->has('overviewDashboard.priorityAlerts')
         );
@@ -111,8 +108,7 @@ test('dashboard overview returns zero students and empty enrolment when no confi
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
-            ->where('overviewDashboard.summary.passRate', null)
-            ->where('overviewDashboard.summary.atRiskStudents', null)
+            ->has('overviewDashboard.studentBreakdown')
             ->where('overviewDashboard.enrolmentByDepartment', [])
             ->where('overviewDashboard.enrolmentFunnel.confirmed', 0)
         );
@@ -181,7 +177,6 @@ test('dashboard overview hides section metrics without corresponding tab permiss
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
             ->has('overviewDashboard')
-            ->where('overviewDashboard.summary.passRate', null)
             ->where('overviewDashboard.summary.hostelOccupancyRate', null)
             ->where('overviewDashboard.summary.totalStaff', 0)
             ->where('overviewDashboard.enrolmentByDepartment', [])

@@ -5,6 +5,7 @@ namespace App\Services\Dashboard;
 use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelQueryPriorityEnum;
 use App\Enums\HMS\HostelQueryStatusEnum;
+use App\Enums\Shared\DisabilityStatusEnum;
 use App\Helpers\Helper;
 use App\Models\HMS\Hostel;
 use App\Models\HMS\HostelApplication;
@@ -47,6 +48,8 @@ class HostelDashboardMetricsService
                 'availableBeds' => $availableBeds,
                 'occupancyRate' => $occupancyRate,
                 'vacantRooms' => (int) $roomStats['vacant_count'],
+                'totalMaxOccupancy' => (int) $roomStats['total_max_occupancy'],
+                'disabledStudents' => $this->disabledStudentsCount(),
             ],
             'blocks' => $this->blocks($hostels),
             'genderSplit' => $this->genderSplit(),
@@ -229,6 +232,21 @@ class HostelDashboardMetricsService
             'declined' => $declined,
             'paidRate' => $paidRate,
         ];
+    }
+
+    private function disabledStudentsCount(): int
+    {
+        $query = HostelRoomAllocation::query()
+            ->active()
+            ->whereHas('student', fn ($builder) => $builder
+                ->where('students.disability_status', DisabilityStatusEnum::YES->value));
+
+        $hostelIds = Helper::resolveUserHostels();
+        if ($hostelIds !== null) {
+            $query->whereHas('room', fn ($builder) => $builder->whereIn('hostel_id', $hostelIds));
+        }
+
+        return $query->count();
     }
 
     /**

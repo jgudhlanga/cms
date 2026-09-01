@@ -115,6 +115,14 @@ const enrollmentData = computed(() => {
 let levelChartInstance: Chart | null = null;
 let enrollmentChartInstance: Chart | null = null;
 
+const getThemeColor = (token: string, fallback: string): string => {
+    if (typeof window === 'undefined') {
+        return fallback;
+    }
+    const value = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+    return value ? `hsl(${value})` : fallback;
+};
+
 const initCharts = () => {
     if (levelChart.value) {
         if (levelChartInstance) levelChartInstance.destroy();
@@ -124,7 +132,13 @@ const initCharts = () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'left', align: 'center' } },
+                plugins: {
+                    legend: {
+                        position: 'left',
+                        align: 'center',
+                        labels: { color: getThemeColor('--muted-foreground', '#64748B') },
+                    },
+                },
                 cutout: '60%',
             },
         });
@@ -143,8 +157,15 @@ const initCharts = () => {
                     tooltip: { mode: 'index', intersect: false },
                 },
                 scales: {
-                    y: { beginAtZero: true, grid: { drawBorder: false } },
-                    x: { grid: { display: false } },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: getThemeColor('--muted-foreground', '#64748B') },
+                        grid: { color: getThemeColor('--border', '#F1F5F9'), drawBorder: false },
+                    },
+                    x: {
+                        ticks: { color: getThemeColor('--muted-foreground', '#64748B') },
+                        grid: { display: false },
+                    },
                 },
             },
         });
@@ -165,7 +186,7 @@ watch(
 </script>
 
 <template>
-    <div class="mt-4 flex flex-col gap-4">
+    <div class="mt-4 flex flex-col gap-3">
         <div class="flex items-center justify-end gap-2">
             <div
                 class="flex min-w-0 shrink-0 items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2 sm:min-w-[280px] sm:max-w-md"
@@ -185,7 +206,7 @@ watch(
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
             <MetricCard
                 compact
                 accent="bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
@@ -248,7 +269,7 @@ watch(
             </MetricCard>
         </div>
 
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-3">
             <DistributionByDepartment
                 :department-distribution="departmentDistribution"
                 :show-actions-column="true"
@@ -270,7 +291,7 @@ watch(
 
         <DashboardCard :title="$t('dashboard.retention_rate')">
             <div
-                class="flex h-[185px] w-full items-center justify-center rounded border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500"
+                class="flex h-[185px] w-full items-center justify-center rounded border border-dashed border-border bg-muted/40 text-sm text-muted-foreground"
             >
                 {{ $t('dashboard.line_chart_placeholder') }}
             </div>

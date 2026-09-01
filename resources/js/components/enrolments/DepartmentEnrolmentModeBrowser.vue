@@ -276,6 +276,7 @@ const totalsTeleportTo = computed(() => (props.totalsTarget ? `#${props.totalsTa
     <Teleport :to="totalsTeleportTo" :disabled="!totalsTarget">
         <DepartmentModeTotalsStrip
             v-if="orderedModes.length > 0"
+            :class="totalsTarget ? undefined : 'mt-2 mb-4'"
             :total="totalEnrolments"
             :total-label="$tChoice('trans.application', totalEnrolments)"
             :items="legendItems"
@@ -297,7 +298,7 @@ const totalsTeleportTo = computed(() => (props.totalsTarget ? `#${props.totalsTa
             :description="$t('trans.no_data_found_description', { data: $tChoice('trans.mode_of_study', 2) })"
         />
 
-        <div v-else class="flex flex-col gap-3">
+        <div v-else class="flex flex-col gap-3" :class="{ 'mt-2': !totalsTarget }">
             <BaseAccordion v-model="openModeId" type="single" :collapsible="true" class="w-full gap-3">
                 <EnrolmentModeAccordionItem
                     v-for="mode in orderedModes"

@@ -23,6 +23,7 @@ class OverviewDashboardMetricsService
         private readonly AcademicDashboardMetricsService $academicDashboardMetricsService,
         private readonly HostelDashboardMetricsService $hostelDashboardMetricsService,
         private readonly StaffDashboardMetricsService $staffDashboardMetricsService,
+        private readonly StudentDashboardMetricsService $studentDashboardMetricsService,
     ) {
         $this->isDepartmentUser = Helper::isDepartmentUser();
         $this->userDepartments = Helper::resolveUserDepartments() ?? [];
@@ -59,12 +60,11 @@ class OverviewDashboardMetricsService
 
         return [
             'summary' => $this->summary(
-                $academicDashboard,
                 $hostelSummary,
                 $staffDashboard,
-                $hasAcademic,
                 $hasStaff,
             ),
+            'studentBreakdown' => $this->studentDashboardMetricsService->breakdown(),
             'enrolmentFunnel' => $hasEnrolments ? $this->enrolmentFunnel($enrolmentSummary) : $this->emptyEnrolmentFunnel(),
             'academicSnapshot' => $hasAcademic ? $this->academicSnapshot($academicDashboard) : $this->emptyAcademicSnapshot(),
             'quickInsights' => $this->quickInsights($academicDashboard, $staffDashboard, $hasAcademic, $hasStaff),
@@ -89,28 +89,17 @@ class OverviewDashboardMetricsService
     }
 
     /**
-     * @param  array<string, mixed>  $academicDashboard
      * @param  array<string, mixed>  $staffDashboard
      * @return array<string, float|int|string|null>
      */
     private function summary(
-        array $academicDashboard,
         ?array $hostelSummary,
         array $staffDashboard,
-        bool $hasAcademic,
         bool $hasStaff,
     ): array {
-        $courseWorkStatus = $academicDashboard['courseWorkStatus'] ?? [];
-        $academicSummary = $academicDashboard['summary'] ?? [];
         $staffSummary = $staffDashboard['summary'] ?? [];
 
         return [
-            'passRate' => $hasAcademic ? ($academicSummary['passRate'] ?? null) : null,
-            'passRateSubtext' => $hasAcademic ? $this->passRateSubtext($academicSummary) : null,
-            'markCompletionRate' => $hasAcademic ? ($courseWorkStatus['completeRate'] ?? null) : null,
-            'markCompletionSubtext' => $hasAcademic ? $this->markCompletionSubtext($courseWorkStatus) : null,
-            'atRiskStudents' => $hasAcademic ? ($academicDashboard['atRiskStudentCount'] ?? null) : null,
-            'atRiskSubtext' => $hasAcademic ? __('dashboard.overview_at_risk_subtext') : null,
             'hostelOccupancyRate' => $hostelSummary['occupancyRate'] ?? null,
             'hostelAvailableBeds' => $hostelSummary['availableBeds'] ?? null,
             'hostelSubtext' => $hostelSummary !== null
