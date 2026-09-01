@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Institution;
 
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
+use App\Models\Institution\DepartmentLevelCourse;
+use App\Support\Institution\ProgrammeSemesterNameFormatter;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateProgrammeStructureRequest extends FormRequest
@@ -34,10 +37,31 @@ class UpdateProgrammeStructureRequest extends FormRequest
             FILTER_NULL_ON_FAILURE,
         );
 
+        $periodsPerYear = $this->resolvePeriodsPerYear();
+
         if ($includesAttachment === false) {
             $this->merge(['attachment_semester_count' => 0]);
         } elseif ($includesAttachment === true && (int) $this->input('attachment_semester_count', 0) < 1) {
-            $this->merge(['attachment_semester_count' => 2]);
+            $this->merge(['attachment_semester_count' => $periodsPerYear]);
         }
+    }
+
+    private function resolvePeriodsPerYear(): int
+    {
+        $departmentLevelCourse = $this->route('department_level_course');
+
+        if (! $departmentLevelCourse instanceof DepartmentLevelCourse) {
+            return ProgrammeSemesterNameFormatter::periodsPerYear(AcademicCalendarTypeEnum::SEMESTER);
+        }
+
+        $departmentLevelCourse->loadMissing('departmentLevel.level');
+        $calendarType = $departmentLevelCourse->departmentLevel?->level?->calendar_type;
+
+        if (! $calendarType instanceof AcademicCalendarTypeEnum) {
+            $calendarType = AcademicCalendarTypeEnum::tryFrom((string) $calendarType)
+                ?? AcademicCalendarTypeEnum::SEMESTER;
+        }
+
+        return ProgrammeSemesterNameFormatter::periodsPerYear($calendarType);
     }
 }

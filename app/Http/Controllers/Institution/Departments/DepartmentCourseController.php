@@ -64,7 +64,13 @@ class DepartmentCourseController extends Controller
         ]);
 
         $institutionDepartment = InstitutionDepartmentResource::make($departmentCourse->institutionDepartment);
-        $departmentLevels = DepartmentLevelResource::collection($departmentCourse->institutionDepartment->departmentLevels);
+        $courseLevels = $departmentCourse->departmentCourseLevels
+            ->pluck('departmentLevel')
+            ->filter()
+            ->unique('id')
+            ->sortBy(fn ($departmentLevel) => $departmentLevel->level?->position)
+            ->values();
+        $departmentLevels = DepartmentLevelResource::collection($courseLevels);
         $courseLevelModes = CourseLevelModeResource::collection($departmentCourse->courseLevelModes);
         $modesOfStudy = ModeOfStudyResource::collection(ModeOfStudy::whereNull('deleted_at')->get());
         $departmentCourse = DepartmentCourseResource::make($departmentCourse);

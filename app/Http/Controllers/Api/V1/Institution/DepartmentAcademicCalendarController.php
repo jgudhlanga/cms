@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Institution;
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
+use App\Enums\Institution\ModeOfStudyEnum;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
@@ -11,6 +12,7 @@ use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\ModeOfStudy;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Students\StudentSemester;
 use App\Queries\Enrolments\ConfirmedStudentsQuery;
@@ -145,6 +147,7 @@ class DepartmentAcademicCalendarController extends Controller
             'filterSemesterId' => null,
             'periodsByType' => [],
             'currentSemesterIdByType' => [],
+            'requireIndustrialAttachment' => false,
         ];
     }
 
@@ -186,7 +189,19 @@ class DepartmentAcademicCalendarController extends Controller
             'filterProgrammeSemesterId' => $context['programmeSemesterId'] ?? null,
             'periodsByType' => $periodLookups['periodsByType'],
             'currentSemesterIdByType' => $periodLookups['currentSemesterIdByType'],
+            'requireIndustrialAttachment' => $this->isOjetMode($modeOfStudyId),
         ];
+    }
+
+    private function isOjetMode(?int $modeOfStudyId): bool
+    {
+        if ($modeOfStudyId === null) {
+            return false;
+        }
+
+        $name = ModeOfStudy::query()->whereKey($modeOfStudyId)->value('name');
+
+        return is_string($name) && ModeOfStudyEnum::tryFromLabel($name) === ModeOfStudyEnum::OJET;
     }
 
     private function courseLevelOptionLookupKey(int $departmentCourseId, int $departmentLevelId, ?int $semesterId): string
@@ -376,7 +391,7 @@ class DepartmentAcademicCalendarController extends Controller
                     ->filter()
                     ->values(),
             ];
-        })->values();
+        })->filter(fn (array $courseRow): bool => $courseRow['levels']->isNotEmpty())->values();
     }
 
     /**
@@ -394,6 +409,10 @@ class DepartmentAcademicCalendarController extends Controller
         $level = $departmentLevel->level;
 
         if ($level === null) {
+            return collect();
+        }
+
+        if (($lookups['requireIndustrialAttachment'] ?? false) && ! $levelCourse->includes_industrial_attachment) {
             return collect();
         }
 

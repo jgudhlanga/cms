@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Institution;
 
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,11 +15,17 @@ class DepartmentLevelCourseResource extends JsonResource
             'departmentCourse.course',
         ]);
 
+        $calendarType = $this->departmentLevel?->level?->calendar_type;
+        $calendarTypeValue = $calendarType instanceof AcademicCalendarTypeEnum
+            ? $calendarType->value
+            : (is_string($calendarType) && $calendarType !== '' ? $calendarType : 'semester');
+
         return [
             'id' => $this->id,
             'departmentCourseId' => $this?->department_course_id,
             'departmentLevelId' => $this?->department_level_id,
             'level' => $this?->departmentLevel?->level?->name,
+            'calendarType' => $calendarTypeValue,
             'course' => $this?->departmentCourse?->course?->name,
             'durationYears' => $this->duration_years,
             'taughtSemesterCount' => $this->taught_semester_count,

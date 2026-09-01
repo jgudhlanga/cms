@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
-import DepartmentColorSwatch from '@/components/institution/DepartmentColorSwatch.vue';
 import { useInstitution } from '@/composables/institution/useInstitution';
+import { hasAbility } from '@/lib/permissions';
 import ClassConfig from '@/pages/institution/academicCalendars/partials/ClassConfig.vue';
 import DepartmentContextBar from '@/pages/institution/departments/partials/DepartmentContextBar.vue';
+import DepartmentHero from '@/pages/institution/departments/partials/DepartmentHero.vue';
 import LinkCoursesToDepartment from '@/pages/institution/departments/partials/LinkCoursesToDepartment.vue';
 import LinkLevelsToDepartment from '@/pages/institution/departments/partials/LinkLevelsToDepartment.vue';
 import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaStore';
@@ -15,7 +16,6 @@ import { SelectOption } from '@/types/utils';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, ref, watch } from 'vue';
-import { hasAbility } from '@/lib/permissions';
 
 interface Props {
     department: InstitutionDepartment;
@@ -42,7 +42,7 @@ const departmentTitle = () => {
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
     { transChoiceKey: 'department', href: route('institution-departments.index', { is_academic: department.attributes?.isAcademic }) },
-    { title:  departmentTitle()},
+    { title: departmentTitle() },
 ];
 
 const { departmentTabs } = useInstitution();
@@ -98,20 +98,9 @@ const activeTabDescription = computed(() => activeSection.value?.transDescriptio
 </script>
 
 <template>
-    <Head :title="$tChoice('trans.department', 2)" />
+    <Head :title="departmentTitle()" />
     <PageContainer :breadcrumbs="breadcrumbs" :back-url="route('institution.index')">
-        <template #backNavigationLeading>
-            <div class="flex h-9 min-w-0 items-center gap-2">
-                <DepartmentColorSwatch
-                    :color-code="department.attributes?.colorCode"
-                    :department-name="department.attributes?.department"
-                    size-class="h-3.5 w-3.5"
-                />
-                <h1 class="truncate text-lg leading-none font-semibold tracking-tight text-foreground">{{ departmentTitle() }}</h1>
-            </div>
-        </template>
-
-        <template v-if="canViewAnyDepartmentMetaData" #backNavigationTrailing>
+        <template v-if="canViewAnyDepartmentMetaData" #backNavigationLeading>
             <DepartmentContextBar
                 :department="department"
                 :form="switchDepartmentForm"
@@ -120,15 +109,16 @@ const activeTabDescription = computed(() => activeSection.value?.transDescriptio
             />
         </template>
 
-        <BaseSectionNav
-            v-model:active-tab="activeTab"
-            :tabs="visibleTabs"
-            :description="activeTabDescription"
-            class=""
-        />
+        <div class="space-y-4">
+            <DepartmentHero :department="department" />
 
-        <div class="py-2">
-            <component :is="activeSection?.component" v-if="activeSection" />
+            <div>
+                <BaseSectionNav v-model:active-tab="activeTab" :tabs="visibleTabs" :description="activeTabDescription" />
+
+                <div class="mt-3">
+                    <component :is="activeSection?.component" v-if="activeSection" />
+                </div>
+            </div>
         </div>
 
         <LinkLevelsToDepartment :institution-department-id="institutionDepartmentId" />

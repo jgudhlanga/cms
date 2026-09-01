@@ -2,6 +2,8 @@
 
 namespace App\Enums\Institution;
 
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
+
 enum LevelEnum: string
 {
     case ABMA_LEVEL_3 = "ABMA Level 3";
@@ -56,6 +58,17 @@ enum LevelEnum: string
             self::HND => 7,
             self::BTECH => 8,
             self::SDP => 9,
+        };
+    }
+
+    public function calendarType(): AcademicCalendarTypeEnum
+    {
+        return match ($this) {
+            self::ABMA_LEVEL_3,
+            self::ABMA_LEVEL_4,
+            self::ABMA_LEVEL_5,
+            self::ABMA_LEVEL_6 => AcademicCalendarTypeEnum::ABMA,
+            default => AcademicCalendarTypeEnum::SEMESTER,
         };
     }
 

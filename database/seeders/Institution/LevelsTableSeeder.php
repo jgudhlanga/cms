@@ -14,7 +14,14 @@ class LevelsTableSeeder extends Seeder
     public function run(): void
     {
         foreach (LevelEnum::cases() as $row) {
-            Level::create(['name' => $row->name(), 'description' => $row->description(), 'position' => $row->position()]);
+            Level::updateOrCreate(
+                ['name' => $row->name()],
+                [
+                    'description' => $row->description(),
+                    'position' => $row->position(),
+                    'calendar_type' => $row->calendarType()->value,
+                ],
+            );
         }
     }
 }
