@@ -40,7 +40,7 @@ export type DepartmentCourse = {
     };
     relationships?: {
         departmentCourseLevels?: DepartmentCourseLevel[];
-        courseModes?: [];
+        modes?: ModeOfStudy[];
     };
 };
 
@@ -49,6 +49,7 @@ export type DepartmentCourseLevel = {
     departmentCourseId?: string | number;
     departmentLevelId?: string | number;
     level?: string;
+    calendarType?: 'semester' | 'term' | 'abma';
 };
 
 export type DepartmentCourseParams = {

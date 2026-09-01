@@ -31,7 +31,12 @@ class DepartmentMetaDataController extends Controller
 
     public function courses(InstitutionDepartment $institutionDepartment): JsonResponse
     {
-        $institutionDepartment->loadMissing('departmentCourses.course');
+        $institutionDepartment->loadMissing([
+            'departmentCourses.course',
+            'departmentCourses.departmentCourseLevels.departmentLevel.level',
+            'departmentCourses.departmentCourseLevels.programmeSemesters',
+            'departmentCourses.courseLevelModes',
+        ]);
 
         $courses = DepartmentCourseResource::collection($institutionDepartment->departmentCourses);
         $departmentCoursesIds = $institutionDepartment->departmentCourses?->pluck('course_id');

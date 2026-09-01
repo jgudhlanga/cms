@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import BaseCard from '@/components/core/card/BaseCard.vue';
+import BaseButton from '@/components/core/button/BaseButton.vue';
 import { BaseCheckbox } from '@/components/core/form';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import Empty from '@/components/core/util/Empty.vue';
-import { useUtils } from '@/composables/core/useUtils';
+import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
-import { ColorVariant } from '@/enums/colors';
+import { ButtonSize } from '@/enums/buttons';
 import { hasAbility } from '@/lib/permissions';
 import { getIdParams } from '@/lib/utils';
 import { AuthObject } from '@/types/data-pagination';
@@ -13,8 +13,8 @@ import { DepartmentCourse, DepartmentCourseLevel, DepartmentCourseUpdateParams, 
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
-import BaseButton from '../../../../components/core/button/BaseButton.vue';
+import { computed } from 'vue';
+import CourseHero from './partials/CourseHero.vue';
 import ProgrammeStructureCard from './partials/ProgrammeStructureCard.vue';
 
 interface Props {
@@ -40,26 +40,23 @@ const breadcrumbs: Array<Link> = [
         href: route('department-courses.show', getIdParams(departmentCourse?.id?.toString() ?? '')),
     },
 ];
-const { navigateTo, isItTrue } = useUtils();
 const canToggleCourseworkCapture = hasAbility('toggle:coursework-capture');
-const allSelected = ref(false);
 const form = useForm<DepartmentCourseUpdateParams>({
     department_level_ids: departmentCourse?.relationships?.departmentCourseLevels?.map((item: DepartmentCourseLevel) => item?.departmentLevelId),
-    ...(canToggleCourseworkCapture
-        ? { coursework_capture_enabled: departmentCourse?.attributes?.courseworkCaptureEnabled !== false }
-        : {}),
+    ...(canToggleCourseworkCapture ? { coursework_capture_enabled: departmentCourse?.attributes?.courseworkCaptureEnabled !== false } : {}),
 });
-const selectAll = () => {
-    if (allSelected.value) {
-        form.department_level_ids = [];
-        allSelected.value = false;
-    } else {
-        form.department_level_ids = departmentLevels?.map((item: DepartmentLevel) => item['id']) ?? [];
-        allSelected.value = true;
-    }
+
+const isLevelSelected = (levelId: string | number | undefined) => (form.department_level_ids ?? []).includes(levelId);
+
+const toggleLevel = (levelId: string | number | undefined) => {
+    const current = form.department_level_ids ?? [];
+    form.department_level_ids = isLevelSelected(levelId) ? current.filter((id) => id !== levelId) : [...current, levelId];
 };
-const updateModel = () => {
-    allSelected.value = form.department_level_ids?.length == departmentLevels?.length;
+
+const allSelected = computed(() => (departmentLevels?.length ?? 0) > 0 && form.department_level_ids?.length === departmentLevels?.length);
+
+const toggleSelectAll = () => {
+    form.department_level_ids = allSelected.value ? [] : (departmentLevels?.map((item: DepartmentLevel) => item['id']) ?? []);
 };
 
 const { updateDepartmentCourses } = useDepartmentCourses();
@@ -69,76 +66,79 @@ const updateCourse = () => {
 </script>
 
 <template>
-    <Head :title="`${$tChoice('trans.department', 1)} ${$tChoice('trans.course', 1)}`" />
+    <Head :title="`${departmentCourse?.attributes.course} — ${institutionDepartment?.attributes.department}`" />
     <PageContainer
         :breadcrumbs="breadcrumbs"
         :back-url="route('institution-departments.show', getIdParams(institutionDepartment?.attributes?.departmentId.toString() ?? ''))"
     >
-        <form @submit.prevent="() => updateCourse()" class="flex flex-col">
-            <div class="grid grid-cols-2 gap-3">
-                <BaseCard :title="`${$tChoice('trans.course', 1)} ${$tChoice('trans.level', 2)}`">
-                    <template v-if="departmentLevels && departmentLevels.length > 0">
-                        <div class="flex flex-col space-y-2">
-                            <div class="flex">
-                                <BaseCheckbox
-                                    input-id="select_all_levels"
-                                    :checked="allSelected"
-                                    :label="`${$t('trans.select_all')} ${$tChoice('trans.level', 1).toLowerCase()}`"
-                                    @click="selectAll()"
-                                />
-                            </div>
-                            <div class="grid grid-cols-1 gap-x-3 md:grid-cols-4">
-                                <template v-for="level in departmentLevels" :key="`level_key_${level['id']}`">
-                                    <BaseCheckbox
-                                        :input-id="`level_id_${level['id']}`"
-                                        :value="level['id']"
-                                        v-model="form.department_level_ids"
-                                        :label="level['attributes']['level']"
-                                        @change="updateModel()"
-                                    />
-                                </template>
-                            </div>
-                        </div>
-                    </template>
-                    <template v-else>
-                        <Empty />
-                    </template>
-                </BaseCard>
-                <BaseCard :title="`${$t('trans.other')} ${$t('trans.details')}`">
-                    <div class="flex flex-col space-y-3">
-                        <BaseCheckbox
-                            v-if="canToggleCourseworkCapture"
-                            input-id="coursework_capture_enabled"
-                            v-model="form.coursework_capture_enabled"
-                            :label="$t('trans.coursework_capture_enabled')"
-                        />
-                        <Empty v-else />
-                    </div>
-                </BaseCard>
-                <div class="col-span-2 grid grid-cols-1 gap-3 md:grid-cols-2">
-                    <ProgrammeStructureCard
-                        v-for="levelCourse in departmentCourse?.relationships?.departmentCourseLevels ?? []"
-                        :key="`programme_structure_${levelCourse.id}`"
-                        :level-course="levelCourse"
-                    />
+        <div class="space-y-4">
+            <CourseHero
+                :course="departmentCourse"
+                :department="institutionDepartment"
+                :selected-levels-count="form.department_level_ids?.length ?? 0"
+                :total-levels-count="departmentLevels?.length ?? 0"
+                :configured-structures-count="departmentCourse?.relationships?.departmentCourseLevels?.length ?? 0"
+                :coursework-capture-enabled="form.coursework_capture_enabled"
+                :show-coursework-capture="canToggleCourseworkCapture"
+            />
+
+            <form @submit.prevent="() => updateCourse()" class="flex w-full flex-col space-y-3 rounded-md border-l border-black p-4 shadow-sm">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <HeadingSmall :title="$t('trans.ui_course_configuration')" />
+                    <BaseButton type="submit" :size="ButtonSize.sm" :processing="form.processing" :disabled="form.processing">
+                        {{ $t('trans.save') }}
+                    </BaseButton>
                 </div>
+
+                <template v-if="departmentLevels && departmentLevels.length > 0">
+                    <div class="flex flex-wrap gap-1.5">
+                        <button
+                            type="button"
+                            class="rounded-full border px-3 py-1 text-xs font-medium transition-colors"
+                            :class="
+                                allSelected
+                                    ? 'border-primary bg-primary/10 text-primary'
+                                    : 'border-border text-muted-foreground hover:bg-muted/50 border-dashed'
+                            "
+                            @click="toggleSelectAll"
+                        >
+                            {{ $t('trans.select_all') }}
+                        </button>
+                        <button
+                            v-for="level in departmentLevels"
+                            :key="`level_key_${level['id']}`"
+                            type="button"
+                            class="rounded-full border px-3 py-1 text-xs font-medium transition-colors"
+                            :class="
+                                isLevelSelected(level['id'])
+                                    ? 'border-primary bg-primary/10 text-primary'
+                                    : 'border-border text-muted-foreground hover:bg-muted/50'
+                            "
+                            @click="toggleLevel(level['id'])"
+                        >
+                            {{ level['attributes']['level'] }}
+                        </button>
+                    </div>
+                </template>
+                <template v-else>
+                    <Empty />
+                </template>
+
+                <BaseCheckbox
+                    v-if="canToggleCourseworkCapture"
+                    input-id="coursework_capture_enabled"
+                    v-model="form.coursework_capture_enabled"
+                    :label="$t('trans.coursework_capture_enabled')"
+                />
+            </form>
+
+            <div v-if="departmentCourse?.relationships?.departmentCourseLevels?.length" class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <ProgrammeStructureCard
+                    v-for="levelCourse in departmentCourse.relationships.departmentCourseLevels"
+                    :key="`programme_structure_${levelCourse.id}`"
+                    :level-course="levelCourse"
+                />
             </div>
-            <div class="flex items-center justify-center space-x-3 p-6">
-                <BaseButton
-                    type="button"
-                    :variant="ColorVariant.shade"
-                    @click="
-                        () =>
-                            navigateTo(
-                                route('institution-departments.show', getIdParams(institutionDepartment?.attributes?.departmentId.toString() ?? '')),
-                            )
-                    "
-                    >{{ $t('trans.back') }}
-                </BaseButton>
-                <BaseButton :processing="form.processing" :disabled="form.processing">
-                    {{ $t('trans.save') }}
-                </BaseButton>
-            </div>
-        </form>
+        </div>
     </PageContainer>
 </template>

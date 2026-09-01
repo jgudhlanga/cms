@@ -2,10 +2,11 @@
 import { GenericButton } from '@/components/core/button';
 import TableLoading from '@/components/core/loader/TableLoading.vue';
 import DataTable from '@/components/core/table/DataTable.vue';
+import SetupSectionCard from '@/pages/institution/departments/partials/view/SetupSectionCard.vue';
 import { useDepartmentLevels } from '@/composables/institution/useDepartmentLevels';
 import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 import { APP_MODULE_KEYS } from '@/lib/constants';
-import { IconName } from '@/lib/icons';
 import { hasAbility } from '@/lib/permissions';
 import { useModalStore } from '@/store/core/useModalStore';
 import { InstitutionDepartment } from '@/types/institution';
@@ -46,17 +47,25 @@ watch(
 </script>
 
 <template>
-    <TableLoading v-if="isLoading" />
-    <DataTable v-else :data="departmentLevels" :columns="createDepartmentLevelColumns()" :show-archived-filter="false">
-        <template #head-right v-if="allowed">
-            <GenericButton
-                :icon="IconName.add"
-                class="rounded-full"
-                :icon-variant="ColorVariant.white"
-                :variant="ColorVariant.primary_outline"
-                @click="() => openDepartmentLevelsModal(departmentLevelsIds)"
-                :title="$t('trans.link_levels')"
-            />
-        </template>
-    </DataTable>
+    <SetupSectionCard
+        :icon="IconName.graduation_cape"
+        :title="`${$tChoice('trans.level', 1)} ${$t('trans.setup')}`"
+        :description="$t('trans.levels_config_description')"
+        :count="departmentLevels.length"
+        :count-label="$tChoice('trans.level', departmentLevels.length)"
+    >
+        <TableLoading v-if="isLoading" />
+        <DataTable v-else :data="departmentLevels" :columns="createDepartmentLevelColumns()" :show-archived-filter="false">
+            <template #head-right v-if="allowed">
+                <GenericButton
+                    :icon="IconName.add"
+                    class="rounded-full"
+                    :icon-variant="ColorVariant.white"
+                    :variant="ColorVariant.primary_outline"
+                    @click="() => openDepartmentLevelsModal(departmentLevelsIds)"
+                    :title="$t('trans.link_levels')"
+                />
+            </template>
+        </DataTable>
+    </SetupSectionCard>
 </template>

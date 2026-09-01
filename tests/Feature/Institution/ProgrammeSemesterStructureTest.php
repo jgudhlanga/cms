@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\Institution\SyncProgrammeSemestersForOfferingAction;
+use App\DTO\Institution\DepartmentCourseUpdateDto;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Institution\ProgrammeSemesterKindEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
@@ -19,6 +20,7 @@ use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Students\StudentSemester;
 use App\Models\Tenants\Tenant;
+use App\Repositories\Institution\interface\IDepartmentCourseRepository;
 use App\Services\Institution\BackfillProgrammeSemestersService;
 use App\Services\Institution\RollbackProgrammeSemestersService;
 use App\Support\Institution\ProgrammeSemesterNameFormatter;
@@ -64,7 +66,95 @@ it('generates taught programme semester names from calendar type', function (): 
     expect(ProgrammeSemesterNameFormatter::taughtName(AcademicCalendarTypeEnum::SEMESTER, 1, 1))
         ->toBe('Year 1 Sem 1')
         ->and(ProgrammeSemesterNameFormatter::taughtName(AcademicCalendarTypeEnum::TERM, 2, 3))
-        ->toBe('Year 2 Term 3');
+        ->toBe('Year 2 Term 3')
+        ->and(ProgrammeSemesterNameFormatter::taughtName(AcademicCalendarTypeEnum::ABMA, 1, 1))
+        ->toBe('Year 1 ABMA 1');
+});
+
+it('creates department level courses with abma calendar defaults and programme semesters', function (): void {
+    $tenant = Tenant::query()->firstOrFail();
+    $department = Department::factory()->create();
+    $institutionDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $tenant->id,
+        'department_id' => $department->id,
+        'department_code' => 'prog-'.Str::lower(Str::random(5)),
+        'description' => 'ABMA programme structure tests',
+    ]);
+    $course = Course::factory()->create();
+    $departmentCourse = DepartmentCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'course_id' => $course->id,
+    ]);
+    $level = Level::factory()->create([
+        'name' => 'ABMA Level 3',
+        'calendar_type' => AcademicCalendarTypeEnum::ABMA->value,
+    ]);
+    $departmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'level_id' => $level->id,
+    ]);
+
+    app(IDepartmentCourseRepository::class)->update(
+        $departmentCourse,
+        new DepartmentCourseUpdateDto(department_level_ids: [$departmentLevel->id]),
+    );
+
+    $dlc = DepartmentLevelCourse::query()
+        ->where('department_course_id', $departmentCourse->id)
+        ->first();
+
+    expect($dlc)->not->toBeNull()
+        ->and($dlc->taught_semester_count)->toBe(4)
+        ->and($dlc->programmeSemesters)->toHaveCount(4)
+        ->and($dlc->programmeSemesters->pluck('name')->all())->toBe([
+            'Year 1 ABMA 1',
+            'Year 1 ABMA 2',
+            'Year 1 ABMA 3',
+            'Year 1 ABMA 4',
+        ]);
+});
+
+it('creates department level courses with term calendar defaults and programme semesters', function (): void {
+    $tenant = Tenant::query()->firstOrFail();
+    $department = Department::factory()->create();
+    $institutionDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $tenant->id,
+        'department_id' => $department->id,
+        'department_code' => 'prog-'.Str::lower(Str::random(5)),
+        'description' => 'Term programme structure tests',
+    ]);
+    $course = Course::factory()->create();
+    $departmentCourse = DepartmentCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'course_id' => $course->id,
+    ]);
+    $level = Level::factory()->create(['calendar_type' => AcademicCalendarTypeEnum::TERM->value]);
+    $departmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'level_id' => $level->id,
+    ]);
+
+    app(IDepartmentCourseRepository::class)->update(
+        $departmentCourse,
+        new DepartmentCourseUpdateDto(department_level_ids: [$departmentLevel->id]),
+    );
+
+    $dlc = DepartmentLevelCourse::query()
+        ->where('department_course_id', $departmentCourse->id)
+        ->first();
+
+    expect($dlc)->not->toBeNull()
+        ->and($dlc->taught_semester_count)->toBe(3)
+        ->and($dlc->programmeSemesters)->toHaveCount(3)
+        ->and($dlc->programmeSemesters->pluck('name')->all())->toBe([
+            'Year 1 Term 1',
+            'Year 1 Term 2',
+            'Year 1 Term 3',
+        ]);
 });
 
 it('appends industrial attachment programme semesters after taught phases', function (): void {

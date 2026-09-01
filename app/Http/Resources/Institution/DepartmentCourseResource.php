@@ -16,7 +16,14 @@ class DepartmentCourseResource extends JsonResource
             'course',
             'departmentCourseLevels.departmentLevel.level',
             'departmentCourseLevels.programmeSemesters',
+            'courseLevelModes',
         ]);
+
+        $modes = $this->courseLevelModes
+            ->flatMap(fn ($courseLevelMode) => $courseLevelMode->mode_objects)
+            ->unique('id')
+            ->sortBy('name')
+            ->values();
 
         return [
             'type' => 'department-course',
@@ -36,6 +43,7 @@ class DepartmentCourseResource extends JsonResource
             ],
             'relationships' => [
                 'departmentCourseLevels' => $this->departmentCourseLevels ? DepartmentLevelCourseResource::collection($this->departmentCourseLevels) : null,
+                'modes' => ModeOfStudyResource::collection($modes),
             ],
         ];
     }

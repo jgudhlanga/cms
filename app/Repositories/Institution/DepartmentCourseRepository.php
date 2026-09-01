@@ -2,14 +2,18 @@
 
 namespace App\Repositories\Institution;
 
+use App\Actions\Institution\SyncProgrammeSemestersForOfferingAction;
 use App\DTO\Institution\CourseRequirementsDto;
 use App\DTO\Institution\DepartmentCourseDto;
 use App\DTO\Institution\DepartmentCourseUpdateDto;
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Models\Institution\DepartmentCourse;
+use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
 use App\Services\Institution\ProgrammeLinkUsageGuard;
+use App\Support\Institution\ProgrammeSemesterNameFormatter;
 use Illuminate\Support\Facades\DB;
 
 class DepartmentCourseRepository extends BaseRepository implements IDepartmentCourseRepository
@@ -17,6 +21,7 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
     public function __construct(
         protected DepartmentCourse $departmentCourse,
         protected ProgrammeLinkUsageGuard $usageGuard,
+        protected SyncProgrammeSemestersForOfferingAction $syncProgrammeSemesters,
     ) {
         parent::__construct($this->departmentCourse);
     }
@@ -96,7 +101,31 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
         }
         // Add new courses
         foreach ($toAddCourseLevels as $departmentLevelId) {
-            $departmentCourse->departmentCourseLevels()->create(['department_course_id' => $departmentCourse->id, 'department_level_id' => $departmentLevelId]);
+            $departmentLevel = DepartmentLevel::query()
+                ->with('level')
+                ->find($departmentLevelId);
+
+            $calendarType = $departmentLevel?->level?->calendar_type;
+
+            if (! $calendarType instanceof AcademicCalendarTypeEnum) {
+                $calendarType = AcademicCalendarTypeEnum::tryFrom((string) $calendarType)
+                    ?? AcademicCalendarTypeEnum::SEMESTER;
+            }
+
+            $taughtCount = ProgrammeSemesterNameFormatter::periodsPerYear($calendarType);
+
+            $departmentLevelCourse = $departmentCourse->departmentCourseLevels()->create([
+                'department_course_id' => $departmentCourse->id,
+                'department_level_id' => $departmentLevelId,
+                'duration_years' => 1,
+                'taught_semester_count' => $taughtCount,
+                'includes_industrial_attachment' => false,
+                'attachment_semester_count' => 0,
+            ]);
+
+            $this->syncProgrammeSemesters->execute(
+                $departmentLevelCourse->fresh(['departmentLevel.level']) ?? $departmentLevelCourse,
+            );
         }
 
         return $departmentCourse;

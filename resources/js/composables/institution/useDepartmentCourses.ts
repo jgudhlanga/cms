@@ -1,6 +1,7 @@
+import { IconButton } from '@/components/core/button';
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
-import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 import { closeModal, errorAlert, forbiddenAlert, openModal, successAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { toggleFormLoader } from '@/lib/forms';
@@ -15,11 +16,11 @@ import { AcademicOLevelResult, Enrolment } from '@/types/enrolments';
 import { InertiaForm, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
-import { ref } from 'vue';
+import { h, ref } from 'vue';
 import { z } from 'zod';
 
 export const useDepartmentCourses = (isEditingProgram?: boolean) => {
-    const { moreActionButton, textLink, checkStatusIcon, onEdit, actionButton } = useDataTables();
+    const { moreActionButton, textLink, checkStatusIcon, onEdit } = useDataTables();
     const { props } = usePage();
     const { can } = props?.auth as Auth;
     const { navigateTo, formatDate, isItTrue } = useUtils();
@@ -40,23 +41,63 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
                 header: trans_choice('trans.level', 2),
                 accessorKey: 'levels',
                 cell: ({ row }: { row: { original: DepartmentCourse } }) => {
-                    return row.original.relationships?.departmentCourseLevels
-                        ?.map((item: DepartmentCourseLevel) => item.level)
-                        .filter(Boolean)
-                        .join(', ');
+                    const levels = (row.original.relationships?.departmentCourseLevels ?? [])
+                        .map((item: DepartmentCourseLevel) => item.level)
+                        .filter(Boolean);
+
+                    if (levels.length === 0) {
+                        return h('span', { class: 'text-muted-foreground' }, '—');
+                    }
+
+                    return h(
+                        'div',
+                        { class: 'flex flex-wrap gap-1' },
+                        levels.map((level) =>
+                            h(
+                                'span',
+                                {
+                                    key: level,
+                                    class: 'inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium whitespace-nowrap text-primary',
+                                },
+                                level,
+                            ),
+                        ),
+                    );
                 },
             },
             {
                 header: trans_choice('trans.mode_of_study', 2),
-                accessorKey: 'courseModes',
+                accessorKey: 'modes',
                 enableSorting: false,
-                meta: { align: 'center' },
                 cell: ({ row }: { row: { original: DepartmentCourse } }) => {
-                    return actionButton({
-                        title: trans_choice('general.mode', 2),
-                        variant: ColorVariant.primary_outline,
-                        onClick: () => navigateTo(route('department-courses.modes', { department_course: String(row.original.id) })),
-                    });
+                    const modes = (row.original.relationships?.modes ?? []).map((mode) => mode.attributes?.name).filter(Boolean);
+
+                    return h('div', { class: 'flex flex-wrap items-center gap-1.5' }, [
+                        modes.length === 0
+                            ? h('span', { class: 'text-muted-foreground text-xs' }, trans('trans.not_set'))
+                            : h(
+                                  'div',
+                                  { class: 'flex flex-wrap gap-1' },
+                                  modes.map((mode) =>
+                                      h(
+                                          'span',
+                                          {
+                                              key: mode,
+                                              class: 'inline-flex items-center rounded-full bg-violet-500/10 px-2 py-0.5 text-[11px] font-medium whitespace-nowrap text-violet-600',
+                                          },
+                                          mode,
+                                      ),
+                                  ),
+                              ),
+                        h('span', { title: trans_choice('general.mode', 2) }, [
+                            h(IconButton, {
+                                icon: IconName.settings,
+                                tone: 'header-primary',
+                                iconSize: '14',
+                                onClick: () => navigateTo(route('department-courses.modes', { department_course: String(row.original.id) })),
+                            }),
+                        ]),
+                    ]);
                 },
             },
             {
