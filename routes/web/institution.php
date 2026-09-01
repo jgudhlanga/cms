@@ -12,7 +12,7 @@ use App\Http\Controllers\Institution\Departments\CourseSyllabusController;
 use App\Http\Controllers\Institution\Departments\CourseSyllabusModuleController;
 use App\Http\Controllers\Institution\Departments\DepartmentClassSizeController;
 use App\Http\Controllers\Institution\Departments\DepartmentCourseController;
-use App\Http\Controllers\Institution\Departments\DepartmentLevelController;
+use App\Http\Controllers\Institution\Departments\DepartmentLevelCourseProgrammeStructureController;
 use App\Http\Controllers\Institution\Departments\InstitutionDepartmentController;
 use App\Http\Controllers\Institution\DocumentTemplates\DocumentTemplateController;
 use App\Http\Controllers\Institution\Dropdowns\CourseController;
@@ -45,6 +45,7 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::post('departments/{department_course}/update', [DepartmentCourseController::class, 'update'])->name('department-courses.update');
     Route::get('departments/course/{department_course}/modes', [DepartmentCourseController::class, 'courseLevelModes'])->name('department-courses.modes');
     Route::post('departments/course/{department_course}/modes', [DepartmentCourseController::class, 'storeCourseLevelModes'])->name('department-courses.modes.store');
+    Route::post('departments/level-courses/{department_level_course}/programme-structure', [DepartmentLevelCourseProgrammeStructureController::class, 'update'])->name('department-level-courses.programme-structure.update');
     // ==================================== COURSE SYLLABUSES ==========================================================
     Route::get('departments/{institution_department}/course-syllabuses', [CourseSyllabusController::class, 'index'])->name('department-course-syllabuses.index');
     Route::get('departments/{institution_department}/course-syllabuses/import', [CourseSyllabusController::class, 'showImport'])->name('department-course-syllabuses.import');

@@ -3,6 +3,7 @@
 namespace App\Models\Institution\Syllabus;
 
 use App\Models\AcademicCalendars\Semester;
+use App\Models\Institution\ProgrammeSemester;
 use App\Models\Institution\Staff;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
@@ -31,6 +32,7 @@ class CourseSyllabusModule extends Model
         'tenant_id',
         'course_syllabus_id',
         'semester_id',
+        'programme_semester_id',
         'title',
         'code',
         'duration_in_hours',
@@ -59,6 +61,11 @@ class CourseSyllabusModule extends Model
     public function semester(): BelongsTo
     {
         return $this->belongsTo(Semester::class, 'semester_id');
+    }
+
+    public function programmeSemester(): BelongsTo
+    {
+        return $this->belongsTo(ProgrammeSemester::class, 'programme_semester_id');
     }
 
     public function lecturers(): BelongsToMany

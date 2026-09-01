@@ -8,10 +8,12 @@ use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\ProgrammeSemester;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Students\StudentSemester;
+use App\Services\Institution\ProgrammeSemesterResolver;
 use Illuminate\Support\Collection;
 
 class StudentEnrolmentProgressionService
@@ -52,6 +54,7 @@ class StudentEnrolmentProgressionService
 
     public function __construct(
         protected StudentSemesterPhaseResolver $phaseResolver,
+        protected ProgrammeSemesterResolver $programmeSemesterResolver,
     ) {}
 
     /**
@@ -107,6 +110,16 @@ class StudentEnrolmentProgressionService
 
     public function isLastPhaseSemester(StudentEnrolment $enrolment, ?StudentSemester $studentSemester): bool
     {
+        $studentSemester ??= $this->currentStudentSemester($enrolment);
+
+        if ($studentSemester instanceof StudentSemester) {
+            $dlc = $this->programmeSemesterResolver->resolveDepartmentLevelCourse($enrolment);
+
+            if ($dlc !== null && $dlc->programmeSemesters->isNotEmpty()) {
+                return $this->programmeSemesterResolver->isLastProgrammeSemester($studentSemester);
+            }
+        }
+
         $enrolment->loadMissing(['studentApplication.departmentLevel.level', 'departmentLevel.level']);
 
         $calendarType = $enrolment->studentApplication?->departmentLevel?->level?->calendar_type
@@ -142,14 +155,30 @@ class StudentEnrolmentProgressionService
     public function canAdvanceToNextPhase(StudentEnrolment $enrolment): bool
     {
         $slug = $this->statusSlug($enrolment);
+        $current = $this->currentStudentSemester($enrolment);
+        $dlc = $this->programmeSemesterResolver->resolveDepartmentLevelCourse($enrolment);
+
+        $isLast = $dlc !== null && $dlc->programmeSemesters->isNotEmpty() && $current instanceof StudentSemester
+            ? $this->programmeSemesterResolver->isLastProgrammeSemester($current)
+            : $this->isLastPhase($enrolment);
 
         return ($slug === self::STATUS_ACTIVE || $slug === self::STATUS_PROCEED)
-            && ! $this->isLastPhase($enrolment);
+            && ! $isLast;
     }
 
     public function canCompleteLevel(StudentEnrolment $enrolment): bool
     {
         $slug = $this->statusSlug($enrolment);
+        $current = $this->currentStudentSemester($enrolment);
+
+        if ($current instanceof StudentSemester) {
+            $dlc = $this->programmeSemesterResolver->resolveDepartmentLevelCourse($enrolment);
+
+            if ($dlc !== null && $dlc->programmeSemesters->isNotEmpty()) {
+                return ($slug === self::STATUS_ACTIVE || $slug === self::STATUS_AWARD)
+                    && $this->programmeSemesterResolver->isCompletionProgrammeSemester($current);
+            }
+        }
 
         return ($slug === self::STATUS_ACTIVE || $slug === self::STATUS_AWARD)
             && $this->isLastPhase($enrolment);
@@ -165,6 +194,12 @@ class StudentEnrolmentProgressionService
         }
 
         $slug = $this->statusSlugForSemester($studentSemester);
+        $dlc = $this->programmeSemesterResolver->resolveDepartmentLevelCourse($enrolment);
+
+        if ($dlc !== null && $dlc->programmeSemesters->isNotEmpty()) {
+            return ($slug === self::STATUS_ACTIVE || $slug === self::STATUS_AWARD)
+                && $this->programmeSemesterResolver->isCompletionProgrammeSemester($studentSemester);
+        }
 
         return ($slug === self::STATUS_ACTIVE || $slug === self::STATUS_AWARD)
             && $this->isLastPhaseSemester($enrolment, $studentSemester);
@@ -233,19 +268,34 @@ class StudentEnrolmentProgressionService
         $studentSemester ??= $this->currentStudentSemester($enrolment);
 
         $calendarYear = $enrolment->academicCalendar?->calendar_year;
-        $semesterId = $studentSemester?->semester_id ?? $enrolment->semester_id;
+        $programmeSemesterId = $studentSemester?->programme_semester_id;
 
-        return ClassConfig::query()
+        if ($programmeSemesterId === null && $studentSemester instanceof StudentSemester) {
+            $programmeSemester = $this->programmeSemesterResolver->programmeSemesterForStudentSemester($studentSemester);
+            $programmeSemesterId = $programmeSemester?->id;
+        }
+
+        $query = ClassConfig::query()
             ->where('institution_department_id', $enrolment->institution_department_id)
             ->where('department_course_id', $enrolment->department_course_id)
             ->where('department_level_id', $enrolment->department_level_id)
             ->where('mode_of_study_id', $enrolment->mode_of_study_id)
-            ->where('semester_id', $semesterId)
             ->when(
                 is_string($calendarYear) && $calendarYear !== '',
-                fn ($query) => $query->where('calendar_year', $calendarYear),
-            )
-            ->first();
+                fn ($q) => $q->where('calendar_year', $calendarYear),
+            );
+
+        if ($programmeSemesterId !== null) {
+            return $query
+                ->where('programme_semester_id', $programmeSemesterId)
+                ->where('slug', 'standard')
+                ->first()
+                ?? $query->where('programme_semester_id', $programmeSemesterId)->first();
+        }
+
+        $semesterId = $studentSemester?->semester_id ?? $enrolment->semester_id;
+
+        return $query->where('semester_id', $semesterId)->first();
     }
 
     /**
@@ -346,6 +396,20 @@ class StudentEnrolmentProgressionService
 
     public function nextPhaseSemester(StudentEnrolment $enrolment): ?Semester
     {
+        $current = $this->currentStudentSemester($enrolment);
+
+        if ($current instanceof StudentSemester) {
+            $nextProgrammeSemester = $this->nextProgrammeSemester($current);
+
+            if ($nextProgrammeSemester instanceof ProgrammeSemester) {
+                $dlc = $this->programmeSemesterResolver->resolveDepartmentLevelCourse($enrolment);
+
+                if ($dlc !== null) {
+                    return $this->programmeSemesterResolver->globalSemesterForProgrammeSemester($dlc, $nextProgrammeSemester);
+                }
+            }
+        }
+
         $enrolment->loadMissing(['departmentLevel.level', 'studentApplication.departmentLevel.level']);
 
         $calendarType = $enrolment->studentApplication?->departmentLevel?->level?->calendar_type
@@ -355,7 +419,6 @@ class StudentEnrolmentProgressionService
             return null;
         }
 
-        $current = $this->currentStudentSemester($enrolment);
         $options = $this->phaseOptions($calendarType)->values();
         $currentIndex = null;
 
@@ -372,5 +435,14 @@ class StudentEnrolmentProgressionService
         }
 
         return $options->get($currentIndex + 1);
+    }
+
+    public function nextProgrammeSemester(?StudentSemester $current): ?ProgrammeSemester
+    {
+        if (! $current instanceof StudentSemester) {
+            return null;
+        }
+
+        return $this->programmeSemesterResolver->nextProgrammeSemester($current);
     }
 }

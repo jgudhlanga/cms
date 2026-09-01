@@ -29,12 +29,15 @@ const { department } = props;
 const institutionDepartmentId = String(department.id);
 
 const departmentTitle = () => {
-   let title = department.attributes.department;
-   if (department.attributes.departmentCode != '') {
-        title += ' ( ' + department.attributes.departmentCode + ' )'
-   }
-   return title;
-}
+    let title = department.attributes.department;
+    const code = department.attributes.departmentCode?.trim();
+
+    if (code) {
+        title += ` (${code})`;
+    }
+
+    return title;
+};
 
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
@@ -113,6 +116,7 @@ const activeTabDescription = computed(() => activeSection.value?.transDescriptio
                 :department="department"
                 :form="switchDepartmentForm"
                 v-model="selectedDepartment"
+                :is-academic="Number(department.attributes?.isAcademic) === 1"
             />
         </template>
 

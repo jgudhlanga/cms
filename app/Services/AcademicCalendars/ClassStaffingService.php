@@ -12,6 +12,7 @@ use App\Models\AcademicCalendars\ClassMetaDataType;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Staff;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
+use App\Models\Students\StudentModuleExemption;
 use App\Support\Institution\CourseSyllabusModulePeriod;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -21,48 +22,74 @@ class ClassStaffingService
     public function resolveSemesterClassConfig(
         ClassConfig $allocationConfig,
         ?int $semesterId,
+        ?int $programmeSemesterId = null,
     ): ?ClassConfig {
-        if ($semesterId === null || $semesterId < 1) {
+        if (($semesterId === null || $semesterId < 1) && ($programmeSemesterId === null || $programmeSemesterId < 1)) {
             return null;
         }
 
-        return ClassConfig::query()
+        $query = ClassConfig::query()
             ->where('calendar_year', $allocationConfig->calendar_year)
             ->where('institution_department_id', $allocationConfig->institution_department_id)
             ->where('department_course_id', $allocationConfig->department_course_id)
             ->where('department_level_id', $allocationConfig->department_level_id)
-            ->where('mode_of_study_id', $allocationConfig->mode_of_study_id)
-            ->where('semester_id', $semesterId)
-            ->first();
+            ->where('mode_of_study_id', $allocationConfig->mode_of_study_id);
+
+        if ($programmeSemesterId !== null && $programmeSemesterId > 0) {
+            return $query->where('programme_semester_id', $programmeSemesterId)->first();
+        }
+
+        return $query->where('semester_id', $semesterId)->first();
     }
 
     /**
      * @return Collection<int, CourseSyllabusModule>
      */
-    public function resolveSemesterModules(ClassConfig $semesterConfig): Collection
+    public function resolveSemesterModules(ClassConfig $semesterConfig, ?int $studentApplicationId = null): Collection
     {
         $syllabusIds = array_values(array_map(
             'intval',
             array_filter($semesterConfig->course_syllabus_ids ?? []),
         ));
 
-        if ($syllabusIds === [] || $semesterConfig->semester_id === null) {
+        if ($syllabusIds === [] || ($semesterConfig->semester_id === null && $semesterConfig->programme_semester_id === null)) {
             return collect();
         }
 
         $slugPrefix = CourseSyllabusModulePeriod::slugPrefixForSyllabus($syllabusIds[0]);
+        $programmeSemesterId = $semesterConfig->programme_semester_id !== null
+            ? (int) $semesterConfig->programme_semester_id
+            : null;
 
-        return CourseSyllabusModule::query()
+        $modules = CourseSyllabusModule::query()
             ->whereIn('course_syllabus_id', $syllabusIds)
-            ->where(function ($query) use ($semesterConfig, $slugPrefix): void {
+            ->where(function ($query) use ($semesterConfig, $slugPrefix, $programmeSemesterId): void {
                 CourseSyllabusModulePeriod::scopeForPeriod(
                     $query,
-                    (int) $semesterConfig->semester_id,
+                    (int) ($semesterConfig->semester_id ?? 0),
                     $slugPrefix,
+                    $programmeSemesterId,
                 );
             })
             ->orderBy('code')
             ->get();
+
+        if ($studentApplicationId === null) {
+            return $modules;
+        }
+
+        $exemptModuleIds = StudentModuleExemption::query()
+            ->where('student_application_id', $studentApplicationId)
+            ->whereNull('deleted_at')
+            ->pluck('course_syllabus_module_id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        if ($exemptModuleIds === []) {
+            return $modules;
+        }
+
+        return $modules->reject(fn (CourseSyllabusModule $module): bool => in_array((int) $module->id, $exemptModuleIds, true));
     }
 
     /**

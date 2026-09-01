@@ -80,6 +80,38 @@ class PaymentHelper
             ->first();
     }
 
+    public static function getPaidOrLatestLedgerRecordForLedgerable(
+        Model $ledgerable,
+        string $slug,
+        ?string $recordType = null,
+        ?IntakePeriod $intakePeriod = null,
+    ): ?Ledger {
+        $feeType = self::getFeeTypeBySlug($slug);
+        if (! $feeType) {
+            return null;
+        }
+
+        $constrain = function ($query) use ($feeType, $recordType, $intakePeriod) {
+            $query->where('fee_type_id', $feeType->id)
+                ->when($recordType, fn ($q) => $q->where('type', $recordType))
+                ->when(
+                    $intakePeriod !== null,
+                    fn ($q) => $q->where('intake_period_id', $intakePeriod->id),
+                );
+        };
+
+        $paid = $ledgerable->ledgerTransactions()
+            ->tap($constrain)
+            ->where('payment_status', 'paid')
+            ->latest()
+            ->first();
+
+        return $paid ?? $ledgerable->ledgerTransactions()
+            ->tap($constrain)
+            ->latest()
+            ->first();
+    }
+
     /**
      * @return array{invoice: ?Ledger, receipt: ?Ledger}
      */
@@ -264,15 +296,16 @@ class PaymentHelper
     public static function hasPaidApplicationFeeAndNotApplied(?User $user = null, ?IntakePeriod $intakePeriod = null): bool
     {
         $user = self::resolveUser($user);
-        $intakePeriod = self::resolveIntakePeriod($intakePeriod);
+        $applicationFeeService = app(ApplicationFeeService::class);
 
-        $applicationFee = app(ApplicationFeeService::class)->forUserAndIntake($user, $intakePeriod);
-
-        if ($applicationFee === null) {
-            return false;
+        if ($applicationFeeService->paidUnusedFee($user) !== null) {
+            return true;
         }
 
-        if ($applicationFee->student_application_id !== null) {
+        $intakePeriod = self::resolveIntakePeriod($intakePeriod);
+        $applicationFee = $applicationFeeService->forUserAndIntake($user, $intakePeriod);
+
+        if ($applicationFee === null || $applicationFee->student_application_id !== null) {
             return false;
         }
 

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Institution\Staff;
 
-
 use App\DTO\Institution\CreateStaffDto;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\StaffRequest;
@@ -11,19 +10,21 @@ use App\Http\Resources\Institution\StaffResource;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Staff;
 use App\Repositories\Institution\interface\IStaffRepository;
+use App\Support\Institution\DepartmentStaffRoles;
 use Inertia\Inertia;
 
 class StaffController extends Controller
 {
-    public function __construct(protected IStaffRepository $repository)
-    {
-    }
+    public function __construct(protected IStaffRepository $repository) {}
 
     public function create(InstitutionDepartment $department)
     {
         $this->authorize('createDepartmentMetaData');
-        $department = InstitutionDepartmentResource::make($department);
-        return Inertia::render('institution/staff/Create', compact('department'));
+
+        return Inertia::render('institution/staff/Create', [
+            'department' => InstitutionDepartmentResource::make($department),
+            'allowedRoleSlugs' => array_values(DepartmentStaffRoles::allowedSlugsFor($department)),
+        ]);
     }
 
     public function show(InstitutionDepartment $department, Staff $staff)
@@ -31,15 +32,19 @@ class StaffController extends Controller
         $this->authorize('viewDepartmentMetaData');
         $department = InstitutionDepartmentResource::make($department);
         $staff = StaffResource::make($staff);
+
         return Inertia::render('institution/staff/Show', compact('department', 'staff'));
     }
 
     public function edit(InstitutionDepartment $department, Staff $staff)
     {
         $this->authorize('viewDepartmentMetaData');
-        $department = InstitutionDepartmentResource::make($department);
-        $staff = StaffResource::make($staff);
-        return Inertia::render('institution/staff/Edit', compact('department', 'staff'));
+
+        return Inertia::render('institution/staff/Edit', [
+            'department' => InstitutionDepartmentResource::make($department),
+            'staff' => StaffResource::make($staff),
+            'allowedRoleSlugs' => array_values(DepartmentStaffRoles::allowedSlugsFor($department)),
+        ]);
     }
 
     /**
@@ -51,6 +56,7 @@ class StaffController extends Controller
         $staff = $this->repository->create(
             CreateStaffDto::fromStaffRequest($request)
         );
+
         return to_route('staff.show', ['department' => $department->id, 'staff' => $staff->id]);
     }
 
@@ -64,6 +70,7 @@ class StaffController extends Controller
             $staff,
             CreateStaffDto::fromStaffRequest($request)
         );
+
         return to_route('staff.show', ['department' => $department->id, 'staff' => $staff->id]);
     }
 

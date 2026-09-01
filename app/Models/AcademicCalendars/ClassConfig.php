@@ -2,10 +2,12 @@
 
 namespace App\Models\AcademicCalendars;
 
+use App\Enums\AcademicCalendars\ClassConfigKindEnum;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\ModeOfStudy;
+use App\Models\Institution\ProgrammeSemester;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Relations\BelongsToArrayIds;
 use App\Traits\Paginatable;
@@ -23,12 +25,15 @@ class ClassConfig extends Model
 {
     use LogsActivity, Paginatable, SoftDeletes;
 
-    protected $fillable = ['calendar_year', 'semester_id',
+    protected $fillable = ['calendar_year', 'semester_id', 'programme_semester_id',
+        'name', 'kind', 'slug',
         'institution_department_id', 'department_course_id',
         'department_level_id', 'mode_of_study_id',
         'students_per_class', 'status', 'course_syllabus_ids'];
+
     protected $casts = [
         'course_syllabus_ids' => 'array',
+        'kind' => ClassConfigKindEnum::class,
     ];
 
     public function syllabus(): BelongsToArrayIds
@@ -63,7 +68,12 @@ class ClassConfig extends Model
     public function semester(): BelongsTo
     {
         return $this->belongsTo(Semester::class);
-    } 
+    }
+
+    public function programmeSemester(): BelongsTo
+    {
+        return $this->belongsTo(ProgrammeSemester::class, 'programme_semester_id');
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

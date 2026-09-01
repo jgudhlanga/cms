@@ -55,7 +55,7 @@ class ImpersonationLandingResolver
                 return route('portal.application.create');
             }
 
-            if ($applicationFee->isPaid()) {
+            if ($applicationFee->isPaid() || $applicationFee->hasPaidReceipt()) {
                 return route('portal.application.create');
             }
 

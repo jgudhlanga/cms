@@ -15,6 +15,7 @@ import type { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import BaseButton from '../../../../components/core/button/BaseButton.vue';
+import ProgrammeStructureCard from './partials/ProgrammeStructureCard.vue';
 
 interface Props {
     institutionDepartment: InstitutionDepartment;
@@ -114,6 +115,13 @@ const updateCourse = () => {
                         <Empty v-else />
                     </div>
                 </BaseCard>
+                <div class="col-span-2 grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <ProgrammeStructureCard
+                        v-for="levelCourse in departmentCourse?.relationships?.departmentCourseLevels ?? []"
+                        :key="`programme_structure_${levelCourse.id}`"
+                        :level-course="levelCourse"
+                    />
+                </div>
             </div>
             <div class="flex items-center justify-center space-x-3 p-6">
                 <BaseButton

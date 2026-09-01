@@ -24,7 +24,22 @@ class AcademicCalendarStudentEnrolment extends Model
 
     protected $table = 'academic_calendar_student_enrolments';
 
-    protected $fillable = ['tenant_id', 'student_enrolment_id', 'student_semesters_id', 'academic_calendar_class_id'];
+    protected $fillable = [
+        'tenant_id',
+        'student_enrolment_id',
+        'student_semesters_id',
+        'academic_calendar_class_id',
+        'is_live',
+        'concluded_at',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_live' => 'boolean',
+            'concluded_at' => 'datetime',
+        ];
+    }
 
     public function academicCalendarClass(): BelongsTo
     {
@@ -43,7 +58,7 @@ class AcademicCalendarStudentEnrolment extends Model
 
     public function getActivitylogOptions(): LogOptions
     {
-        return LogOptions::defaults() 
+        return LogOptions::defaults()
             ->logFillable()
             ->useLogName('AcademicCalendarStudentEnrolment')
             ->logOnlyDirty()

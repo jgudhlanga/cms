@@ -108,7 +108,11 @@ class AuthenticatedSessionController extends Controller
                         $intakePeriod = $intakePeriodId !== null
                             ? IntakePeriod::query()->findOrFail($intakePeriodId)
                             : $eligibility->resolveIntakeForTrack($track, null);
-                        $applicationFeeService->ensureForFeeRequiredLevel($user, $level, $intakePeriod);
+                        $applicationFee = $applicationFeeService->ensureForFeeRequiredLevel($user, $level, $intakePeriod);
+
+                        if ($applicationFee->isPaid() || $applicationFee->hasPaidReceipt()) {
+                            return to_route('portal.application.create');
+                        }
 
                         return to_route('portal.application.fee-payment');
                     }
@@ -146,7 +150,7 @@ class AuthenticatedSessionController extends Controller
                     return to_route('portal.application.create');
                 }
 
-                if ($applicationFee->isPaid()) {
+                if ($applicationFee->isPaid() || $applicationFee->hasPaidReceipt()) {
                     return to_route('portal.application.create');
                 }
 

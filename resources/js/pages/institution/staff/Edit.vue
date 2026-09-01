@@ -14,6 +14,7 @@ interface Props {
     auth: AuthObject;
     errors: object;
     staff: Staff;
+    allowedRoleSlugs: string[];
 }
 
 const props = defineProps<Props>();
@@ -37,6 +38,6 @@ onBeforeUnmount(() => {
 <template>
     <Head :title="$t('trans.edit_staff')" />
     <PageContainer :breadcrumbs="breadcrumbs">
-        <StaffForm :department="department" :staff="staff" />
+        <StaffForm :department="department" :staff="staff" :allowed-role-slugs="allowedRoleSlugs" />
     </PageContainer>
 </template>

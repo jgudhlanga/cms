@@ -4,6 +4,8 @@ namespace App\Http\Controllers\AcademicCalendars;
 
 use App\Actions\Students\AdvanceToNextSemesterAction;
 use App\Actions\Students\CompleteLevelEnrolmentAction;
+use App\Actions\Students\ContinueAndReseatStudentsAction;
+use App\Actions\Students\CorrectProgrammeSemesterInclusionAction;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Shared\GenderEnum;
 use App\Exceptions\Students\StudentEnrolmentProgressionException;
@@ -14,7 +16,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AcademicCalendars\AcademicCalendarRequest;
 use App\Http\Requests\AcademicCalendars\BulkAcademicCalendarClassStudentsRequest;
 use App\Http\Requests\AcademicCalendars\ClassConfigRequest;
-use App\Http\Requests\AcademicCalendars\CourseWorkImportPreviewRequest;
+use App\Http\Requests\AcademicCalendars\CorrectProgrammeSemesterInclusionRequest;
 use App\Http\Requests\AcademicCalendars\CourseWorkImportProcessRequest;
 use App\Http\Requests\AcademicCalendars\MoveAcademicCalendarClassStudentsRequest;
 use App\Http\Requests\AcademicCalendars\StoreAcademicCalendarClassesRequest;
@@ -54,6 +56,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -71,6 +74,8 @@ class AcademicCalendarController extends Controller
         private readonly AssessmentCalendarWindowService $assessmentCalendarWindowService,
         private readonly StudentEnrolmentProgressionService $enrolmentProgression,
         private readonly AdvanceToNextSemesterAction $advanceToNextSemester,
+        private readonly ContinueAndReseatStudentsAction $continueAndReseatStudents,
+        private readonly CorrectProgrammeSemesterInclusionAction $correctProgrammeSemesterInclusion,
         private readonly CompleteLevelEnrolmentAction $completeLevelEnrolment,
     ) {}
 
@@ -714,22 +719,68 @@ class AcademicCalendarController extends Controller
             array_map('intval', $request->validated('student_enrolment_ids')),
         );
 
-        $advanced = 0;
+        $result = $this->continueAndReseatStudents->execute(
+            $enrolments,
+            $academicCalendarClass,
+            auth()->id(),
+        );
 
-        foreach ($enrolments as $enrolment) {
-            try {
-                $this->advanceToNextSemester->execute($enrolment);
-                $advanced++;
-            } catch (StudentEnrolmentProgressionException) {
-                continue;
-            }
-        }
+        $advanced = $result['advanced'];
 
         if ($advanced < 1) {
             return back()->withErrors(['student_enrolment_ids' => __('academic_calendar.advance_phase_none')]);
         }
 
         return back()->with('success', __('academic_calendar.advance_phase_success', ['count' => $advanced]));
+    }
+
+    public function correctDepartmentAcademicCalendarClassInclusion(
+        InstitutionDepartment $institutionDepartment,
+        string $calendar_year,
+        AcademicCalendarClass $academicCalendarClass,
+        CorrectProgrammeSemesterInclusionRequest $request,
+    ): RedirectResponse {
+        $this->authorize('update:academic-calendar-student-enrolments');
+
+        $enrolments = $this->enrolmentsOnClass(
+            $academicCalendarClass,
+            array_map('intval', $request->validated('student_enrolment_ids')),
+        );
+
+        $result = $this->correctProgrammeSemesterInclusion->execute(
+            $enrolments,
+            (int) $request->validated('programme_semester_id'),
+            auth()->id(),
+        );
+
+        if ($result['corrected'] < 1) {
+            return back()->withErrors(['student_enrolment_ids' => __('academic_calendar.correct_inclusion_none')]);
+        }
+
+        return back()->with('success', __('academic_calendar.correct_inclusion_success', ['count' => $result['corrected']]));
+    }
+
+    public function undoDepartmentAcademicCalendarClassProgression(
+        InstitutionDepartment $institutionDepartment,
+        string $calendar_year,
+        AcademicCalendarClass $academicCalendarClass,
+        Request $request,
+    ): RedirectResponse {
+        $this->authorize('update:academic-calendar-student-enrolments');
+
+        $runId = (int) $request->input('programme_semester_progression_run_id');
+
+        if ($runId < 1) {
+            return back()->withErrors(['programme_semester_progression_run_id' => __('academic_calendar.undo_progression_invalid')]);
+        }
+
+        $exitCode = Artisan::call('programme:undo-progression', ['run' => $runId]);
+
+        if ($exitCode !== 0) {
+            return back()->withErrors(['programme_semester_progression_run_id' => __('academic_calendar.undo_progression_failed')]);
+        }
+
+        return back()->with('success', __('academic_calendar.undo_progression_success'));
     }
 
     public function completeDepartmentAcademicCalendarClassStudents(

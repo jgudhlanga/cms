@@ -54,6 +54,18 @@ class RedirectStudentMiddleware
             return $next($request);
         }
 
+        if ($this->applicationFeeService->paidUnusedFee($user) !== null) {
+            if (! $request->routeIs(
+                'portal.application.create',
+                'portal.application.confirm',
+                'portal.store-application',
+            )) {
+                return to_route('portal.application.create');
+            }
+
+            return $next($request);
+        }
+
         if ($this->trackSession->get() === null) {
             if (! $request->routeIs('portal.application.track', 'portal.application.select-track')) {
                 return to_route('portal.application.track');

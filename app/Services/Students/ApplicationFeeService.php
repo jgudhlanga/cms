@@ -91,38 +91,35 @@ class ApplicationFeeService
             ->first();
     }
 
+    public function paidUnusedFee(User $user): ?ApplicationFee
+    {
+        $fees = $this->unusedNonCancelledFees($user);
+
+        return $fees->first(
+            fn (ApplicationFee $applicationFee): bool => $applicationFee->isPaid() || $applicationFee->hasPaidReceipt()
+        );
+    }
+
     public function activeApplicationFee(User $user): ?ApplicationFee
     {
-        return ApplicationFee::query()
-            ->where('user_id', $user->id)
-            ->whereNull('student_application_id')
-            ->whereNot('status', ApplicationFeeStatusEnum::CANCELLED)
-            ->latest('id')
-            ->first();
+        return $this->paidUnusedFee($user)
+            ?? $this->unusedNonCancelledFees($user)->first();
     }
 
     public function abandonUnpaidApplicationFee(User $user): void
     {
-        $applicationFee = $this->activeApplicationFee($user);
-
-        if ($applicationFee === null || ! $applicationFee->isAwaitingPayment()) {
-            return;
-        }
-
-        $applicationFee->update([
-            'status' => ApplicationFeeStatusEnum::CANCELLED,
-        ]);
+        ApplicationFee::query()
+            ->where('user_id', $user->id)
+            ->whereNull('student_application_id')
+            ->where('status', ApplicationFeeStatusEnum::AWAITING_PAYMENT)
+            ->update([
+                'status' => ApplicationFeeStatusEnum::CANCELLED,
+            ]);
     }
 
     public function paidAwaitingApplication(User $user): ?ApplicationFee
     {
-        $applicationFee = $this->activeApplicationFee($user);
-
-        if ($applicationFee === null || ! $applicationFee->isPaid()) {
-            return null;
-        }
-
-        return $applicationFee;
+        return $this->paidUnusedFee($user);
     }
 
     public function resolveIntakeForSubmit(User $user, ?int $requestIntakePeriodId = null): IntakePeriod
@@ -175,36 +172,22 @@ class ApplicationFeeService
         }
 
         $intakePeriod ??= $this->resolvePortalIntakePeriod();
+        $attributes = $this->feeIdentityAttributes($user, $level);
+
+        $paidUnused = $this->paidUnusedFee($user);
+
+        if ($paidUnused !== null) {
+            $this->abandonUnpaidApplicationFee($user);
+            $paidUnused->fill($attributes);
+            $paidUnused->save();
+
+            return $paidUnused->fresh();
+        }
 
         $applicationFee = ApplicationFee::query()->firstOrNew([
             'user_id' => $user->id,
             'intake_period_id' => $intakePeriod->id,
         ]);
-
-        $attributes = [
-            'tenant_id' => $user->tenant_id,
-            'level_id' => $level->id,
-        ];
-
-        $student = $user->studentProfile;
-
-        if (session()->has('registration.id_type_id')) {
-            $attributes['id_type_id'] = session('registration.id_type_id');
-        } elseif ($student?->id_type_id !== null) {
-            $attributes['id_type_id'] = $student->id_type_id;
-        }
-
-        if (session('registration.id_number')) {
-            $attributes['id_number'] = session('registration.id_number');
-        } elseif ($student?->id_number !== null) {
-            $attributes['id_number'] = $student->id_number;
-        }
-
-        if (session('registration.passport_number')) {
-            $attributes['passport_number'] = session('registration.passport_number');
-        } elseif ($student?->passport_number !== null) {
-            $attributes['passport_number'] = $student->passport_number;
-        }
 
         if (
             ! $applicationFee->exists
@@ -233,7 +216,7 @@ class ApplicationFeeService
     {
         $applicationFee = $this->activeApplicationFee($user);
 
-        if ($applicationFee === null || $applicationFee->isPaid()) {
+        if ($applicationFee === null || $applicationFee->isPaid() || $applicationFee->hasPaidReceipt()) {
             return null;
         }
 
@@ -260,5 +243,51 @@ class ApplicationFeeService
         }
 
         return $intakePeriod;
+    }
+
+    /**
+     * @return Collection<int, ApplicationFee>
+     */
+    private function unusedNonCancelledFees(User $user): Collection
+    {
+        return ApplicationFee::query()
+            ->where('user_id', $user->id)
+            ->whereNull('student_application_id')
+            ->whereNot('status', ApplicationFeeStatusEnum::CANCELLED)
+            ->latest('id')
+            ->get();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function feeIdentityAttributes(User $user, Level $level): array
+    {
+        $attributes = [
+            'tenant_id' => $user->tenant_id,
+            'level_id' => $level->id,
+        ];
+
+        $student = $user->studentProfile;
+
+        if (session()->has('registration.id_type_id')) {
+            $attributes['id_type_id'] = session('registration.id_type_id');
+        } elseif ($student?->id_type_id !== null) {
+            $attributes['id_type_id'] = $student->id_type_id;
+        }
+
+        if (session('registration.id_number')) {
+            $attributes['id_number'] = session('registration.id_number');
+        } elseif ($student?->id_number !== null) {
+            $attributes['id_number'] = $student->id_number;
+        }
+
+        if (session('registration.passport_number')) {
+            $attributes['passport_number'] = session('registration.passport_number');
+        } elseif ($student?->passport_number !== null) {
+            $attributes['passport_number'] = $student->passport_number;
+        }
+
+        return $attributes;
     }
 }

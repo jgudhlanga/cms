@@ -208,6 +208,8 @@ return [
             'department-setup:levels',
             'department-setup:courses',
             'department-setup:class-sizes',
+            'manage:programme-structures',
+            'grant:module-exemptions',
             'viewOnlyOwnDepartment:departments',
             'viewAny:document-templates',
             'view:document-templates',

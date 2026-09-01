@@ -20,11 +20,12 @@ import { InstitutionDepartment } from '@/types/institution';
 import { CreateStaffParams, Staff } from '@/types/staff';
 import { useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 
 interface Props {
     department: InstitutionDepartment;
     staff?: Staff;
+    allowedRoleSlugs?: string[];
 }
 
 const props = defineProps<Props>();
@@ -110,7 +111,15 @@ onMounted(() => {
         store.setStaffFormData(staff);
     }
 });
-const onlyRoles = 'head-of-department,head-of-division,lecturer,lecturer-in-charge,senior-lecturer';
+const onlyRoles = computed(() =>
+    (props.allowedRoleSlugs ?? [
+        'head-of-department',
+        'head-of-division',
+        'lecturer',
+        'lecturer-in-charge',
+        'senior-lecturer',
+    ]).join(','),
+);
 </script>
 
 <template>
