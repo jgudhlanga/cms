@@ -27,7 +27,7 @@ class DepartmentLevelCourseResource extends JsonResource
             'level' => $this?->departmentLevel?->level?->name,
             'calendarType' => $calendarTypeValue,
             'course' => $this?->departmentCourse?->course?->name,
-            'durationYears' => $this->duration_years,
+            'durationYears' => (float) $this->duration_years,
             'taughtSemesterCount' => $this->taught_semester_count,
             'includesIndustrialAttachment' => (bool) $this->includes_industrial_attachment,
             'attachmentSemesterCount' => $this->attachment_semester_count,

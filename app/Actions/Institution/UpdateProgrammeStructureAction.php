@@ -15,7 +15,7 @@ class UpdateProgrammeStructureAction
 
     /**
      * @param  array{
-     *     duration_years: int,
+     *     duration_years: float|int|string,
      *     taught_semester_count: int,
      *     includes_industrial_attachment: bool,
      *     attachment_semester_count: int
@@ -25,7 +25,7 @@ class UpdateProgrammeStructureAction
     {
         return DB::transaction(function () use ($departmentLevelCourse, $data): DepartmentLevelCourse {
             $departmentLevelCourse->update([
-                'duration_years' => (int) $data['duration_years'],
+                'duration_years' => round((float) $data['duration_years'], 1),
                 'taught_semester_count' => (int) $data['taught_semester_count'],
                 'includes_industrial_attachment' => (bool) $data['includes_industrial_attachment'],
                 'attachment_semester_count' => (bool) $data['includes_industrial_attachment']

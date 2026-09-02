@@ -20,6 +20,7 @@ use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Students\StudentSemester;
 use App\Models\Tenants\Tenant;
+use App\Models\Users\User;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
 use App\Services\Institution\BackfillProgrammeSemestersService;
 use App\Services\Institution\RollbackProgrammeSemestersService;
@@ -155,6 +156,52 @@ it('creates department level courses with term calendar defaults and programme s
             'Year 1 Term 2',
             'Year 1 Term 3',
         ]);
+});
+
+it('persists a year-and-a-half programme with three taught semesters', function (): void {
+    $dlc = createProgrammeStructureDlc();
+    $user = User::factory()->create(['tenant_id' => Tenant::query()->firstOrFail()->id]);
+    $user->givePermissionTo('manage:programme-structures');
+
+    $this->actingAs($user)
+        ->from(route('institution-departments.show', $dlc->departmentLevel->institution_department_id))
+        ->post(route('department-level-courses.programme-structure.update', $dlc), [
+            'duration_years' => 1.5,
+            'taught_semester_count' => 3,
+            'includes_industrial_attachment' => false,
+            'attachment_semester_count' => 0,
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    $dlc->refresh()->load('programmeSemesters');
+
+    expect((float) $dlc->duration_years)->toBe(1.5)
+        ->and($dlc->taught_semester_count)->toBe(3)
+        ->and($dlc->programmeSemesters)->toHaveCount(3)
+        ->and($dlc->programmeSemesters->pluck('name')->all())->toBe([
+            'Year 1 Sem 1',
+            'Year 1 Sem 2',
+            'Year 2 Sem 1',
+        ]);
+});
+
+it('rejects programme duration below half a year', function (): void {
+    $dlc = createProgrammeStructureDlc();
+    $user = User::factory()->create(['tenant_id' => Tenant::query()->firstOrFail()->id]);
+    $user->givePermissionTo('manage:programme-structures');
+
+    $this->actingAs($user)
+        ->from(route('institution-departments.show', $dlc->departmentLevel->institution_department_id))
+        ->post(route('department-level-courses.programme-structure.update', $dlc), [
+            'duration_years' => 0.25,
+            'taught_semester_count' => 3,
+            'includes_industrial_attachment' => false,
+            'attachment_semester_count' => 0,
+        ])
+        ->assertSessionHasErrors('duration_years');
+
+    expect((int) $dlc->fresh()->taught_semester_count)->toBe(2);
 });
 
 it('appends industrial attachment programme semesters after taught phases', function (): void {
