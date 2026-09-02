@@ -34,4 +34,30 @@ class OLevelRequirementResolver
 
         return null;
     }
+
+    /**
+     * Class-list ranking: a saved course requirement row always wins, even when
+     * O-level is off on that row. Falls back to the department-level row.
+     */
+    public function resolveRanking(?int $departmentLevelId, ?int $departmentCourseId): ApplicationLevelRequirement|ApplicationCourseRequirement|null
+    {
+        if ($departmentLevelId && $departmentCourseId) {
+            $courseRequirement = ApplicationCourseRequirement::query()
+                ->where('department_level_id', $departmentLevelId)
+                ->where('department_course_id', $departmentCourseId)
+                ->first();
+
+            if ($courseRequirement !== null) {
+                return $courseRequirement;
+            }
+        }
+
+        if ($departmentLevelId) {
+            return ApplicationLevelRequirement::query()
+                ->where('department_level_id', $departmentLevelId)
+                ->first();
+        }
+
+        return null;
+    }
 }
