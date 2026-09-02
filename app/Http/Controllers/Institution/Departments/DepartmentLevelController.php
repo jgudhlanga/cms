@@ -7,17 +7,20 @@ use App\Helpers\WorkflowHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Institution\DepartmentLevelRequest;
 use App\Http\Resources\Enrolments\EnrolmentGroupResource;
+use App\Http\Resources\Institution\CourseRequirementResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Http\Resources\Institution\ModeOfStudyResource;
 use App\Http\Resources\Shared\WorkflowStepResource;
+use App\Models\Applications\ApplicationCourseRequirement;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Institution\interface\IDepartmentLevelRepository;
 use App\Services\DepartmentEnrolmentService;
 use App\Services\Institution\ProgrammeLinkUsageGuard;
+use App\Services\Students\OLevelRequirementResolver;
 use Illuminate\Auth\Access\AuthorizationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,6 +31,7 @@ class DepartmentLevelController extends Controller
         protected IDepartmentLevelRepository $repository,
         protected DepartmentEnrolmentService $departmentEnrolmentService,
         protected ProgrammeLinkUsageGuard $usageGuard,
+        protected OLevelRequirementResolver $requirementResolver,
     ) {}
 
     /**
@@ -83,7 +87,14 @@ class DepartmentLevelController extends Controller
             : null;
 
         $departmentLevel->loadMissing('requirement');
-        $includeOLevelResults = (bool) ($departmentLevel->requirement?->is_o_level_required);
+        $rankingRequirement = $this->requirementResolver->resolveRanking(
+            (int) $departmentLevel->id,
+            $courseId ? (int) $courseId : null,
+        );
+        $courseRequirement = $rankingRequirement instanceof ApplicationCourseRequirement
+            ? $rankingRequirement
+            : null;
+        $includeOLevelResults = (bool) ($rankingRequirement?->is_o_level_required);
 
         // ------------------------------------------------------------
         // 2. Query enrolments efficiently
@@ -114,6 +125,9 @@ class DepartmentLevelController extends Controller
             'modesOfStudy' => ModeOfStudyResource::collection($modesOfStudy),
             'intakePeriods' => IntakePeriodResource::collection($intakePeriods),
             'course' => $departmentCourse ? ['name' => $departmentCourse?->course?->name, 'department_course_id' => $courseId] : null,
+            'courseRequirement' => $courseRequirement
+                ? CourseRequirementResource::make($courseRequirement)
+                : null,
         ]);
     }
 }

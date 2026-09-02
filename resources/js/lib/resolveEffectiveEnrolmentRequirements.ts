@@ -1,4 +1,4 @@
-import type { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
+import type { CourseRequirement, DepartmentLevel, DepartmentLevelRequirement } from '@/types/department-meta-data';
 
 type EnrolmentRequirement = CourseRequirement | DepartmentLevelRequirement;
 
@@ -69,5 +69,43 @@ export function resolveEffectiveEnrolmentRequirements(
             onlyReadWriteRequired,
         },
         relationships: oLevelSource?.relationships ?? base.relationships,
+    };
+}
+
+/**
+ * Class-list ranking: a saved course requirement row always wins.
+ * Falls back to the department-level row when the course has none.
+ */
+export function resolveRankingRequirement(
+    courseReq: CourseRequirement | null | undefined,
+    levelReq: DepartmentLevelRequirement | null | undefined,
+): EnrolmentRequirement | null {
+    if (hasRequirementId(courseReq)) {
+        return courseReq!;
+    }
+
+    if (hasRequirementId(levelReq)) {
+        return levelReq!;
+    }
+
+    return null;
+}
+
+export function withRankingRequirement(
+    level: DepartmentLevel,
+    courseReq: CourseRequirement | null | undefined,
+): DepartmentLevel {
+    const effective = resolveRankingRequirement(courseReq, level.relationships?.requirement);
+
+    if (!effective) {
+        return level;
+    }
+
+    return {
+        ...level,
+        relationships: {
+            ...level.relationships,
+            requirement: effective as DepartmentLevelRequirement,
+        },
     };
 }

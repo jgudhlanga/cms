@@ -10,10 +10,11 @@ import {
     parseEnrolmentStatusFrom,
 } from '@/lib/enrolmentStatusOrigin';
 import { filterEnrolmentApplications, toTitleCase } from '@/lib/enrolmentClassListPresentation';
+import { withRankingRequirement } from '@/lib/resolveEffectiveEnrolmentRequirements';
 import ClassListTable from '@/pages/enrolments/partials/ClassListTable.vue';
 import GenderEnrolmentAccordionItem from '@/pages/institution/enrolments/partials/GenderEnrolmentAccordionItem.vue';
 import { AuthObject } from '@/types/data-pagination';
-import { DepartmentLevel } from '@/types/department-meta-data';
+import { DepartmentLevel, CourseRequirement } from '@/types/department-meta-data';
 import { ClassListType, EnrolmentGroup, EnrolmentGroupResponse } from '@/types/enrolments';
 import { InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
 import { Head } from '@inertiajs/vue3';
@@ -33,6 +34,7 @@ interface Props {
     modesOfStudy: ModeOfStudy[];
     enrolments: EnrolmentGroupResponse;
     classSize: string | number;
+    courseRequirement?: CourseRequirement | null;
 }
 
 const props = defineProps<Props>();
@@ -85,14 +87,15 @@ const breadcrumbs = computed(() => [
     { title: listTypeLabel.value },
 ]);
 
-const isOLevel = computed(() => isItTrue(level?.relationships?.requirement?.attributes?.isOLevelRequired));
+const rankingLevel = computed(() => withRankingRequirement(props.level, props.courseRequirement));
+const isOLevel = computed(() => isItTrue(rankingLevel.value?.relationships?.requirement?.attributes?.isOLevelRequired));
 const classListType = computed(() => (queryParams['type'] as ClassListType) || undefined);
 
 const groupApplications = (group: EnrolmentGroup) => {
     const applications = enrolments.groups?.[group] ?? [];
 
     if (isOLevel.value) {
-        return applyPolicyAlgorithmToApplications(applications, level);
+        return applyPolicyAlgorithmToApplications(applications, rankingLevel.value);
     }
 
     return applications;
@@ -196,7 +199,7 @@ watch(
                         :is-open="openGenderGroup === group"
                     >
                         <ClassListTable
-                            :level="level"
+                            :level="rankingLevel"
                             :is-o-level="isOLevel"
                             :class-list-type="classListType"
                             :department-id="String(department?.id)"

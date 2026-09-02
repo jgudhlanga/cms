@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { resolveEffectiveEnrolmentRequirements } from '@/lib/resolveEffectiveEnrolmentRequirements';
-import type { CourseRequirement, DepartmentLevelRequirement } from '@/types/department-meta-data';
+import {
+    resolveEffectiveEnrolmentRequirements,
+    resolveRankingRequirement,
+    withRankingRequirement,
+} from '@/lib/resolveEffectiveEnrolmentRequirements';
+import type { CourseRequirement, DepartmentLevel, DepartmentLevelRequirement } from '@/types/department-meta-data';
 
 const levelRequirement = (overrides: Partial<DepartmentLevelRequirement['attributes']> = {}): DepartmentLevelRequirement => ({
     type: 'department-level-requirement',
@@ -117,5 +121,83 @@ describe('resolveEffectiveEnrolmentRequirements', () => {
             resolveEffectiveEnrolmentRequirements(courseRequirement({ onlyReadWriteRequired: true }), levelRequirement())
                 ?.attributes.onlyReadWriteRequired,
         ).toBe(true);
+    });
+});
+
+describe('resolveRankingRequirement', () => {
+    it('prefers a saved course row over the level row', () => {
+        const course = courseRequirement({
+            isOLevelRequired: true,
+            mainSubjectsCount: 2,
+            otherSubjectsCount: 3,
+            mainSubjectIds: [200],
+        });
+        const level = levelRequirement({
+            isOLevelRequired: true,
+            mainSubjectsCount: 3,
+            otherSubjectsCount: 2,
+            mainSubjectIds: [100],
+        });
+
+        const ranked = resolveRankingRequirement(course, level);
+
+        expect(ranked?.id).toBe(20);
+        expect(ranked?.attributes.mainSubjectsCount).toBe(2);
+        expect(ranked?.attributes.otherSubjectsCount).toBe(3);
+        expect(ranked?.relationships?.subjects?.[0]?.id).toBe(200);
+    });
+
+    it('uses the course row even when that row does not require O-levels', () => {
+        const course = courseRequirement({ isOLevelRequired: false, mainSubjectsCount: 2 });
+        const level = levelRequirement({ isOLevelRequired: true, mainSubjectsCount: 3 });
+
+        expect(resolveRankingRequirement(course, level)?.attributes.mainSubjectsCount).toBe(2);
+        expect(resolveRankingRequirement(course, level)?.attributes.isOLevelRequired).toBe(false);
+    });
+
+    it('falls back to the level row when the course has no requirement', () => {
+        const level = levelRequirement({ mainSubjectsCount: 3 });
+
+        expect(resolveRankingRequirement(null, level)?.id).toBe(10);
+        expect(resolveRankingRequirement(null, level)?.attributes.mainSubjectsCount).toBe(3);
+    });
+});
+
+describe('withRankingRequirement', () => {
+    const departmentLevel = (requirement?: DepartmentLevelRequirement): DepartmentLevel => ({
+        id: 1,
+        attributes: {
+            institutionDepartmentId: 1,
+            levelId: 1,
+            level: 'NC',
+            levelPosition: 1,
+        },
+        relationships: requirement ? { requirement } : {},
+    });
+
+    it('replaces level subjects with the course override', () => {
+        const course = courseRequirement({
+            isOLevelRequired: true,
+            otherSubjectsCount: 3,
+        });
+        const cloned = withRankingRequirement(
+            departmentLevel(
+                levelRequirement({
+                    isOLevelRequired: true,
+                    otherSubjectsCount: 2,
+                }),
+            ),
+            course,
+        );
+
+        expect(cloned.relationships?.requirement?.id).toBe(20);
+        expect(cloned.relationships?.requirement?.attributes.otherSubjectsCount).toBe(3);
+        expect(cloned.relationships?.requirement?.relationships?.subjects?.[0]?.id).toBe(200);
+    });
+
+    it('keeps the level requirement when the course has none', () => {
+        const cloned = withRankingRequirement(departmentLevel(levelRequirement()), null);
+
+        expect(cloned.relationships?.requirement?.id).toBe(10);
     });
 });

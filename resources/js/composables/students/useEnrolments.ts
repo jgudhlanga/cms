@@ -94,6 +94,8 @@ export const useEnrolments = () => {
      * - Score required subjects + top-N other subjects (lower is better).
      * - Drop invalid applications (any required score ≥ 9 / missing grades).
      * - Sort by totalScore → examSittingsCount → mainSubjectsScore → applicationDate.
+     * - Callers must pass a level whose `relationships.requirement` is already
+     *   the course row when one exists (`withRankingRequirement`).
      *
      * Known gaps for a future backend sort:
      * - Non-O-level tables stay name-ordered from the API.

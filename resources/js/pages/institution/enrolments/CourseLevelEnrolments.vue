@@ -11,6 +11,7 @@ import {
     occupiesIntakeSeat,
 } from '@/lib/enrolmentClassListPresentation';
 import { hasAbility } from '@/lib/permissions';
+import { withRankingRequirement } from '@/lib/resolveEffectiveEnrolmentRequirements';
 import ClassListActionDialog from '@/pages/institution/enrolments/partials/ClassListActionDialog.vue';
 import type { ClassListActionPayload } from '@/pages/institution/enrolments/partials/ClassListActionDialog.vue';
 import ClassSize from '@/pages/institution/enrolments/partials/ClassSize.vue';
@@ -20,7 +21,7 @@ import GenderEnrolmentAccordionItem from '@/pages/institution/enrolments/partial
 import ScoringFormula from '@/pages/institution/enrolments/partials/ScoringFormula.vue';
 import { useEnrolmentClassListUiStore } from '@/store/enrolments/useEnrolmentClassListUiStore';
 import { AuthObject } from '@/types/data-pagination';
-import { DepartmentLevel } from '@/types/department-meta-data';
+import { DepartmentLevel, CourseRequirement } from '@/types/department-meta-data';
 import { EnrolmentApplication, EnrolmentGroup, EnrolmentGroupResponse } from '@/types/enrolments';
 import { InstitutionDepartment, IntakePeriod, ModeOfStudy } from '@/types/institution';
 import { WorkflowStep } from '@/types/settings';
@@ -42,6 +43,7 @@ interface Props {
     modesOfStudy?: ModeOfStudy[];
     enrolments: EnrolmentGroupResponse;
     classSize: string | number;
+    courseRequirement?: CourseRequirement | null;
 }
 
 const props = defineProps<Props>();
@@ -113,8 +115,9 @@ const breadcrumbs: Array<BreadcrumbLink> = [
     { transChoiceKey: 'application' },
 ];
 
-const levelRequirements = computed(() => level?.relationships?.requirement);
-const isOLevel = computed(() => isItTrue(levelRequirements.value?.attributes?.isOLevelRequired));
+const rankingLevel = computed(() => withRankingRequirement(props.level, props.courseRequirement));
+const rankingRequirements = computed(() => rankingLevel.value.relationships?.requirement);
+const isOLevel = computed(() => isItTrue(rankingRequirements.value?.attributes?.isOLevelRequired));
 
 const allApplications = computed((): EnrolmentApplication[] =>
     genderGroups.flatMap((group) => enrolments.value.groups?.[group] ?? []),
@@ -200,7 +203,7 @@ const deficit = computed(() => remainingSeats.value);
 const rankedGroupApplications = (group: EnrolmentGroup): EnrolmentApplication[] => {
     const apps = enrolments.value.groups?.[group] ?? [];
     if (isOLevel.value) {
-        return applyPolicyAlgorithmToApplications(apps, level);
+        return applyPolicyAlgorithmToApplications(apps, rankingLevel.value);
     }
 
     return [...apps].sort(
@@ -632,7 +635,7 @@ const onRowPurge = (application: EnrolmentApplication) => {
                 >
                     <EnrolmentApplicationsBrowser
                         :key="group"
-                        :level="level"
+                        :level="rankingLevel"
                         :department-id="String(department?.id)"
                         :applications="enrolments.groups?.[group] ?? []"
                         :class-size="intakeLimit"

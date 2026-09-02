@@ -20,12 +20,14 @@ use App\Http\Resources\Enrolments\ClassListNextTopResource;
 use App\Http\Resources\Enrolments\EnrolmentGroupResource;
 use App\Http\Resources\Enrolments\EnrolmentResource;
 use App\Http\Resources\Enrolments\OtherApplicationResource;
+use App\Http\Resources\Institution\CourseRequirementResource;
 use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Http\Resources\Institution\ModeOfStudyResource;
 use App\Jobs\Enrolments\SendEnrolmentProgressJob;
 use App\Jobs\Enrolments\SendOfferLetterJob;
+use App\Models\Applications\ApplicationCourseRequirement;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
@@ -37,6 +39,7 @@ use App\Models\Students\StudentApplication;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Services\DepartmentEnrolmentService;
 use App\Services\Enrolments\ClassListTransitionService;
+use App\Services\Students\OLevelRequirementResolver;
 use App\Services\Students\StudentIdNumberValidationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
@@ -55,6 +58,7 @@ class ClassListController extends Controller
         protected UpsertYearStudentEnrolmentAction $upsertYearStudentEnrolment,
         protected ClassListTransitionService $classListTransitionService,
         protected StudentIdNumberValidationService $studentIdNumberValidationService,
+        protected OLevelRequirementResolver $requirementResolver,
     ) {}
 
     public function store(ClassListRequest $request)
@@ -472,6 +476,14 @@ class ClassListController extends Controller
             ? DepartmentCourse::with(['course'])->find($courseId)
             : null;
 
+        $rankingRequirement = $this->requirementResolver->resolveRanking(
+            (int) $departmentLevel->id,
+            $courseId ? (int) $courseId : null,
+        );
+        $courseRequirement = $rankingRequirement instanceof ApplicationCourseRequirement
+            ? $rankingRequirement
+            : null;
+
         // ------------------------------------------------------------
         // 2. Query enrolments efficiently
         // ------------------------------------------------------------
@@ -498,6 +510,9 @@ class ClassListController extends Controller
             'modesOfStudy' => ModeOfStudyResource::collection($modesOfStudy),
             'intakePeriods' => IntakePeriodResource::collection($intakePeriods),
             'course' => $departmentCourse ? ['name' => $departmentCourse?->course?->name, 'department_course_id' => $courseId] : null,
+            'courseRequirement' => $courseRequirement
+                ? CourseRequirementResource::make($courseRequirement)
+                : null,
         ]);
     }
 

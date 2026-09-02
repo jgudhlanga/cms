@@ -110,3 +110,38 @@ test('o level requirement resolver returns null when neither requires o levels',
 
     expect($resolved)->toBeNull();
 });
+
+test('ranking resolver prefers a saved course requirement even when o level is off', function () {
+    [$tenant, $departmentLevel, $departmentCourse] = createRequirementResolverFixture();
+
+    saveLevelRequirement($tenant->id, $departmentLevel->id, true, 3);
+    $courseRequirement = saveCourseRequirement($tenant->id, $departmentLevel->id, $departmentCourse->id, false, 2);
+
+    $resolved = app(OLevelRequirementResolver::class)
+        ->resolveRanking($departmentLevel->id, $departmentCourse->id);
+
+    expect($resolved)->toBeInstanceOf(ApplicationCourseRequirement::class)
+        ->and($resolved->is($courseRequirement))->toBeTrue()
+        ->and((int) $resolved->main_subjects_count)->toBe(2);
+});
+
+test('ranking resolver falls back to the level requirement when the course has none', function () {
+    [$tenant, $departmentLevel, $departmentCourse] = createRequirementResolverFixture();
+
+    $levelRequirement = saveLevelRequirement($tenant->id, $departmentLevel->id, true, 3);
+
+    $resolved = app(OLevelRequirementResolver::class)
+        ->resolveRanking($departmentLevel->id, $departmentCourse->id);
+
+    expect($resolved)->toBeInstanceOf(ApplicationLevelRequirement::class)
+        ->and($resolved->is($levelRequirement))->toBeTrue();
+});
+
+test('ranking resolver returns null when neither requirement row exists', function () {
+    [$tenant, $departmentLevel, $departmentCourse] = createRequirementResolverFixture();
+
+    $resolved = app(OLevelRequirementResolver::class)
+        ->resolveRanking($departmentLevel->id, $departmentCourse->id);
+
+    expect($resolved)->toBeNull();
+});
