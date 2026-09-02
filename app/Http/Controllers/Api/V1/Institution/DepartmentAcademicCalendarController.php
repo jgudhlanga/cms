@@ -9,6 +9,7 @@ use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\AcademicCalendars\Semester;
+use App\Models\Applications\ApplicationOfferingMode;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
@@ -147,7 +148,8 @@ class DepartmentAcademicCalendarController extends Controller
             'filterSemesterId' => null,
             'periodsByType' => [],
             'currentSemesterIdByType' => [],
-            'requireIndustrialAttachment' => false,
+            'offeredCourseLevelKeys' => [],
+            'restrictToActiveOfferings' => false,
         ];
     }
 
@@ -189,19 +191,66 @@ class DepartmentAcademicCalendarController extends Controller
             'filterProgrammeSemesterId' => $context['programmeSemesterId'] ?? null,
             'periodsByType' => $periodLookups['periodsByType'],
             'currentSemesterIdByType' => $periodLookups['currentSemesterIdByType'],
-            'requireIndustrialAttachment' => $this->isOjetMode($modeOfStudyId),
+            'offeredCourseLevelKeys' => $this->offeredCourseLevelKeys($department, $modeOfStudyId),
+            'restrictToActiveOfferings' => $this->isOjetMode($modeOfStudyId),
         ];
     }
 
-    private function isOjetMode(?int $modeOfStudyId): bool
+    /**
+     * @return array<string, true>
+     */
+    private function offeredCourseLevelKeys(InstitutionDepartment $department, int $modeOfStudyId): array
     {
-        if ($modeOfStudyId === null) {
-            return false;
+        $rows = ApplicationOfferingMode::query()
+            ->where('mode_of_study_id', $modeOfStudyId)
+            ->whereHas('offeringCourse.offeringLevel.offeringDepartment', function ($query) use ($department): void {
+                $query->where('institution_department_id', $department->id);
+            })
+            ->with([
+                'offeringCourse:id,department_course_id,application_offering_level_id',
+                'offeringCourse.offeringLevel:id,department_level_id',
+            ])
+            ->get();
+
+        $keys = [];
+
+        foreach ($rows as $row) {
+            $courseId = (int) ($row->offeringCourse?->department_course_id ?? 0);
+            $levelId = (int) ($row->offeringCourse?->offeringLevel?->department_level_id ?? 0);
+
+            if ($courseId <= 0 || $levelId <= 0) {
+                continue;
+            }
+
+            $keys[$this->courseLevelPairLookupKey($courseId, $levelId)] = true;
         }
 
+        return $keys;
+    }
+
+    private function isOjetMode(int $modeOfStudyId): bool
+    {
         $name = ModeOfStudy::query()->whereKey($modeOfStudyId)->value('name');
 
         return is_string($name) && ModeOfStudyEnum::tryFromLabel($name) === ModeOfStudyEnum::OJET;
+    }
+
+    /**
+     * @param  list<array{id: int, students_per_class: int, semesterId: int|null, semester: string|null, courseSyllabusIds: list<int>, courseSyllabusCodes: list<string>}>  $configRows
+     * @param  array{offeredCourseLevelKeys?: array<string, true>, restrictToActiveOfferings?: bool, totalFinalList?: array<string, int>}  $lookups
+     */
+    private function shouldIncludeCourseLevel(string $pairKey, array $lookups, array $configRows): bool
+    {
+        if (! ($lookups['restrictToActiveOfferings'] ?? false)) {
+            return true;
+        }
+
+        $offeredKeys = $lookups['offeredCourseLevelKeys'] ?? [];
+        $hasStudents = (int) ($lookups['totalFinalList'][$pairKey] ?? 0) > 0;
+        $hasConfigs = $configRows !== [];
+        $isOffered = isset($offeredKeys[$pairKey]);
+
+        return $hasStudents || $hasConfigs || $isOffered;
     }
 
     private function courseLevelOptionLookupKey(int $departmentCourseId, int $departmentLevelId, ?int $semesterId): string
@@ -410,10 +459,6 @@ class DepartmentAcademicCalendarController extends Controller
             return collect();
         }
 
-        if (($lookups['requireIndustrialAttachment'] ?? false) && ! $levelCourse->includes_industrial_attachment) {
-            return collect();
-        }
-
         $calendarType = $level->calendar_type instanceof AcademicCalendarTypeEnum
             ? $level->calendar_type
             : AcademicCalendarTypeEnum::tryFrom((string) $level->calendar_type) ?? AcademicCalendarTypeEnum::SEMESTER;
@@ -423,6 +468,11 @@ class DepartmentAcademicCalendarController extends Controller
             (int) $levelCourse->department_level_id,
         );
         $allConfigRows = $lookups['configsByPair'][$pairKey] ?? [];
+
+        if (! $this->shouldIncludeCourseLevel($pairKey, $lookups, $allConfigRows)) {
+            return collect();
+        }
+
         $configuredSemesterIds = [];
 
         $configuredProgrammeSemesterIds = [];
