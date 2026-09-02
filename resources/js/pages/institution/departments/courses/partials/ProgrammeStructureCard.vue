@@ -103,25 +103,42 @@ const saveStructure = () => {
             </BaseButton>
         </div>
         <div v-if="canManage" class="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
-            <BaseInput v-model="form.duration_years" type="number" min="1" label="Duration (years)" :vertical-layout="false" />
+            <BaseInput
+                v-model="form.duration_years"
+                :input-id="`duration_years_${levelCourse.id}`"
+                type="number"
+                min="0.5"
+                step="0.5"
+                label="Duration (years)"
+                :vertical-layout="false"
+                :error="form.errors.duration_years"
+            />
             <div>
                 <BaseInput
                     v-model="form.taught_semester_count"
+                    :input-id="`taught_semester_count_${levelCourse.id}`"
                     type="number"
                     min="1"
                     :label="taughtLabel"
                     :vertical-layout="false"
+                    :error="form.errors.taught_semester_count"
                 />
                 <p class="text-muted-foreground mt-1 text-xs">{{ taughtHint }}</p>
             </div>
-            <BaseCheckbox v-model="form.includes_industrial_attachment" input-id="includes_attachment" label="Includes industrial attachment" />
+            <BaseCheckbox
+                v-model="form.includes_industrial_attachment"
+                :input-id="`includes_attachment_${levelCourse.id}`"
+                label="Includes industrial attachment"
+            />
             <BaseInput
                 v-if="form.includes_industrial_attachment"
                 v-model="form.attachment_semester_count"
+                :input-id="`attachment_semester_count_${levelCourse.id}`"
                 type="number"
                 min="1"
                 :label="attachmentLabel"
                 :vertical-layout="false"
+                :error="form.errors.attachment_semester_count"
             />
         </div>
         <div v-if="programmeSemesters.length" class="flex flex-wrap gap-1.5">

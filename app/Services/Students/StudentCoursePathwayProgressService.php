@@ -484,7 +484,7 @@ class StudentCoursePathwayProgressService
             ? max(0, (int) ($offering->attachment_semester_count ?? 0))
             : 0;
         $fromCounts = ($taught + $attachment) / $periodsPerYear;
-        $fromDuration = (float) max(0, (int) ($offering->duration_years ?? 0));
+        $fromDuration = (float) max(0, $offering->duration_years ?? 0);
 
         return max($fromDuration, $fromCounts);
     }

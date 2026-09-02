@@ -22,7 +22,7 @@ class UpdateProgrammeStructureRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'duration_years' => ['required', 'integer', 'min:1', 'max:10'],
+            'duration_years' => ['required', 'numeric', 'min:0.5', 'max:10'],
             'taught_semester_count' => ['required', 'integer', 'min:1', 'max:24'],
             'includes_industrial_attachment' => ['required', 'boolean'],
             'attachment_semester_count' => ['required', 'integer', 'min:0', 'max:12'],

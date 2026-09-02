@@ -23,7 +23,7 @@ class DepartmentLevelCourse extends Model
     protected function casts(): array
     {
         return [
-            'duration_years' => 'integer',
+            'duration_years' => 'decimal:1',
             'taught_semester_count' => 'integer',
             'includes_industrial_attachment' => 'boolean',
             'attachment_semester_count' => 'integer',

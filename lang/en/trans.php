@@ -1045,7 +1045,7 @@ return [
     'ui_attachment_semesters' => 'Attachment semesters',
     'ui_attachment_terms' => 'Attachment terms',
     'ui_attachment_abma_periods' => 'Attachment ABMA periods',
-    'ui_programme_structure_taught_hint_semester' => 'Semester levels have 2 taught periods per year (Sem 1–2).',
+    'ui_programme_structure_taught_hint_semester' => 'Semester levels use Sem 1–2 each year. A 1½-year course has 3 taught semesters.',
     'ui_programme_structure_taught_hint_term' => 'Term levels have 3 taught periods per year (Term 1–3).',
     'ui_programme_structure_taught_hint_abma' => 'ABMA years have 4 periods (ABMA 1–4).',
     'ui_expand_row' => 'Expand row',
