@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import BaseAccordion from '@/components/core/accordion/BaseAccordion.vue';
+import { BaseButton } from '@/components/core/button';
+import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import DepartmentModeTotalsStrip from '@/components/institution/DepartmentModeTotalsStrip.vue';
 import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
+import { ButtonSize } from '@/enums/buttons';
+import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { errorAlert } from '@/lib/alerts';
 import EnrolmentModeAccordionItem from '@/pages/institution/departments/partials/view/EnrolmentModeAccordionItem.vue';
@@ -55,6 +59,9 @@ const modeTotals = ref<Record<number, number>>({});
 const coursesByMode = ref<Record<string, DepartmentCourseClassCount[]>>({});
 const loadedModes = ref<Record<string, boolean>>({});
 const loadingModes = ref<Record<string, boolean>>({});
+const failedModes = ref<Record<string, boolean>>({});
+const retriedEmptyMismatch = ref<Record<string, boolean>>({});
+const panelRequestSeq = ref<Record<string, number>>({});
 const resolvedCalendarIdByMode = ref<Record<string, number | null>>({});
 const loadingMeta = ref(false);
 const isReady = ref(false);
@@ -127,10 +134,27 @@ const isModeLoaded = (modeId: string): boolean => {
 
 const isModeLoading = (modeId: string): boolean => Boolean(loadingModes.value[cacheKeyFor(modeId)]);
 
-const shouldShowPanelSpinner = (modeId: string): boolean =>
-    normalizeModeId(openModeId.value) === modeId && (isModeLoading(modeId) || !isModeLoaded(modeId));
+const isModeFailed = (modeId: string): boolean => Boolean(failedModes.value[cacheKeyFor(modeId)]);
 
 const coursesForMode = (modeId: string): DepartmentCourseClassCount[] => coursesByMode.value[modeId] ?? [];
+
+const hasEmptyCountMismatch = (modeId: string): boolean =>
+    coursesForMode(modeId).length === 0 && (modeTotals.value[Number(modeId)] ?? 0) > 0;
+
+const shouldShowPanelSpinner = (modeId: string): boolean =>
+    normalizeModeId(openModeId.value) === modeId &&
+    (isModeLoading(modeId) || (!isModeLoaded(modeId) && !isModeFailed(modeId)));
+
+const shouldShowEmptyState = (modeId: string): boolean =>
+    !isModeLoading(modeId) && (isModeLoaded(modeId) || isModeFailed(modeId)) && coursesForMode(modeId).length === 0;
+
+const shouldSkipCachedPanel = (modeId: string, cacheKey: string, force: boolean): boolean => {
+    if (force || !loadedModes.value[cacheKey]) {
+        return false;
+    }
+
+    return !hasEmptyCountMismatch(modeId) || Boolean(retriedEmptyMismatch.value[cacheKey]);
+};
 
 const totalConfirmed = computed(() => orderedModes.value.reduce((sum, mode) => sum + modeCount(mode), 0));
 
@@ -183,13 +207,20 @@ const loadModePanel = async (modeId: string, force = false) => {
     }
 
     const cacheKey = cacheKeyFor(id);
-    if (!force && loadedModes.value[cacheKey]) {
+    if (shouldSkipCachedPanel(id, cacheKey, force)) {
         return;
     }
 
+    const requestSeq = (panelRequestSeq.value[cacheKey] ?? 0) + 1;
+    panelRequestSeq.value = { ...panelRequestSeq.value, [cacheKey]: requestSeq };
     loadingModes.value = { ...loadingModes.value, [cacheKey]: true };
+    failedModes.value = { ...failedModes.value, [cacheKey]: false };
     try {
         const document = await HttpService.get(calendarPath(), { params: calendarQuery(id) });
+        if (panelRequestSeq.value[cacheKey] !== requestSeq) {
+            return;
+        }
+
         const rows = (Array.isArray(document) ? document : (document?.data ?? [])) as DepartmentCourseClassCount[];
         if (Array.isArray(document?.meta?.modeTotals)) {
             applyModeTotals(document.meta.modeTotals as DepartmentClassModeTotal[]);
@@ -206,11 +237,34 @@ const loadModePanel = async (modeId: string, force = false) => {
             ...loadedModes.value,
             [cacheKey]: true,
         };
+        const emptyMismatch = rows.length === 0 && (modeTotals.value[Number(id)] ?? 0) > 0;
+        if (emptyMismatch && !force && !retriedEmptyMismatch.value[cacheKey]) {
+            retriedEmptyMismatch.value = { ...retriedEmptyMismatch.value, [cacheKey]: true };
+            await loadModePanel(id, true);
+
+            return;
+        }
+
+        retriedEmptyMismatch.value = {
+            ...retriedEmptyMismatch.value,
+            [cacheKey]: emptyMismatch,
+        };
     } catch {
+        if (panelRequestSeq.value[cacheKey] !== requestSeq) {
+            return;
+        }
+
+        failedModes.value = { ...failedModes.value, [cacheKey]: true };
         errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.class', 2) }));
     } finally {
-        loadingModes.value = { ...loadingModes.value, [cacheKey]: false };
+        if (panelRequestSeq.value[cacheKey] === requestSeq) {
+            loadingModes.value = { ...loadingModes.value, [cacheKey]: false };
+        }
     }
+};
+
+const refreshModePanel = async (modeId: string): Promise<void> => {
+    await loadModePanel(modeId, true);
 };
 
 const loadOpenModePanel = async (force = false): Promise<void> => {
@@ -228,6 +282,9 @@ const loadOpenModePanel = async (force = false): Promise<void> => {
 const resetAndReload = async () => {
     loadedModes.value = {};
     loadingModes.value = {};
+    failedModes.value = {};
+    retriedEmptyMismatch.value = {};
+    panelRequestSeq.value = {};
     coursesByMode.value = {};
     resolvedCalendarIdByMode.value = {};
     await fetchModeTotals();
@@ -337,7 +394,7 @@ const totalsTeleportTo = computed(() => (props.totalsTarget ? `#${props.totalsTa
                         />
 
                         <div
-                            v-else-if="isModeLoaded(String(mode.id))"
+                            v-else-if="shouldShowEmptyState(String(mode.id))"
                             class="rounded-xl border border-dashed border-border bg-muted/30 px-4 py-6 text-center"
                         >
                             <p class="text-sm font-medium text-muted-foreground">
@@ -350,6 +407,22 @@ const totalsTeleportTo = computed(() => (props.totalsTarget ? `#${props.totalsTa
                                     })
                                 }}
                             </p>
+                            <div class="mt-3 flex justify-center">
+                                <BaseButton
+                                    type="button"
+                                    :variant="ColorVariant.primary_outline"
+                                    :size="ButtonSize.sm"
+                                    :processing="isModeLoading(String(mode.id))"
+                                    @click.stop="refreshModePanel(String(mode.id))"
+                                >
+                                    <BaseIcon
+                                        v-if="!isModeLoading(String(mode.id))"
+                                        :name="IconName.refresh"
+                                        class="h-4 w-4"
+                                    />
+                                    <span>{{ $t('trans.refresh') }}</span>
+                                </BaseButton>
+                            </div>
                         </div>
                     </div>
                 </EnrolmentModeAccordionItem>

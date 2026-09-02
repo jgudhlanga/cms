@@ -3,6 +3,7 @@
 use App\Actions\Institution\SyncProgrammeSemestersForOfferingAction;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Institution\CourseSyllabusStatusEnum;
+use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
@@ -1183,6 +1184,186 @@ test('department academic calendar includes mode totals with course rows when mo
     expect($response->json('data'))->not->toBeEmpty()
         ->and(collect($response->json('meta.modeTotals'))->firstWhere('modeOfStudyId', $context['modeOfStudy']->id)['count'] ?? 0)
         ->toBe(2);
+});
+
+test('department academic calendar includes ojet course rows when the offering has no industrial attachment', function () {
+    $this->travelTo('2026-05-15');
+
+    $context = buildDepartmentClassContext();
+    $context['modeOfStudy']->update(['name' => ModeOfStudyEnum::OJET->value]);
+    DepartmentLevelCourse::query()
+        ->where('department_course_id', $context['departmentCourse']->id)
+        ->where('department_level_id', $context['departmentLevel']->id)
+        ->update([
+            'includes_industrial_attachment' => false,
+            'attachment_semester_count' => 0,
+        ]);
+    createFinalStudentApplication($context, 'ojet-no-attachment@example.com');
+
+    Sanctum::actingAs($context['user']);
+
+    $response = $this->getJson('/api/v1/departments/'.$context['institutionDepartment']->id.'/academic-calendars?academic_year='.$context['calendar']->calendar_year.'&mode_of_study_id='.$context['modeOfStudy']->id);
+
+    $response->assertOk();
+
+    expect($response->json('data'))->not->toBeEmpty()
+        ->and($response->json('data.0.levels.0.totalFinalList'))->toBe(1)
+        ->and(collect($response->json('meta.modeTotals'))->firstWhere('modeOfStudyId', $context['modeOfStudy']->id)['count'] ?? 0)
+        ->toBe(1);
+});
+
+test('department academic calendar omits levels that do not offer the selected ojet mode', function () {
+    $this->travelTo('2026-05-15');
+
+    $context = buildDepartmentClassContext();
+    $context['modeOfStudy']->update(['name' => ModeOfStudyEnum::OJET->value]);
+
+    $otherLevel = Level::factory()->create(['name' => 'AL3', 'calendar_type' => 'semester']);
+    $otherDepartmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $context['tenant']->id,
+        'institution_department_id' => $context['institutionDepartment']->id,
+        'level_id' => $otherLevel->id,
+    ]);
+    DepartmentLevelCourse::query()->create([
+        'department_course_id' => $context['departmentCourse']->id,
+        'department_level_id' => $otherDepartmentLevel->id,
+    ]);
+
+    seedApplicationOffering(
+        $context['institutionDepartment'],
+        $context['departmentLevel'],
+        $context['departmentCourse'],
+        [(int) $context['modeOfStudy']->id],
+    );
+    createFinalStudentApplication($context, 'ojet-offered-nd@example.com');
+
+    Sanctum::actingAs($context['user']);
+
+    $response = $this->getJson('/api/v1/departments/'.$context['institutionDepartment']->id.'/academic-calendars?academic_year='.$context['calendar']->calendar_year.'&mode_of_study_id='.$context['modeOfStudy']->id);
+
+    $response->assertOk();
+    $levelIds = collect($response->json('data.0.levels'))->pluck('departmentLevelId')->map(fn ($id) => (string) $id)->all();
+
+    expect($levelIds)->toContain((string) $context['departmentLevel']->id)
+        ->and($levelIds)->not->toContain((string) $otherDepartmentLevel->id)
+        ->and($response->json('data.0.levels.0.totalFinalList'))->toBe(1);
+});
+
+test('department academic calendar omits empty ojet levels when no offering catalogue exists', function () {
+    $this->travelTo('2026-05-15');
+
+    $context = buildDepartmentClassContext();
+    $context['modeOfStudy']->update(['name' => ModeOfStudyEnum::OJET->value]);
+
+    $otherLevel = Level::factory()->create(['name' => 'HND', 'calendar_type' => 'semester']);
+    $otherDepartmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $context['tenant']->id,
+        'institution_department_id' => $context['institutionDepartment']->id,
+        'level_id' => $otherLevel->id,
+    ]);
+    DepartmentLevelCourse::query()->create([
+        'department_course_id' => $context['departmentCourse']->id,
+        'department_level_id' => $otherDepartmentLevel->id,
+    ]);
+    createFinalStudentApplication($context, 'ojet-occupied-nd@example.com');
+
+    Sanctum::actingAs($context['user']);
+
+    $response = $this->getJson('/api/v1/departments/'.$context['institutionDepartment']->id.'/academic-calendars?academic_year='.$context['calendar']->calendar_year.'&mode_of_study_id='.$context['modeOfStudy']->id);
+
+    $response->assertOk();
+    $levelIds = collect($response->json('data.0.levels'))->pluck('departmentLevelId')->map(fn ($id) => (string) $id)->all();
+
+    expect($levelIds)->toContain((string) $context['departmentLevel']->id)
+        ->and($levelIds)->not->toContain((string) $otherDepartmentLevel->id);
+});
+
+test('department academic calendar includes empty attached levels for non-ojet modes', function () {
+    $this->travelTo('2026-05-15');
+
+    $context = buildDepartmentClassContext();
+
+    $otherLevel = Level::factory()->create(['name' => 'AL4', 'calendar_type' => 'semester']);
+    $otherDepartmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $context['tenant']->id,
+        'institution_department_id' => $context['institutionDepartment']->id,
+        'level_id' => $otherLevel->id,
+    ]);
+    DepartmentLevelCourse::query()->create([
+        'department_course_id' => $context['departmentCourse']->id,
+        'department_level_id' => $otherDepartmentLevel->id,
+    ]);
+
+    seedApplicationOffering(
+        $context['institutionDepartment'],
+        $context['departmentLevel'],
+        $context['departmentCourse'],
+        [(int) $context['modeOfStudy']->id],
+    );
+    createFinalStudentApplication($context, 'full-time-occupied@example.com');
+
+    Sanctum::actingAs($context['user']);
+
+    $response = $this->getJson('/api/v1/departments/'.$context['institutionDepartment']->id.'/academic-calendars?academic_year='.$context['calendar']->calendar_year.'&mode_of_study_id='.$context['modeOfStudy']->id);
+
+    $response->assertOk();
+    $levelIds = collect($response->json('data.0.levels'))->pluck('departmentLevelId')->map(fn ($id) => (string) $id)->all();
+
+    expect($levelIds)->toContain((string) $context['departmentLevel']->id)
+        ->and($levelIds)->toContain((string) $otherDepartmentLevel->id);
+});
+
+test('department academic calendar includes offered ojet levels with no confirmed students', function () {
+    $this->travelTo('2026-05-15');
+
+    $context = buildDepartmentClassContext();
+    $context['modeOfStudy']->update(['name' => ModeOfStudyEnum::OJET->value]);
+
+    $emptyOfferedLevel = Level::factory()->create(['name' => 'NC', 'calendar_type' => 'semester']);
+    $emptyOfferedDepartmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $context['tenant']->id,
+        'institution_department_id' => $context['institutionDepartment']->id,
+        'level_id' => $emptyOfferedLevel->id,
+    ]);
+    DepartmentLevelCourse::query()->create([
+        'department_course_id' => $context['departmentCourse']->id,
+        'department_level_id' => $emptyOfferedDepartmentLevel->id,
+    ]);
+
+    $unofferedLevel = Level::factory()->create(['name' => 'AL4', 'calendar_type' => 'semester']);
+    $unofferedDepartmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $context['tenant']->id,
+        'institution_department_id' => $context['institutionDepartment']->id,
+        'level_id' => $unofferedLevel->id,
+    ]);
+    DepartmentLevelCourse::query()->create([
+        'department_course_id' => $context['departmentCourse']->id,
+        'department_level_id' => $unofferedDepartmentLevel->id,
+    ]);
+
+    seedApplicationOffering(
+        $context['institutionDepartment'],
+        $context['departmentLevel'],
+        $context['departmentCourse'],
+        [(int) $context['modeOfStudy']->id],
+    );
+    seedApplicationOffering(
+        $context['institutionDepartment'],
+        $emptyOfferedDepartmentLevel,
+        $context['departmentCourse'],
+        [(int) $context['modeOfStudy']->id],
+    );
+
+    Sanctum::actingAs($context['user']);
+
+    $response = $this->getJson('/api/v1/departments/'.$context['institutionDepartment']->id.'/academic-calendars?academic_year='.$context['calendar']->calendar_year.'&mode_of_study_id='.$context['modeOfStudy']->id);
+
+    $response->assertOk();
+    $levelIds = collect($response->json('data.0.levels'))->pluck('departmentLevelId')->map(fn ($id) => (string) $id)->all();
+
+    expect($levelIds)->toContain((string) $context['departmentLevel']->id)
+        ->and($levelIds)->toContain((string) $emptyOfferedDepartmentLevel->id)
+        ->and($levelIds)->not->toContain((string) $unofferedDepartmentLevel->id);
 });
 
 test('department academic calendar remaining periods use programme semester ids when the offering has them', function () {
