@@ -18,7 +18,7 @@ const delegatedProps = computed(() => {
 </script>
 
 <template>
-  <AccordionHeader class="flex">
+  <AccordionHeader class="flex items-center">
     <AccordionTrigger
       v-bind="delegatedProps"
       :class="
@@ -35,5 +35,6 @@ const delegatedProps = computed(() => {
         />
       </slot>
     </AccordionTrigger>
+    <slot name="actions" />
   </AccordionHeader>
 </template>

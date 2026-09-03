@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 import { AccordionContent, type AccordionContentProps } from 'reka-ui'
 import { computed, type HTMLAttributes } from 'vue'
 
-const props = defineProps<AccordionContentProps & { class?: HTMLAttributes['class'] }>()
+const props = defineProps<AccordionContentProps & { class?: HTMLAttributes['class']; forceMount?: boolean }>()
 
 const delegatedProps = computed(() => {
   const { class: _, ...delegated } = props
@@ -15,7 +15,7 @@ const delegatedProps = computed(() => {
 <template>
   <AccordionContent
     v-bind="delegatedProps"
-    class="overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
+    class="overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down data-[state=open]:overflow-visible"
   >
     <div :class="cn('pb-4 pt-0', props.class)">
       <slot />

@@ -31,6 +31,10 @@ const props = withDefaults(defineProps<Props>(), {
     groupPlural: 'programmes',
 });
 
+const emit = defineEmits<{
+    open: [];
+}>();
+
 const isEmpty = computed(() => props.count === 0);
 
 const subtitle = computed(() => {
@@ -57,8 +61,8 @@ const iconBoxClass = computed(() =>
 
 const itemClass = computed(() =>
     cn(
-        'overflow-hidden rounded-xl border bg-card shadow-sm transition-[border-color,box-shadow]',
-        props.isOpen ? 'border-primary/40 shadow-md' : 'border-border/70 hover:border-primary/25',
+        'rounded-xl border bg-card shadow-sm transition-[border-color,box-shadow]',
+        props.isOpen ? 'overflow-visible border-primary/40 shadow-md' : 'overflow-hidden border-border/70 hover:border-primary/25',
         isEmpty.value ? 'opacity-90' : '',
     ),
 );
@@ -68,6 +72,7 @@ const itemClass = computed(() =>
     <AccordionItem :value="value" :class="itemClass">
         <AccordionTrigger
             class="group cursor-pointer gap-2.5 px-3 py-3 hover:no-underline sm:px-4 [&[data-state=open]_.accordion-chevron]:rotate-180 [&>svg]:hidden"
+            @click="emit('open')"
         >
             <div class="flex min-w-0 flex-1 items-center gap-2.5 text-left">
                 <span :class="iconBoxClass" aria-hidden="true">
@@ -90,6 +95,9 @@ const itemClass = computed(() =>
                     <ChevronDown class="accordion-chevron h-4 w-4 transition-transform duration-200" stroke-width="2.25" />
                 </span>
             </div>
+            <template #actions>
+                <slot name="header-actions" />
+            </template>
         </AccordionTrigger>
         <AccordionContent class="px-3 pb-3 pt-0 sm:px-4">
             <slot />
