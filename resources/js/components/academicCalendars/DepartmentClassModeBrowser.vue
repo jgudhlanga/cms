@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BaseAccordion from '@/components/core/accordion/BaseAccordion.vue';
-import { BaseButton } from '@/components/core/button';
+import { BaseButton, IconButton } from '@/components/core/button';
 import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import DepartmentModeTotalsStrip from '@/components/institution/DepartmentModeTotalsStrip.vue';
 import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
@@ -149,7 +149,15 @@ const shouldShowEmptyState = (modeId: string): boolean =>
     !isModeLoading(modeId) && (isModeLoaded(modeId) || isModeFailed(modeId)) && coursesForMode(modeId).length === 0;
 
 const shouldSkipCachedPanel = (modeId: string, cacheKey: string, force: boolean): boolean => {
-    if (force || !loadedModes.value[cacheKey]) {
+    if (force) {
+        return false;
+    }
+
+    if (loadingModes.value[cacheKey]) {
+        return true;
+    }
+
+    if (!loadedModes.value[cacheKey]) {
         return false;
     }
 
@@ -279,6 +287,15 @@ const loadOpenModePanel = async (force = false): Promise<void> => {
     }
 };
 
+const openModePanel = (modeId: string): void => {
+    const id = normalizeModeId(modeId);
+    if (!id) {
+        return;
+    }
+
+    void loadModePanel(id);
+};
+
 const resetAndReload = async () => {
     loadedModes.value = {};
     loadingModes.value = {};
@@ -318,9 +335,9 @@ watch(
     },
 );
 
-watch(openModeId, async (modeId, previous) => {
+watch(openModeId, async (modeId) => {
     const id = normalizeModeId(modeId);
-    if (!isReady.value || !id || id === normalizeModeId(previous)) {
+    if (!isReady.value || !id) {
         return;
     }
     await loadOpenModePanel();
@@ -377,9 +394,22 @@ const totalsTeleportTo = computed(() => (props.totalsTarget ? `#${props.totalsTa
                     :empty-subtitle="$t('academic_calendar.no_confirmed_students_recorded')"
                     :count-singular="$tChoice('academic_calendar.confirmed_student', 1).toLowerCase()"
                     :count-plural="$tChoice('academic_calendar.confirmed_student', 2).toLowerCase()"
+                    @open="openModePanel(String(mode.id))"
                 >
+                    <template #header-actions>
+                        <IconButton
+                            :icon="IconName.refresh"
+                            tone="header-primary"
+                            :aria-label="$t('trans.refresh')"
+                            :disabled="isModeLoading(String(mode.id))"
+                            class="mr-2"
+                            @click.stop="refreshModePanel(String(mode.id))"
+                        />
+                    </template>
                     <div
+                        :key="`${mode.id}-${isModeLoaded(String(mode.id))}-${isModeLoading(String(mode.id))}`"
                         class="flex flex-col gap-4 border-t border-border/60 pt-4"
+                        :class="shouldShowPanelSpinner(String(mode.id)) ? 'min-h-48' : ''"
                         :aria-busy="shouldShowPanelSpinner(String(mode.id))"
                     >
                         <DataLoadingSpinner v-if="shouldShowPanelSpinner(String(mode.id))" />
