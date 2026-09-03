@@ -19,6 +19,22 @@ import { storeToRefs } from 'pinia';
 import { h, ref } from 'vue';
 import { z } from 'zod';
 
+const firstFormError = (errors: Record<string, unknown>, keys: string[]): string | undefined => {
+    for (const key of keys) {
+        const value = errors[key];
+        if (typeof value === 'string' && value.trim() !== '') {
+            return value;
+        }
+        if (Array.isArray(value) && typeof value[0] === 'string' && value[0].trim() !== '') {
+            return value[0];
+        }
+    }
+
+    const first = Object.values(errors).find((value) => typeof value === 'string' && value.trim() !== '');
+
+    return typeof first === 'string' ? first : undefined;
+};
+
 export const useDepartmentCourses = (isEditingProgram?: boolean) => {
     const { moreActionButton, textLink, checkStatusIcon, onEdit } = useDataTables();
     const { props } = usePage();
@@ -209,17 +225,12 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
             const error = trans('trans.item_save_failure', { item: trans_choice('trans.course', 2) });
             form.post(route('department-courses.update', departmentCourseId), {
                 onStart: () => toggleFormLoader(true),
-                onFinish: () => {
-                    form.reset();
-                    toggleFormLoader(false);
-                },
+                onFinish: () => toggleFormLoader(false),
                 onSuccess: () => {
                     successAlert(success);
                     navigateTo(route('institution-departments.show', getIdParams(institutionDepartmentId)));
                 },
-                onError: () => {
-                    errorAlert(error);
-                },
+                onError: (errors) => errorAlert(firstFormError(errors, ['department_level_ids']) ?? error),
             });
         } catch (error: any) {
             form.setError(error.format());
@@ -327,17 +338,12 @@ export const useDepartmentCourses = (isEditingProgram?: boolean) => {
             const error = trans('trans.item_save_failure', { item: name });
             form.post(route('department-courses.modes.store', departmentCourseId), {
                 onStart: () => toggleFormLoader(true),
-                onFinish: () => {
-                    form.reset();
-                    toggleFormLoader(false);
-                },
+                onFinish: () => toggleFormLoader(false),
                 onSuccess: () => {
                     successAlert(success);
                     navigateTo(route('institution-departments.show', getIdParams(institutionDepartmentId)));
                 },
-                onError: () => {
-                    errorAlert(error);
-                },
+                onError: (errors) => errorAlert(firstFormError(errors, ['mode_ids']) ?? error),
             });
         } catch (error: any) {
             form.setError(error.format());

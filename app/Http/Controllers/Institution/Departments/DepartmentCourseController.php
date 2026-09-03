@@ -17,6 +17,7 @@ use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\ModeOfStudy;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
+use App\Services\Institution\CourseLevelModeService;
 use App\Services\Institution\ProgrammeLinkUsageGuard;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -26,6 +27,7 @@ class DepartmentCourseController extends Controller
     public function __construct(
         protected IDepartmentCourseRepository $repository,
         protected ProgrammeLinkUsageGuard $usageGuard,
+        protected CourseLevelModeService $courseLevelModes,
     ) {}
 
     public function syncDepartmentCourses(InstitutionDepartment $institutionDepartment, DepartmentCourseRequest $request): void
@@ -70,8 +72,13 @@ class DepartmentCourseController extends Controller
             ->unique('id')
             ->sortBy(fn ($departmentLevel) => $departmentLevel->level?->position)
             ->values();
+        $linkedLevelIds = $courseLevels->pluck('id')->map(fn ($id): int => (int) $id)->all();
         $departmentLevels = DepartmentLevelResource::collection($courseLevels);
-        $courseLevelModes = CourseLevelModeResource::collection($departmentCourse->courseLevelModes);
+        $courseLevelModes = CourseLevelModeResource::collection(
+            $departmentCourse->courseLevelModes
+                ->filter(fn ($courseLevelMode): bool => in_array((int) $courseLevelMode->department_level_id, $linkedLevelIds, true))
+                ->values()
+        );
         $modesOfStudy = ModeOfStudyResource::collection(ModeOfStudy::whereNull('deleted_at')->get());
         $departmentCourse = DepartmentCourseResource::make($departmentCourse);
 
@@ -83,19 +90,7 @@ class DepartmentCourseController extends Controller
     public function storeCourseLevelModes(DepartmentCourse $departmentCourse, CourseLevelModeRequest $request): void
     {
         $this->authorize('updateDepartmentMetaData');
-        foreach ($request->mode_ids as $levelId => $modes) {
-            if (empty($modes)) {
-                $departmentCourse->courseLevelModes()
-                    ->where('department_level_id', $levelId)
-                    ->delete();
-
-                continue;
-            }
-            $departmentCourse->courseLevelModes()->updateOrCreate(
-                ['department_level_id' => $levelId],
-                ['modes' => array_values($modes)]
-            );
-        }
+        $this->courseLevelModes->sync($departmentCourse, $request->mode_ids ?? []);
     }
 
     public function update(DepartmentCourse $departmentCourse, DepartmentCourseUpdateRequest $request): void

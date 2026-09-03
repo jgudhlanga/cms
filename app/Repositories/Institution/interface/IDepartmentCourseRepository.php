@@ -2,10 +2,11 @@
 
 namespace App\Repositories\Institution\interface;
 
+use App\DTO\Institution\CourseRequirementsDto;
 use App\DTO\Institution\DepartmentCourseDto;
 use App\DTO\Institution\DepartmentCourseUpdateDto;
-use App\DTO\Institution\CourseRequirementsDto;
 use App\Models\Institution\DepartmentCourse;
+use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Base\Interface\IBaseRepository;
 
@@ -15,6 +16,7 @@ interface IDepartmentCourseRepository extends IBaseRepository
 
     public function update(DepartmentCourse $departmentCourse, DepartmentCourseUpdateDto $dto);
 
-    public function updateLevelCourseRequirements(DepartmentCourse $departmentCourse, CourseRequirementsDto $dto);
+    public function ensureCourseLevel(DepartmentCourse $departmentCourse, int $departmentLevelId): DepartmentLevelCourse;
 
+    public function updateLevelCourseRequirements(DepartmentCourse $departmentCourse, CourseRequirementsDto $dto);
 }
