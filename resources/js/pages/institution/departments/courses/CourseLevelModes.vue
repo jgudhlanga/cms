@@ -54,9 +54,13 @@ const form = useForm<DepartmentCourseModeParams>({
 const { saveCourseLevelModes } = useDepartmentCourses();
 
 const buildModeMatrix = () => {
+    const linkedLevelIds = new Set(departmentLevels.map((level) => String(level.id)));
     const matrix: Record<string, (string | number)[]> = {};
     courseLevelModes.forEach((clm) => {
         const levelId = String(clm.attributes.departmentLevelId);
+        if (!linkedLevelIds.has(levelId)) {
+            return;
+        }
         matrix[levelId] = clm.relationships.modes.map((m) => m.id).filter((id): id is string => id !== undefined);
     });
     departmentLevels.forEach((level) => {

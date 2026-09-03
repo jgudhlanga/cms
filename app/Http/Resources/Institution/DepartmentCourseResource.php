@@ -19,7 +19,13 @@ class DepartmentCourseResource extends JsonResource
             'courseLevelModes',
         ]);
 
+        $linkedLevelIds = $this->departmentCourseLevels
+            ->pluck('department_level_id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
         $modes = $this->courseLevelModes
+            ->filter(fn ($courseLevelMode): bool => in_array((int) $courseLevelMode->department_level_id, $linkedLevelIds, true))
             ->flatMap(fn ($courseLevelMode) => $courseLevelMode->mode_objects)
             ->unique('id')
             ->sortBy('name')

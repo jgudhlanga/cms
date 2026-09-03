@@ -72,6 +72,7 @@ class DepartmentMetaDataController extends Controller
 
         $modeIds = CourseLevelMode::query()
             ->whereIn('department_course_id', $courseIds)
+            ->forLinkedLevels()
             ->get()
             ->pluck('modes')
             ->flatten()

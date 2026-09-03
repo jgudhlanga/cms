@@ -9,6 +9,7 @@ use App\DTO\Institution\DepartmentCourseUpdateDto;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
@@ -87,48 +88,68 @@ class DepartmentCourseRepository extends BaseRepository implements IDepartmentCo
         } else {
             $departmentCourse = $departmentCourse->fresh() ?? $departmentCourse;
         }
-        // Get existing department_ linked to this department
-        $existingCourseLevels = $departmentCourse->departmentCourseLevels()->where('department_course_id', $departmentCourse->id)->pluck('department_level_id')->toArray();
-        $newCourseLevelIds = $dto->department_level_ids;
+        $existingCourseLevels = $departmentCourse->departmentCourseLevels()
+            ->pluck('department_level_id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->all();
+        $newCourseLevelIds = array_values(array_unique(array_filter(
+            array_map('intval', $dto->department_level_ids),
+            fn (int $id): bool => $id > 0,
+        )));
 
-        // Determine which IDs to add and which to remove
-        $toAddCourseLevels = array_diff($newCourseLevelIds, $existingCourseLevels);
-        $toRemoveCourseLevels = array_diff($existingCourseLevels, $newCourseLevelIds);
+        $toAddCourseLevels = array_values(array_diff($newCourseLevelIds, $existingCourseLevels));
+        $toRemoveCourseLevels = array_values(array_diff($existingCourseLevels, $newCourseLevelIds));
 
-        // Delete removed courses
-        if (! empty($toRemoveCourseLevels)) {
+        if ($toRemoveCourseLevels !== []) {
+            $this->usageGuard->assertCourseLevelsUnused((int) $departmentCourse->id, $toRemoveCourseLevels);
             $departmentCourse->departmentCourseLevels()->whereIn('department_level_id', $toRemoveCourseLevels)->delete();
+            $departmentCourse->courseLevelModes()->whereIn('department_level_id', $toRemoveCourseLevels)->delete();
         }
-        // Add new courses
+
         foreach ($toAddCourseLevels as $departmentLevelId) {
-            $departmentLevel = DepartmentLevel::query()
-                ->with('level')
-                ->find($departmentLevelId);
-
-            $calendarType = $departmentLevel?->level?->calendar_type;
-
-            if (! $calendarType instanceof AcademicCalendarTypeEnum) {
-                $calendarType = AcademicCalendarTypeEnum::tryFrom((string) $calendarType)
-                    ?? AcademicCalendarTypeEnum::SEMESTER;
-            }
-
-            $taughtCount = ProgrammeSemesterNameFormatter::periodsPerYear($calendarType);
-
-            $departmentLevelCourse = $departmentCourse->departmentCourseLevels()->create([
-                'department_course_id' => $departmentCourse->id,
-                'department_level_id' => $departmentLevelId,
-                'duration_years' => 1,
-                'taught_semester_count' => $taughtCount,
-                'includes_industrial_attachment' => false,
-                'attachment_semester_count' => 0,
-            ]);
-
-            $this->syncProgrammeSemesters->execute(
-                $departmentLevelCourse->fresh(['departmentLevel.level']) ?? $departmentLevelCourse,
-            );
+            $this->ensureCourseLevel($departmentCourse, $departmentLevelId);
         }
 
         return $departmentCourse;
+    }
+
+    public function ensureCourseLevel(DepartmentCourse $departmentCourse, int $departmentLevelId): DepartmentLevelCourse
+    {
+        $existing = $departmentCourse->departmentCourseLevels()
+            ->where('department_level_id', $departmentLevelId)
+            ->first();
+
+        if ($existing instanceof DepartmentLevelCourse) {
+            return $existing;
+        }
+
+        $departmentLevel = DepartmentLevel::query()
+            ->with('level')
+            ->find($departmentLevelId);
+
+        $calendarType = $departmentLevel?->level?->calendar_type;
+
+        if (! $calendarType instanceof AcademicCalendarTypeEnum) {
+            $calendarType = AcademicCalendarTypeEnum::tryFrom((string) $calendarType)
+                ?? AcademicCalendarTypeEnum::SEMESTER;
+        }
+
+        $taughtCount = ProgrammeSemesterNameFormatter::periodsPerYear($calendarType);
+
+        $departmentLevelCourse = $departmentCourse->departmentCourseLevels()->create([
+            'department_course_id' => $departmentCourse->id,
+            'department_level_id' => $departmentLevelId,
+            'duration_years' => 1,
+            'taught_semester_count' => $taughtCount,
+            'includes_industrial_attachment' => false,
+            'attachment_semester_count' => 0,
+        ]);
+
+        $this->syncProgrammeSemesters->execute(
+            $departmentLevelCourse->fresh(['departmentLevel.level']) ?? $departmentLevelCourse,
+        );
+
+        return $departmentLevelCourse->fresh(['departmentLevel.level', 'programmeSemesters']) ?? $departmentLevelCourse;
     }
 
     public function updateLevelCourseRequirements(DepartmentCourse $departmentCourse, CourseRequirementsDto $dto): void
