@@ -2,6 +2,8 @@
 
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
+use App\Models\AcademicCalendars\AcademicCalendar;
+use App\Models\AcademicCalendars\Semester;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
@@ -20,6 +22,7 @@ use App\Models\Shared\Title;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
+use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use Illuminate\Support\Str;
@@ -155,5 +158,44 @@ if (! function_exists('resolveWorkflowStep')) {
                 'position' => $workflowStep->position(),
             ]
         );
+    }
+}
+
+if (! function_exists('ensureApplicationWorkflowSteps')) {
+    function ensureApplicationWorkflowSteps(): void
+    {
+        foreach (WorkflowStepEnum::cases() as $workflowStep) {
+            resolveWorkflowStep($workflowStep);
+        }
+    }
+}
+
+if (! function_exists('ensureStudentEnrolmentResolutionFixtures')) {
+    function ensureStudentEnrolmentResolutionFixtures(): void
+    {
+        AcademicCalendar::query()->firstOrCreate(
+            [
+                'calendar_year' => '2025/2026',
+                'type' => 'semester',
+            ],
+            [
+                'opening_date' => now()->startOfYear()->toDateString(),
+                'closing_date' => now()->endOfYear()->toDateString(),
+            ],
+        );
+
+        foreach (['Semester 1', 'Semester 2'] as $name) {
+            Semester::query()->firstOrCreate(
+                ['slug' => Str::slug($name)],
+                ['name' => $name, 'description' => null],
+            );
+        }
+
+        foreach (['Active', 'Completed'] as $name) {
+            StudentEnrolmentStatus::query()->firstOrCreate(
+                ['name' => $name],
+                ['description' => 'Test'],
+            );
+        }
     }
 }

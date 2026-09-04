@@ -8,14 +8,15 @@ import DepartmentContextBar from '@/pages/institution/departments/partials/Depar
 import DepartmentHero from '@/pages/institution/departments/partials/DepartmentHero.vue';
 import LinkCoursesToDepartment from '@/pages/institution/departments/partials/LinkCoursesToDepartment.vue';
 import LinkLevelsToDepartment from '@/pages/institution/departments/partials/LinkLevelsToDepartment.vue';
+import { useSectionTabQuerySync } from '@/composables/core/useSectionTabQuerySync';
 import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaStore';
 import { AuthObject } from '@/types/data-pagination';
 import { InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 interface Props {
     department: InstitutionDepartment;
@@ -29,8 +30,8 @@ const { department } = props;
 const institutionDepartmentId = String(department.id);
 
 const departmentTitle = () => {
-    let title = department.attributes.department;
-    const code = department.attributes.departmentCode?.trim();
+    let title = department.attributes?.department ?? '';
+    const code = department.attributes?.departmentCode?.trim();
 
     if (code) {
         title += ` (${code})`;
@@ -60,12 +61,7 @@ const visibleTabs = computed(() => {
     return departmentTabs(props.department).filter((tab) => tab.show);
 });
 
-onMounted(() => {
-    const tabParam = new URL(usePage().url, window.location.origin).searchParams.get('tab');
-    if (tabParam && visibleTabs.value.some((tab) => tab.value === tabParam)) {
-        activeTab.value = tabParam;
-    }
-});
+useSectionTabQuerySync(activeTab, () => visibleTabs.value.map((tab) => tab.value));
 
 watch(
     visibleTabs,
@@ -113,9 +109,20 @@ const activeTabDescription = computed(() => activeSection.value?.transDescriptio
             <DepartmentHero :department="department" />
 
             <div>
-                <BaseSectionNav v-model:active-tab="activeTab" :tabs="visibleTabs" :description="activeTabDescription" />
+                <BaseSectionNav
+                    v-model:active-tab="activeTab"
+                    :tabs="visibleTabs"
+                    :description="activeTabDescription"
+                    nav-id="department-tabs"
+                />
 
-                <div class="mt-3">
+                <div
+                    :id="`department-tabs-panel-${activeTab}`"
+                    role="tabpanel"
+                    :aria-labelledby="`department-tabs-tab-${activeTab}`"
+                    tabindex="0"
+                    class="mt-3"
+                >
                     <component :is="activeSection?.component" v-if="activeSection" />
                 </div>
             </div>

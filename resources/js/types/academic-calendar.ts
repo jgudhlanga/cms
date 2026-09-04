@@ -106,6 +106,8 @@ export type AcademicCalendarClassPreviewStudent = {
     studentNumber?: string | null;
     gender?: string | null;
     name: string;
+    canAdvanceToNextPhase?: boolean;
+    cannotAdvancePhaseReason?: string | null;
 };
 
 export type ClassTutorSummary = {

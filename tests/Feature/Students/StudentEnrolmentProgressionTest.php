@@ -87,6 +87,22 @@ it('advances an active first-phase enrolment to semester two on the same enrolme
     expect((int) $semesterOne?->student_enrolment_status_id)->toBe($proceedId);
 });
 
+it('explains why a last-phase enrolment cannot advance', function (): void {
+    $enrolment = createPhaseEnrolment('ADV-LAST-REASON', 'semester-2');
+
+    $reason = app(StudentEnrolmentProgressionService::class)->cannotAdvanceToNextPhaseReason($enrolment);
+
+    expect($reason)->toBe(__('students.enrolment_cannot_advance_last_phase', ['phase' => 'Semester 2']));
+});
+
+it('explains why a referred enrolment cannot advance', function (): void {
+    $enrolment = createPhaseEnrolment('ADV-REFERRED-REASON', 'semester-1', 'Referred');
+
+    $reason = app(StudentEnrolmentProgressionService::class)->cannotAdvanceToNextPhaseReason($enrolment);
+
+    expect($reason)->toBe(__('students.enrolment_cannot_advance_status', ['status' => 'Referred']));
+});
+
 it('refuses to advance a last-phase enrolment', function (): void {
     $enrolment = createPhaseEnrolment('ADV-LAST', 'semester-2');
 

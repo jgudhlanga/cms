@@ -138,8 +138,7 @@ function createFinalApplicationForPivot(array $context, string $trackingNumber):
     return $studentApplication->fresh() ?? $studentApplication;
 }
 
-
-it('backfills semester one and two for current year when today is in semester two window', function (): void {
+it('starts a mid-year intake on semester two only, with no phase for the window it missed', function (): void {
     $context = createSemesterPivotContext();
     $application = createFinalApplicationForPivot($context, 'backfill-s2@test.com');
 
@@ -154,9 +153,8 @@ it('backfills semester one and two for current year when today is in semester tw
         ->orderBy('semester_id')
         ->get();
 
-    expect($semesters)->toHaveCount(2)
-        ->and($semesters->pluck('semester_id')->map(fn ($id) => (int) $id)->all())
-        ->toContain($context['semesterOneId'], $context['semesterTwoId']);
+    expect($semesters)->toHaveCount(1)
+        ->and((int) $semesters->first()->semester_id)->toBe($context['semesterTwoId']);
 });
 
 it('is idempotent when backfill runs twice', function (): void {
@@ -187,7 +185,7 @@ it('rollback restores original enrolment columns after backfill', function (): v
         ->and((int) $enrolment->student_enrolment_status_id)->toBe($originalStatusId);
 });
 
-it('finalise in semester two creates enrolment with both semester phases', function (): void {
+it('finalise in semester two creates the enrolment on that phase alone', function (): void {
     $context = createSemesterPivotContext();
     $studentApplication = createVerifiedStudentApplication('FINALISE-S2');
 
@@ -211,8 +209,11 @@ it('finalise in semester two creates enrolment with both semester phases', funct
 
     $enrolment = StudentEnrolment::query()->where('student_application_id', $studentApplication->id)->first();
 
+    $phases = StudentSemester::query()->where('student_enrolment_id', $enrolment->id)->get();
+
     expect($enrolment)->not->toBeNull()
-        ->and(StudentSemester::query()->where('student_enrolment_id', $enrolment->id)->count())->toBe(2);
+        ->and($phases)->toHaveCount(1)
+        ->and((int) $phases->first()->semester_id)->toBe($context['semesterTwoId']);
 });
 
 it('advances within the same year without creating a second enrolment', function (): void {
@@ -232,9 +233,15 @@ it('advances within the same year without creating a second enrolment', function
 });
 
 it('pins syllabus on semester two without clearing semester one syllabi', function (): void {
+    // Start in the first window and advance, so the student genuinely holds both phases.
+    Carbon::setTestNow(Carbon::parse('2026-03-15', config('app.timezone')));
+
     $context = createSemesterPivotContext();
+    $context['classConfig']->update(['semester_id' => $context['semesterOneId']]);
     $application = createFinalApplicationForPivot($context, 'syllabus-isolation@test.com');
     $enrolment = StudentEnrolment::query()->where('student_application_id', $application->id)->firstOrFail();
+
+    app(AdvanceToNextSemesterAction::class)->execute($enrolment->fresh());
 
     $semesterOne = StudentSemester::query()
         ->where('student_enrolment_id', $enrolment->id)

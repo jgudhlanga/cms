@@ -98,6 +98,21 @@ test('institution departments index returns color and expanded metadata', functi
         ->and($row['attributes']['coursesOfferedCount'])->toBe(1);
 });
 
+test('institution department show renders the department page', function () {
+    $user = makeInstitutionDepartmentsViewer();
+    $seeded = seedGuestRegistrationProgramme();
+    $institutionDepartment = InstitutionDepartment::query()->findOrFail($seeded['departmentId']);
+    $institutionDepartment->department()->update(['is_academic' => true]);
+
+    $this->actingAs($user)
+        ->get(route('institution-departments.show', $institutionDepartment->id))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->component('institution/departments/Show')
+            ->where('department.id', $institutionDepartment->id)
+            ->has('department.attributes.department'));
+});
+
 test('institution department update persists color code', function () {
     $user = makeInstitutionDepartmentsViewer();
     $seeded = seedGuestRegistrationProgramme();

@@ -38,8 +38,14 @@ useSectionTabQuerySync(activeTab, () => visibleTabs.value.map((tab) => tab.value
     <Head :title="$tChoice('hms.title', 2)" />
 
     <PageContainer :breadcrumbs="breadcrumbs">
-        <BaseSectionNav v-model:active-tab="activeTab" :tabs="visibleTabs" />
-        <div class="py-4">
+        <BaseSectionNav v-model:active-tab="activeTab" :tabs="visibleTabs" nav-id="hms-tabs" />
+        <div
+            :id="`hms-tabs-panel-${activeTab}`"
+            role="tabpanel"
+            :aria-labelledby="`hms-tabs-tab-${activeTab}`"
+            tabindex="0"
+            class="py-4"
+        >
             <component :is="activeSection?.component" v-if="activeSection" />
         </div>
         <!-- ── Create / Edit modal ───────────────────────────────────────── -->

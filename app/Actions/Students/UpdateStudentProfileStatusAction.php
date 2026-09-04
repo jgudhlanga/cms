@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Students;
 
-use App\Models\Enrolments\ClassList;
+use App\Actions\Enrolments\SyncStudentApplicationClassListLifecycleAction;
+use App\Enums\Shared\ClassListTypeEnum;
+use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
@@ -19,6 +21,7 @@ class UpdateStudentProfileStatusAction
     public function __construct(
         private readonly StudentApplicationStatusMapper $mapper,
         private readonly IntakePeriodResolver $intakePeriods,
+        private readonly SyncStudentApplicationClassListLifecycleAction $lifecycle,
     ) {}
 
     public function execute(Student $student, string $statusSlug, string $reason, ?User $actor = null): void
@@ -58,13 +61,18 @@ class UpdateStudentProfileStatusAction
             ->all();
 
         $classListType = $this->mapper->classListTypeForSlug($statusSlug);
+        $stepEnum = $this->mapper->stepEnumBySlug($statusSlug);
 
-        DB::transaction(function () use ($applications, $workflowStep, $classListType): void {
+        DB::transaction(function () use ($applications, $classListType, $stepEnum): void {
             foreach ($applications as $application) {
-                $application->update(['workflow_step_id' => $workflowStep->id]);
+                if ($classListType instanceof ClassListTypeEnum) {
+                    $this->lifecycle->syncApplicationToType($application, $classListType, false);
 
-                if ($classListType !== null && $application->classList instanceof ClassList) {
-                    $application->classList()->update(['type' => $classListType->value]);
+                    continue;
+                }
+
+                if ($stepEnum instanceof WorkflowStepEnum) {
+                    $this->lifecycle->applyWorkflow($application, $stepEnum);
                 }
             }
         });
@@ -85,7 +93,7 @@ class UpdateStudentProfileStatusAction
 
         return $student->applications()
             ->whereIn('intake_period_id', $activeIntakePeriodIds)
-            ->with(['workflowStep', 'classList', 'departmentLevel.level'])
+            ->with(['workflowStep', 'classList', 'departmentLevel.level', 'student.user', 'institutionDepartment', 'intakePeriod'])
             ->get();
     }
 

@@ -12,6 +12,7 @@ use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentSemester;
 use Illuminate\Http\RedirectResponse;
+use Throwable;
 
 class StudentEnrolmentProgressController extends Controller
 {
@@ -28,16 +29,7 @@ class StudentEnrolmentProgressController extends Controller
 
         abort_unless((int) $studentEnrolment->student_id === (int) $student->id, 404);
 
-        try {
-            $this->updateStudentEnrolmentStatus->execute(
-                $studentEnrolment,
-                (string) $request->validated('status'),
-            );
-        } catch (StudentEnrolmentProgressionException $exception) {
-            return back()->withErrors(['status' => $exception->getMessage()]);
-        }
-
-        return back()->with('success', __('students.enrolment_status_updated'));
+        return $this->applyStatusUpdate($studentEnrolment, (string) $request->validated('status'));
     }
 
     public function updateSemesterStatus(
@@ -52,13 +44,25 @@ class StudentEnrolmentProgressController extends Controller
 
         abort_unless($enrolment instanceof StudentEnrolment && (int) $enrolment->student_id === (int) $student->id, 404);
 
+        return $this->applyStatusUpdate($studentSemester, (string) $request->validated('status'));
+    }
+
+    private function applyStatusUpdate(
+        StudentEnrolment|StudentSemester $target,
+        string $statusSlug,
+    ): RedirectResponse {
         try {
-            $this->updateStudentEnrolmentStatus->execute(
-                $studentSemester,
-                (string) $request->validated('status'),
-            );
+            $this->updateStudentEnrolmentStatus->execute($target, $statusSlug);
         } catch (StudentEnrolmentProgressionException $exception) {
             return back()->withErrors(['status' => $exception->getMessage()]);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors([
+                'status' => $exception->getMessage() !== ''
+                    ? $exception->getMessage()
+                    : __('students.enrolment_status_update_failed'),
+            ]);
         }
 
         return back()->with('success', __('students.enrolment_status_updated'));

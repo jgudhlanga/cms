@@ -155,15 +155,67 @@ class StudentEnrolmentProgressionService
     public function canAdvanceToNextPhase(StudentEnrolment $enrolment): bool
     {
         $slug = $this->statusSlug($enrolment);
-        $current = $this->currentStudentSemester($enrolment);
-        $dlc = $this->programmeSemesterResolver->resolveDepartmentLevelCourse($enrolment);
-
-        $isLast = $dlc !== null && $dlc->programmeSemesters->isNotEmpty() && $current instanceof StudentSemester
-            ? $this->programmeSemesterResolver->isLastProgrammeSemester($current)
-            : $this->isLastPhase($enrolment);
 
         return ($slug === self::STATUS_ACTIVE || $slug === self::STATUS_PROCEED)
-            && ! $isLast;
+            && ! $this->isLastPhase($enrolment);
+    }
+
+    public function cannotAdvanceToNextPhaseReason(StudentEnrolment $enrolment): ?string
+    {
+        if ($this->canAdvanceToNextPhase($enrolment)) {
+            return null;
+        }
+
+        $reasons = [];
+        $slug = $this->statusSlug($enrolment);
+
+        if ($slug !== self::STATUS_ACTIVE && $slug !== self::STATUS_PROCEED) {
+            $reasons[] = __('students.enrolment_cannot_advance_status', [
+                'status' => $this->statusName($enrolment) ?? __('students.enrolment_status_missing'),
+            ]);
+        }
+
+        if ($this->isLastPhase($enrolment)) {
+            $reasons[] = __('students.enrolment_cannot_advance_last_phase', [
+                'phase' => $this->currentPhaseLabel($enrolment) ?? __('students.enrolment_last_phase_fallback'),
+            ]);
+        }
+
+        if ($reasons === []) {
+            return __('students.enrolment_cannot_advance_phase');
+        }
+
+        return implode(' ', $reasons);
+    }
+
+    private function currentPhaseLabel(StudentEnrolment $enrolment): ?string
+    {
+        $current = $this->currentStudentSemester($enrolment);
+
+        if (! $current instanceof StudentSemester) {
+            return null;
+        }
+
+        $programmeSemester = $this->programmeSemesterResolver->programmeSemesterForStudentSemester($current);
+
+        if ($programmeSemester instanceof ProgrammeSemester && is_string($programmeSemester->name) && $programmeSemester->name !== '') {
+            return $programmeSemester->name;
+        }
+
+        $current->loadMissing('semester');
+        $name = $current->semester?->name ?? $current->semester?->slug;
+
+        return is_string($name) && $name !== '' ? $name : null;
+    }
+
+    private function statusName(StudentEnrolment $enrolment): ?string
+    {
+        $studentSemester = $this->currentStudentSemester($enrolment);
+        $studentSemester?->loadMissing('studentEnrolmentStatus');
+        $name = $studentSemester?->studentEnrolmentStatus?->name
+            ?? $enrolment->studentEnrolmentStatus?->name;
+
+        return is_string($name) && $name !== '' ? $name : null;
     }
 
     public function canCompleteLevel(StudentEnrolment $enrolment): bool

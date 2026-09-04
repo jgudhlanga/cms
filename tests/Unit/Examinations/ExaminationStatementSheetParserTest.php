@@ -39,6 +39,13 @@ it('parses a HEXCO statement sheet into exam-dump rows', function (): void {
         ->and($rows[1][ExaminationDumpColumns::SESSION])->toBe('2026-06-01');
 });
 
+it('carries the statement course level onto every dump row', function (): void {
+    $rows = app(ExaminationStatementSheetParser::class)->parse(hexcoStatementSheet1Fixture());
+
+    expect($rows)->each->toHaveKey(ExaminationDumpColumns::COURSE_LEVEL)
+        ->and(collect($rows)->pluck(ExaminationDumpColumns::COURSE_LEVEL)->unique()->all())->toBe(['N.C.']);
+});
+
 it('filters statement subject rows by sitting', function (): void {
     $rows = app(ExaminationStatementSheetParser::class)->parse(
         hexcoStatementSheet1Fixture(),

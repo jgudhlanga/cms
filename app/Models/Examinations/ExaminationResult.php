@@ -21,6 +21,7 @@ class ExaminationResult extends Model
         'student_id',
         'discipline',
         'course_code',
+        'course_level',
         'candidate_number',
         'surname',
         'first_names',

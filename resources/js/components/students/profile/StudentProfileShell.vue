@@ -46,14 +46,14 @@ const canChangeStatus = computed(
 </script>
 
 <template>
-    <div class="w-full min-w-0 max-w-full overflow-x-clip rounded-xl bg-card text-card-foreground">
+    <div class="w-full min-w-0 max-w-full overflow-x-clip rounded-xl border border-border bg-card text-card-foreground shadow-sm">
         <Header
             :data="headerData"
             @edit-student-number="openModal(APP_MODULE_KEYS.student_number_change)"
             @edit-status="openModal(APP_MODULE_KEYS.student_status_change)"
         >
             <template v-if="showBack && backUrl" #actions>
-                <BackNavigationButton :url="backUrl" :destination="backDestination" />
+                <BackNavigationButton :url="backUrl" :destination="backDestination" pill />
             </template>
         </Header>
         <ChangeStudentNumberModal

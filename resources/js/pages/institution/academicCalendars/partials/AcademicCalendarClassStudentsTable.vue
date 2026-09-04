@@ -19,6 +19,8 @@ defineProps<{
     canViewCourseWork: boolean;
     canAdvancePhase: boolean;
     canCompleteLevel: boolean;
+    advancePhaseDisabled?: boolean;
+    advancePhaseBlockReason?: string;
     moveTargetClasses: AcademicCalendarClassMoveTarget[];
     studentCourseWorkUrl: (student: AcademicCalendarClassPreviewStudent) => string;
 }>();
@@ -101,16 +103,22 @@ const avatarClasses = (gender: string | null | undefined): string => {
                 </td>
                 <td class="j-td text-right" @click.stop>
                     <div class="flex flex-nowrap items-center justify-end gap-1.5">
-                        <BaseButton
+                        <span
                             v-if="canAdvancePhase && selectedStudentEnrolmentIds.length > 0"
-                            :size="ButtonSize.xs"
-                            :variant="ColorVariant.primary"
-                            type="button"
-                            classes="whitespace-nowrap rounded-full"
+                            class="inline-flex"
+                            :title="advancePhaseDisabled ? advancePhaseBlockReason || $t('academic_calendar.advance_phase_none') : undefined"
                             @click="emit('advancePhase')"
                         >
-                            {{ $t('academic_calendar.continue_next_phase') }}
-                        </BaseButton>
+                            <BaseButton
+                                :size="ButtonSize.xs"
+                                :variant="ColorVariant.primary"
+                                type="button"
+                                :disabled="advancePhaseDisabled"
+                                classes="whitespace-nowrap rounded-full pointer-events-none"
+                            >
+                                {{ $t('academic_calendar.continue_next_phase') }}
+                            </BaseButton>
+                        </span>
                         <BaseButton
                             v-if="canCompleteLevel && selectedStudentEnrolmentIds.length > 0"
                             :size="ButtonSize.xs"

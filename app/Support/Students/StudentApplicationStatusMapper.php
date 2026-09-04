@@ -75,7 +75,14 @@ class StudentApplicationStatusMapper
      */
     public function classListTypeForSlug(string $slug): ?ClassListTypeEnum
     {
-        return $this->isRejected($slug) ? ClassListTypeEnum::FAILED : null;
+        return match ($this->stepEnumBySlug($slug)) {
+            WorkflowStepEnum::REQUIREMENTS => ClassListTypeEnum::PROVISIONAL,
+            WorkflowStepEnum::WAITLISTED => ClassListTypeEnum::WAITING,
+            WorkflowStepEnum::ACCEPTED => ClassListTypeEnum::VERIFIED,
+            WorkflowStepEnum::ENROLLED => ClassListTypeEnum::FINAL,
+            WorkflowStepEnum::REJECTED => ClassListTypeEnum::FAILED,
+            default => null,
+        };
     }
 
     /**

@@ -2,6 +2,7 @@
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
 import PageHeaderAvatar from '@/components/users/PageHeaderAvatar.vue';
+import { useSectionTabQuerySync } from '@/composables/core/useSectionTabQuerySync';
 import { useStaff } from '@/composables/institution/useStaff';
 import { useStaffTabsStore } from '@/store/institution/useStaffTabsStore';
 import { AuthObject } from '@/types/data-pagination';
@@ -35,14 +36,22 @@ const { activeTab } = storeToRefs(useStaffTabsStore());
 
 const visibleTabs = computed(() => staffTabs(staff, institutionDepartmentId));
 const activeSection = computed(() => visibleTabs.value.find((tab) => tab.value === activeTab.value));
+
+useSectionTabQuerySync(activeTab, () => visibleTabs.value.map((tab) => tab.value));
 </script>
 
 <template>
     <Head :title="`${$t('trans.staff')} ${$tChoice('trans.profile', 1)}`" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <PageHeaderAvatar :line-one="user?.attributes?.name" :line-two="staff.attributes?.employeeNumber" :show-user-profile-link="true" />
-        <BaseSectionNav v-model:active-tab="activeTab" :tabs="visibleTabs" />
-        <div class="py-4">
+        <BaseSectionNav v-model:active-tab="activeTab" :tabs="visibleTabs" nav-id="staff-tabs" />
+        <div
+            :id="`staff-tabs-panel-${activeTab}`"
+            role="tabpanel"
+            :aria-labelledby="`staff-tabs-tab-${activeTab}`"
+            tabindex="0"
+            class="py-4"
+        >
             <component :is="activeSection?.component" v-if="activeSection" />
         </div>
     </PageContainer>

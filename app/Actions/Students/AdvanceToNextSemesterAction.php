@@ -33,19 +33,20 @@ class AdvanceToNextSemesterAction
             'departmentLevel.level',
             'academicCalendar',
             'studentSemesters.semester',
+            'studentSemesters.studentEnrolmentStatus',
         ]);
 
-        if (! $this->progression->canAdvanceToNextPhase($enrolment)) {
-            throw new StudentEnrolmentProgressionException(
-                __('students.enrolment_cannot_advance_phase'),
-            );
+        $cannotAdvanceReason = $this->progression->cannotAdvanceToNextPhaseReason($enrolment);
+
+        if ($cannotAdvanceReason !== null) {
+            throw new StudentEnrolmentProgressionException($cannotAdvanceReason);
         }
 
         $studentApplication = $enrolment->studentApplication;
 
         if ($studentApplication === null) {
             throw new StudentEnrolmentProgressionException(
-                __('students.enrolment_cannot_advance_phase'),
+                __('students.enrolment_cannot_advance_no_application'),
             );
         }
 
@@ -59,7 +60,7 @@ class AdvanceToNextSemesterAction
 
             if (! $nextPhase instanceof Semester) {
                 throw new StudentEnrolmentProgressionException(
-                    __('students.enrolment_cannot_advance_phase'),
+                    __('students.enrolment_cannot_advance_no_next_phase'),
                 );
             }
 

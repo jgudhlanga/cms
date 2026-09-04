@@ -16,6 +16,9 @@ use Illuminate\Support\Collection;
 
 class ProgrammeSemesterResolver
 {
+    /** @var array<string, DepartmentLevelCourse|null> */
+    private array $departmentLevelCourseCache = [];
+
     public function __construct(
         protected StudentSemesterPhaseResolver $phaseResolver,
     ) {}
@@ -33,11 +36,19 @@ class ProgrammeSemesterResolver
             return null;
         }
 
-        return DepartmentLevelCourse::query()
+        $cacheKey = $departmentLevelId.':'.$departmentCourseId;
+
+        if (array_key_exists($cacheKey, $this->departmentLevelCourseCache)) {
+            return $this->departmentLevelCourseCache[$cacheKey];
+        }
+
+        $this->departmentLevelCourseCache[$cacheKey] = DepartmentLevelCourse::query()
             ->where('department_level_id', $departmentLevelId)
             ->where('department_course_id', $departmentCourseId)
             ->with(['programmeSemesters', 'departmentLevel.level'])
             ->first();
+
+        return $this->departmentLevelCourseCache[$cacheKey];
     }
 
     public function resolveDepartmentLevelCourseForOffering(
@@ -85,12 +96,34 @@ class ProgrammeSemesterResolver
             return null;
         }
 
-        return $this->mapGlobalSemesterToProgrammeSemester($dlc, (int) $studentSemester->semester_id);
+        return $this->mapGlobalSemesterToProgrammeSemester(
+            $dlc,
+            (int) $studentSemester->semester_id,
+            $this->startOrdinalForEnrolment($enrolment),
+        );
+    }
+
+    /**
+     * The calendar phase this enrolment began in. A mid-year intake's first phase is the year's
+     * second calendar semester, so its programme phases are offset by one.
+     */
+    private function startOrdinalForEnrolment(StudentEnrolment $enrolment): int
+    {
+        // Queried rather than eager-loaded so callers keep whatever relation state they had.
+        $ordinals = StudentSemester::query()
+            ->where('student_semesters.student_enrolment_id', $enrolment->id)
+            ->join('semesters', 'semesters.id', '=', 'student_semesters.semester_id')
+            ->pluck('semesters.slug')
+            ->map(fn ($slug): int => $this->phaseResolver->phaseOrdinal((string) $slug))
+            ->filter(fn (int $ordinal): bool => $ordinal > 0);
+
+        return $ordinals->isEmpty() ? 1 : (int) $ordinals->min();
     }
 
     public function mapGlobalSemesterToProgrammeSemester(
         DepartmentLevelCourse $dlc,
         int $globalSemesterId,
+        int $startOrdinal = 1,
     ): ?ProgrammeSemester {
         $dlc->loadMissing(['programmeSemesters', 'departmentLevel.level']);
 
@@ -115,12 +148,20 @@ class ProgrammeSemesterResolver
 
         $ordinal = $this->phaseResolver->phaseOrdinal((string) $globalSemester->slug);
 
-        /** @var ProgrammeSemester|null $match */
-        $match = $programmeSemesters
+        /** @var Collection<int, ProgrammeSemester> $taught */
+        $taught = $programmeSemesters
             ->where('kind', ProgrammeSemesterKindEnum::TAUGHT)
             ->sortBy('position')
-            ->values()
-            ->get($ordinal - 1);
+            ->values();
+
+        // Offset by the period the student started in, wrapping within the year: an August intake
+        // begins their Year 1 Sem 1 in the calendar's second semester, so the year's first
+        // semester is where their Year 1 Sem 2 will fall.
+        $periodsPerYear = max(1, $calendarType->maxAssessmentCalendarsPerYear());
+        $index = (($ordinal - max(1, $startOrdinal)) % $periodsPerYear + $periodsPerYear) % $periodsPerYear;
+
+        /** @var ProgrammeSemester|null $match */
+        $match = $taught->get($index);
 
         return $match instanceof ProgrammeSemester ? $match : null;
     }

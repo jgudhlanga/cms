@@ -174,6 +174,9 @@ export type CoursePathwayStepState = 'completed' | 'current' | 'blocked' | 'lock
 export type CoursePathwayStep = {
     programmeSemesterId: number;
     name: string;
+    /** Level-qualified compact form, e.g. "ND Y1 S2" — every level restarts at Year 1. */
+    shortName: string;
+    levelName: string | null;
     kind: string;
     state: CoursePathwayStepState;
 };

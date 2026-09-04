@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Students;
 
+use App\Actions\Students\StartNextLevelFromHexcoAwardAction;
 use App\Enums\Students\StudentExamResultComment;
 use App\Models\Examinations\ExaminationResult;
 use App\Models\Students\Student;
@@ -17,6 +18,8 @@ class StudentExamResultLookupService
 {
     public function __construct(
         private readonly StudentExamResultAccessService $accessService,
+        private readonly ExamResultLevelResolver $levelResolver,
+        private readonly StartNextLevelFromHexcoAwardAction $startNextLevelFromHexcoAward,
     ) {}
 
     /**
@@ -180,6 +183,7 @@ class StudentExamResultLookupService
             'id' => $row->id,
             'discipline' => $row->discipline,
             'courseCode' => $row->course_code,
+            'courseLevel' => $row->course_level,
             'candidateNumber' => $row->candidate_number,
             'surname' => $row->surname,
             'firstNames' => $row->first_names,
@@ -277,9 +281,33 @@ class StudentExamResultLookupService
 
         $this->linkExaminationResultsToStudent($student, $candidateNumber);
 
+        // A HEXCO statement is cumulative: it lists every paper for the level with the sitting
+        // each was passed in. Record a summary per sitting so a candidate carrying both an NC
+        // and an ND statement ends up with a row per statement, not just one for the newest.
+        // $results is ordered by session_date desc, so the first group is the latest sitting.
         $latestSession = (string) $results->first()?->session;
         $sessionResults = $results->where('session', $latestSession)->values();
         $summary = $this->upsertSummary($student, $candidateNumber, $sessionResults);
+
+        foreach ($results->groupBy('session') as $session => $earlierResults) {
+            if ((string) $session === $latestSession) {
+                continue;
+            }
+
+            $this->upsertSummary($student, $candidateNumber, $earlierResults->values());
+        }
+
+        // AWARD closes the statement's course level. When a next-level application is already
+        // finalised, start that level at Year 1 Sem 1 in the half after this sitting.
+        if ($summary->comment === StudentExamResultComment::Award) {
+            $progression = $this->startNextLevelFromHexcoAward->execute($student, $summary);
+
+            if ($progression['status'] === 'started') {
+                Log::info('exam_results.award_started_next_level', $progression);
+            } elseif (! str_starts_with($progression['status'], 'skipped_not_award')) {
+                Log::info('exam_results.award_next_level_outcome', $progression);
+            }
+        }
 
         return [
             'found' => true,
@@ -313,6 +341,18 @@ class StudentExamResultLookupService
         $comment = StudentExamResultComment::tryFromCourseComment(is_string($rawComment) ? $rawComment : null);
         $enrolment = $this->accessService->resolveEnrolmentContext($student);
 
+        $courseLevel = $sessionResults
+            ->pluck('course_level')
+            ->filter(fn ($level) => is_string($level) && trim($level) !== '')
+            ->first();
+
+        $departmentLevel = $this->levelResolver->resolve(
+            $student,
+            is_string($courseLevel) ? $courseLevel : null,
+            $session,
+            $enrolment,
+        );
+
         return StudentExamResult::query()->updateOrCreate(
             [
                 'student_id' => $student->id,
@@ -324,7 +364,7 @@ class StudentExamResultLookupService
                 'candidate_number' => $candidateNumber,
                 'id_number' => $student->id_number ?? $student->passport_number,
                 'institution_department_id' => $enrolment?->institution_department_id,
-                'department_level_id' => $enrolment?->department_level_id,
+                'department_level_id' => $departmentLevel?->id ?? $enrolment?->department_level_id,
                 'department_course_id' => $enrolment?->department_course_id,
                 'mode_of_study_id' => $enrolment?->mode_of_study_id,
                 'comment' => $comment,

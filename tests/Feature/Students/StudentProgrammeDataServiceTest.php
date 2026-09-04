@@ -195,7 +195,7 @@ it('loads modules from programme syllabuses when student_semesters have no pinne
         ->and(collect($semesters)->firstWhere('label', 'Semester 2')['module'][0]['code'])->toBe('S2-M01');
 });
 
-it('marks calendar-current semester as unknown without exam results in august', function (): void {
+it('shows stored semester statuses when there are no exam results in august', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-08-15', config('app.timezone')));
 
     $context = createProgrammeTestContext('PROG-AUG');
@@ -207,14 +207,16 @@ it('marks calendar-current semester as unknown without exam results in august', 
 
     expect($semesters[0]['label'])->toBe('Semester 2')
         ->and($semesterTwo['isCurrent'])->toBeTrue()
-        ->and($semesterTwo['status'])->toBe('Unknown')
+        ->and($semesterTwo['status'])->toBe('Active')
+        ->and($semesterTwo['statusSlug'])->toBe('active')
         ->and($semesterTwo['needsResultsCollection'])->toBeFalse()
         ->and($semesterOne['isCurrent'])->toBeFalse()
-        ->and($semesterOne['status'])->toBe('Unknown')
+        ->and($semesterOne['status'])->toBe('Proceed')
+        ->and($semesterOne['statusSlug'])->toBe('proceed')
         ->and($semesterOne['needsResultsCollection'])->toBeTrue();
 });
 
-it('keeps semester two first but marks semester one unknown in march without exam results', function (): void {
+it('keeps stored semester one status in march without exam results', function (): void {
     Carbon::setTestNow(Carbon::parse('2026-03-15', config('app.timezone')));
 
     $context = createProgrammeTestContext('PROG-MAR');
@@ -226,11 +228,35 @@ it('keeps semester two first but marks semester one unknown in march without exa
 
     expect($semesters[0]['label'])->toBe('Semester 2')
         ->and($semesterOne['isCurrent'])->toBeTrue()
-        ->and($semesterOne['status'])->toBe('Unknown')
+        ->and($semesterOne['status'])->toBe('Active')
+        ->and($semesterOne['statusSlug'])->toBe('active')
         ->and($semesterOne['needsResultsCollection'])->toBeFalse()
         ->and($semesterTwo['isCurrent'])->toBeFalse()
         ->and($semesterTwo['status'])->toBe('Unknown')
         ->and($semesterTwo['needsResultsCollection'])->toBeTrue();
+});
+
+it('preserves a manual status override when programmes are rebuilt without exam results', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-08-15', config('app.timezone')));
+
+    $context = createProgrammeTestContext('PROG-MANUAL-STATUS', AcademicCalendarTypeEnum::SEMESTER, 'semester-2');
+    $enrolment = StudentEnrolment::query()->where('student_id', $context['student']->id)->firstOrFail();
+    $deferredId = (int) StudentEnrolmentStatus::query()->where('slug', 'deferred')->value('id');
+
+    StudentSemester::query()
+        ->where('student_enrolment_id', $enrolment->id)
+        ->where('semester_id', $context['semesterTwoId'])
+        ->update(['student_enrolment_status_id' => $deferredId]);
+
+    $programmes = app(StudentProgrammeDataService::class)->buildProgrammesForStudent($context['student']);
+    $semesterTwo = collect($programmes[0]['semesters'])->firstWhere('label', 'Semester 2');
+
+    expect($semesterTwo['status'])->toBe('Deferred')
+        ->and($semesterTwo['statusSlug'])->toBe('deferred')
+        ->and((int) StudentSemester::query()
+            ->where('student_enrolment_id', $enrolment->id)
+            ->where('semester_id', $context['semesterTwoId'])
+            ->value('student_enrolment_status_id'))->toBe($deferredId);
 });
 
 it('lists three term phases for term calendar types', function (): void {
