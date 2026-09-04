@@ -5,6 +5,7 @@ use App\Enums\Institution\LevelEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\IdTypeEnum;
+use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Enums\Students\ApplicationTrackEnum;
 use App\Models\Institution\Course;
 use App\Models\Institution\Department;
@@ -500,4 +501,106 @@ test('resolveIntakeForApplicationSubmit uses continuous intake when regular is c
 
     expect($intake->id)->toBe($continuous->id)
         ->and($intake->is_continuous)->toBeTrue();
+});
+
+test('resolveIntakeForApplicationSubmit ignores a continuous fee on the regular track', function () {
+    $regular = ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
+    $continuous = ensureContinuousIntakeOpen();
+    $user = createTrackApplicant();
+    $level = Level::query()->firstOrCreate(
+        ['name' => LevelEnum::ND->value],
+        ['description' => 'ND', 'position' => 6, 'show_on_current_application_period' => true],
+    );
+
+    ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $continuous->id,
+        'level_id' => $level->id,
+        'status' => ApplicationFeeStatusEnum::PAID,
+    ]);
+
+    $intake = app(ApplicationFeeService::class)->resolveIntakeForApplicationSubmit(
+        $user,
+        ApplicationTrackEnum::Regular,
+        $continuous->id,
+    );
+
+    expect($intake->id)->toBe($regular->id)
+        ->and($intake->is_continuous)->toBeFalse();
+});
+
+test('regular application submit succeeds with leftover continuous application fee', function () {
+    $seeded = seedGuestRegistrationProgramme();
+    $seeded['level']->update(['has_application_fee_payment' => true]);
+    $continuous = ensureContinuousIntakeOpen();
+    $user = createTrackApplicant();
+
+    ApplicationFee::query()->create([
+        'tenant_id' => $user->tenant_id,
+        'user_id' => $user->id,
+        'intake_period_id' => $continuous->id,
+        'level_id' => $seeded['level']->id,
+        'status' => ApplicationFeeStatusEnum::PAID,
+    ]);
+
+    $title = Title::query()->firstOrCreate(['name' => 'Ms Regular Continuous Fee']);
+    $gender = Gender::query()->firstOrCreate(['title' => 'Female Regular Continuous Fee']);
+    $maritalStatus = MaritalStatus::query()->firstOrCreate(['title' => 'Single Regular Continuous Fee']);
+    $relationship = Relationship::query()->firstOrCreate(['name' => 'Guardian Regular Continuous Fee']);
+    $idType = IdType::query()->firstOrCreate(
+        ['id' => IdTypeEnum::ZIMBABWEAN_ID_NUMBER->id()],
+        ['name' => IdTypeEnum::ZIMBABWEAN_ID_NUMBER->value],
+    );
+
+    $idNumber = '63-116929F59';
+
+    $this->actingAs($user)
+        ->withSession([
+            'application.track' => ApplicationTrackEnum::Regular->value,
+            'application.intake_period_id' => $continuous->id,
+            'application.level_id' => $seeded['level']->id,
+            'registration.id_number' => $idNumber,
+            'registration.id_type_id' => $idType->id,
+        ])
+        ->from(route('portal.application.confirm'))
+        ->post(route('portal.store-application'), [
+            'first_name' => 'Lucy',
+            'last_name' => 'Murisa',
+            'middle_name' => 'Kudakwashe',
+            'gender_id' => $gender->id,
+            'marital_status_id' => $maritalStatus->id,
+            'title_id' => $title->id,
+            'mode_of_study_id' => $seeded['modeId'],
+            'id_type_id' => $idType->id,
+            'id_number' => $idNumber,
+            'date_of_birth' => '1986-05-19',
+            'address_1' => 'Address 1',
+            'address_2' => 'Address 2',
+            'address_3' => 'Address 3',
+            'email' => $user->email,
+            'phone_number' => '0777000000',
+            'next_of_kin_name' => 'Kin Name',
+            'next_of_kin_address_1' => 'Kin 1',
+            'next_of_kin_address_2' => 'Kin 2',
+            'next_of_kin_address_3' => 'Kin 3',
+            'relationship_id' => $relationship->id,
+            'next_of_kin_phone_number' => '0777111111',
+            'department_id' => $seeded['departmentId'],
+            'level_id' => $seeded['departmentLevelId'],
+            'course_id' => $seeded['courseId'],
+            'disability_status' => 'no',
+            'required_level_completed' => true,
+        ])
+        ->assertRedirect(route('portal.applications'))
+        ->assertSessionDoesntHaveErrors();
+
+    $student = Student::query()->where('user_id', $user->id)->first();
+    expect($student)->not->toBeNull();
+
+    $application = $student->applications()->latest()->first();
+    expect($application)->not->toBeNull()
+        ->and($application->intake_period_id)->toBe($seeded['intakeId'])
+        ->and($application->institution_department_id)->toBe($seeded['departmentId'])
+        ->and($application->department_level_id)->toBe($seeded['departmentLevelId']);
 });

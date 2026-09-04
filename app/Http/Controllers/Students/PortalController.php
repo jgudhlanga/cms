@@ -615,7 +615,9 @@ class PortalController extends Controller
             $intakePeriod = $this->applicationFeeService->resolveIntakeForApplicationSubmit(
                 $user,
                 $track,
-                $request->filled('intake_period_id') ? $request->integer('intake_period_id') : null
+                $request->filled('intake_period_id')
+                    ? $request->integer('intake_period_id')
+                    : $this->trackSession->intakePeriodId()
             );
 
             if ($intakePeriod->is_continuous && ! $track->usesContinuousIntake()) {

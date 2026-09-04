@@ -18,6 +18,7 @@ use App\Services\Students\ApplicationEligibilityService;
 use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\ApplicationTrackSession;
 use App\Services\Students\RegistrationProgrammeAvailabilityService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -195,14 +196,17 @@ class CreateApplicationRequest extends FormRequest
         }
 
         $applicationFeeService = app(ApplicationFeeService::class);
-        $intakePeriod = $track->usesContinuousIntake()
-            ? $applicationFeeService->continuousIntakePeriod()
-            : $applicationFeeService->resolveIntakeForSubmit(
-                $this->user(),
-                $this->filled('intake_period_id') ? $this->integer('intake_period_id') : ($trackSession->intakePeriodId())
-            );
+        $requestedIntakePeriodId = $this->filled('intake_period_id')
+            ? $this->integer('intake_period_id')
+            : $trackSession->intakePeriodId();
 
-        if ($intakePeriod === null) {
+        try {
+            $intakePeriod = $applicationFeeService->resolveIntakeForApplicationSubmit(
+                $this->user(),
+                $track,
+                $requestedIntakePeriodId,
+            );
+        } catch (ModelNotFoundException) {
             $validator->errors()->add('level_id', __('trans.application_track_not_open'));
 
             return;

@@ -136,23 +136,28 @@ class ApplicationFeeService
     /**
      * Resolve intake for portal application submit, honouring the selected track
      * before falling back to open regular intakes (which may be closed).
+     *
+     * Unused fees from the other path (e.g. a leftover SDP/OJET fee on Regular)
+     * are ignored so the application is attached to the open intake for the track.
      */
     public function resolveIntakeForApplicationSubmit(
         User $user,
         ApplicationTrackEnum $track,
         ?int $requestIntakePeriodId = null,
     ): IntakePeriod {
-        $applicationFee = $this->activeApplicationFee($user);
+        $feeIntake = $this->activeApplicationFee($user)?->intakePeriod;
 
-        if ($applicationFee !== null) {
-            return $applicationFee->intakePeriod;
+        if ($feeIntake !== null && $this->intakeMatchesTrack($feeIntake, $track)) {
+            return $feeIntake;
         }
 
         if ($track->usesContinuousIntake()) {
             return $this->resolveContinuousIntakePeriod();
         }
 
-        return $this->resolvePortalIntakePeriod($requestIntakePeriodId);
+        return $this->resolvePortalIntakePeriod(
+            $this->regularRequestedIntakePeriodId($requestIntakePeriodId)
+        );
     }
 
     public function forUserAndIntake(User $user, ?IntakePeriod $intakePeriod = null): ?ApplicationFee
@@ -243,6 +248,25 @@ class ApplicationFeeService
         }
 
         return $intakePeriod;
+    }
+
+    private function intakeMatchesTrack(IntakePeriod $intake, ApplicationTrackEnum $track): bool
+    {
+        return $track->usesContinuousIntake() === $intake->is_continuous;
+    }
+
+    private function regularRequestedIntakePeriodId(?int $requestIntakePeriodId): ?int
+    {
+        if ($requestIntakePeriodId === null || $requestIntakePeriodId <= 0) {
+            return null;
+        }
+
+        $isRegular = IntakePeriod::query()
+            ->whereKey($requestIntakePeriodId)
+            ->where('is_continuous', false)
+            ->exists();
+
+        return $isRegular ? $requestIntakePeriodId : null;
     }
 
     /**
