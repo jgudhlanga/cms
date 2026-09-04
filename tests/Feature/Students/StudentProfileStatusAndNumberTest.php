@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
+use App\Jobs\Enrolments\SendEnrolmentProgressJob;
+use App\Jobs\Enrolments\SendOfferLetterJob;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
 use App\Models\Enrolments\ClassList;
@@ -19,6 +21,7 @@ use App\Models\Users\User;
 use App\Support\Rbac\PermissionRegistry;
 use Database\Seeders\Rbac\RoleGroupSeeder;
 use Database\Seeders\Rbac\RolesTableSeeder;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity;
 
@@ -426,4 +429,62 @@ it('forbids changing the student status without the permission', function (): vo
             'reason' => 'No permission to change this student status.',
         ])
         ->assertForbidden();
+});
+
+it('generates a student number and offer letter when accepting from the student profile', function (): void {
+    Queue::fake();
+
+    $application = createVerifiedStudentApplication('STA-ACC-'.strtoupper(Str::random(4)));
+    $student = $application->student;
+    $student->update([
+        'student_number' => null,
+        'student_number_generated' => false,
+    ]);
+
+    activateIntakePeriodForStatusTest($application);
+    seedWorkflowStepsForStatusTest();
+
+    ClassList::query()->where('student_application_id', $application->id)->update([
+        'type' => ClassListTypeEnum::PROVISIONAL->value,
+    ]);
+
+    $manager = createStudentStatusManager($student);
+
+    $this->actingAs($manager)
+        ->patch(route('students.status.update', $student), [
+            'status' => WorkflowStepEnum::ACCEPTED->slug(),
+            'reason' => 'Documents verified on the student profile.',
+        ])
+        ->assertRedirect();
+
+    $acceptedStep = resolveWorkflowStep(WorkflowStepEnum::ACCEPTED);
+    $student = $student->fresh();
+
+    expect($application->fresh()->workflow_step_id)->toBe($acceptedStep->id)
+        ->and(ClassList::query()->where('student_application_id', $application->id)->value('type'))
+        ->toBe(ClassListTypeEnum::VERIFIED)
+        ->and($student?->student_number)->not->toBeEmpty()
+        ->and($student?->student_number_generated)->toBeTrue();
+
+    Queue::assertPushed(SendOfferLetterJob::class);
+});
+
+it('emails the applicant when rejecting from the student profile', function (): void {
+    Queue::fake();
+
+    $application = createVerifiedStudentApplication('STA-FAIL-MAIL-'.strtoupper(Str::random(4)));
+    $student = $application->student;
+    activateIntakePeriodForStatusTest($application);
+    seedWorkflowStepsForStatusTest();
+
+    $manager = createStudentStatusManager($student);
+
+    $this->actingAs($manager)
+        ->patch(route('students.status.update', $student), [
+            'status' => WorkflowStepEnum::REJECTED->slug(),
+            'reason' => 'Applicant failed to meet the entry requirements.',
+        ])
+        ->assertRedirect();
+
+    Queue::assertPushed(SendEnrolmentProgressJob::class);
 });

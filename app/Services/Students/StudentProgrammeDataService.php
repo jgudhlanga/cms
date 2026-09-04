@@ -18,8 +18,10 @@ use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentSemester;
 use App\Services\AcademicCalendars\CourseWorkAggregationService;
+use App\Services\Institution\ProgrammeSemesterResolver;
 use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
 use App\Support\Institution\CourseSyllabusModulePeriod;
+use App\Support\Institution\ProgrammeSemesterNameFormatter;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -32,6 +34,8 @@ class StudentProgrammeDataService
         protected ExamResultEnrolmentStatusResolver $examResultResolver,
         protected SyncStudentSemesterStatusesFromExamResultsService $syncSemesterStatusesFromExamResults,
         protected StudentCoursePathwayProgressService $pathwayProgress,
+        protected ProgrammeSemesterResolver $programmeSemesterResolver,
+        protected StudentSemesterPhaseResolver $phaseResolver,
     ) {}
 
     /**
@@ -293,6 +297,16 @@ class StudentProgrammeDataService
         $latestEnrolment->load(['studentSemesters.semester', 'studentSemesters.studentEnrolmentStatus']);
         $enrolmentsBySemesterId = $latestEnrolment->studentSemesters->keyBy('semester_id');
 
+        // A calendar half is not a programme phase. A student who joined in the year's second
+        // semester is on Year 1 Sem 1, and their Year 1 Sem 2 falls in the next calendar's first
+        // half — so modules and labels come from the programme semester, never the calendar one.
+        $offering = $this->programmeSemesterResolver->resolveDepartmentLevelCourse($latestEnrolment);
+        $levelName = $latestEnrolment->departmentLevel?->level?->name;
+        $startOrdinal = $latestEnrolment->studentSemesters
+            ->map(fn (StudentSemester $row): int => $this->phaseResolver->phaseOrdinal((string) ($row->semester?->slug ?? '')))
+            ->filter(fn (int $ordinal): bool => $ordinal > 0)
+            ->min() ?? 1;
+
         $availableStatuses = array_values(array_filter(
             $this->progression->availableStatuses(),
             fn (array $status): bool => $status['slug'] !== StudentEnrolmentProgressionService::STATUS_UNKNOWN,
@@ -308,6 +322,13 @@ class StudentProgrammeDataService
             $semesterId = (int) $phase->id;
             $studentSemester = $enrolmentsBySemesterId->get($semesterId);
             $enrolment = $latestEnrolment;
+
+            $programmeSemester = $studentSemester instanceof StudentSemester
+                ? $this->programmeSemesterResolver->programmeSemesterForStudentSemester($studentSemester)
+                : ($offering !== null
+                    ? $this->programmeSemesterResolver->mapGlobalSemesterToProgrammeSemester($offering, $semesterId, $startOrdinal)
+                    : null);
+            $programmeSemesterId = $programmeSemester?->id !== null ? (int) $programmeSemester->id : null;
             $calendar = $slugToCalendar->first(
                 fn (AcademicCalendar $calendar, string $slug): bool => $slug === $phaseSlug
             );
@@ -325,19 +346,28 @@ class StudentProgrammeDataService
             $resolvedSlug = $hasExamResult
                 ? strtolower($examComment->value)
                 : (
-                    $isCurrent && $previousResolvedSlug === StudentEnrolmentProgressionService::STATUS_PROCEED
-                        ? StudentEnrolmentProgressionService::STATUS_ACTIVE
-                        : StudentEnrolmentProgressionService::STATUS_UNKNOWN
+                    is_string($enrolmentSlug) && $enrolmentSlug !== ''
+                        ? $enrolmentSlug
+                        : (
+                            $isCurrent && $previousResolvedSlug === StudentEnrolmentProgressionService::STATUS_PROCEED
+                                ? StudentEnrolmentProgressionService::STATUS_ACTIVE
+                                : StudentEnrolmentProgressionService::STATUS_UNKNOWN
+                        )
                 );
 
             $isDisabled = $previousResolvedSlug !== null
                 && StudentEnrolmentProgressionService::isBlockingStatus($previousResolvedSlug);
+
+            $storedStatusName = $studentSemester instanceof StudentSemester
+                ? $studentSemester->studentEnrolmentStatus?->name
+                : null;
 
             $displayStatus = $this->resolveExamDrivenDisplayStatus(
                 $hasExamResult,
                 $examComment,
                 $isDisabled,
                 $resolvedSlug,
+                is_string($storedStatusName) && $storedStatusName !== '' ? $storedStatusName : null,
             );
 
             $syllabusIds = $this->resolveSyllabusIdsForProgrammePhase(
@@ -363,9 +393,10 @@ class StudentProgrammeDataService
 
             $modules = collect($syllabusIds)
                 ->flatMap(fn (int $syllabusId) => $modulesBySyllabusId->get($syllabusId, collect()))
-                ->filter(fn (CourseSyllabusModule $module): bool => CourseSyllabusModulePeriod::matchesPeriod(
+                ->filter(fn (CourseSyllabusModule $module): bool => $this->moduleBelongsToPhase(
                     $module,
                     $semesterId,
+                    $programmeSemesterId,
                 ))
                 ->map(fn (CourseSyllabusModule $module): array => $this->mapProgrammeModule(
                     $module,
@@ -381,14 +412,15 @@ class StudentProgrammeDataService
             $isLastPhase = $phaseSlug === $isLastPhaseSlug;
 
             $statusSlugForSelect = $hasExamResult
+                || $resolvedSlug === StudentEnrolmentProgressionService::STATUS_UNKNOWN
                 ? null
-                : ($resolvedSlug === StudentEnrolmentProgressionService::STATUS_ACTIVE
-                    ? StudentEnrolmentProgressionService::STATUS_ACTIVE
-                    : null);
+                : $resolvedSlug;
 
             $orderedPhases[] = [
                 'id' => sprintf('%s-%s', $studentApplication?->id ?? '', Str::slug($phaseSlug)),
-                'label' => $phase->name,
+                'label' => $programmeSemester !== null
+                    ? ProgrammeSemesterNameFormatter::qualifiedName($levelName, $programmeSemester->name)
+                    : $phase->name,
                 'year' => $calendarYear,
                 'status' => $displayStatus,
                 'statusSlug' => $statusSlugForSelect,
@@ -463,11 +495,34 @@ class StudentProgrammeDataService
         return [];
     }
 
+    /**
+     * Which phase a module belongs to. Once the phase resolves to a programme semester, the
+     * module's own programme semester is the only thing that decides — matching on the calendar
+     * semester as well would hand a mid-year intake the modules of the phase they have not
+     * reached, because their Year 1 Sem 1 sits in the calendar's second half.
+     */
+    private function moduleBelongsToPhase(
+        CourseSyllabusModule $module,
+        int $semesterId,
+        ?int $programmeSemesterId,
+    ): bool {
+        if ($module->all_semesters) {
+            return CourseSyllabusModulePeriod::matchesPeriod($module, $semesterId, $programmeSemesterId);
+        }
+
+        if ($programmeSemesterId !== null && $module->programme_semester_id !== null) {
+            return (int) $module->programme_semester_id === $programmeSemesterId;
+        }
+
+        return CourseSyllabusModulePeriod::matchesPeriod($module, $semesterId, $programmeSemesterId);
+    }
+
     private function resolveExamDrivenDisplayStatus(
         bool $hasExamResult,
         ?StudentExamResultComment $examComment,
         bool $isDisabled,
         string $resolvedSlug,
+        ?string $storedStatusName = null,
     ): ?string {
         if ($hasExamResult && $examComment !== null) {
             return ucfirst(strtolower($examComment->value));
@@ -477,11 +532,19 @@ class StudentProgrammeDataService
             return null;
         }
 
+        if (is_string($storedStatusName) && $storedStatusName !== '') {
+            return $storedStatusName;
+        }
+
         if ($resolvedSlug === StudentEnrolmentProgressionService::STATUS_ACTIVE) {
             return 'Active';
         }
 
-        return 'Unknown';
+        if ($resolvedSlug === StudentEnrolmentProgressionService::STATUS_UNKNOWN) {
+            return 'Unknown';
+        }
+
+        return ucfirst($resolvedSlug);
     }
 
     private function phaseNumberFromSlug(string $slug): int

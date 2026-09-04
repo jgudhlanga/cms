@@ -119,6 +119,25 @@ const canMoveStudents = computed(() => hasAbility(['update:academic-calendar-stu
 const canAdvancePhase = computed(() => canMoveStudents.value && props.isLastProgrammePhase !== true);
 const canCompleteLevel = computed(() => canMoveStudents.value && props.isLastProgrammePhase === true);
 
+const selectedStudents = computed(() =>
+    filteredStudents.value.filter((student) => selectedStudentEnrolmentIds.value.includes(student.studentEnrolmentId)),
+);
+const selectedCanAdvancePhase = computed(() =>
+    selectedStudents.value.some((student) => student.canAdvanceToNextPhase !== false),
+);
+const advancePhaseBlockReason = computed(() => {
+    const reasons = [
+        ...new Set(
+            selectedStudents.value
+                .filter((student) => student.canAdvanceToNextPhase === false)
+                .map((student) => student.cannotAdvancePhaseReason)
+                .filter((reason): reason is string => typeof reason === 'string' && reason !== ''),
+        ),
+    ];
+
+    return reasons.join(' ');
+});
+
 const singleClassExportOption = computed(() => [
     {
         academicCalendarClassId: academicCalendarClass.value.id,
@@ -138,6 +157,12 @@ const { open: openConfirmDialog } = useCustomConfirmDialog();
 
 const onAdvancePhase = async (): Promise<void> => {
     if (selectedStudentEnrolmentIds.value.length === 0) {
+        return;
+    }
+
+    if (!selectedCanAdvancePhase.value) {
+        errorAlert(advancePhaseBlockReason.value || trans('academic_calendar.advance_phase_none'));
+
         return;
     }
 
@@ -329,6 +354,8 @@ const onRemoveStudent = async (student: AcademicCalendarClassPreviewStudent): Pr
                     :can-view-course-work="canViewCourseWork"
                     :can-advance-phase="canAdvancePhase"
                     :can-complete-level="canCompleteLevel"
+                    :advance-phase-disabled="!selectedCanAdvancePhase"
+                    :advance-phase-block-reason="advancePhaseBlockReason"
                     :move-target-classes="moveTargetClasses"
                     :student-course-work-url="studentCourseWorkUrl"
                     @toggle-select-all="toggleSelectAllChangeClassFromRow"

@@ -4,6 +4,7 @@ import LevelCodeBadge from '@/components/core/util/LevelCodeBadge.vue';
 import { IconName } from '@/enums/icons';
 import { formatLevelBadge } from '@/lib/levelBadge';
 import { InstitutionDepartment } from '@/types/institution';
+import { Link } from '@inertiajs/vue3';
 import { CircleUser } from 'lucide-vue-next';
 
 interface Props {
@@ -120,17 +121,15 @@ const hasStaffName = (name?: string | null): boolean => Boolean(name?.trim());
                     <BaseIcon :name="IconName.edit" class="h-3.5 w-3.5" />
                     {{ $t('trans.edit') }}
                 </button>
-                <a
+                <Link
                     v-if="canView && viewUrl"
                     :href="viewUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
                     class="inline-flex items-center gap-1.5 rounded-full border-2 border-primary bg-transparent px-4 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/5"
                     @click.stop
                 >
                     <BaseIcon :name="IconName.eye" class="h-3.5 w-3.5" />
                     {{ $t('trans.view') }}
-                </a>
+                </Link>
             </div>
         </div>
     </div>

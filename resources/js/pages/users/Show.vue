@@ -3,6 +3,7 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
 import UserProfileHeader from '@/components/users/UserProfileHeader.vue';
 import UserProfileImpersonateSection from '@/components/users/profile/UserProfileImpersonateSection.vue';
+import { useSectionTabQuerySync } from '@/composables/core/useSectionTabQuerySync';
 import { useShowUser } from '@/composables/users/useShowUser';
 import { useUserTabsStore } from '@/store/users/useUserTabsStore';
 import { AuthObject } from '@/types/data-pagination';
@@ -32,6 +33,8 @@ const { activeTab } = storeToRefs(useUserTabsStore());
 
 const visibleTabs = computed(() => userProfileTabs(user));
 const activeSection = computed(() => visibleTabs.value.find((tab) => tab.value === activeTab.value));
+
+useSectionTabQuerySync(activeTab, () => visibleTabs.value.map((tab) => tab.value));
 </script>
 
 <template>
@@ -41,9 +44,15 @@ const activeSection = computed(() => visibleTabs.value.find((tab) => tab.value =
             <UserProfileHeader :user="user" />
 
             <div class="w-full min-w-0 space-y-4 px-3 pb-4 md:px-4">
-                <BaseSectionNav v-model:active-tab="activeTab" :tabs="visibleTabs" :grouped="false" />
+                <BaseSectionNav v-model:active-tab="activeTab" :tabs="visibleTabs" :grouped="false" nav-id="user-tabs" />
 
-                <div class="min-w-0 pt-1">
+                <div
+                    :id="`user-tabs-panel-${activeTab}`"
+                    role="tabpanel"
+                    :aria-labelledby="`user-tabs-tab-${activeTab}`"
+                    tabindex="0"
+                    class="min-w-0 pt-1"
+                >
                     <component :is="activeSection?.component" v-if="activeSection" />
                 </div>
             </div>

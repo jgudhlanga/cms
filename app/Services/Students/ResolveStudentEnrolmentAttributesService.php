@@ -8,6 +8,7 @@ use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolmentStatus;
+use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 
@@ -32,10 +33,11 @@ class ResolveStudentEnrolmentAttributesService
     {
         $asOf = $asOf ?? Carbon::now((string) config('app.timezone'));
         $studentApplication = $this->resolveStudentApplication($studentApplicationId);
+        $academicCalendarId = $this->resolveAcademicCalendarId($studentApplication, $asOf);
 
         return [
-            'academic_calendar_id' => $this->resolveAcademicCalendarId($studentApplication, $asOf),
-            'semester_id' => $this->resolveSemesterId($studentApplication),
+            'academic_calendar_id' => $academicCalendarId,
+            'semester_id' => $this->resolveSemesterId($studentApplication, $academicCalendarId),
             'student_enrolment_status_id' => $this->resolveActiveStudentEnrolmentStatusId(),
         ];
     }
@@ -97,7 +99,7 @@ class ResolveStudentEnrolmentAttributesService
         return $calendarType;
     }
 
-    private function resolveSemesterId(StudentApplication $studentApplication): int
+    private function resolveSemesterId(StudentApplication $studentApplication, ?int $academicCalendarId = null): int
     {
         $prefix = $this->resolveCalendarType($studentApplication)->value;
         $options = Semester::query()
@@ -117,7 +119,13 @@ class ResolveStudentEnrolmentAttributesService
         }
 
         $existingPhaseCount = $this->progression->existingPhaseCount($studentApplication);
-        $optionIndex = min($existingPhaseCount, $options->count() - 1);
+
+        // A first enrolment starts in the calendar period it is actually created in, not at
+        // phase 1 of the year — an August intake begins at semester-2, not semester-1.
+        $optionIndex = $existingPhaseCount === 0
+            ? $this->startingPhaseIndex($academicCalendarId, $options->count() - 1)
+            : min($existingPhaseCount, $options->count() - 1);
+
         $option = $options->get($optionIndex);
 
         if ($option === null) {
@@ -127,6 +135,28 @@ class ResolveStudentEnrolmentAttributesService
         }
 
         return (int) $option->id;
+    }
+
+    /**
+     * Zero-based index of the calendar period the enrolment is being created in.
+     */
+    private function startingPhaseIndex(?int $academicCalendarId, int $maxIndex): int
+    {
+        if ($academicCalendarId === null) {
+            return 0;
+        }
+
+        $calendar = AcademicCalendar::query()->find($academicCalendarId);
+
+        if ($calendar === null) {
+            return 0;
+        }
+
+        $slug = AcademicCalendarPeriodResolver::semesterSlugForCalendar($calendar);
+        $parts = explode('-', $slug);
+        $ordinal = (int) end($parts);
+
+        return max(0, min($ordinal - 1, $maxIndex));
     }
 
     private function resolveActiveStudentEnrolmentStatusId(): int

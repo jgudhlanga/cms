@@ -2,11 +2,12 @@
 
 namespace App\Services\Enrolments;
 
+use App\Actions\Enrolments\SyncStudentApplicationClassListLifecycleAction;
 use App\DTO\Enrolments\ClassListDto;
 use App\Enums\Shared\ClassListTypeEnum;
-use App\Jobs\Enrolments\SendEnrolmentProgressJob;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Services\DepartmentEnrolmentService;
@@ -53,6 +54,7 @@ class ClassListTransitionService
     public function __construct(
         protected IClassListRepository $repository,
         protected DepartmentEnrolmentService $departmentEnrolmentService,
+        protected SyncStudentApplicationClassListLifecycleAction $lifecycle,
     ) {}
 
     /**
@@ -103,7 +105,7 @@ class ClassListTransitionService
             foreach ($toAdd as $applicationId) {
                 $dto = $this->makeDto((int) $applicationId, $type);
                 $entry = $this->repository->create($dto);
-                $this->dispatchProgress($entry, $type);
+                $this->lifecycle->sync($entry, ClassListTypeEnum::from($type));
                 $this->audit(
                     entry: $entry,
                     actor: $actor,
@@ -144,6 +146,7 @@ class ClassListTransitionService
 
         $entries = ClassList::query()
             ->whereIn('student_application_id', $ids)
+            ->with(['studentApplication.student.user'])
             ->get();
 
         if ($entries->isEmpty()) {
@@ -185,6 +188,7 @@ class ClassListTransitionService
 
                 $entry->type = $toType;
                 $entry->save();
+                $this->lifecycle->sync($entry, ClassListTypeEnum::from($toType));
 
                 $this->audit(
                     entry: $entry,
@@ -222,6 +226,7 @@ class ClassListTransitionService
 
         $entries = ClassList::query()
             ->whereIn('student_application_id', $ids)
+            ->with('studentApplication')
             ->get();
 
         foreach ($entries as $entry) {
@@ -258,6 +263,10 @@ class ClassListTransitionService
                         'application_ids' => [$entry->student_application_id],
                     ]),
                 );
+
+                if ($entry->studentApplication instanceof StudentApplication) {
+                    $this->lifecycle->resetToReview($entry->studentApplication);
+                }
 
                 $entry->forceDelete();
                 $purged++;
@@ -331,39 +340,6 @@ class ClassListTransitionService
                 'original_education_certificates_confirmed' => false,
             ],
         );
-    }
-
-    private function dispatchProgress(ClassList $entry, string $type): void
-    {
-        $details = DB::table('class_lists as cl')
-            ->join('student_applications as sp', 'sp.id', '=', 'cl.student_application_id')
-            ->join('institution_departments as idp', 'idp.id', '=', 'sp.institution_department_id')
-            ->join('departments as dp', 'dp.id', '=', 'idp.department_id')
-            ->join('department_levels as dl', 'dl.id', '=', 'sp.department_level_id')
-            ->join('levels as lv', 'lv.id', '=', 'dl.level_id')
-            ->join('department_courses as dc', 'dc.id', '=', 'sp.department_course_id')
-            ->join('courses as cs', 'cs.id', '=', 'dc.course_id')
-            ->where('cl.id', $entry->id)
-            ->select([
-                'sp.institution_department_id',
-                'dp.name as department',
-                'lv.name as level',
-                'cs.name as course',
-            ])
-            ->first();
-
-        if ($details === null) {
-            return;
-        }
-
-        SendEnrolmentProgressJob::dispatch(
-            $entry->id,
-            $type,
-            $details->institution_department_id,
-            $details->department,
-            $details->level,
-            $details->course,
-        )->withoutDelay();
     }
 
     /**

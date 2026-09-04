@@ -59,9 +59,16 @@ const tabProps = (tabValue: string) => {
             v-model:active-tab="activeTabModel"
             :tabs="tabs"
             :aria-label="$t('trans.maintenance')"
+            nav-id="maintenance-tabs"
         />
 
-        <div :class="contentWrapperClass">
+        <div
+            :id="`maintenance-tabs-panel-${activeTab}`"
+            role="tabpanel"
+            :aria-labelledby="`maintenance-tabs-tab-${activeTab}`"
+            tabindex="0"
+            :class="contentWrapperClass"
+        >
             <component
                 :is="activeSection?.component"
                 v-if="activeSection"

@@ -525,6 +525,18 @@ test('class detail page returns students', function () {
         ->and(data_get($page, 'props.moveTargetClasses'))->toBe([])
         ->and(data_get($page, 'props.siblingAcademicCalendarClasses'))->toHaveCount(1)
         ->and(data_get($page, 'props.siblingAcademicCalendarClasses.0.id'))->toBe($academicCalendarClass->id);
+
+    $previewStudent = collect(data_get($page, 'props.academicCalendarClass.students'))->first();
+    $enrolment = StudentEnrolment::query()->findOrFail($previewStudent['studentEnrolmentId']);
+
+    expect($previewStudent['studentId'])->toBe((int) $enrolment->student_id);
+
+    $context['user']->givePermissionTo(['view:students', 'viewAny:students']);
+
+    $this->get(route('students.show', [
+        'student' => $previewStudent['studentId'],
+        'from' => 'academic-calendar',
+    ]))->assertSuccessful();
 });
 
 test('class detail page exposes move targets and update flag when user has permission and multiple classes exist', function () {

@@ -9,6 +9,10 @@ use App\Models\Users\User;
 use Illuminate\Support\Facades\Queue;
 use Spatie\Activitylog\Models\Activity;
 
+beforeEach(function (): void {
+    ensureApplicationWorkflowSteps();
+});
+
 function makeClassListMutationUser(array $permissions): User
 {
     $user = User::factory()->create(['tenant_id' => TenantEnum::HARARE_POLY->id()]);
@@ -189,6 +193,7 @@ it('transitions provisional to verified only with verify permission', function (
 
 it('transitions verified to final only with manage-final permission', function () {
     Queue::fake();
+    ensureStudentEnrolmentResolutionFixtures();
     ['application' => $application] = classListEntryFor('TRANS-FINAL-001', ClassListTypeEnum::VERIFIED);
 
     $forbidden = makeClassListMutationUser(['verify:class-lists']);
@@ -331,6 +336,7 @@ it('rejects transitions away from final class list status', function () {
 
 it('bulk transitions multiple verified entries to final with one note', function () {
     Queue::fake();
+    ensureStudentEnrolmentResolutionFixtures();
     ['application' => $first] = classListEntryFor('TRANS-BULK-FINAL-001', ClassListTypeEnum::VERIFIED);
     ['application' => $second] = classListEntryFor('TRANS-BULK-FINAL-002', ClassListTypeEnum::VERIFIED);
     $user = makeClassListMutationUser(['manage-final:class-lists']);

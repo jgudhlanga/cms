@@ -8,7 +8,7 @@ import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
 import { useModalStore } from '@/store/core/useModalStore';
 import type { SelectOption } from '@/types/utils';
-import { useForm } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 
 export interface StudentStatusOption {
@@ -70,6 +70,11 @@ const save = (): void => {
         onSuccess: () => {
             closeModal(APP_MODULE_KEYS.student_status_change);
             onClose();
+            router.visit(window.location.href, {
+                replace: true,
+                preserveState: false,
+                preserveScroll: false,
+            });
         },
     });
 };

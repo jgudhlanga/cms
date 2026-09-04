@@ -24,7 +24,7 @@ class ContinueAndReseatStudentsAction
 
     /**
      * @param  Collection<int, StudentEnrolment>  $enrolments
-     * @return array{advanced: int, reseated: int, run_id: int|null}
+     * @return array{advanced: int, reseated: int, run_id: int|null, skipped_reasons: list<string>}
      */
     public function execute(
         Collection $enrolments,
@@ -35,6 +35,7 @@ class ContinueAndReseatStudentsAction
         $advanced = 0;
         $reseated = 0;
         $runId = null;
+        $skippedReasons = [];
 
         $sourceClass->loadMissing('classConfig');
 
@@ -58,7 +59,13 @@ class ContinueAndReseatStudentsAction
 
             try {
                 $updatedEnrolment = $this->advanceToNextSemester->execute($enrolment);
-            } catch (StudentEnrolmentProgressionException) {
+            } catch (StudentEnrolmentProgressionException $exception) {
+                $message = trim($exception->getMessage());
+
+                if ($message !== '') {
+                    $skippedReasons[] = $message;
+                }
+
                 continue;
             }
 
@@ -129,7 +136,12 @@ class ContinueAndReseatStudentsAction
                 ->update(['affected_count' => $advanced, 'updated_at' => now()]);
         }
 
-        return compact('advanced', 'reseated', 'run_id');
+        return [
+            'advanced' => $advanced,
+            'reseated' => $reseated,
+            'run_id' => $runId,
+            'skipped_reasons' => array_values(array_unique($skippedReasons)),
+        ];
     }
 
     private function resolveTargetClass(

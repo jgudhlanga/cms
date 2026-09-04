@@ -76,6 +76,7 @@ final class ExaminationStatementSheetParser
                 ExaminationDumpColumns::GRADE => $grade,
                 ExaminationDumpColumns::SESSION => $session,
                 ExaminationDumpColumns::COURSE_COMMENT => $meta['course_comment'],
+                ExaminationDumpColumns::COURSE_LEVEL => $meta['course_level'],
             ];
         }
 

@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\Enrolments;
 
-use App\Actions\Students\UpsertYearStudentEnrolmentAction;
+use App\Actions\Enrolments\SyncStudentApplicationClassListLifecycleAction;
 use App\DTO\Enrolments\ClassListDto;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
-use App\Enums\Shared\WorkflowStepEnum;
 use App\Helpers\DepartmentHelper;
 use App\Helpers\EnrolmentHelper;
 use App\Http\Controllers\Controller;
@@ -25,8 +24,6 @@ use App\Http\Resources\Institution\DepartmentLevelResource;
 use App\Http\Resources\Institution\InstitutionDepartmentResource;
 use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Http\Resources\Institution\ModeOfStudyResource;
-use App\Jobs\Enrolments\SendEnrolmentProgressJob;
-use App\Jobs\Enrolments\SendOfferLetterJob;
 use App\Models\Applications\ApplicationCourseRequirement;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\DepartmentCourse;
@@ -34,7 +31,6 @@ use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\FeeStructure;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Shared\FeeType;
-use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentApplication;
 use App\Repositories\Institution\interface\IClassListRepository;
 use App\Services\DepartmentEnrolmentService;
@@ -55,7 +51,7 @@ class ClassListController extends Controller
     public function __construct(
         protected IClassListRepository $repository,
         protected DepartmentEnrolmentService $departmentEnrolmentService,
-        protected UpsertYearStudentEnrolmentAction $upsertYearStudentEnrolment,
+        protected SyncStudentApplicationClassListLifecycleAction $lifecycle,
         protected ClassListTransitionService $classListTransitionService,
         protected StudentIdNumberValidationService $studentIdNumberValidationService,
         protected OLevelRequirementResolver $requirementResolver,
@@ -229,41 +225,9 @@ class ClassListController extends Controller
         DB::transaction(function () use ($classLists) {
             collect($classLists)->each(function ($dto) {
                 $classEntry = $this->repository->create($dto);
-                $details = $this->getClassEntryDetails($classEntry->id);
-                SendEnrolmentProgressJob::dispatch(
-                    $classEntry->id,
-                    $dto->type,
-                    $details->institution_department_id,
-                    $details->department,
-                    $details->level,
-                    $details->course)->withoutDelay();
+                $this->lifecycle->sync($classEntry, ClassListTypeEnum::from($dto->type));
             });
         });
-    }
-
-    protected function getClassEntryDetails(int $classListId)
-    {
-        return DB::table('class_lists as cl')
-            ->join('student_applications as sp', 'sp.id', '=', 'cl.student_application_id')
-            ->join('students as st', 'st.id', '=', 'sp.student_id')
-            ->join('institution_departments as idp', 'idp.id', '=', 'sp.institution_department_id')
-            ->join('departments as dp', 'dp.id', '=', 'idp.department_id')
-            ->join('department_levels as dl', 'dl.id', '=', 'sp.department_level_id')
-            ->join('levels as lv', 'lv.id', '=', 'dl.level_id')
-            ->join('department_courses as dc', 'dc.id', '=', 'sp.department_course_id')
-            ->join('courses as cs', 'cs.id', '=', 'dc.course_id')
-            ->join('users as us', 'us.id', '=', 'st.user_id')
-            ->where('cl.id', $classListId)
-            ->select([
-                'cl.id',
-                'us.first_name',
-                'us.last_name',
-                'us.email',
-                'sp.institution_department_id',
-                'dp.name as department',
-                'lv.name as level',
-                'cs.name as course',
-            ])->first();
     }
 
     public function update(UpdateClassEntryRequest $request, StudentApplication $studentApplication)
@@ -329,40 +293,14 @@ class ClassListController extends Controller
                 return back()->with('error', "Unsupported class list update type \"{$type}\".");
             }
 
-            DB::transaction(function () use ($request, $studentApplication, $entry, $isVerification, $isConfirmation): void {
-                $entry->type = $isVerification
-                    ? ClassListTypeEnum::VERIFIED->value
-                    : ClassListTypeEnum::FINAL->value;
+            DB::transaction(function () use ($request, $studentApplication, $entry, $isVerification): void {
+                $targetType = $isVerification
+                    ? ClassListTypeEnum::VERIFIED
+                    : ClassListTypeEnum::FINAL;
+                $entry->type = $targetType->value;
                 $entry->save();
 
-                $studentNumber = EnrolmentHelper::resolveStudentNumber($studentApplication);
-                $student = $studentApplication->student;
-                $student->fresh()->update([
-                    'student_number' => $studentNumber,
-                    'student_number_generated' => true,
-                ]);
-
-                $workflowSlug = $isVerification
-                    ? WorkflowStepEnum::ACCEPTED->slug()
-                    : WorkflowStepEnum::ENROLLED->slug();
-                $step = WorkflowStep::where('slug', $workflowSlug)->first();
-                if ($step === null) {
-                    throw new \RuntimeException("Workflow step \"{$workflowSlug}\" was not found.");
-                }
-
-                if ($isVerification) {
-                    $user = $student->user;
-                    SendOfferLetterJob::dispatch($user->full_name, $user->email, $studentApplication->id)->withoutDelay();
-                    if (EnrolmentHelper::isEntryLevel($studentApplication)) {
-                        EnrolmentHelper::rejectOtherApplications($studentApplication->student, $studentApplication);
-                    }
-                }
-
-                if ($isConfirmation) {
-                    $this->createStudentEnrolment($studentApplication);
-                }
-
-                $studentApplication->update(['workflow_step_id' => $step->id]);
+                $this->lifecycle->sync($entry, $targetType);
 
                 if ($request->filled('remarks')) {
                     $studentApplication->notes()->create([
@@ -380,11 +318,6 @@ class ClassListController extends Controller
         }
     }
 
-    private function createStudentEnrolment(StudentApplication $studentApplication): void
-    {
-        $this->upsertYearStudentEnrolment->execute($studentApplication);
-    }
-
     public function rejectApplication(StudentApplication $studentApplication)
     {
         try {
@@ -395,9 +328,7 @@ class ClassListController extends Controller
             }
             $entry->type = ClassListTypeEnum::FAILED->value;
             $entry->save();
-            // change student application status to rejected
-            $step = WorkflowStep::where('slug', WorkflowStepEnum::REJECTED->slug())->first();
-            $studentApplication->update(['workflow_step_id' => $step->id]);
+            $this->lifecycle->sync($entry, ClassListTypeEnum::FAILED);
 
             return back()->with('success', 'Class list entry updated successfully.');
         } catch (Throwable $e) {

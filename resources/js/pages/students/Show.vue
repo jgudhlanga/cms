@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { Head, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, watch } from 'vue';
+import { Head } from '@inertiajs/vue3';
+import { computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
 import StudentProfileDangerZone from '@/components/students/profile/StudentProfileDangerZone.vue';
 import StudentProfileShell from '@/components/students/profile/StudentProfileShell.vue';
+import { useSectionTabQuerySync } from '@/composables/core/useSectionTabQuerySync';
 import { useStudentProfile } from '@/composables/students/useStudentProfile';
 import { useStudentShowNavigation } from '@/composables/students/useStudentShowNavigation';
 import { useStudentsStore } from '@/store/students/useStudentsStore';
@@ -23,8 +24,6 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const validTabValues = ['basic_info', 'programs', 'applications', 'financials', 'accommodations', 'documents', 'exam_results', 'clearance', 'authentication'] as const;
-
 const { profileTabs } = useStudentProfile();
 const { backUrl, backDestination, breadcrumbs, showBack } = useStudentShowNavigation();
 
@@ -37,12 +36,7 @@ const visibleTabs = computed(() => profileTabs(props.student, {
 
 const activeSection = computed(() => visibleTabs.value.find((tab) => tab.value === activeTab.value));
 
-onMounted(() => {
-    const tabParam = new URL(usePage().url, window.location.origin).searchParams.get('tab');
-    if (tabParam && validTabValues.includes(tabParam as (typeof validTabValues)[number])) {
-        activeTab.value = tabParam;
-    }
-});
+useSectionTabQuerySync(activeTab, () => visibleTabs.value.map((tab) => tab.value));
 
 watch(
     visibleTabs,
@@ -68,9 +62,19 @@ watch(
             :back-destination="backDestination"
             :show-back="showBack"
         >
-            <BaseSectionNav v-model:active-tab="activeTab" :tabs="visibleTabs" />
-            <div class="px-2 py-1">
-                <component :is="activeSection?.component" v-if="activeSection" :key="`${activeTab}-${props.student.attributes?.idNumber ?? ''}`" />
+            <BaseSectionNav v-model:active-tab="activeTab" :tabs="visibleTabs" nav-id="student-tabs" />
+            <div
+                :id="`student-tabs-panel-${activeTab}`"
+                role="tabpanel"
+                :aria-labelledby="`student-tabs-tab-${activeTab}`"
+                tabindex="0"
+                class="px-2 py-1"
+            >
+                <component
+                    :is="activeSection?.component"
+                    v-if="activeSection"
+                    :key="`${activeTab}-${props.student.attributes?.applicationStatus ?? ''}-${props.student.attributes?.studentNumber ?? ''}`"
+                />
             </div>
             <StudentProfileDangerZone :student="props.student" />
         </StudentProfileShell>

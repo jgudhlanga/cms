@@ -12,6 +12,8 @@ final class ExaminationDumpColumns
 
     public const string COURSE_CODE = 'Course Code';
 
+    public const string COURSE_LEVEL = 'Course Level';
+
     public const string CANDIDATE_NUMBER = 'Candidate_Number';
 
     public const string SURNAME = 'Surname';
@@ -29,6 +31,9 @@ final class ExaminationDumpColumns
     public const string COURSE_COMMENT = 'Course Comment';
 
     /**
+     * Headers an incoming dump must carry. Course Level is deliberately absent: dumps
+     * flattened before it existed are still importable, and cell() yields null for it.
+     *
      * @return list<string>
      */
     public static function requiredHeaders(): array
@@ -45,6 +50,16 @@ final class ExaminationDumpColumns
             self::SESSION,
             self::COURSE_COMMENT,
         ];
+    }
+
+    /**
+     * Headers written when we flatten a HEXCO statement ourselves.
+     *
+     * @return list<string>
+     */
+    public static function dumpHeaders(): array
+    {
+        return [...self::requiredHeaders(), self::COURSE_LEVEL];
     }
 
     /**

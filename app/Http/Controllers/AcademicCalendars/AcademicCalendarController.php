@@ -731,7 +731,12 @@ class AcademicCalendarController extends Controller
         $advanced = $result['advanced'];
 
         if ($advanced < 1) {
-            return back()->withErrors(['student_enrolment_ids' => __('academic_calendar.advance_phase_none')]);
+            $reasons = array_values(array_filter($result['skipped_reasons'] ?? []));
+            $message = $reasons === []
+                ? __('academic_calendar.advance_phase_none')
+                : implode(' ', $reasons);
+
+            return back()->withErrors(['student_enrolment_ids' => $message]);
         }
 
         return back()->with('success', __('academic_calendar.advance_phase_success', ['count' => $advanced]));
@@ -1015,11 +1020,11 @@ class AcademicCalendarController extends Controller
     }
 
     /**
-     * @return list<array{studentEnrolmentId: int, studentId: int, applicationTrackingNumber: mixed, studentNumber: mixed, gender: mixed, name: string}>
+     * @return list<array{studentEnrolmentId: int, studentId: int, applicationTrackingNumber: mixed, studentNumber: mixed, gender: mixed, name: string, canAdvanceToNextPhase: bool, cannotAdvancePhaseReason: string|null}>
      */
     private function studentsPayloadForAcademicCalendarClass(AcademicCalendarClass $academicCalendarClass): array
     {
-        return AcademicCalendarStudentEnrolment::query()
+        $rows = AcademicCalendarStudentEnrolment::query()
             ->join('student_enrolments', 'student_enrolments.id', '=', 'academic_calendar_student_enrolments.student_enrolment_id')
             ->join('student_applications', 'student_applications.id', '=', 'student_enrolments.student_application_id')
             ->join('students', 'students.id', '=', 'student_applications.student_id')
@@ -1030,23 +1035,47 @@ class AcademicCalendarController extends Controller
             ->select([
                 'student_enrolments.id as student_enrolment_id',
                 'student_applications.application_tracking_number',
+                'students.id as student_id',
                 'students.student_number',
-                'users.id as user_id',
                 'genders.title as gender_title',
                 'users.first_name',
                 'users.last_name',
             ])
             ->orderBy('users.first_name')
             ->orderBy('users.last_name')
-            ->get()
-            ->map(function (AcademicCalendarStudentEnrolment $row): array {
+            ->get();
+
+        $enrolmentIds = $rows->pluck('student_enrolment_id')->filter()->all();
+        $enrolments = $enrolmentIds === []
+            ? collect()
+            : StudentEnrolment::query()
+                ->with([
+                    'studentApplication.departmentLevel.level',
+                    'studentEnrolmentStatus',
+                    'departmentLevel.level',
+                    'studentSemesters.semester',
+                    'studentSemesters.studentEnrolmentStatus',
+                ])
+                ->whereIn('id', $enrolmentIds)
+                ->get()
+                ->keyBy('id');
+
+        return $rows
+            ->map(function (AcademicCalendarStudentEnrolment $row) use ($enrolments): array {
+                $enrolment = $enrolments->get((int) $row->student_enrolment_id);
+                $reason = $enrolment instanceof StudentEnrolment
+                    ? $this->enrolmentProgression->cannotAdvanceToNextPhaseReason($enrolment)
+                    : __('students.enrolment_cannot_advance_phase');
+
                 return [
                     'studentEnrolmentId' => (int) $row->student_enrolment_id,
-                    'studentId' => (int) $row->user_id,
+                    'studentId' => (int) $row->student_id,
                     'applicationTrackingNumber' => $row->application_tracking_number,
                     'studentNumber' => $row->student_number ?: $row->application_tracking_number,
                     'gender' => $row->gender_title,
                     'name' => trim(sprintf('%s %s', (string) ($row->first_name ?? ''), (string) ($row->last_name ?? ''))),
+                    'canAdvanceToNextPhase' => $reason === null,
+                    'cannotAdvancePhaseReason' => $reason,
                 ];
             })
             ->values()

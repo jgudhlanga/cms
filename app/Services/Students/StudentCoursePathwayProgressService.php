@@ -243,6 +243,7 @@ class StudentCoursePathwayProgressService
     ): array {
         $hasLocal = in_array((int) $offering->department_level_id, $localLevelIds, true);
         $position = (int) ($offering->departmentLevel?->level?->position ?? 0);
+        $levelName = $offering->departmentLevel?->level?->name;
         $impliedComplete = ! $hasLocal && $position < $minLocalPosition;
         $programmeSemesters = $offering->programmeSemesters ?? collect();
         $structureMissing = $programmeSemesters->isEmpty();
@@ -254,13 +255,13 @@ class StudentCoursePathwayProgressService
 
         if ($impliedComplete) {
             $steps = $programmeSemesters
-                ->map(fn (ProgrammeSemester $semester): array => $this->stepPayload($semester, 'completed'))
+                ->map(fn (ProgrammeSemester $semester): array => $this->stepPayload($semester, 'completed', $levelName))
                 ->values()
                 ->all();
 
             return [
                 'departmentLevelId' => (int) $offering->department_level_id,
-                'levelName' => $offering->departmentLevel?->level?->name,
+                'levelName' => $levelName,
                 'studentApplicationId' => $application?->id,
                 'impliedComplete' => true,
                 'structureMissing' => $structureMissing,
@@ -272,13 +273,13 @@ class StudentCoursePathwayProgressService
 
         if (! $hasLocal) {
             $steps = $programmeSemesters
-                ->map(fn (ProgrammeSemester $semester): array => $this->stepPayload($semester, 'locked'))
+                ->map(fn (ProgrammeSemester $semester): array => $this->stepPayload($semester, 'locked', $levelName))
                 ->values()
                 ->all();
 
             return [
                 'departmentLevelId' => (int) $offering->department_level_id,
-                'levelName' => $offering->departmentLevel?->level?->name,
+                'levelName' => $levelName,
                 'studentApplicationId' => $application?->id,
                 'impliedComplete' => false,
                 'structureMissing' => $structureMissing,
@@ -289,12 +290,12 @@ class StudentCoursePathwayProgressService
         }
 
         $inclusions = $this->inclusionsForOffering($student, $departmentCourseId, (int) $offering->department_level_id);
-        $steps = $this->stepsForLocalStage($offering, $inclusions);
+        $steps = $this->stepsForLocalStage($offering, $inclusions, $levelName);
         $status = $this->stageStatus($offering, $steps, $inclusions);
 
         return [
             'departmentLevelId' => (int) $offering->department_level_id,
-            'levelName' => $offering->departmentLevel?->level?->name,
+            'levelName' => $levelName,
             'studentApplicationId' => $application?->id,
             'impliedComplete' => false,
             'structureMissing' => $structureMissing,
@@ -308,7 +309,7 @@ class StudentCoursePathwayProgressService
      * @param  Collection<int, StudentSemester>  $inclusions
      * @return list<array{programmeSemesterId: int, name: string, kind: string, state: string}>
      */
-    private function stepsForLocalStage(DepartmentLevelCourse $offering, Collection $inclusions): array
+    private function stepsForLocalStage(DepartmentLevelCourse $offering, Collection $inclusions, ?string $levelName = null): array
     {
         $programmeSemesters = ($offering->programmeSemesters ?? collect())->sortBy('position')->values();
 
@@ -341,7 +342,7 @@ class StudentCoursePathwayProgressService
 
         foreach ($programmeSemesters as $programmeSemester) {
             if ($pastCurrent) {
-                $steps[] = $this->stepPayload($programmeSemester, 'locked');
+                $steps[] = $this->stepPayload($programmeSemester, 'locked', $levelName);
 
                 continue;
             }
@@ -350,19 +351,19 @@ class StudentCoursePathwayProgressService
 
             if ($slug === null) {
                 if ($laterInclusionExists((int) $programmeSemester->position)) {
-                    $steps[] = $this->stepPayload($programmeSemester, 'completed');
+                    $steps[] = $this->stepPayload($programmeSemester, 'completed', $levelName);
 
                     continue;
                 }
 
-                $steps[] = $this->stepPayload($programmeSemester, 'current');
+                $steps[] = $this->stepPayload($programmeSemester, 'current', $levelName);
                 $pastCurrent = true;
 
                 continue;
             }
 
             if (StudentEnrolmentProgressionService::isBlockingStatus($slug)) {
-                $steps[] = $this->stepPayload($programmeSemester, 'blocked');
+                $steps[] = $this->stepPayload($programmeSemester, 'blocked', $levelName);
                 $pastCurrent = true;
 
                 continue;
@@ -370,12 +371,12 @@ class StudentCoursePathwayProgressService
 
             if ($slug === StudentEnrolmentProgressionService::STATUS_AWARD
                 || $slug === StudentEnrolmentProgressionService::STATUS_PROCEED) {
-                $steps[] = $this->stepPayload($programmeSemester, 'completed');
+                $steps[] = $this->stepPayload($programmeSemester, 'completed', $levelName);
 
                 continue;
             }
 
-            $steps[] = $this->stepPayload($programmeSemester, 'current');
+            $steps[] = $this->stepPayload($programmeSemester, 'current', $levelName);
             $pastCurrent = true;
         }
 
@@ -515,15 +516,19 @@ class StudentCoursePathwayProgressService
     }
 
     /**
-     * @return array{programmeSemesterId: int, name: string, kind: string, state: string}
+     * @return array{programmeSemesterId: int, name: string, shortName: string, levelName: string|null, kind: string, state: string}
      */
-    private function stepPayload(ProgrammeSemester $programmeSemester, string $state): array
+    private function stepPayload(ProgrammeSemester $programmeSemester, string $state, ?string $levelName = null): array
     {
         $kind = $programmeSemester->kind;
+        $name = (string) $programmeSemester->name;
 
         return [
             'programmeSemesterId' => (int) $programmeSemester->id,
-            'name' => (string) $programmeSemester->name,
+            'name' => $name,
+            // Every level restarts at Year 1, so the level has to travel with the phase name.
+            'shortName' => ProgrammeSemesterNameFormatter::qualifiedName($levelName, $name, short: true),
+            'levelName' => $levelName,
             'kind' => is_string($kind) ? $kind : ($kind?->value ?? 'taught'),
             'state' => $state,
         ];

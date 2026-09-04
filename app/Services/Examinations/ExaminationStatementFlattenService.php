@@ -45,7 +45,7 @@ class ExaminationStatementFlattenService
         }
 
         try {
-            fputcsv($handle, ExaminationDumpColumns::requiredHeaders());
+            fputcsv($handle, ExaminationDumpColumns::dumpHeaders());
 
             $stats = [
                 'sheets' => 0,
@@ -66,7 +66,7 @@ class ExaminationStatementFlattenService
 
                 foreach ($dumpRows as $dumpRow) {
                     $ordered = [];
-                    foreach (ExaminationDumpColumns::requiredHeaders() as $header) {
+                    foreach (ExaminationDumpColumns::dumpHeaders() as $header) {
                         $ordered[] = $dumpRow[$header] ?? '';
                     }
                     fputcsv($handle, $ordered);

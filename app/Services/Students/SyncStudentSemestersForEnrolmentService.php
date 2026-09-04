@@ -7,6 +7,7 @@ namespace App\Services\Students;
 use App\Models\AcademicCalendars\Semester;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentSemester;
+use App\Services\Institution\ProgrammeSemesterResolver;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
@@ -15,6 +16,7 @@ class SyncStudentSemestersForEnrolmentService
     public function __construct(
         protected StudentSemesterPhaseResolver $phaseResolver,
         protected StudentEnrolmentProgressionService $progression,
+        protected ProgrammeSemesterResolver $programmeSemesterResolver,
     ) {}
 
     /**
@@ -91,15 +93,23 @@ class SyncStudentSemestersForEnrolmentService
                     ? array_values(array_filter(array_map('intval', $sourceSyllabusIds ?? [])))
                     : [];
 
+                $attributes = [
+                    'student_enrolment_status_id' => $statusId,
+                    'course_syllabus_ids' => $syllabusIds !== [] ? $syllabusIds : null,
+                ];
+
+                $programmeSemesterId = $this->programmeSemesterIdForPhase($enrolment, (int) $phase->id, $created);
+
+                if ($programmeSemesterId !== null) {
+                    $attributes['programme_semester_id'] = $programmeSemesterId;
+                }
+
                 $studentSemester = StudentSemester::query()->updateOrCreate(
                     [
                         'student_enrolment_id' => $enrolment->id,
                         'semester_id' => $phase->id,
                     ],
-                    [
-                        'student_enrolment_status_id' => $statusId,
-                        'course_syllabus_ids' => $syllabusIds !== [] ? $syllabusIds : null,
-                    ],
+                    $attributes,
                 );
 
                 $created[] = $studentSemester;
@@ -111,6 +121,63 @@ class SyncStudentSemestersForEnrolmentService
 
             return $created;
         });
+    }
+
+    /**
+     * Pin the programme phase this calendar phase represents. The offering's taught phases are
+     * consumed in order, so the phase being created is the next one the student has not used on
+     * this offering — an August intake's first phase is Year 1 Sem 1 even though it falls in the
+     * year's second calendar semester. Never re-points a phase that is already pinned.
+     *
+     * @param  list<StudentSemester>  $created  phases created earlier in this same sync
+     */
+    private function programmeSemesterIdForPhase(StudentEnrolment $enrolment, int $semesterId, array $created): ?int
+    {
+        $existing = StudentSemester::query()
+            ->where('student_enrolment_id', $enrolment->id)
+            ->where('semester_id', $semesterId)
+            ->first();
+
+        if ($existing instanceof StudentSemester && $existing->programme_semester_id !== null) {
+            return null;
+        }
+
+        $dlc = $this->programmeSemesterResolver->resolveDepartmentLevelCourse($enrolment);
+
+        if ($dlc === null) {
+            return null;
+        }
+
+        $taught = $this->programmeSemesterResolver->taughtProgrammeSemesters($dlc);
+
+        if ($taught === []) {
+            return null;
+        }
+
+        $taughtIds = array_map(static fn ($programmeSemester): int => (int) $programmeSemester->id, $taught);
+
+        $consumed = StudentSemester::query()
+            ->whereNull('deleted_at')
+            ->whereIn('programme_semester_id', $taughtIds)
+            ->whereHas('enrolment', fn ($query) => $query
+                ->where('student_id', $enrolment->student_id)
+                ->where('department_course_id', $enrolment->department_course_id)
+                ->where('department_level_id', $enrolment->department_level_id)
+                ->whereNull('deleted_at'))
+            ->when(
+                $existing instanceof StudentSemester,
+                fn ($query) => $query->whereKeyNot($existing->id),
+            )
+            ->pluck('programme_semester_id');
+
+        $index = $consumed
+            ->merge(collect($created)->pluck('programme_semester_id'))
+            ->filter(static fn ($id): bool => $id !== null && in_array((int) $id, $taughtIds, true))
+            ->map(static fn ($id): int => (int) $id)
+            ->unique()
+            ->count();
+
+        return isset($taught[$index]) ? (int) $taught[$index]->id : null;
     }
 
     public function snapshotLatestPhaseOntoEnrolment(StudentEnrolment $enrolment, ?array $semesters = null): void
