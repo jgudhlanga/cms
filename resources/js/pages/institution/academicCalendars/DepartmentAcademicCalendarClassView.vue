@@ -12,6 +12,8 @@ import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialo
 import { EDIT_CLASS_MODAL, useAcademicCalendarClassEdit } from '@/composables/academicCalendars/useAcademicCalendarClassEdit';
 import { openClassListExportModal } from '@/composables/academicCalendars/useClassListExport';
 import { MOVE_STUDENTS_MODAL, useAcademicCalendarClassMoveStudents } from '@/composables/academicCalendars/useAcademicCalendarClassMoveStudents';
+import ReassignProgrammeDialog from '@/components/students/programme/ReassignProgrammeDialog.vue';
+import { canReassignProgramme, useReassignProgramme } from '@/composables/students/useReassignProgramme';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
@@ -116,6 +118,24 @@ const { editClassForm, openEditClassModal, submitEditClass, resetEditClassFormOn
 );
 
 const canMoveStudents = computed(() => hasAbility(['update:academic-calendar-student-enrolments']));
+const canMoveProgramme = computed(() => canReassignProgramme());
+const {
+    form: reassignForm,
+    records: reassignRecords,
+    loadingRecords: reassignLoadingRecords,
+    selectedApplicationIds: reassignSelectedIds,
+    hydratingDefaults: reassignHydratingDefaults,
+    openReassignProgrammeDialog,
+    submitReassignProgramme,
+} = useReassignProgramme();
+
+const openProgrammeReassign = () => {
+    const ids =
+        selectedStudentEnrolmentIds.value.length > 0
+            ? [...selectedStudentEnrolmentIds.value]
+            : filteredStudents.value.map((student) => student.studentEnrolmentId);
+    void openReassignProgrammeDialog({ studentEnrolmentIds: ids });
+};
 const canAdvancePhase = computed(() => canMoveStudents.value && props.isLastProgrammePhase !== true);
 const canCompleteLevel = computed(() => canMoveStudents.value && props.isLastProgrammePhase === true);
 
@@ -319,6 +339,16 @@ const onRemoveStudent = async (student: AcademicCalendarClassPreviewStudent): Pr
                 <AcademicCalendarClassStudentFilters class="min-w-0" :filters="filters" @change="onFiltersChange">
                     <template #actions>
                         <BaseButton
+                            v-if="canMoveProgramme"
+                            type="button"
+                            :size="ButtonSize.xs"
+                            :variant="ColorVariant.primary_outline"
+                            classes="rounded-full"
+                            @click="openProgrammeReassign"
+                        >
+                            {{ $t('students.reassign_programme') }}
+                        </BaseButton>
+                        <BaseButton
                             v-if="canMoveStudents"
                             type="button"
                             :size="ButtonSize.xs"
@@ -380,6 +410,15 @@ const onRemoveStudent = async (student: AcademicCalendarClassPreviewStudent): Pr
                 :move-target-classes="moveTargetClasses"
                 :on-form-action="submitMoveStudents"
                 :on-close-modal="resetMoveFormOnModalClose"
+            />
+            <ReassignProgrammeDialog
+                v-if="canMoveProgramme"
+                :form="reassignForm"
+                :records="reassignRecords"
+                :loading-records="reassignLoadingRecords"
+                :hydrating-defaults="reassignHydratingDefaults"
+                v-model:selected-application-ids="reassignSelectedIds"
+                :on-form-action="submitReassignProgramme"
             />
             <AddAcademicCalendarClassStudentsModal
                 v-if="canMoveStudents"

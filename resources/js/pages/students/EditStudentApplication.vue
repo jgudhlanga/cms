@@ -144,7 +144,15 @@ watch(
                     :error="form.errors.course"
                     :is-required="true"
                 />
-                <ModeOfStudyComboSelect :form="form" v-model="form.modeOfStudy" :error="form.errors.modeOfStudy" :is-required="true" />
+                <ModeOfStudyComboSelect
+                    :form="form"
+                    :institution-department-id="String(form.department?.value ?? '')"
+                    :department-course-id="String(form.course?.value ?? '')"
+                    :department-level-id="String(form.level?.value ?? '')"
+                    v-model="form.modeOfStudy"
+                    :error="form.errors.modeOfStudy"
+                    :is-required="true"
+                />
             </div>
             <div class="my-6 flex flex-col justify-center space-y-3 space-x-3 md:flex-row">
                 <BaseButton

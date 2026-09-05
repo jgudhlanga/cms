@@ -7,6 +7,7 @@ use App\Http\Controllers\Students\AcademicRecordController;
 use App\Http\Controllers\Students\SponsorController;
 use App\Http\Controllers\Students\StudentController;
 use App\Http\Controllers\Students\StudentEnrolmentProgressController;
+use App\Http\Controllers\Students\StudentProgrammeReassignmentController;
 use App\Http\Controllers\Students\UserStudentController;
 use Illuminate\Support\Facades\Route;
 
@@ -64,6 +65,8 @@ Route::prefix('students')->middleware('auth')->group(function () {
     Route::get('{user}/profile', [UserStudentController::class, 'index'])->name('students.profile');
     Route::get('program/{student_application}/edit', [UserStudentController::class, 'edit'])->name('students.program-edit');
     Route::put('program/{student_application}/update', [UserStudentController::class, 'updateProgram'])->name('students.program-update');
+    Route::get('programmes/usage', [StudentProgrammeReassignmentController::class, 'usage'])->name('students.programmes.usage');
+    Route::post('programmes/reassign', [StudentProgrammeReassignmentController::class, 'store'])->name('students.programmes.reassign');
 });
 Route::middleware('auth')->resource('students', StudentController::class)
     ->except(['create', 'store'])

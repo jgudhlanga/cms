@@ -3,6 +3,7 @@
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
+use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
@@ -125,7 +126,7 @@ test('updating application syncs linked student enrolment fields', function () {
 
     $targetInstitutionDepartment = InstitutionDepartment::query()->create([
         'tenant_id' => $program->tenant_id,
-        'department_id' => $program->institutionDepartment->department_id,
+        'department_id' => Department::factory()->create()->id,
         'department_code' => 'SYNC-'.strtoupper(Str::random(6)),
         'description' => 'Sync target department',
     ]);
@@ -144,6 +145,11 @@ test('updating application syncs linked student enrolment fields', function () {
     ]);
 
     $targetModeOfStudy = ModeOfStudy::factory()->create();
+    ensureProgrammeOffering(
+        (int) $targetDepartmentCourse->id,
+        (int) $targetDepartmentLevel->id,
+        (int) $targetModeOfStudy->id,
+    );
     $semester = Semester::query()->create([
         'name' => 'Sync Year Option',
         'slug' => 'sync-year-option-'.strtolower(Str::random(6)),
@@ -203,6 +209,11 @@ test('updating application without linked enrolment does not create student enro
     $admin->givePermissionTo('update:student-applications');
 
     $targetModeOfStudy = ModeOfStudy::factory()->create();
+    ensureProgrammeOffering(
+        (int) $program->department_course_id,
+        (int) $program->department_level_id,
+        (int) $targetModeOfStudy->id,
+    );
 
     $payload = [
         'institution_department_id' => $program->institution_department_id,

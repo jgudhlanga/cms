@@ -6,6 +6,7 @@ use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
 use App\Models\Enrolments\ClassList;
 use App\Models\Institution\Course;
+use App\Models\Institution\CourseLevelMode;
 use App\Models\Institution\Department;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
@@ -166,6 +167,38 @@ if (! function_exists('ensureApplicationWorkflowSteps')) {
     {
         foreach (WorkflowStepEnum::cases() as $workflowStep) {
             resolveWorkflowStep($workflowStep);
+        }
+    }
+}
+
+if (! function_exists('ensureProgrammeOffering')) {
+    function ensureProgrammeOffering(int $departmentCourseId, int $departmentLevelId, int $modeOfStudyId): void
+    {
+        DepartmentLevelCourse::query()->firstOrCreate([
+            'department_course_id' => $departmentCourseId,
+            'department_level_id' => $departmentLevelId,
+        ]);
+
+        $row = CourseLevelMode::query()
+            ->where('department_course_id', $departmentCourseId)
+            ->where('department_level_id', $departmentLevelId)
+            ->first();
+
+        if ($row === null) {
+            CourseLevelMode::query()->create([
+                'department_course_id' => $departmentCourseId,
+                'department_level_id' => $departmentLevelId,
+                'modes' => [$modeOfStudyId],
+            ]);
+
+            return;
+        }
+
+        $modes = array_values(array_unique(array_map('intval', $row->modes ?? [])));
+
+        if (! in_array($modeOfStudyId, $modes, true)) {
+            $modes[] = $modeOfStudyId;
+            $row->update(['modes' => $modes]);
         }
     }
 }

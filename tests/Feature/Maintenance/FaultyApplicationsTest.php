@@ -120,6 +120,11 @@ it('lets a data maintenance user open the programme editor for a faulty applicat
 it('lets a data maintenance user restore a missing mode of study', function (): void {
     $application = createVerifiedStudentApplication('STU-FAULTY-FIX');
     $modeOfStudyId = $application->mode_of_study_id;
+    ensureProgrammeOffering(
+        (int) $application->department_course_id,
+        (int) $application->department_level_id,
+        (int) $modeOfStudyId,
+    );
     breakApplicationProgramme($application, 'missing_mode_of_study');
     actingAsDataMaintenanceUser($application->tenant_id);
 

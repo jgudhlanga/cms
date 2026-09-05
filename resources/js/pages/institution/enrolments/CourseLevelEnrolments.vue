@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import BaseAccordion from '@/components/core/accordion/BaseAccordion.vue';
+import BaseButton from '@/components/core/button/BaseButton.vue';
+import { ButtonSize } from '@/enums/buttons';
 import { useUtils } from '@/composables/core/useUtils';
 import { useEnrolments } from '@/composables/students/useEnrolments';
 import { ColorVariant } from '@/enums/colors';
@@ -19,6 +21,8 @@ import DeficitInClassSize from '@/pages/institution/enrolments/partials/DeficitI
 import EnrolmentApplicationsBrowser from '@/pages/institution/enrolments/partials/EnrolmentApplicationsBrowser.vue';
 import GenderEnrolmentAccordionItem from '@/pages/institution/enrolments/partials/GenderEnrolmentAccordionItem.vue';
 import ScoringFormula from '@/pages/institution/enrolments/partials/ScoringFormula.vue';
+import ReassignProgrammeDialog from '@/components/students/programme/ReassignProgrammeDialog.vue';
+import { canReassignProgramme, useReassignProgramme } from '@/composables/students/useReassignProgramme';
 import { useEnrolmentClassListUiStore } from '@/store/enrolments/useEnrolmentClassListUiStore';
 import { AuthObject } from '@/types/data-pagination';
 import { DepartmentLevel, CourseRequirement } from '@/types/department-meta-data';
@@ -52,6 +56,16 @@ const { department, level, intakePeriod, modeOfStudy, course } = props;
 const enrolments = computed(() => props.enrolments);
 const { isItTrue } = useUtils();
 const { allocateClassSlots, classListIsCreatedForGroup, applyPolicyAlgorithmToApplications } = useEnrolments();
+const canMoveProgramme = computed(() => canReassignProgramme());
+const {
+    form: reassignForm,
+    records: reassignRecords,
+    loadingRecords: reassignLoadingRecords,
+    selectedApplicationIds: reassignSelectedIds,
+    hydratingDefaults: reassignHydratingDefaults,
+    openReassignProgrammeDialog,
+    submitReassignProgramme,
+} = useReassignProgramme();
 
 const intakeLimit = ref(Number(props.classSize) || 0);
 watch(
@@ -340,6 +354,14 @@ const onIntakeLimitSaved = (value: number) => {
     intakeLimit.value = value;
 };
 
+const openProgrammeReassign = () => {
+    const ids =
+        selectedCount.value > 0
+            ? Array.from(selectedIds.value)
+            : allApplications.value.map((app) => Number(app.applicationId));
+    void openReassignProgrammeDialog({ applicationIds: ids });
+};
+
 const mutationContext = () => ({
     institution_department_id: Number(department.id),
     department_level_id: Number(level.id),
@@ -611,6 +633,16 @@ const onRowPurge = (application: EnrolmentApplication) => {
                         @saved="onIntakeLimitSaved"
                     />
                     <DeficitInClassSize :deficit="deficit" />
+                    <BaseButton
+                        v-if="canMoveProgramme"
+                        type="button"
+                        :size="ButtonSize.xs"
+                        :variant="ColorVariant.primary_outline"
+                        classes="rounded-full"
+                        @click="openProgrammeReassign"
+                    >
+                        {{ $t('students.reassign_programme') }}
+                    </BaseButton>
                 </div>
 
                 <ScoringFormula v-if="isOLevel" />
@@ -665,5 +697,14 @@ const onRowPurge = (application: EnrolmentApplication) => {
                 </GenderEnrolmentAccordionItem>
             </BaseAccordion>
         </div>
+        <ReassignProgrammeDialog
+            v-if="canMoveProgramme"
+            :form="reassignForm"
+            :records="reassignRecords"
+            :loading-records="reassignLoadingRecords"
+            :hydrating-defaults="reassignHydratingDefaults"
+            v-model:selected-application-ids="reassignSelectedIds"
+            :on-form-action="submitReassignProgramme"
+        />
     </PageContainer>
 </template>

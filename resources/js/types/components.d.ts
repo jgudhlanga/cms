@@ -365,6 +365,7 @@ declare module 'vue' {
     RaceComboSelect: typeof import('./../components/core/form/combobox/RaceComboSelect.vue')['default']
     RadioGroup: typeof import('./../components/ui/radio-group/RadioGroup.vue')['default']
     RadioGroupItem: typeof import('./../components/ui/radio-group/RadioGroupItem.vue')['default']
+    ReassignProgrammeDialog: typeof import('./../components/students/programme/ReassignProgrammeDialog.vue')['default']
     ReconcilePreviewModal: typeof import('./../components/finance/ReconcilePreviewModal.vue')['default']
     ReconciliationFilters: typeof import('./../components/finance/filters/ReconciliationFilters.vue')['default']
     RegistrationIntentSummary: typeof import('./../components/portal/RegistrationIntentSummary.vue')['default']
