@@ -204,6 +204,60 @@ it('rejects programme duration below half a year', function (): void {
     expect((int) $dlc->fresh()->taught_semester_count)->toBe(2);
 });
 
+it('includes industrial attachment in duration years without changing taught or attachment counts', function (): void {
+    $dlc = createProgrammeStructureDlc();
+    $user = User::factory()->create(['tenant_id' => Tenant::query()->firstOrFail()->id]);
+    $user->givePermissionTo('manage:programme-structures');
+
+    $this->actingAs($user)
+        ->from(route('institution-departments.show', $dlc->departmentLevel->institution_department_id))
+        ->post(route('department-level-courses.programme-structure.update', $dlc), [
+            'duration_years' => 1,
+            'taught_semester_count' => 2,
+            'includes_industrial_attachment' => true,
+            'attachment_semester_count' => 2,
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    $dlc->refresh()->load('programmeSemesters');
+
+    expect((float) $dlc->duration_years)->toBe(2.0)
+        ->and($dlc->taught_semester_count)->toBe(2)
+        ->and($dlc->includes_industrial_attachment)->toBeTrue()
+        ->and($dlc->attachment_semester_count)->toBe(2)
+        ->and($dlc->programmeSemesters)->toHaveCount(4)
+        ->and($dlc->programmeSemesters->pluck('name')->all())->toBe([
+            'Year 1 Sem 1',
+            'Year 1 Sem 2',
+            'Year 2 Attachment 1',
+            'Year 2 Attachment 2',
+        ]);
+});
+
+it('adds a one-year attachment onto a year-and-a-half taught programme', function (): void {
+    $dlc = createProgrammeStructureDlc();
+    $user = User::factory()->create(['tenant_id' => Tenant::query()->firstOrFail()->id]);
+    $user->givePermissionTo('manage:programme-structures');
+
+    $this->actingAs($user)
+        ->from(route('institution-departments.show', $dlc->departmentLevel->institution_department_id))
+        ->post(route('department-level-courses.programme-structure.update', $dlc), [
+            'duration_years' => 1.5,
+            'taught_semester_count' => 3,
+            'includes_industrial_attachment' => true,
+            'attachment_semester_count' => 2,
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    $dlc->refresh();
+
+    expect((float) $dlc->duration_years)->toBe(2.5)
+        ->and($dlc->taught_semester_count)->toBe(3)
+        ->and($dlc->attachment_semester_count)->toBe(2);
+});
+
 it('appends industrial attachment programme semesters after taught phases', function (): void {
     $dlc = createProgrammeStructureDlc();
     $dlc->update([

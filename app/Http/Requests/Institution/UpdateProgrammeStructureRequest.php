@@ -6,6 +6,7 @@ namespace App\Http\Requests\Institution;
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Models\Institution\DepartmentLevelCourse;
+use App\Support\Institution\ProgrammeDurationCalculator;
 use App\Support\Institution\ProgrammeSemesterNameFormatter;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -39,11 +40,26 @@ class UpdateProgrammeStructureRequest extends FormRequest
 
         $periodsPerYear = $this->resolvePeriodsPerYear();
 
-        if ($includesAttachment === false) {
-            $this->merge(['attachment_semester_count' => 0]);
-        } elseif ($includesAttachment === true && (int) $this->input('attachment_semester_count', 0) < 1) {
+        if ($includesAttachment !== true) {
+            if ($includesAttachment === false) {
+                $this->merge(['attachment_semester_count' => 0]);
+            }
+
+            return;
+        }
+
+        if ((int) $this->input('attachment_semester_count', 0) < 1) {
             $this->merge(['attachment_semester_count' => $periodsPerYear]);
         }
+
+        $this->merge([
+            'duration_years' => ProgrammeDurationCalculator::years(
+                max(1, (int) $this->input('taught_semester_count', 1)),
+                max(1, (int) $this->input('attachment_semester_count', $periodsPerYear)),
+                $periodsPerYear,
+                true,
+            ),
+        ]);
     }
 
     private function resolvePeriodsPerYear(): int

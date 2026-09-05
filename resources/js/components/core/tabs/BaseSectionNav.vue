@@ -15,12 +15,14 @@ const props = withDefaults(
         ariaLabel?: string;
         badgeCounts?: Record<string, number | undefined>;
         navId?: string;
+        dense?: boolean;
     }>(),
     {
         layout: 'horizontal',
         variant: 'pills',
         grouped: true,
         ariaLabel: 'Section navigation',
+        dense: false,
     },
 );
 
@@ -49,12 +51,7 @@ const navClass = computed(() =>
             ? isHorizontal.value
                 ? 'flex-row gap-2 overflow-x-auto pb-1'
                 : 'flex-col gap-1'
-            : cn(
-                  'gap-0',
-                  isHorizontal.value
-                      ? 'flex-row overflow-x-auto border-b border-border'
-                      : 'flex-col border-r border-border',
-              ),
+            : cn('gap-0', isHorizontal.value ? 'border-border flex-row overflow-x-auto border-b' : 'border-border flex-col border-r'),
     ),
 );
 
@@ -64,27 +61,26 @@ const pillsContainerClass = computed(() => {
     }
 
     if (!props.grouped) {
-        return isHorizontal.value
-            ? 'inline-flex w-fit min-w-0 flex-wrap items-center gap-2'
-            : 'flex w-full flex-col gap-1';
+        return isHorizontal.value ? 'inline-flex w-fit min-w-0 flex-wrap items-center gap-2' : 'flex w-full flex-col gap-1';
     }
 
+    const trackPadding = props.dense ? 'p-1' : 'p-1.5';
+
     return isHorizontal.value
-        ? 'relative inline-flex w-fit min-w-0 items-center gap-1 rounded-xl bg-muted p-1.5'
-        : 'relative flex w-full flex-col gap-1 rounded-xl bg-muted p-1.5';
+        ? cn('bg-muted relative inline-flex w-fit min-w-0 items-center gap-1 rounded-xl', trackPadding)
+        : cn('bg-muted relative flex w-full flex-col gap-1 rounded-xl', trackPadding);
 });
 
 const navButtonClass = (isActive: boolean, isDisabled: boolean): string => {
     if (isPills.value) {
-        const standaloneClass = !props.grouped
-            ? 'rounded-lg border border-border bg-card shadow-sm'
-            : 'rounded-lg';
+        const standaloneClass = !props.grouped ? 'rounded-lg border border-border bg-card shadow-sm' : 'rounded-lg';
 
         return cn(
-            'relative z-10 inline-flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-[color,box-shadow,background-color,border-color]',
+            'relative z-10 inline-flex items-center font-medium transition-[color,box-shadow,background-color,border-color]',
+            props.dense ? 'gap-2 px-3 py-1.5 text-[13px]' : 'gap-2.5 px-4 py-2.5 text-sm',
             focusRingClass,
             standaloneClass,
-            isHorizontal.value ? 'min-w-[5.5rem] shrink-0 justify-center' : 'w-full justify-start',
+            isHorizontal.value ? cn('shrink-0 justify-center', !props.dense && 'min-w-[5.5rem]') : 'w-full justify-start',
             isDisabled
                 ? 'cursor-not-allowed opacity-50'
                 : isActive
@@ -100,23 +96,20 @@ const navButtonClass = (isActive: boolean, isDisabled: boolean): string => {
     return cn(
         'relative inline-flex items-center gap-2 text-sm transition-colors',
         focusRingClass,
-        isHorizontal.value
-            ? 'shrink-0 border-b-2 px-4 py-2.5 -mb-px'
-            : 'w-full border-l-2 px-4 py-2.5',
+        isHorizontal.value ? '-mb-px shrink-0 border-b-2 px-4 py-2.5' : 'w-full border-l-2 px-4 py-2.5',
         isDisabled
             ? 'cursor-not-allowed opacity-50'
             : isActive
               ? isHorizontal.value
-                  ? 'border-primary font-medium text-foreground'
-                  : 'border-primary bg-muted/50 font-medium text-foreground'
+                  ? 'border-primary text-foreground font-medium'
+                  : 'border-primary bg-muted/50 text-foreground font-medium'
               : isHorizontal.value
-                ? 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
-                : 'border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground',
+                ? 'text-muted-foreground hover:border-border hover:text-foreground border-transparent'
+                : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground border-transparent',
     );
 };
 
-const labelClass = (isActive: boolean): string =>
-    cn('truncate', !isPills.value && 'uppercase', isPills.value && isActive && 'font-medium');
+const labelClass = (isActive: boolean): string => cn('truncate', !isPills.value && 'uppercase', isPills.value && isActive && 'font-medium');
 
 const activateTab = (tab: CustomTab): void => {
     if (tab.disabled) {
@@ -254,7 +247,7 @@ const updateIndicator = (): void => {
 
 const indicatorClass = computed(() =>
     cn(
-        'absolute left-0 top-0 z-0 rounded-lg bg-primary/10 shadow-sm',
+        'bg-primary/10 absolute top-0 left-0 z-0 rounded-lg shadow-sm',
         isHorizontal.value ? 'transition-[transform,width] duration-200 ease-out' : 'transition-[transform,height] duration-200 ease-out',
         !indicatorAnimatable.value && 'transition-none',
     ),
@@ -299,15 +292,16 @@ watch(
 
 watch(
     () => props.tabs,
-    () => nextTick(() => {
-        updateFadeState();
-        updateIndicator();
-    }),
+    () =>
+        nextTick(() => {
+            updateFadeState();
+            updateIndicator();
+        }),
 );
 </script>
 
 <template>
-    <div class="min-w-0 space-y-2">
+    <div class="min-w-0" :class="dense ? 'space-y-1.5' : 'space-y-2'">
         <nav ref="navEl" :class="navClass" :aria-label="ariaLabel" :style="navMaskStyle">
             <div ref="trackEl" :class="pillsContainerClass" role="tablist" :aria-orientation="layout">
                 <div v-if="hasSlidingIndicator" v-show="indicatorReady" :class="indicatorClass" :style="indicatorStyle" aria-hidden="true" />
@@ -326,18 +320,18 @@ watch(
                     @click="onTabClick(tab)"
                     @keydown="onTabKeydown($event, tab)"
                 >
-                    <component v-if="tab.icon" :is="icons[tab.icon]" class="h-4.5 w-4.5 shrink-0" />
+                    <component v-if="tab.icon" :is="icons[tab.icon]" class="shrink-0" :class="dense ? 'h-4 w-4' : 'h-4.5 w-4.5'" />
                     <span :class="labelClass(activeTab === tab.value)">{{ tab.transLabel?.() }}</span>
                     <span
                         v-if="badgeCounts?.[tab.value] && badgeCounts[tab.value]! > 0"
-                        class="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-medium text-destructive-foreground"
+                        class="bg-destructive text-destructive-foreground rounded-full px-1.5 py-0.5 text-[10px] font-medium"
                     >
                         {{ badgeCounts[tab.value] }}
                     </span>
                 </button>
             </div>
         </nav>
-        <p v-if="description" class="text-sm text-muted-foreground">
+        <p v-if="description" class="text-muted-foreground" :class="dense ? 'text-xs' : 'text-sm'">
             {{ description }}
         </p>
     </div>

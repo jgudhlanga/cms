@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import BaseSectionNav from '@/components/core/tabs/BaseSectionNav.vue';
+import { useSectionTabQuerySync } from '@/composables/core/useSectionTabQuerySync';
 import { useInstitution } from '@/composables/institution/useInstitution';
 import { hasAbility } from '@/lib/permissions';
 import ClassConfig from '@/pages/institution/academicCalendars/partials/ClassConfig.vue';
@@ -8,7 +9,6 @@ import DepartmentContextBar from '@/pages/institution/departments/partials/Depar
 import DepartmentHero from '@/pages/institution/departments/partials/DepartmentHero.vue';
 import LinkCoursesToDepartment from '@/pages/institution/departments/partials/LinkCoursesToDepartment.vue';
 import LinkLevelsToDepartment from '@/pages/institution/departments/partials/LinkLevelsToDepartment.vue';
-import { useSectionTabQuerySync } from '@/composables/core/useSectionTabQuerySync';
 import { useDepartmentMetaStore } from '@/store/institution/useDepartmentMetaStore';
 import { AuthObject } from '@/types/data-pagination';
 import { InstitutionDepartment } from '@/types/institution';
@@ -105,7 +105,7 @@ const activeTabDescription = computed(() => activeSection.value?.transDescriptio
             />
         </template>
 
-        <div class="space-y-4">
+        <div class="space-y-3">
             <DepartmentHero :department="department" />
 
             <div>
@@ -114,6 +114,7 @@ const activeTabDescription = computed(() => activeSection.value?.transDescriptio
                     :tabs="visibleTabs"
                     :description="activeTabDescription"
                     nav-id="department-tabs"
+                    dense
                 />
 
                 <div
@@ -121,7 +122,7 @@ const activeTabDescription = computed(() => activeSection.value?.transDescriptio
                     role="tabpanel"
                     :aria-labelledby="`department-tabs-tab-${activeTab}`"
                     tabindex="0"
-                    class="mt-3"
+                    class="mt-2"
                 >
                     <component :is="activeSection?.component" v-if="activeSection" />
                 </div>

@@ -15,22 +15,20 @@ defineProps<Props>();
 </script>
 
 <template>
-    <section class="border-border bg-card overflow-hidden rounded-2xl border">
-        <header class="border-border bg-muted/30 flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 sm:px-5">
-            <div class="flex min-w-0 items-center gap-2.5">
-                <span class="bg-primary/10 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
-                    <BaseIcon :name="icon" class="h-4 w-4" />
+    <section class="border-border bg-card overflow-hidden rounded-xl border">
+        <header class="border-border bg-muted/30 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b px-3 py-2 sm:px-4">
+            <div class="flex min-w-0 flex-1 items-baseline gap-2">
+                <span class="bg-primary/10 text-primary flex h-6 w-6 shrink-0 translate-y-0.5 items-center justify-center rounded-md">
+                    <BaseIcon :name="icon" class="h-3.5 w-3.5" />
                 </span>
-                <div class="min-w-0">
-                    <h2 class="text-foreground truncate text-sm font-bold tracking-tight">{{ title }}</h2>
-                    <p v-if="description" class="text-muted-foreground mt-0.5 text-xs leading-relaxed">{{ description }}</p>
-                </div>
+                <h2 class="text-foreground shrink-0 text-sm font-bold tracking-tight">{{ title }}</h2>
+                <p v-if="description" class="text-muted-foreground hidden min-w-0 truncate text-xs md:block">{{ description }}</p>
             </div>
-            <Badge v-if="count !== undefined" variant="secondary" class="shrink-0 font-normal">
+            <Badge v-if="count !== undefined" variant="secondary" class="h-5 shrink-0 px-2 text-[11px] font-normal">
                 {{ count }} {{ countLabel }}
             </Badge>
         </header>
-        <div class="px-4 py-3 sm:px-5">
+        <div class="px-3 py-2.5 sm:px-4">
             <slot />
         </div>
     </section>
