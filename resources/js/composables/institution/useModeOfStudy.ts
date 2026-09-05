@@ -99,13 +99,19 @@ export const useModeOfStudy = () => {
         useApplicationOfferings = false,
     ) => {
         isLoading.value = true;
-        courseModesOfStudy.value = await HttpService.get(
-            route(useApplicationOfferings ? 'v1.enrolments.course-modes' : 'v1.modes-of-study.course-modes', {
-                department_course: departmentCourseId,
-                department_level: departmentLevelId,
-            }),
-        );
-        isLoading.value = false;
+        try {
+            const document = await HttpService.get(
+                route(useApplicationOfferings ? 'v1.enrolments.course-modes' : 'v1.modes-of-study.course-modes', {
+                    department_course: departmentCourseId,
+                    department_level: departmentLevelId,
+                }),
+            );
+            courseModesOfStudy.value = Array.isArray(document) ? document : (document?.data ?? []);
+        } catch {
+            courseModesOfStudy.value = [];
+        } finally {
+            isLoading.value = false;
+        }
     };
 
     const listDepartmentModesOfStudy = async (departmentId: string) => {

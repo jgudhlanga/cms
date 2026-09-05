@@ -190,6 +190,25 @@ class ProgrammeLinkUsageGuard
 
     /**
      * @param  list<int>  $modeOfStudyIds
+     * @return array<int, array{applications: int, enrolments: int}>
+     */
+    public function courseLevelModeUsageSplit(
+        int $departmentCourseId,
+        int $departmentLevelId,
+        array $modeOfStudyIds,
+    ): array {
+        return $this->usageSplitFor(
+            $modeOfStudyIds,
+            'mode_of_study_id',
+            [
+                'department_course_id' => $departmentCourseId,
+                'department_level_id' => $departmentLevelId,
+            ],
+        );
+    }
+
+    /**
+     * @param  list<int>  $modeOfStudyIds
      *
      * @throws ValidationException
      */

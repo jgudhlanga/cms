@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -155,6 +156,11 @@ class StudentApplication extends Model implements HasMedia
     public function currentLevel(): ?string
     {
         return $this->levelEnum()?->name();
+    }
+
+    public function enrolments(): HasMany
+    {
+        return $this->hasMany(StudentEnrolment::class, 'student_application_id');
     }
 
     public function classList(): BelongsTo

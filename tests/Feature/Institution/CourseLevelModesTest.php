@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\DTO\Institution\DepartmentCourseUpdateDto;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
+use App\Enums\Students\ApplicationTrackEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\CourseLevelMode;
@@ -17,6 +18,7 @@ use App\Models\Students\StudentEnrolmentStatus;
 use App\Models\Tenants\Tenant;
 use App\Models\Users\User;
 use App\Repositories\Institution\interface\IDepartmentCourseRepository;
+use App\Services\Students\ApplicationTrackSession;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\Sanctum;
@@ -91,6 +93,7 @@ it('hides leftover modes that belong to an unlinked level', function (): void {
         ->assertInertia(fn ($page) => $page
             ->component('institution/departments/courses/CourseLevelModes')
             ->has('courseLevelModes', 1)
+            ->has('linkedUsage')
             ->where('courseLevelModes.0.attributes.departmentLevelId', (int) $application->department_level_id)
         );
 });
@@ -391,4 +394,33 @@ it('counts enrolments when deciding whether a course level is still in use', fun
             ->toContain('1 enrolment')
             ->not->toContain('application');
     });
+});
+
+it('returns configured course-level modes for admin staff even with a continuous application track', function (): void {
+    $application = createVerifiedStudentApplication('STU-CLM-MODES-API');
+    $fullTime = ModeOfStudy::query()->firstOrCreate(['name' => 'Full Time']);
+    $blockRelease = blockReleaseMode();
+
+    CourseLevelMode::query()->create([
+        'department_course_id' => $application->department_course_id,
+        'department_level_id' => $application->department_level_id,
+        'modes' => [(int) $fullTime->id, (int) $blockRelease->id],
+    ]);
+
+    courseLevelModesUser();
+    session([ApplicationTrackSession::TRACK_KEY => ApplicationTrackEnum::Continuous->value]);
+
+    $response = $this->getJson(route('v1.modes-of-study.course-modes', [
+        'department_course' => $application->department_course_id,
+        'department_level' => $application->department_level_id,
+    ]));
+
+    $response->assertOk();
+
+    $ids = collect($response->json())
+        ->map(fn ($row) => (int) ($row['id'] ?? 0))
+        ->all();
+
+    expect($ids)->toContain((int) $fullTime->id)
+        ->and($ids)->toContain((int) $blockRelease->id);
 });

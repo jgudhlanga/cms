@@ -95,6 +95,38 @@ class CourseLevelModeService
         return $summary;
     }
 
+    public function ensureMode(int $departmentCourseId, int $departmentLevelId, int $modeOfStudyId): void
+    {
+        if ($departmentCourseId < 1 || $departmentLevelId < 1 || $modeOfStudyId < 1) {
+            return;
+        }
+
+        $departmentCourse = DepartmentCourse::query()->find($departmentCourseId);
+
+        if (! $departmentCourse instanceof DepartmentCourse) {
+            return;
+        }
+
+        $row = CourseLevelMode::withTrashed()
+            ->where('department_course_id', $departmentCourseId)
+            ->where('department_level_id', $departmentLevelId)
+            ->orderByRaw('deleted_at is not null')
+            ->orderByDesc('id')
+            ->first();
+
+        $current = $this->normalizeIds($row?->modes ?? []);
+
+        if (in_array($modeOfStudyId, $current, true) && ($row === null || ! $row->trashed())) {
+            return;
+        }
+
+        if (! in_array($modeOfStudyId, $current, true)) {
+            $current[] = $modeOfStudyId;
+        }
+
+        $this->writeRow($departmentCourse, $departmentLevelId, $current);
+    }
+
     /**
      * @return list<array{course: string, level: string, action: string, records: int}>
      */

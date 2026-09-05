@@ -80,17 +80,44 @@ class DepartmentCourseController extends Controller
                 ->values()
         );
         $modesOfStudy = ModeOfStudyResource::collection(ModeOfStudy::whereNull('deleted_at')->get());
-        $departmentCourse = DepartmentCourseResource::make($departmentCourse);
+        $departmentCourseResource = DepartmentCourseResource::make($departmentCourse);
+        $linkedUsage = $this->linkedUsageByLevel((int) $departmentCourse->id, $linkedLevelIds);
 
-        return Inertia::render('institution/departments/courses/CourseLevelModes',
-            compact('institutionDepartment', 'departmentCourse', 'departmentLevels', 'courseLevelModes', 'modesOfStudy'),
-        );
+        return Inertia::render('institution/departments/courses/CourseLevelModes', [
+            'institutionDepartment' => $institutionDepartment,
+            'departmentCourse' => $departmentCourseResource,
+            'departmentLevels' => $departmentLevels,
+            'courseLevelModes' => $courseLevelModes,
+            'modesOfStudy' => $modesOfStudy,
+            'linkedUsage' => $linkedUsage,
+        ]);
     }
 
     public function storeCourseLevelModes(DepartmentCourse $departmentCourse, CourseLevelModeRequest $request): void
     {
         $this->authorize('updateDepartmentMetaData');
         $this->courseLevelModes->sync($departmentCourse, $request->mode_ids ?? []);
+    }
+
+    /**
+     * @param  list<int>  $linkedLevelIds
+     * @return array<string, array{applications: int, enrolments: int, modeIds: list<int>}>
+     */
+    private function linkedUsageByLevel(int $departmentCourseId, array $linkedLevelIds): array
+    {
+        $usage = [];
+
+        foreach ($linkedLevelIds as $levelId) {
+            $modeIds = $this->usageGuard->usedModeIds($departmentCourseId, $levelId);
+            $split = $this->usageGuard->courseLevelModeUsageSplit($departmentCourseId, $levelId, $modeIds);
+            $usage[(string) $levelId] = [
+                'applications' => array_sum(array_column($split, 'applications')),
+                'enrolments' => array_sum(array_column($split, 'enrolments')),
+                'modeIds' => $modeIds,
+            ];
+        }
+
+        return $usage;
     }
 
     public function update(DepartmentCourse $departmentCourse, DepartmentCourseUpdateRequest $request): void

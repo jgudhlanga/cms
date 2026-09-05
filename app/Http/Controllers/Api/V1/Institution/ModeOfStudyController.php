@@ -1,17 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1\Institution;
 
-use App\Enums\Students\ApplicationTrackEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Http\Resources\Institution\ModeOfStudyResource;
+use App\Models\Institution\CourseLevelMode;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\ModeOfStudy;
 use App\Repositories\Institution\interface\IModeOfStudyRepository;
-use App\Services\Students\ApplicationEligibilityService;
-use App\Services\Students\ApplicationTrackSession;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -26,22 +26,23 @@ class ModeOfStudyController extends Controller
 
     public function courseModes(DepartmentCourse $departmentCourse, DepartmentLevel $departmentLevel): AnonymousResourceCollection
     {
-        $departmentLevel->loadMissing('level');
+        $modeIds = CourseLevelMode::query()
+            ->where('department_course_id', $departmentCourse->id)
+            ->where('department_level_id', $departmentLevel->id)
+            ->get()
+            ->pluck('modes')
+            ->flatten()
+            ->map(fn (mixed $id): int => (int) $id)
+            ->filter(fn (int $id): bool => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
 
-        $courseLevelModes = $departmentCourse->courseLevelModes()->where('department_level_id', $departmentLevel->id)->get();
-        $modeObjects = $courseLevelModes->flatMap(fn ($clm) => $clm->mode_objects);
+        $modes = $modeIds === []
+            ? collect()
+            : ModeOfStudy::query()->whereIn('id', $modeIds)->orderBy('name')->get();
 
-        $track = app(ApplicationTrackSession::class)->get();
-        if ($track === ApplicationTrackEnum::Continuous && $departmentLevel->level !== null) {
-            $eligibility = app(ApplicationEligibilityService::class);
-            if (! $eligibility->isSdpLevel($departmentLevel->level)) {
-                $modeObjects = $modeObjects->filter(
-                    fn (ModeOfStudy $mode) => $eligibility->isOjetMode($mode),
-                );
-            }
-        }
-
-        return ModeOfStudyResource::collection($modeObjects->values());
+        return ModeOfStudyResource::collection($modes);
     }
 
     public function store(Request $request) {}

@@ -5,6 +5,8 @@ import PageContainer from '@/components/core/page/PageContainer.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import { useUtils } from '@/composables/core/useUtils';
 import { useDepartmentCourses } from '@/composables/institution/useDepartmentCourses';
+import { canReassignProgramme, useReassignProgramme } from '@/composables/students/useReassignProgramme';
+import ReassignProgrammeDialog from '@/components/students/programme/ReassignProgrammeDialog.vue';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
@@ -14,7 +16,7 @@ import { CourseLevelMode, DepartmentCourse, DepartmentCourseModeParams, Departme
 import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
-import { trans_choice } from 'laravel-vue-i18n';
+import { trans, trans_choice } from 'laravel-vue-i18n';
 import { computed, onMounted } from 'vue';
 import CourseHero from './partials/CourseHero.vue';
 
@@ -24,12 +26,14 @@ interface Props {
     departmentLevels: DepartmentLevel[];
     courseLevelModes: CourseLevelMode[];
     modesOfStudy: ModeOfStudy[];
+    linkedUsage?: Record<string, { applications: number; enrolments: number; modeIds: number[] }>;
     auth: AuthObject;
     errors: object;
 }
 
 const props = defineProps<Props>();
 const { institutionDepartment, departmentCourse, departmentLevels, courseLevelModes, modesOfStudy } = props;
+const linkedUsage = computed(() => props.linkedUsage ?? {});
 
 const breadcrumbs: Array<Link> = [
     { transChoiceKey: 'institution', transChoiceKeyIndex: 1, href: route('institution.index') },
@@ -52,6 +56,22 @@ const form = useForm<DepartmentCourseModeParams>({
 });
 
 const { saveCourseLevelModes } = useDepartmentCourses();
+const canMoveLinked = computed(() => canReassignProgramme());
+const { form: reassignForm, records, loadingRecords, selectedApplicationIds, hydratingDefaults, openReassignProgrammeDialog, submitReassignProgramme } =
+    useReassignProgramme();
+
+const usageForLevel = (levelId: string | number | undefined) => linkedUsage.value[String(levelId)] ?? { applications: 0, enrolments: 0, modeIds: [] };
+
+const openMoveLinked = (levelId: string | number | undefined) => {
+    const usage = usageForLevel(levelId);
+    void openReassignProgrammeDialog({
+        source: {
+            departmentCourseId: departmentCourse?.id,
+            departmentLevelId: levelId,
+            modeOfStudyIds: usage.modeIds,
+        },
+    });
+};
 
 const buildModeMatrix = () => {
     const linkedLevelIds = new Set(departmentLevels.map((level) => String(level.id)));
@@ -150,16 +170,39 @@ const updateCourse = () => {
                             >
                                 <div class="flex flex-wrap items-center justify-between gap-2">
                                     <span class="text-foreground text-sm font-semibold">{{ level.attributes.level }}</span>
-                                    <span
-                                        class="text-[11px] font-medium"
-                                        :class="selectedCountForLevel(level.id) > 0 ? 'text-emerald-600' : 'text-muted-foreground'"
-                                    >
-                                        {{
-                                            selectedCountForLevel(level.id) > 0
-                                                ? `${selectedCountForLevel(level.id)} ${$t('trans.ui_modes_selected')}`
-                                                : $t('trans.ui_no_modes_selected')
-                                        }}
-                                    </span>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span
+                                            v-if="usageForLevel(level.id).applications > 0 || usageForLevel(level.id).enrolments > 0"
+                                            class="text-[11px] font-medium text-amber-700"
+                                        >
+                                            {{
+                                                trans('students.reassign_programme_linked', {
+                                                    applications: usageForLevel(level.id).applications,
+                                                    enrolments: usageForLevel(level.id).enrolments,
+                                                })
+                                            }}
+                                        </span>
+                                        <BaseButton
+                                            v-if="canMoveLinked && (usageForLevel(level.id).applications > 0 || usageForLevel(level.id).enrolments > 0)"
+                                            type="button"
+                                            :size="ButtonSize.xs"
+                                            :variant="ColorVariant.primary_outline"
+                                            classes="rounded-full"
+                                            @click="openMoveLinked(level.id)"
+                                        >
+                                            {{ $t('students.reassign_programme_move_linked') }}
+                                        </BaseButton>
+                                        <span
+                                            class="text-[11px] font-medium"
+                                            :class="selectedCountForLevel(level.id) > 0 ? 'text-emerald-600' : 'text-muted-foreground'"
+                                        >
+                                            {{
+                                                selectedCountForLevel(level.id) > 0
+                                                    ? `${selectedCountForLevel(level.id)} ${$t('trans.ui_modes_selected')}`
+                                                    : $t('trans.ui_no_modes_selected')
+                                            }}
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="flex flex-wrap gap-1.5">
                                     <button
@@ -205,5 +248,14 @@ const updateCourse = () => {
                 </BaseButton>
             </div>
         </form>
+        <ReassignProgrammeDialog
+            v-if="canMoveLinked"
+            :form="reassignForm"
+            :records="records"
+            :loading-records="loadingRecords"
+            :hydrating-defaults="hydratingDefaults"
+            v-model:selected-application-ids="selectedApplicationIds"
+            :on-form-action="submitReassignProgramme"
+        />
     </PageContainer>
 </template>
