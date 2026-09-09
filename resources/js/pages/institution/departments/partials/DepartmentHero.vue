@@ -56,7 +56,7 @@ interface MetaItem {
 
 const metaItems = computed<MetaItem[]>(() =>
     [
-        { key: 'division', icon: IconName.company, value: division.value ?? notSet.value, muted: !division.value },
+        division.value ? { key: 'division', icon: IconName.company, value: division.value } : null,
         headOfDivision.value ? { key: 'head_of_division', icon: IconName.contact, labelKey: 'head_of_division', value: headOfDivision.value } : null,
         {
             key: 'head_of_department',

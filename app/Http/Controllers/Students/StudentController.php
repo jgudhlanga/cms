@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers\Students;
 
+use App\Actions\Students\UpdateStudentIntakePeriodAction;
 use App\Actions\Students\UpdateStudentNumberAction;
 use App\Actions\Students\UpdateStudentProfileStatusAction;
 use App\DTO\Students\UpdateStudentDto;
 use App\Exceptions\Maintenance\StudentIdNumberConflictException;
 use App\Exports\Students\StudentListExport;
+use App\Helpers\DropdownHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Students\ExportStudentListRequest;
 use App\Http\Requests\Students\FixStudentIdNumberRequest;
 use App\Http\Requests\Students\PurgeStudentAccountRequest;
+use App\Http\Requests\Students\UpdateStudentIntakePeriodRequest;
 use App\Http\Requests\Students\UpdateStudentNumberRequest;
 use App\Http\Requests\Students\UpdateStudentProfileStatusRequest;
 use App\Http\Requests\Students\UpdateStudentRequest;
@@ -90,6 +93,13 @@ class StudentController extends Controller
         $activeIntakePeriodIds = $intakePeriodResolver->activeIntakePeriodIds();
         $offerLetterIntakePeriodIds = $intakePeriodResolver->offerLetterIntakePeriodIds();
         $studentStatusOptions = app(StudentApplicationStatusMapper::class)->options();
+        $studentIntakePeriodOptions = DropdownHelper::getIntakePeriods()
+            ->map(fn (object $period): array => [
+                'id' => (int) $period->id,
+                'name' => (string) $period->name,
+            ])
+            ->values()
+            ->all();
 
         return Inertia::render('students/Show', compact(
             'user',
@@ -97,6 +107,7 @@ class StudentController extends Controller
             'activeIntakePeriodIds',
             'offerLetterIntakePeriodIds',
             'studentStatusOptions',
+            'studentIntakePeriodOptions',
         ));
     }
 
@@ -160,6 +171,21 @@ class StudentController extends Controller
         );
 
         return back()->with('success', __('students.change_status_updated'));
+    }
+
+    public function updateIntakePeriod(
+        UpdateStudentIntakePeriodRequest $request,
+        Student $student,
+        UpdateStudentIntakePeriodAction $updateIntakePeriod,
+    ): RedirectResponse {
+        $updateIntakePeriod->execute(
+            $student,
+            (int) $request->validated('intake_period_id'),
+            (string) $request->validated('reason'),
+            Auth::user(),
+        );
+
+        return back()->with('success', __('students.change_intake_period_updated'));
     }
 
     public function uploadIdPhoto(

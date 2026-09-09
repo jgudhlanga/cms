@@ -75,7 +75,7 @@ export interface DepartmentCourseMetaData {
 }
 
 export interface DepartmentLevelMetaData {
-    levels: DepartmentCourse[];
+    levels: DepartmentLevel[];
     departmentLevelsIds: Array<string | undefined | null> | null;
 }
 

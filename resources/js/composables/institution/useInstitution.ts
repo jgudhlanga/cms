@@ -5,6 +5,7 @@ import About from '@/pages/institution/departments/partials/view/About.vue';
 import Announcements from '@/pages/institution/departments/partials/view/Announcements.vue';
 import Calendar from '@/pages/institution/departments/partials/view/Calendar.vue';
 import CourseSyllabusTab from '@/pages/institution/departments/partials/view/CourseSyllabusTab.vue';
+import DataReconciliation from '@/pages/institution/departments/partials/view/DataReconciliation.vue';
 import DepartmentSetup from '@/pages/institution/departments/partials/view/DepartmentSetup.vue';
 import Enrolments from '@/pages/institution/departments/partials/view/Enrolments.vue';
 import Staff from '@/pages/institution/departments/partials/view/Staff.vue';
@@ -65,6 +66,14 @@ export const useInstitution = () => {
                 component: h(CourseSyllabusTab, { department }),
                 show: isItTrue(department?.attributes?.isAcademic),
                 icon: IconName.book_check,
+            },
+            {
+                transLabel: () => trans('trans.data_reconciliation'),
+                transDescription: () => trans('trans.data_reconciliation_description'),
+                value: 'data_reconciliation',
+                component: h(DataReconciliation, { department }),
+                show: isItTrue(department?.attributes?.isAcademic),
+                icon: IconName.file_search,
             },
             {
                 transLabel: () => trans('trans.setup'),

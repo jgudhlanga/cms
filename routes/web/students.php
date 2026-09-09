@@ -35,6 +35,8 @@ Route::prefix('students')->middleware('auth')->group(function () {
         ->name('students.student-number.update');
     Route::patch('{student}/status', [StudentController::class, 'updateStatus'])
         ->name('students.status.update');
+    Route::patch('{student}/intake-period', [StudentController::class, 'updateIntakePeriod'])
+        ->name('students.intake-period.update');
     Route::patch('{student}/enrolments/{student_enrolment}/status', [StudentEnrolmentProgressController::class, 'updateStatus'])
         ->name('students.enrolments.status.update');
     Route::patch('{student}/student-semesters/{student_semester}/status', [StudentEnrolmentProgressController::class, 'updateSemesterStatus'])

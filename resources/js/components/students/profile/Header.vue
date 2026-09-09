@@ -19,11 +19,13 @@ interface Props {
 const emit = defineEmits<{
   (event: 'edit-student-number'): void;
   (event: 'edit-status'): void;
+  (event: 'edit-intake-period'): void;
 }>();
 
 interface HeaderFact {
   label: string;
   value: string;
+  editable?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -67,17 +69,36 @@ const hasRealAvatar = computed(() => Boolean(props.data?.avatarUrl?.trim?.()));
 const avatarSrc = computed(() => props.data?.avatarUrl?.trim?.() || defaultAvatarImage.value);
 const canEditStudentNumber = computed(() => Boolean(props.data?.studentId) && hasAbility('change-student-number:students'));
 const canEditStatus = computed(() => Boolean(props.data?.studentId) && hasAbility('change-student-status:students'));
+const canEditIntakePeriod = computed(
+  () => Boolean(props.data?.studentId)
+    && Boolean(props.data?.intakePeriodId)
+    && hasAbility('change-intake-period:students'),
+);
 
 const programmeFacts = computed<HeaderFact[]>(() => {
   const facts: HeaderFact[] = [];
-  const intakeOrYear = yearSemesterDisplay.value || props.data?.intakePeriod?.trim() || '';
+  const intakeName = props.data?.intakePeriod?.trim() || '';
+  const yearSemester = yearSemesterDisplay.value;
   const mode = props.data?.modeOfStudy?.trim() || '';
   const department = props.data?.department?.trim() || '';
 
-  if (intakeOrYear) {
+  if (intakeName) {
     facts.push({
       label: trans('trans.intake'),
-      value: intakeOrYear,
+      value: intakeName,
+      editable: true,
+    });
+  } else if (yearSemester) {
+    facts.push({
+      label: trans('trans.intake'),
+      value: yearSemester,
+    });
+  }
+
+  if (intakeName && yearSemester) {
+    facts.push({
+      label: trans_choice('academic_calendar.academic_calendar', 1),
+      value: yearSemester,
     });
   }
 
@@ -225,7 +246,7 @@ const hasSponsoredFacts = computed(() => sponsorName.value !== '');
             v-if="hasProgrammeFacts"
             class="flex w-full min-w-0 flex-wrap items-baseline text-[10px] leading-snug sm:text-[11px]"
           >
-            <template v-for="(fact, index) in programmeFacts" :key="`programme-${fact.label}`">
+            <template v-for="(fact, index) in programmeFacts" :key="`programme-${fact.label}-${index}`">
               <span
                 v-if="index > 0"
                 class="mx-1.5 text-muted-foreground/40"
@@ -235,8 +256,18 @@ const hasSponsoredFacts = computed(() => sponsorName.value !== '');
                 <dt class="shrink-0 text-muted-foreground">
                   {{ fact.label }}
                 </dt>
-                <dd class="min-w-0 font-bold wrap-break-word text-foreground">
-                  {{ fact.value }}
+                <dd class="inline-flex min-w-0 items-baseline gap-0.5 font-bold wrap-break-word text-foreground">
+                  <span class="min-w-0">{{ fact.value }}</span>
+                  <button
+                    v-if="fact.editable && canEditIntakePeriod"
+                    type="button"
+                    class="inline-flex size-5 shrink-0 items-center justify-center rounded-full leading-none text-muted-foreground hover:bg-accent hover:text-foreground"
+                    :title="$t('students.change_intake_period_action')"
+                    :aria-label="$t('students.change_intake_period_action')"
+                    @click="emit('edit-intake-period')"
+                  >
+                    <BaseIcon :name="IconName.edit" size="14" class="block" />
+                  </button>
                 </dd>
               </div>
             </template>

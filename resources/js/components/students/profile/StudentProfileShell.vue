@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import BackNavigationButton from '@/components/core/button/BackNavigationButton.vue';
+import ChangeIntakePeriodModal, {
+    type StudentIntakePeriodOption,
+} from '@/components/students/profile/ChangeIntakePeriodModal.vue';
 import ChangeStudentNumberModal from '@/components/students/profile/ChangeStudentNumberModal.vue';
 import ChangeStudentStatusModal, {
     type StudentStatusOption,
@@ -37,11 +40,21 @@ const statusOptions = computed<StudentStatusOption[]>(
     () => (page.props.studentStatusOptions as StudentStatusOption[] | undefined) ?? [],
 );
 
+const intakePeriodOptions = computed<StudentIntakePeriodOption[]>(
+    () => (page.props.studentIntakePeriodOptions as StudentIntakePeriodOption[] | undefined) ?? [],
+);
+
 const canChangeStudentNumber = computed(
     () => Boolean(props.student?.id) && hasAbility('change-student-number:students'),
 );
 const canChangeStatus = computed(
     () => Boolean(props.student?.id) && statusOptions.value.length > 0 && hasAbility('change-student-status:students'),
+);
+const canChangeIntakePeriod = computed(
+    () => Boolean(props.student?.id)
+        && Boolean(headerData.value.intakePeriodId)
+        && intakePeriodOptions.value.length > 0
+        && hasAbility('change-intake-period:students'),
 );
 </script>
 
@@ -51,6 +64,7 @@ const canChangeStatus = computed(
             :data="headerData"
             @edit-student-number="openModal(APP_MODULE_KEYS.student_number_change)"
             @edit-status="openModal(APP_MODULE_KEYS.student_status_change)"
+            @edit-intake-period="openModal(APP_MODULE_KEYS.student_intake_period_change)"
         >
             <template v-if="showBack && backUrl" #actions>
                 <BackNavigationButton :url="backUrl" :destination="backDestination" pill />
@@ -66,6 +80,12 @@ const canChangeStatus = computed(
             :student-id="props.student.id!"
             :status-options="statusOptions"
             :current-status="headerData.applicationStatus"
+        />
+        <ChangeIntakePeriodModal
+            v-if="canChangeIntakePeriod"
+            :student-id="props.student.id!"
+            :intake-period-options="intakePeriodOptions"
+            :current-intake-period-id="headerData.intakePeriodId"
         />
         <div class="px-2 sm:px-3">
             <InvalidIdNumberBanner :student="props.student" />
