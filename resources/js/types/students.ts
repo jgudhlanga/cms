@@ -53,6 +53,7 @@ export type Student = {
         enrolmentStatus?: string;
         applicationStatus?: string;
         intakePeriod?: string;
+        intakePeriodId?: string | number | null;
         applicationTrackingNumber?: string;
         profileContext?: 'enrolled' | 'applicant' | null;
         isApprenticeThisYear?: boolean;
@@ -88,6 +89,7 @@ export type StudentHeader = {
     enrolmentStatus: string;
     applicationStatus?: string;
     intakePeriod?: string;
+    intakePeriodId?: string | number | null;
     applicationTrackingNumber?: string;
     profileContext?: 'enrolled' | 'applicant' | null;
     department: string;

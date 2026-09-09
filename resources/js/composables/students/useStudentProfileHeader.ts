@@ -17,6 +17,7 @@ export function useStudentProfileHeader(student: MaybeRefOrGetter<Student | null
             enrolmentStatus: value?.attributes.enrolmentStatus ?? '',
             applicationStatus: value?.attributes.applicationStatus ?? '',
             intakePeriod: value?.attributes.intakePeriod ?? '',
+            intakePeriodId: value?.attributes.intakePeriodId ?? null,
             applicationTrackingNumber: value?.attributes.applicationTrackingNumber ?? '',
             profileContext: value?.attributes.profileContext ?? null,
             modeOfStudy: value?.attributes.modeOfStudy ?? '',

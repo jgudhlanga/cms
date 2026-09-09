@@ -62,6 +62,11 @@ class StudentPolicy
         return $this->view($user, $student) && $user->can('change-student-status:students');
     }
 
+    public function changeIntakePeriod(User $user, Student $student): bool
+    {
+        return $this->view($user, $student) && $user->can('change-intake-period:students');
+    }
+
     public function manageGallery(User $user, Student $student): bool
     {
         if (! $this->moduleState->isEnabled(ModuleEnum::GALLERY->slug())) {

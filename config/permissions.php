@@ -308,6 +308,7 @@ return [
             'uploadIdPhoto:students',
             'change-student-number:students',
             'change-student-status:students',
+            'change-intake-period:students',
             'export:students',
             'crud-settings:students',
             'viewAuditTrail:students',

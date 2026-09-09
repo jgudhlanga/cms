@@ -30,7 +30,7 @@ const headOfDepartment = computed(() => attributes.value?.headOfDepartment?.trim
         </div>
 
         <div class="grid grid-cols-1 gap-4 sm:w-2/3 sm:grid-cols-3">
-            <LabelValue :label="$t('trans.division')" :value="attributes?.division ?? $t('trans.not_set')" />
+            <LabelValue v-if="attributes?.division" :label="$t('trans.division')" :value="attributes.division" />
             <LabelValue :label="$t('trans.ui_courses_offered')" :value="String(attributes?.coursesOfferedCount ?? 0)" />
             <LabelValue :label="$t('trans.ui_staff_count')" :value="String(attributes?.staffCount ?? 0)" />
         </div>

@@ -141,6 +141,7 @@ declare module 'vue' {
     CardFooter: typeof import('./../components/ui/card/CardFooter.vue')['default']
     CardHeader: typeof import('./../components/ui/card/CardHeader.vue')['default']
     CardTitle: typeof import('./../components/ui/card/CardTitle.vue')['default']
+    ChangeIntakePeriodModal: typeof import('./../components/students/profile/ChangeIntakePeriodModal.vue')['default']
     ChangeStudentNumberModal: typeof import('./../components/students/profile/ChangeStudentNumberModal.vue')['default']
     ChangeStudentStatusModal: typeof import('./../components/students/profile/ChangeStudentStatusModal.vue')['default']
     Checkbox: typeof import('./../components/ui/checkbox/Checkbox.vue')['default']

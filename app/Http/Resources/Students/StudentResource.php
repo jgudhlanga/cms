@@ -106,6 +106,7 @@ class StudentResource extends JsonResource
                 'enrolmentStatus' => $profileSummary['enrolmentStatus'],
                 'applicationStatus' => $profileSummary['applicationStatus'],
                 'intakePeriod' => $profileSummary['intakePeriod'],
+                'intakePeriodId' => $profileSummary['intakePeriodId'],
                 'applicationTrackingNumber' => $profileSummary['applicationTrackingNumber'],
                 'profileContext' => $profileSummary['profileContext'],
                 'isApprenticeThisYear' => $apprenticeSummary['isApprenticeThisYear'],
@@ -138,6 +139,7 @@ class StudentResource extends JsonResource
      *     enrolmentStatus: ?string,
      *     applicationStatus: ?string,
      *     intakePeriod: ?string,
+     *     intakePeriodId: int|null,
      *     applicationTrackingNumber: ?string,
      *     profileContext: 'enrolled'|'applicant'|null
      * }
@@ -153,7 +155,13 @@ class StudentResource extends JsonResource
                 'departmentCourse.course',
                 'modeOfStudy',
                 'studentEnrolmentStatus',
+                'studentApplication.intakePeriod',
             ]);
+
+            $linkedApplication = $enrolment->studentApplication;
+            $intakePeriod = $linkedApplication instanceof StudentApplication
+                ? $linkedApplication->intakePeriod
+                : null;
 
             return [
                 'department' => $enrolment->institutionDepartment?->department?->name,
@@ -162,7 +170,8 @@ class StudentResource extends JsonResource
                 'modeOfStudy' => $enrolment->modeOfStudy?->name,
                 'enrolmentStatus' => $enrolment->studentEnrolmentStatus?->name,
                 'applicationStatus' => $this->resolveApplicationStatus($enrolment),
-                'intakePeriod' => null,
+                'intakePeriod' => $intakePeriod?->name,
+                'intakePeriodId' => $intakePeriod?->id !== null ? (int) $intakePeriod->id : null,
                 'applicationTrackingNumber' => null,
                 'profileContext' => 'enrolled',
             ];
@@ -188,6 +197,9 @@ class StudentResource extends JsonResource
                 'enrolmentStatus' => null,
                 'applicationStatus' => $application->workflowStep?->name,
                 'intakePeriod' => $application->intakePeriod?->name,
+                'intakePeriodId' => $application->intakePeriod?->id !== null
+                    ? (int) $application->intakePeriod->id
+                    : null,
                 'applicationTrackingNumber' => $application->application_tracking_number,
                 'profileContext' => 'applicant',
             ];
@@ -201,6 +213,7 @@ class StudentResource extends JsonResource
             'enrolmentStatus' => null,
             'applicationStatus' => null,
             'intakePeriod' => null,
+            'intakePeriodId' => null,
             'applicationTrackingNumber' => null,
             'profileContext' => null,
         ];

@@ -1,3 +1,4 @@
+import { Switch } from '@/components/ui/switch';
 import { useDataTables } from '@/composables/core/useDataTables';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
@@ -11,10 +12,10 @@ import { useCreateApplicationFormStore } from '@/store/portal/useCreateApplicati
 import { useUpdateProgramFormStore } from '@/store/portal/useUpdateProgramFormStore';
 import { Auth } from '@/types';
 import { DepartmentLevel, DepartmentLevelCourse, DepartmentLevelMetaData, DepartmentLevelRequirement } from '@/types/department-meta-data';
-import { InertiaForm, usePage } from '@inertiajs/vue3';
+import { InertiaForm, router, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { storeToRefs } from 'pinia';
-import { ref } from 'vue';
+import { h, ref } from 'vue';
 import { z } from 'zod';
 
 export const useDepartmentLevels = (isEditingProgram?: boolean) => {
@@ -35,7 +36,17 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
                 accessorKey: 'actions',
                 enableSorting: false,
                 meta: { align: 'right' },
-                cell: () => null,
+                cell: ({ row }: { row: { original: DepartmentLevel } }) => {
+                    const canUnlink = !!can['department-setup:levels'];
+
+                    return h('span', { class: 'inline-flex justify-end', title: trans('trans.unlink_level') }, [
+                        h(Switch, {
+                            modelValue: true,
+                            disabled: !canUnlink || isUnlinking.value,
+                            'onUpdate:modelValue': () => unlinkDepartmentLevel(row.original, canUnlink),
+                        }),
+                    ]);
+                },
             },
         ];
     };
@@ -155,8 +166,45 @@ export const useDepartmentLevels = (isEditingProgram?: boolean) => {
         }
     };
 
+    const isUnlinking = ref(false);
+
+    /**
+     * Drops a single level from the department by re-syncing the remaining links.
+     * The server soft deletes the link, so re-linking the level later restores it
+     * on its original id instead of orphaning applications and enrolments.
+     */
+    const unlinkDepartmentLevel = (departmentLevel: DepartmentLevel, canUnlink: boolean) => {
+        if (!canUnlink) return forbiddenAlert();
+
+        const institutionDepartmentId = departmentLevel.attributes?.institutionDepartmentId?.toString() ?? '';
+        const levelId = Number(departmentLevel.attributes?.levelId);
+        const level = departmentLevel.attributes?.level ?? trans_choice('trans.level', 1);
+
+        if (institutionDepartmentId === '' || !(levelId > 0)) return;
+
+        const level_ids = (departmentLevelsMetadata.value?.departmentLevelsIds ?? [])
+            .map((id) => Number(id))
+            .filter((id) => id > 0 && id !== levelId);
+
+        isUnlinking.value = true;
+        router.post(
+            route('department-levels.sync', institutionDepartmentId),
+            { level_ids },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    successAlert(trans('trans.level_unlinked', { level }));
+                    loadDepartmentLevelsMetadata(institutionDepartmentId);
+                },
+                onError: (errors) => errorAlert(errors?.level_ids ?? trans('trans.level_unlink_failure', { level })),
+                onFinish: () => (isUnlinking.value = false),
+            },
+        );
+    };
+
     return {
         createDepartmentLevelColumns,
+        unlinkDepartmentLevel,
         openDepartmentLevelsModal,
         syncDepartmentLevels,
         listDepartmentLevels,
