@@ -12,11 +12,23 @@ class StudentNumberProgressionImporter
     /** @var list<string> */
     public const array COLUMNS = [
         'Student Number',
+        'ID Number',
+        'Name',
+        'Department',
+        'Level',
+        'Course',
+        'Mode',
     ];
 
     /** @var array<string, list<string>> */
     public const array HEADER_ALIASES = [
         'student_number' => ['STUDENT NUMBER', 'STUDENT NO', 'STUDENT NO.', 'REG NUMBER', 'REGISTRATION NUMBER'],
+        'id_number' => ['ID NUMBER', 'NATIONAL ID', 'NATIONAL ID NUMBER', 'PASSPORT NUMBER'],
+        'name' => ['NAME', 'STUDENT NAME', 'FULL NAME'],
+        'department' => ['DEPARTMENT'],
+        'level' => ['LEVEL'],
+        'course' => ['COURSE', 'PROGRAMME', 'PROGRAM'],
+        'mode' => ['MODE', 'MODE OF STUDY'],
     ];
 
     /**

@@ -81,8 +81,14 @@ class EnrolmentProgressionImportController extends Controller
         $importAction = $this->resolveAction($action);
         $academicCalendar = $this->academicCalendarFromCalendarYear($calendar_year);
         $classConfig = $this->resolveClassConfig($institutionDepartment, $academicCalendar, $request);
+        $restrictToClass = $this->resolveOptionalClass($request, $classConfig);
 
-        $data = $templateService->assemble($institutionDepartment, $classConfig, $importAction);
+        $data = $templateService->assemble(
+            $institutionDepartment,
+            $classConfig,
+            $importAction,
+            $restrictToClass,
+        );
         $fileName = $templateService->downloadFileName($institutionDepartment, $classConfig, $importAction);
 
         return Excel::download(

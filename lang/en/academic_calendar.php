@@ -49,7 +49,7 @@ return [
     'progression_import_action_complete_level' => 'Mark level completed',
     'progression_import_action_advance_phase' => 'Continue to next phase',
     'progression_import_title' => 'Import :action list',
-    'progression_import_description' => 'Download the template, fill in student numbers for those who passed, preview, then confirm.',
+    'progression_import_description' => 'Download the pre-filled student list, remove anyone who should not be processed, preview, then confirm.',
     'progression_import_download_template' => 'Download template',
     'progression_import_upload' => 'Upload student list',
     'progression_import_preview' => 'Preview',
