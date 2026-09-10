@@ -47,6 +47,7 @@ export type Student = {
         weight?: string;
         disabilityStatus?: 'yes' | 'no' | 'prefer_not_to_say' | null;
         department?: string;
+        institutionDepartmentId?: string | number | null;
         level?: string;
         course?: string;
         modeOfStudy?: string;
@@ -400,6 +401,17 @@ export type StudentApplicationEdit = {
     modeOfStudy: SelectOption | null;
 };
 
+
+export type StudentLookupResult = {
+    studentId: number;
+    studentName: string;
+    studentNumber: string | null;
+    idNumber: string | null;
+    department: string | null;
+    level: string | null;
+    course: string | null;
+    modeOfStudy: string | null;
+};
 
 export type StudentFiltersState = {
     search?: string | null;

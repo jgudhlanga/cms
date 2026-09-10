@@ -375,4 +375,17 @@ return [
     'change_intake_period_updated' => 'Intake period updated.',
     'change_intake_period_activity_description' => 'Intake period changed to :intake',
     'application_invalid_missing_level' => 'Invalid application — level is missing',
+
+    // Student lookup drawer
+    'find_student' => 'Student Lookup',
+    'find_student_description' => 'Search enrolled students across departments and jump straight to a profile.',
+    'lookup_search_hint' => 'Optional filters narrow results. Choose All to search across departments.',
+    'lookup_start_typing' => 'Select a course to see students, or type at least 2 characters to search.',
+    'lookup_no_results' => 'No students match your search.',
+    'lookup_no_course_suggestions' => 'No students found for this course.',
+    'lookup_course_suggestions_hint' => 'Top matches for this course. Type to search further.',
+    'lookup_reset_filters' => 'Reset filters',
+    'lookup_all_departments' => 'All departments',
+    'lookup_all_levels' => 'All levels',
+    'lookup_all_courses' => 'All courses',
 ];

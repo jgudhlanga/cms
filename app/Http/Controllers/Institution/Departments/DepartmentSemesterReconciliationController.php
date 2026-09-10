@@ -22,7 +22,7 @@ class DepartmentSemesterReconciliationController extends Controller
 {
     public function show(Request $request, InstitutionDepartment $department): Response
     {
-        $this->authorize('viewDepartmentMetaData');
+        $this->authorize('viewDepartmentMetaData', $department);
 
         return Inertia::render(
             'institution/departments/reconciliation/SemesterReconciliation',
@@ -34,7 +34,7 @@ class DepartmentSemesterReconciliationController extends Controller
         InstitutionDepartment $department,
         SemesterReconciliationImportTemplateService $templateService,
     ): BinaryFileResponse {
-        $this->authorize('viewDepartmentMetaData');
+        $this->authorize('viewDepartmentMetaData', $department);
 
         $data = $templateService->assemble($department);
 
@@ -49,7 +49,7 @@ class DepartmentSemesterReconciliationController extends Controller
         InstitutionDepartment $department,
         SemesterReconciliationImportService $importService,
     ): JsonResponse {
-        $this->authorize('updateDepartmentMetaData');
+        $this->authorize('updateDepartmentMetaData', $department);
 
         $validated = $request->validated();
         $file = $request->file('file');
@@ -75,7 +75,7 @@ class DepartmentSemesterReconciliationController extends Controller
         InstitutionDepartment $department,
         SemesterReconciliationImportService $importService,
     ): JsonResponse {
-        $this->authorize('updateDepartmentMetaData');
+        $this->authorize('updateDepartmentMetaData', $department);
 
         $validated = $request->validated();
 

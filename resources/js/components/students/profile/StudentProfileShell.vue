@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import BackNavigationButton from '@/components/core/button/BackNavigationButton.vue';
 import ChangeIntakePeriodModal, {
     type StudentIntakePeriodOption,
 } from '@/components/students/profile/ChangeIntakePeriodModal.vue';
@@ -15,21 +14,15 @@ import { APP_MODULE_KEYS } from '@/lib/constants';
 import { hasAbility } from '@/lib/permissions';
 import { useModalStore } from '@/store/core/useModalStore';
 import type { Student } from '@/types/students';
-import type { Link } from '@/types/ui';
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 interface Props {
     student: Student;
     activeTab?: StudentProfileTabValue;
-    backUrl?: string;
-    backDestination?: Link;
-    showBack?: boolean;
 }
 
-const props = withDefaults(defineProps<Props>(), {
-    showBack: false,
-});
+const props = defineProps<Props>();
 
 const { headerData } = useStudentProfileHeader(() => props.student);
 
@@ -65,11 +58,7 @@ const canChangeIntakePeriod = computed(
             @edit-student-number="openModal(APP_MODULE_KEYS.student_number_change)"
             @edit-status="openModal(APP_MODULE_KEYS.student_status_change)"
             @edit-intake-period="openModal(APP_MODULE_KEYS.student_intake_period_change)"
-        >
-            <template v-if="showBack && backUrl" #actions>
-                <BackNavigationButton :url="backUrl" :destination="backDestination" pill />
-            </template>
-        </Header>
+        />
         <ChangeStudentNumberModal
             v-if="canChangeStudentNumber"
             :student-id="props.student.id!"

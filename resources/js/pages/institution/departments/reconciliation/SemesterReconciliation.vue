@@ -71,6 +71,7 @@ const {
     previewError,
     processLoading,
     processError,
+    processSkipReasons,
     templateUrl,
     previewRows,
     extrasRows,
@@ -198,14 +199,21 @@ const rowHighlightClass = (status: string): string => {
             />
 
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <BaseInput
-                    :model-value="String(calendarYear)"
-                    input-id="semester-reconciliation-calendar-year"
-                    name="calendar_year"
-                    type="number"
-                    :label="$t('trans.department_reconciliation_calendar_year')"
-                    @update:model-value="(value: string | number) => (calendarYear = Number(value) || calendarYear)"
-                />
+                <div class="space-y-1">
+                    <BaseInput
+                        :model-value="String(calendarYear)"
+                        input-id="semester-reconciliation-calendar-year"
+                        name="calendar_year"
+                        type="number"
+                        :label="$t('trans.department_reconciliation_calendar_year')"
+                        :disabled="preview !== null || processLoading"
+                        @update:model-value="(value: string | number) => (calendarYear = Number(value) || calendarYear)"
+                    />
+                    <!-- Locked once a preview exists: the preview rows were resolved against this year. -->
+                    <p v-if="preview !== null" class="text-xs text-muted-foreground">
+                        {{ $t('trans.department_reconciliation_calendar_year_locked') }}
+                    </p>
+                </div>
                 <ModeOfStudyComboSelect
                     v-model="selectedMode"
                     :form="filterForm"
@@ -253,7 +261,7 @@ const rowHighlightClass = (status: string): string => {
                             id="semester-reconciliation-file"
                             ref="fileInput"
                             type="file"
-                            accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+                            accept=".xlsx,.csv,.ods,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.oasis.opendocument.spreadsheet,text/csv"
                             class="block min-w-0 flex-1 text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-medium"
                             :disabled="processLoading"
                             @change="onFileChange($event, fileInput)"
@@ -273,6 +281,26 @@ const rowHighlightClass = (status: string): string => {
                     <p v-if="fileError" class="text-sm text-destructive">{{ fileError }}</p>
                     <p v-if="previewError" class="text-sm text-destructive">{{ previewError }}</p>
                     <p v-if="processError" class="text-sm text-destructive">{{ processError }}</p>
+
+                    <!-- The server returns a reason per skipped row; surface them instead of only a count. -->
+                    <div
+                        v-if="processSkipReasons.length > 0"
+                        class="space-y-1 rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-950"
+                    >
+                        <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                            {{ $t('trans.department_reconciliation_skipped_rows_heading') }}
+                        </p>
+                        <ul class="space-y-1">
+                            <li
+                                v-for="group in processSkipReasons"
+                                :key="group.reason"
+                                class="text-sm text-amber-900 dark:text-amber-200"
+                            >
+                                <span class="font-medium">{{ $t('trans.department_reconciliation_skipped_rows_label', { rows: group.rowNumbers.join(', ') }) }}</span>
+                                {{ group.reason }}
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 

@@ -4,14 +4,22 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Institution\Reconciliation;
 
+use App\Models\Institution\InstitutionDepartment;
 use App\Rules\Institution\AcceptedDepartmentReconciliationImportFile;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SemesterReconciliationPreviewRequest extends FormRequest
 {
+    /**
+     * Authorize before validation so an unauthorized caller cannot use the difference between a
+     * 422 and a 403 to probe which record ids exist.
+     */
     public function authorize(): bool
     {
-        return true;
+        $department = $this->route('department');
+
+        return $department instanceof InstitutionDepartment
+            && $this->user()?->can('updateDepartmentMetaData', $department) === true;
     }
 
     /**
@@ -22,7 +30,7 @@ class SemesterReconciliationPreviewRequest extends FormRequest
         $currentYear = (int) now()->format('Y');
 
         return [
-            'file' => ['required', 'file', new AcceptedDepartmentReconciliationImportFile],
+            'file' => ['required', 'file', 'max:10240', new AcceptedDepartmentReconciliationImportFile],
             'calendar_year' => ['required', 'integer', 'min:'.($currentYear - 10), 'max:'.($currentYear + 10)],
             'mode_of_study_id' => ['nullable', 'integer', 'exists:mode_of_studies,id'],
             'department_level_id' => ['nullable', 'integer', 'exists:department_levels,id'],

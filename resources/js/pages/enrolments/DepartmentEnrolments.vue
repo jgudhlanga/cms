@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LookupPillButton from '@/components/core/button/LookupPillButton.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import DepartmentEnrolmentModeBrowser from '@/components/enrolments/DepartmentEnrolmentModeBrowser.vue';
 import type { DepartmentEnrolmentLevelHrefContext } from '@/components/enrolments/DepartmentEnrolmentModeBrowser.vue';
@@ -13,7 +14,6 @@ import DepartmentContextBar from '@/pages/institution/departments/partials/Depar
 import { InstitutionDepartment, IntakePeriod } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { Search } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 
 interface Props {
@@ -129,14 +129,7 @@ const syncModeToUrl = (modeId: string) => {
         </template>
 
         <template #backNavigationTrailing>
-            <button
-                type="button"
-                class="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-muted"
-                @click="lookupOpen = true"
-            >
-                <Search class="h-3.5 w-3.5 shrink-0" />
-                {{ $t('enrolments.find_applicant') }}
-            </button>
+            <LookupPillButton :label="$t('enrolments.find_applicant')" @click="lookupOpen = true" />
         </template>
 
         <DepartmentEnrolmentModeBrowser

@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Services\Institution\Reconciliation;
 
 use App\Actions\Students\ContinueStudentEnrolmentAction;
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Exceptions\Students\StudentEnrolmentResolutionException;
 use App\Importers\Institution\EnrolmentVsClassListImporter;
+use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
@@ -16,8 +18,10 @@ use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
 use App\Services\Enrollment\EnrollmentLookupService;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -325,22 +329,31 @@ class EnrolmentVsClassListImportService
             $base['systemLevel'] = $application->departmentLevel?->level?->name;
             $base['systemCourse'] = $application->departmentCourse?->course?->name;
 
-            $classListType = $application->classList?->type;
-            $isFailed = $classListType === ClassListTypeEnum::FAILED
-                || $classListType === ClassListTypeEnum::FAILED->value
-                || $application->workflowStep?->slug === WorkflowStepEnum::REJECTED->slug();
+            $blockReason = $this->elevationBlockReason($application);
 
-            if ($isFailed) {
+            if ($blockReason !== null) {
                 return array_merge($base, [
                     'status' => 'in_admissions',
-                    'errors' => [__('trans.department_enrolment_vs_class_list_not_eligible')],
-                    'skipReasons' => [__('trans.department_enrolment_vs_class_list_not_eligible')],
+                    'errors' => [$blockReason],
+                    'skipReasons' => [$blockReason],
                 ]);
             }
+
+            // findEligibleApplication falls back to any application in the department when none
+            // matches the class list's level and course. The enrolment is then built from the
+            // application's offering, not the file's, so say so rather than electing silently.
+            $offeringMismatch = (int) $application->department_level_id !== (int) $departmentLevel->id
+                || (int) $application->department_course_id !== (int) $departmentCourse->id;
 
             return array_merge($base, [
                 'status' => 'elevate',
                 'isSelectable' => true,
+                'highlight' => $offeringMismatch
+                    ? __('trans.department_enrolment_vs_class_list_offering_mismatch')
+                    : null,
+                'errors' => $offeringMismatch
+                    ? [__('trans.department_enrolment_vs_class_list_offering_mismatch')]
+                    : [],
             ]);
         }
 
@@ -541,6 +554,19 @@ class EnrolmentVsClassListImportService
                     ];
                 }
 
+                // Re-run the same eligibility gate the preview applies. The uploaded file is gone
+                // by this point and the row ids arrive from the client, so this is the only thing
+                // standing between a hand-crafted request and a force-enrolled applicant.
+                $blockReason = $this->elevationBlockReason($application);
+
+                if ($blockReason !== null) {
+                    return [
+                        'rowNumber' => $rowNumber,
+                        'status' => 'skipped',
+                        'reason' => $blockReason,
+                    ];
+                }
+
                 $existing = StudentEnrolment::query()
                     ->where('student_application_id', $application->id)
                     ->whereHas('academicCalendar', function (Builder $query) use ($calendarYear): void {
@@ -556,7 +582,25 @@ class EnrolmentVsClassListImportService
                     ];
                 }
 
-                $this->continueStudentEnrolmentAction->execute($application);
+                // The requested year guards the duplicate check above, so it must also drive the
+                // write. Without an anchor the enrolment is created against whatever calendar
+                // covers today, silently filing a 2025 reconciliation under 2026.
+                $calendar = $this->targetAcademicCalendar($application, $calendarYear);
+
+                if (! $calendar instanceof AcademicCalendar) {
+                    return [
+                        'rowNumber' => $rowNumber,
+                        'status' => 'skipped',
+                        'reason' => __('trans.department_enrolment_vs_class_list_no_calendar_for_year', [
+                            'year' => (string) $calendarYear,
+                        ]),
+                    ];
+                }
+
+                $this->continueStudentEnrolmentAction->execute(
+                    $application,
+                    $this->enrolmentAnchorFor($calendar),
+                );
 
                 return [
                     'rowNumber' => $rowNumber,
@@ -578,6 +622,103 @@ class EnrolmentVsClassListImportService
                 'reason' => __('trans.department_enrolment_vs_class_list_process_row_failed'),
             ];
         }
+    }
+
+    /**
+     * The academic calendar the reconciled year refers to, for this application's calendar type.
+     */
+    private function targetAcademicCalendar(StudentApplication $application, int $calendarYear): ?AcademicCalendar
+    {
+        $application->loadMissing('departmentLevel.level');
+
+        $calendarType = $application->departmentLevel?->level?->calendar_type;
+        $typeValue = $calendarType instanceof AcademicCalendarTypeEnum
+            ? $calendarType->value
+            : (is_string($calendarType) ? $calendarType : null);
+
+        if ($typeValue === null) {
+            return null;
+        }
+
+        return AcademicCalendar::query()
+            ->where('type', $typeValue)
+            ->where('calendar_year', (string) $calendarYear)
+            ->orderBy('opening_date')
+            ->first();
+    }
+
+    /**
+     * The point in time to enrol as of.
+     *
+     * Null (meaning "now") whenever today already falls inside the target calendar, so the ordinary
+     * current-year path keeps its existing behaviour — including how many phases the semester sync
+     * materialises. Only an out-of-range year gets an explicit anchor: the close of a past calendar,
+     * or the opening of a future one.
+     */
+    private function enrolmentAnchorFor(AcademicCalendar $calendar): ?CarbonInterface
+    {
+        $timezone = (string) config('app.timezone');
+        $today = Carbon::now($timezone)->startOfDay();
+
+        $opening = $calendar->opening_date !== null
+            ? Carbon::parse((string) $calendar->opening_date, $timezone)->startOfDay()
+            : null;
+        $closing = $calendar->closing_date !== null
+            ? Carbon::parse((string) $calendar->closing_date, $timezone)->startOfDay()
+            : null;
+
+        if ($opening !== null && $today->lt($opening)) {
+            return $opening;
+        }
+
+        if ($closing !== null && $today->gt($closing)) {
+            return $closing;
+        }
+
+        return null;
+    }
+
+    /**
+     * Workflow steps that mean the applicant is still moving through admissions and must not be
+     * elevated straight to enrolled. A null step is allowed through: legacy records predate the
+     * workflow and reconciling them is the point of this tool.
+     *
+     * @var list<WorkflowStepEnum>
+     */
+    private const BLOCKED_WORKFLOW_STEPS = [
+        WorkflowStepEnum::REGISTRATION_FEE,
+        WorkflowStepEnum::REVIEW,
+        WorkflowStepEnum::REQUIREMENTS,
+        WorkflowStepEnum::WAITLISTED,
+        WorkflowStepEnum::REJECTED,
+    ];
+
+    /**
+     * Shared by preview and process so the two can never drift apart.
+     *
+     * @return string|null Null when the application may be elevated, otherwise the reason it may not.
+     */
+    private function elevationBlockReason(StudentApplication $application): ?string
+    {
+        $classListType = $application->classList?->type;
+
+        if ($classListType === ClassListTypeEnum::FAILED || $classListType === ClassListTypeEnum::FAILED->value) {
+            return __('trans.department_enrolment_vs_class_list_not_eligible');
+        }
+
+        $stepSlug = $application->workflowStep?->slug;
+
+        if ($stepSlug === null) {
+            return null;
+        }
+
+        foreach (self::BLOCKED_WORKFLOW_STEPS as $blocked) {
+            if ($stepSlug === $blocked->slug()) {
+                return __('trans.department_enrolment_vs_class_list_not_eligible');
+            }
+        }
+
+        return null;
     }
 
     private function summaryKeyForStatus(string $status): string

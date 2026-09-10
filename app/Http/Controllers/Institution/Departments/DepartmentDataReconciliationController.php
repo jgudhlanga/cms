@@ -18,7 +18,7 @@ class DepartmentDataReconciliationController extends Controller
         InstitutionDepartment $department,
         DepartmentEnrolmentCountsService $countsService,
     ): JsonResponse {
-        $this->authorize('viewDepartmentMetaData');
+        $this->authorize('viewDepartmentMetaData', $department);
 
         $calendarYear = (int) ($request->query('calendar_year') ?: now()->format('Y'));
         $modeOfStudyId = $request->query('mode_of_study_id');

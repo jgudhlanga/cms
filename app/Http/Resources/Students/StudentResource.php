@@ -133,6 +133,7 @@ class StudentResource extends JsonResource
     /**
      * @return array{
      *     department: ?string,
+     *     institutionDepartmentId: int|null,
      *     level: ?string,
      *     course: ?string,
      *     modeOfStudy: ?string,
@@ -165,6 +166,9 @@ class StudentResource extends JsonResource
 
             return [
                 'department' => $enrolment->institutionDepartment?->department?->name,
+                'institutionDepartmentId' => $enrolment->institution_department_id !== null
+                    ? (int) $enrolment->institution_department_id
+                    : null,
                 'level' => $enrolment->departmentLevel?->level?->name,
                 'course' => $enrolment->departmentCourse?->course?->name,
                 'modeOfStudy' => $enrolment->modeOfStudy?->name,
@@ -191,6 +195,9 @@ class StudentResource extends JsonResource
 
             return [
                 'department' => $application->institutionDepartment?->department?->name,
+                'institutionDepartmentId' => $application->institution_department_id !== null
+                    ? (int) $application->institution_department_id
+                    : null,
                 'level' => $application->departmentLevel?->level?->name,
                 'course' => $application->departmentCourse?->course?->name,
                 'modeOfStudy' => $application->modeOfStudy?->name,
@@ -207,6 +214,7 @@ class StudentResource extends JsonResource
 
         return [
             'department' => null,
+            'institutionDepartmentId' => null,
             'level' => null,
             'course' => null,
             'modeOfStudy' => null,

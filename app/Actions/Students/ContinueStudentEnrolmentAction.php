@@ -10,6 +10,7 @@ use App\Models\Enrolments\ClassList;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
+use Carbon\CarbonInterface;
 
 class ContinueStudentEnrolmentAction
 {
@@ -17,7 +18,14 @@ class ContinueStudentEnrolmentAction
         protected UpsertYearStudentEnrolmentAction $upsertYearStudentEnrolment,
     ) {}
 
-    public function execute(StudentApplication $studentApplication): StudentEnrolment
+    /**
+     * @param  CarbonInterface|null  $asOf  Point in time the enrolment is being made as of. Null
+     *                                      means "now", which is what the normal finalisation flow
+     *                                      wants. Reconciliation of a past year passes an anchor
+     *                                      inside that year so the enrolment does not land in the
+     *                                      current academic calendar.
+     */
+    public function execute(StudentApplication $studentApplication, ?CarbonInterface $asOf = null): StudentEnrolment
     {
         $studentApplication->loadMissing([
             'student',
@@ -27,15 +35,16 @@ class ContinueStudentEnrolmentAction
             'departmentCourse',
         ]);
 
-        $classListId = $studentApplication->classList?->id
+        $classList = $studentApplication->classList
             ?? ClassList::query()
                 ->where('student_application_id', $studentApplication->id)
-                ->value('id');
+                ->first();
 
-        if ($classListId !== null) {
-            ClassList::query()
-                ->whereKey($classListId)
-                ->update(['type' => ClassListTypeEnum::FINAL->value]);
+        // Update through the model, not the query builder: ClassList is activity-logged, and a
+        // query-builder update bypasses Eloquent events, leaving this irreversible status change
+        // with no audit trail.
+        if ($classList instanceof ClassList) {
+            $classList->update(['type' => ClassListTypeEnum::FINAL->value]);
         }
 
         $enrolledStep = WorkflowStep::query()
@@ -48,6 +57,6 @@ class ContinueStudentEnrolmentAction
             ]);
         }
 
-        return $this->upsertYearStudentEnrolment->execute($studentApplication);
+        return $this->upsertYearStudentEnrolment->execute($studentApplication, $asOf);
     }
 }

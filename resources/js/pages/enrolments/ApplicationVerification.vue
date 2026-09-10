@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LookupPillButton from '@/components/core/button/LookupPillButton.vue';
 import EnrolmentApplicantLookupDrawer from '@/components/enrolments/EnrolmentApplicantLookupDrawer.vue';
 import VerificationMatchToggle from '@/components/enrolments/VerificationMatchToggle.vue';
 import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialog';
@@ -25,7 +26,7 @@ import {
 } from '@/types/enrolments';
 import { Link } from '@/types/ui';
 import { Head, useForm } from '@inertiajs/vue3';
-import { Search, User } from 'lucide-vue-next';
+import { User } from 'lucide-vue-next';
 import { trans } from 'laravel-vue-i18n';
 import { computed, onMounted, ref } from 'vue';
 
@@ -300,14 +301,7 @@ onMounted(() => {
         </template>
 
         <template #backNavigationTrailing>
-            <button
-                type="button"
-                class="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-muted"
-                @click="lookupOpen = true"
-            >
-                <Search class="h-3.5 w-3.5 shrink-0" />
-                {{ $t('enrolments.find_applicant') }}
-            </button>
+            <LookupPillButton :label="$t('enrolments.find_applicant')" @click="lookupOpen = true" />
         </template>
 
         <div class="grid grid-cols-1 gap-3 lg:grid-cols-12">

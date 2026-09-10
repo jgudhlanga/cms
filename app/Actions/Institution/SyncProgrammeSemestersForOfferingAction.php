@@ -22,14 +22,7 @@ class SyncProgrammeSemestersForOfferingAction
         $departmentLevelCourse->loadMissing(['departmentLevel.level']);
 
         return DB::transaction(function () use ($departmentLevelCourse): Collection {
-            $calendarType = $departmentLevelCourse->departmentLevel?->level?->calendar_type
-                ?? AcademicCalendarTypeEnum::SEMESTER;
-
-            if (! $calendarType instanceof AcademicCalendarTypeEnum) {
-                $calendarType = AcademicCalendarTypeEnum::tryFrom((string) $calendarType)
-                    ?? AcademicCalendarTypeEnum::SEMESTER;
-            }
-
+            $calendarType = $this->calendarType($departmentLevelCourse);
             $periodsPerYear = ProgrammeSemesterNameFormatter::periodsPerYear($calendarType);
             $taughtCount = max(1, (int) $departmentLevelCourse->taught_semester_count);
             $includesAttachment = (bool) $departmentLevelCourse->includes_industrial_attachment;
@@ -38,52 +31,23 @@ class SyncProgrammeSemestersForOfferingAction
                 : 0;
 
             $desired = $this->buildDesiredRows(
-                $departmentLevelCourse,
                 $calendarType,
                 $periodsPerYear,
                 $taughtCount,
                 $attachmentCount,
             );
 
-            $existing = ProgrammeSemester::query()
-                ->where('department_level_course_id', $departmentLevelCourse->id)
-                ->orderBy('position')
-                ->get()
-                ->keyBy('position');
-
+            $existing = $this->existingByPosition($departmentLevelCourse);
             $synced = collect();
 
             foreach ($desired as $row) {
-                $position = (int) $row['position'];
-                $current = $existing->get($position);
-
-                if ($current instanceof ProgrammeSemester) {
-                    if ($this->canUpdateProgrammeSemester($current)) {
-                        $current->update([
-                            'name' => $row['name'],
-                            'kind' => $row['kind'],
-                        ]);
-                    }
-                    $synced->push($current->fresh() ?? $current);
-
-                    continue;
-                }
-
-                $synced->push(ProgrammeSemester::query()->create([
-                    'department_level_course_id' => $departmentLevelCourse->id,
-                    'position' => $position,
-                    'name' => $row['name'],
-                    'kind' => $row['kind'],
-                ]));
+                $synced->push($this->syncRow($existing, $departmentLevelCourse, $row));
             }
 
-            $desiredPositions = $desired->pluck('position')->map(fn (mixed $p): int => (int) $p)->all();
-
-            ProgrammeSemester::query()
-                ->where('department_level_course_id', $departmentLevelCourse->id)
-                ->whereNotIn('position', $desiredPositions)
-                ->whereDoesntHave('studentSemesters')
-                ->delete();
+            $this->purgeUnusedPositions(
+                $departmentLevelCourse,
+                $desired->pluck('position')->map(fn (mixed $position): int => (int) $position)->all(),
+            );
 
             return $synced->sortBy('position')->values();
         });
@@ -93,7 +57,6 @@ class SyncProgrammeSemestersForOfferingAction
      * @return Collection<int, array{position: int, name: string, kind: ProgrammeSemesterKindEnum}>
      */
     private function buildDesiredRows(
-        DepartmentLevelCourse $departmentLevelCourse,
         AcademicCalendarTypeEnum $calendarType,
         int $periodsPerYear,
         int $taughtCount,
@@ -132,8 +95,87 @@ class SyncProgrammeSemestersForOfferingAction
         return $rows->values();
     }
 
+    /**
+     * @return Collection<int, ProgrammeSemester>
+     */
+    private function existingByPosition(DepartmentLevelCourse $departmentLevelCourse): Collection
+    {
+        return ProgrammeSemester::query()
+            ->withTrashed()
+            ->with('studentSemesters')
+            ->where('department_level_course_id', $departmentLevelCourse->id)
+            ->orderBy('position')
+            ->get()
+            ->keyBy(fn (ProgrammeSemester $semester): int => (int) $semester->position);
+    }
+
+    /**
+     * @param  Collection<int, ProgrammeSemester>  $existing
+     * @param  array{position: int, name: string, kind: ProgrammeSemesterKindEnum}  $row
+     */
+    private function syncRow(
+        Collection $existing,
+        DepartmentLevelCourse $departmentLevelCourse,
+        array $row,
+    ): ProgrammeSemester {
+        $position = (int) $row['position'];
+        $current = $existing->get($position);
+
+        if (! $current instanceof ProgrammeSemester) {
+            return ProgrammeSemester::query()->create([
+                'department_level_course_id' => $departmentLevelCourse->id,
+                'position' => $position,
+                'name' => $row['name'],
+                'kind' => $row['kind'],
+            ]);
+        }
+
+        if ($current->trashed()) {
+            $current->restore();
+        }
+
+        if ($this->canUpdateProgrammeSemester($current)) {
+            $current->update([
+                'name' => $row['name'],
+                'kind' => $row['kind'],
+            ]);
+        }
+
+        return $current->fresh() ?? $current;
+    }
+
+    /**
+     * @param  list<int>  $desiredPositions
+     */
+    private function purgeUnusedPositions(DepartmentLevelCourse $departmentLevelCourse, array $desiredPositions): void
+    {
+        ProgrammeSemester::query()
+            ->withTrashed()
+            ->where('department_level_course_id', $departmentLevelCourse->id)
+            ->whereNotIn('position', $desiredPositions)
+            ->whereDoesntHave('studentSemesters')
+            ->forceDelete();
+    }
+
     private function canUpdateProgrammeSemester(ProgrammeSemester $programmeSemester): bool
     {
+        if ($programmeSemester->relationLoaded('studentSemesters')) {
+            return $programmeSemester->studentSemesters->isEmpty();
+        }
+
         return ! $programmeSemester->studentSemesters()->exists();
+    }
+
+    private function calendarType(DepartmentLevelCourse $departmentLevelCourse): AcademicCalendarTypeEnum
+    {
+        $calendarType = $departmentLevelCourse->departmentLevel?->level?->calendar_type
+            ?? AcademicCalendarTypeEnum::SEMESTER;
+
+        if ($calendarType instanceof AcademicCalendarTypeEnum) {
+            return $calendarType;
+        }
+
+        return AcademicCalendarTypeEnum::tryFrom((string) $calendarType)
+            ?? AcademicCalendarTypeEnum::SEMESTER;
     }
 }
