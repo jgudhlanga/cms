@@ -62,16 +62,26 @@ class RestoreModeReassignBugService
             return $summary;
         }
 
-        DB::transaction(function () use ($applications, $courseLevelModes, &$summary): void {
-            foreach ($applications as $row) {
-                $this->restoreApplication($row, $summary);
-            }
+        // Bulk restore must not write Spatie activity_log rows: production MySQL
+        // has failed mid-restore when /tmp was missing for those inserts.
+        DB::transaction(function () use ($applications, &$summary): void {
+            StudentApplication::withoutEvents(function () use ($applications, &$summary): void {
+                StudentEnrolment::withoutEvents(function () use ($applications, &$summary): void {
+                    StudentExamResult::withoutEvents(function () use ($applications, &$summary): void {
+                        CourseLevelMode::withoutEvents(function () use ($applications, $courseLevelModes, &$summary): void {
+                            foreach ($applications as $row) {
+                                $this->restoreApplication($row, $summary);
+                            }
 
-            foreach ($courseLevelModes as $row) {
-                $this->restoreCourseLevelMode($row, $summary);
-            }
+                            foreach ($courseLevelModes as $row) {
+                                $this->restoreCourseLevelMode($row, $summary);
+                            }
 
-            $this->syncUsedModes($applications, $courseLevelModes);
+                            $this->syncUsedModes($applications, $courseLevelModes);
+                        });
+                    });
+                });
+            });
         });
 
         return $summary;
@@ -158,7 +168,13 @@ class RestoreModeReassignBugService
         }
 
         if ((int) $application->mode_of_study_id === $row['new_mode_id']) {
-            $application->update(['mode_of_study_id' => $row['old_mode_id']]);
+            StudentApplication::query()
+                ->whereKey($application->id)
+                ->where('mode_of_study_id', $row['new_mode_id'])
+                ->update([
+                    'mode_of_study_id' => $row['old_mode_id'],
+                    'updated_at' => now(),
+                ]);
             $summary['applications']['restored']++;
         } else {
             $summary['applications']['skipped']++;
@@ -184,7 +200,13 @@ class RestoreModeReassignBugService
             }
 
             if ((int) $enrolment->mode_of_study_id === $row['new_mode_id']) {
-                $enrolment->update(['mode_of_study_id' => $row['old_mode_id']]);
+                StudentEnrolment::query()
+                    ->whereKey($enrolment->id)
+                    ->where('mode_of_study_id', $row['new_mode_id'])
+                    ->update([
+                        'mode_of_study_id' => $row['old_mode_id'],
+                        'updated_at' => now(),
+                    ]);
                 $summary['enrolments']['restored']++;
             } else {
                 $summary['enrolments']['skipped']++;
@@ -203,7 +225,11 @@ class RestoreModeReassignBugService
             if ((int) $exam->mode_of_study_id === $row['new_mode_id']) {
                 StudentExamResult::query()
                     ->whereKey($exam->id)
-                    ->update(['mode_of_study_id' => $row['old_mode_id']]);
+                    ->where('mode_of_study_id', $row['new_mode_id'])
+                    ->update([
+                        'mode_of_study_id' => $row['old_mode_id'],
+                        'updated_at' => now(),
+                    ]);
                 $summary['exams']['restored']++;
             } else {
                 $summary['exams']['skipped']++;
@@ -242,7 +268,12 @@ class RestoreModeReassignBugService
     private function softDeleteCourseLevelMode(CourseLevelMode $mode): void
     {
         if (! $mode->trashed()) {
-            $mode->delete();
+            CourseLevelMode::query()
+                ->whereKey($mode->id)
+                ->update([
+                    'deleted_at' => now(),
+                    'updated_at' => now(),
+                ]);
         }
     }
 
@@ -251,11 +282,13 @@ class RestoreModeReassignBugService
      */
     private function updateCourseLevelModeModes(CourseLevelMode $mode, array $modes): void
     {
-        if ($mode->trashed()) {
-            $mode->restore();
-        }
-
-        $mode->update(['modes' => array_values($modes)]);
+        CourseLevelMode::withTrashed()
+            ->whereKey($mode->id)
+            ->update([
+                'modes' => json_encode(array_values($modes)),
+                'deleted_at' => null,
+                'updated_at' => now(),
+            ]);
     }
 
     /**
@@ -263,11 +296,13 @@ class RestoreModeReassignBugService
      */
     private function restoreSoftDeletedCourseLevelMode(CourseLevelMode $mode, array $modes): void
     {
-        if ($mode->trashed()) {
-            $mode->restore();
-        }
-
-        $mode->update(['modes' => array_values($modes)]);
+        CourseLevelMode::withTrashed()
+            ->whereKey($mode->id)
+            ->update([
+                'modes' => json_encode(array_values($modes)),
+                'deleted_at' => null,
+                'updated_at' => now(),
+            ]);
     }
 
     /**

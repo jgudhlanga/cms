@@ -154,10 +154,29 @@ function makeStudentNumberSpreadsheet(array $studentNumbers): UploadedFile
 {
     $spreadsheet = new Spreadsheet;
     $sheet = $spreadsheet->getActiveSheet();
-    $sheet->setCellValue('A1', 'Student Number');
+    $columns = [
+        'Student Number',
+        'ID Number',
+        'Name',
+        'Department',
+        'Level',
+        'Course',
+        'Mode',
+    ];
+
+    foreach ($columns as $columnIndex => $heading) {
+        $sheet->setCellValue([$columnIndex + 1, 1], $heading);
+    }
 
     foreach (array_values($studentNumbers) as $index => $number) {
-        $sheet->setCellValue('A'.($index + 2), $number);
+        $row = $index + 2;
+        $sheet->setCellValue([1, $row], $number);
+        $sheet->setCellValue([2, $row], '63-000000'.$index.'A00');
+        $sheet->setCellValue([3, $row], 'Test Student '.$index);
+        $sheet->setCellValue([4, $row], 'ICT');
+        $sheet->setCellValue([5, $row], 'NC');
+        $sheet->setCellValue([6, $row], 'Computer Science');
+        $sheet->setCellValue([7, $row], 'Full Time');
     }
 
     $path = storage_path('framework/testing/progression-import-'.Str::random(8).'.xlsx');
@@ -281,4 +300,32 @@ it('allows downloading the progression import template for complete-level and ad
             'action' => 'advance-phase',
         ]))
         ->assertOk();
+});
+
+it('prepopulates the template with seated student details and preview still matches on student number', function (): void {
+    $enrolment = createPhaseEnrolmentForNextLevel('IMPORT-PREFILL', 'semester-2', 'Active');
+    $enrolment->student?->update(['id_number' => '63-1234567A63']);
+    ['classConfig' => $classConfig] = createClassSeatingForEnrolment($enrolment);
+    $department = \App\Models\Institution\InstitutionDepartment::query()->findOrFail($enrolment->institution_department_id);
+
+    $assembled = app(\App\Services\AcademicCalendars\EnrolmentProgressionImportTemplateService::class)
+        ->assemble($department, $classConfig, EnrolmentProgressionImportAction::CompleteLevel);
+
+    expect($assembled['header']['studentCount'])->toBe(1)
+        ->and($assembled['rows'][0][0])->toBe('IMPORT-PREFILL')
+        ->and($assembled['rows'][0][1])->toBe('63-1234567A63')
+        ->and($assembled['rows'][0][2])->toContain('Test')
+        ->and($assembled['rows'][0][4])->toBe('NC')
+        ->and($assembled['rows'][0][6])->not->toBe('');
+
+    $file = makeStudentNumberSpreadsheet([(string) $enrolment->student?->student_number]);
+    $preview = app(EnrolmentProgressionImportService::class)->preview(
+        $file,
+        $department,
+        $classConfig,
+        EnrolmentProgressionImportAction::CompleteLevel,
+    );
+
+    expect($preview['summary']['eligible'])->toBe(1)
+        ->and($preview['rows'][0]['studentNumber'])->toBe('IMPORT-PREFILL');
 });

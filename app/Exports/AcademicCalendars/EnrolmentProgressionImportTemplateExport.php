@@ -57,6 +57,7 @@ class EnrolmentProgressionImportTemplateDataSheetExport implements FromArray, Wi
             ['Department', $header['department'] ?? null],
             ['Action', $header['action'] ?? null],
             ['Calendar Year', $header['calendarYear'] ?? null],
+            ['Students', $header['studentCount'] ?? null],
             ['Generated', $header['generatedAt'] ?? null],
             [null],
             $templateService->columns(),
