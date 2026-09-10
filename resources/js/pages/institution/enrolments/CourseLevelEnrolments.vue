@@ -62,6 +62,7 @@ const {
     records: reassignRecords,
     loadingRecords: reassignLoadingRecords,
     selectedApplicationIds: reassignSelectedIds,
+    filterModeIds: reassignFilterModeIds,
     hydratingDefaults: reassignHydratingDefaults,
     openReassignProgrammeDialog,
     submitReassignProgramme,
@@ -704,6 +705,7 @@ const onRowPurge = (application: EnrolmentApplication) => {
             :loading-records="reassignLoadingRecords"
             :hydrating-defaults="reassignHydratingDefaults"
             v-model:selected-application-ids="reassignSelectedIds"
+            v-model:filter-mode-ids="reassignFilterModeIds"
             :on-form-action="submitReassignProgramme"
         />
     </PageContainer>

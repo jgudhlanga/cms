@@ -57,8 +57,16 @@ const form = useForm<DepartmentCourseModeParams>({
 
 const { saveCourseLevelModes } = useDepartmentCourses();
 const canMoveLinked = computed(() => canReassignProgramme());
-const { form: reassignForm, records, loadingRecords, selectedApplicationIds, hydratingDefaults, openReassignProgrammeDialog, submitReassignProgramme } =
-    useReassignProgramme();
+const {
+    form: reassignForm,
+    records,
+    loadingRecords,
+    selectedApplicationIds,
+    filterModeIds,
+    hydratingDefaults,
+    openReassignProgrammeDialog,
+    submitReassignProgramme,
+} = useReassignProgramme();
 
 const usageForLevel = (levelId: string | number | undefined) => linkedUsage.value[String(levelId)] ?? { applications: 0, enrolments: 0, modeIds: [] };
 
@@ -255,6 +263,7 @@ const updateCourse = () => {
             :loading-records="loadingRecords"
             :hydrating-defaults="hydratingDefaults"
             v-model:selected-application-ids="selectedApplicationIds"
+            v-model:filter-mode-ids="filterModeIds"
             :on-form-action="submitReassignProgramme"
         />
     </PageContainer>

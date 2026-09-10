@@ -11,18 +11,18 @@ import { ColorVariant } from '@/enums/colors';
 import { SizeVariant } from '@/enums/sizes';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { clearFormErrors } from '@/lib/forms';
+import { recordModeId, UNSPECIFIED_MODE_ID } from '@/composables/students/useReassignProgramme';
 import type { ProgrammeUsageRecord } from '@/types/programme-reassign';
 import type { SelectOption } from '@/types/utils';
 import type { InertiaForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
-import { computed, ref, watch } from 'vue';
-
-const UNSPECIFIED_MODE_ID = 0;
+import { computed, watch } from 'vue';
 
 const props = defineProps<{
     form: InertiaForm<{
         application_ids: number[];
         student_enrolment_ids: number[];
+        source_mode_of_study_ids?: number[];
         institution_department_id: number | null;
         department_level_id: number | null;
         department_course_id: number | null;
@@ -39,10 +39,7 @@ const props = defineProps<{
 }>();
 
 const selectedApplicationIds = defineModel<number[]>('selectedApplicationIds', { required: true });
-const filterModeIds = ref<number[]>([]);
-
-const recordModeId = (row: ProgrammeUsageRecord): number =>
-    row.mode_of_study_id !== null && row.mode_of_study_id > 0 ? row.mode_of_study_id : UNSPECIFIED_MODE_ID;
+const filterModeIds = defineModel<number[]>('filterModeIds', { required: true });
 
 const modeOptions = computed(() => {
     const counts = new Map<number, { label: string; count: number }>();

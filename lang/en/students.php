@@ -336,6 +336,8 @@ return [
     'reassign_programme_deselect_filtered' => 'Deselect all in view',
     'reassign_programme_selection_summary' => ':selected of :visible in view · :total selected overall',
     'reassign_programme_no_matches' => 'No students match the selected modes.',
+    'reassign_programme_hidden_selection' => 'Clear the mode filter or deselect students that are hidden before moving.',
+    'reassign_programme_source_mode_mismatch' => 'One or more selected students are not on the filtered mode(s).',
     'change_status_action' => 'Change student status',
     'change_status_modal_title' => 'Change student status',
     'change_status_field_label' => 'Status',

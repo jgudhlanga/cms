@@ -30,6 +30,8 @@ class ReassignStudentProgrammeRequest extends FormRequest
             'application_ids.*' => ['integer', 'distinct', 'exists:student_applications,id'],
             'student_enrolment_ids' => ['nullable', 'array'],
             'student_enrolment_ids.*' => ['integer', 'distinct', 'exists:student_enrolments,id'],
+            'source_mode_of_study_ids' => ['nullable', 'array'],
+            'source_mode_of_study_ids.*' => ['integer', 'distinct', 'exists:mode_of_studies,id'],
             'institution_department_id' => ['required', 'integer', 'exists:institution_departments,id'],
             'department_level_id' => ['required', 'integer', 'exists:department_levels,id'],
             'department_course_id' => ['required', 'integer', 'exists:department_courses,id'],
@@ -89,5 +91,13 @@ class ReassignStudentProgrammeRequest extends FormRequest
     public function studentEnrolmentIds(): array
     {
         return array_values(array_filter(array_map('intval', $this->input('student_enrolment_ids', []) ?? [])));
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function sourceModeOfStudyIds(): array
+    {
+        return array_values(array_filter(array_map('intval', $this->input('source_mode_of_study_ids', []) ?? [])));
     }
 }

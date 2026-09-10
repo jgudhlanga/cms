@@ -758,3 +758,55 @@ it('allows staff to reassign a review application in an active intake', function
 
     expect((int) $application->fresh()->department_course_id)->toBe((int) $target['course']->id);
 });
+
+it('only moves applications currently on the filtered source modes', function (): void {
+    $partTimeApp = createVerifiedStudentApplication('REAS-SRC-PT-'.strtoupper(Str::random(4)));
+    $blockReleaseApp = createVerifiedStudentApplication('REAS-SRC-BR-'.strtoupper(Str::random(4)));
+    $fullTime = ModeOfStudy::query()->firstOrCreate(['name' => 'Full Time']);
+    $partTime = ModeOfStudy::query()->firstOrCreate(['name' => 'Part Time']);
+    $blockRelease = ModeOfStudy::query()->firstOrCreate(
+        ['name' => 'Block Release'],
+        ['description' => 'Block Release'],
+    );
+
+    $blockReleaseApp->update([
+        'institution_department_id' => $partTimeApp->institution_department_id,
+        'department_level_id' => $partTimeApp->department_level_id,
+        'department_course_id' => $partTimeApp->department_course_id,
+        'mode_of_study_id' => $blockRelease->id,
+    ]);
+    $partTimeApp->update(['mode_of_study_id' => $partTime->id]);
+
+    ensureProgrammeOffering(
+        (int) $partTimeApp->department_course_id,
+        (int) $partTimeApp->department_level_id,
+        (int) $fullTime->id,
+    );
+    ensureProgrammeOffering(
+        (int) $partTimeApp->department_course_id,
+        (int) $partTimeApp->department_level_id,
+        (int) $partTime->id,
+    );
+    ensureProgrammeOffering(
+        (int) $partTimeApp->department_course_id,
+        (int) $partTimeApp->department_level_id,
+        (int) $blockRelease->id,
+    );
+
+    $this->actingAs(reassignRootUser($partTimeApp->tenant_id))
+        ->from('/')
+        ->post(route('students.programmes.reassign'), [
+            ...reassignPayload([
+                'institution_department_id' => $partTimeApp->institution_department_id,
+                'department_level_id' => $partTimeApp->department_level_id,
+                'department_course_id' => $partTimeApp->department_course_id,
+                'mode_of_study_id' => $fullTime->id,
+            ], ['application_ids' => [$partTimeApp->id, $blockReleaseApp->id]]),
+            'source_mode_of_study_ids' => [$partTime->id],
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('success');
+
+    expect((int) $partTimeApp->fresh()->mode_of_study_id)->toBe((int) $fullTime->id)
+        ->and((int) $blockReleaseApp->fresh()->mode_of_study_id)->toBe((int) $blockRelease->id);
+});

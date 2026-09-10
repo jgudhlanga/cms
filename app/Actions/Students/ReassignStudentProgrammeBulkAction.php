@@ -21,17 +21,36 @@ class ReassignStudentProgrammeBulkAction
     /**
      * @param  list<int>  $applicationIds
      * @param  list<int>  $studentEnrolmentIds
+     * @param  list<int>  $sourceModeOfStudyIds
      * @return array{moved: int, skipped: list<array{id: int, reason: string}>, class_unassigned: int}
      */
-    public function execute(User $actor, array $applicationIds, array $studentEnrolmentIds, ReassignStudentProgrammeDto $target): array
-    {
+    public function execute(
+        User $actor,
+        array $applicationIds,
+        array $studentEnrolmentIds,
+        ReassignStudentProgrammeDto $target,
+        array $sourceModeOfStudyIds = [],
+    ): array {
         $applications = $this->resolveApplications($applicationIds, $studentEnrolmentIds);
         $moved = 0;
         $classUnassigned = 0;
         $skipped = [];
+        $allowedSourceModes = array_values(array_unique(array_filter(
+            array_map('intval', $sourceModeOfStudyIds),
+            fn (int $id): bool => $id > 0,
+        )));
 
         foreach ($applications as $application) {
             try {
+                if ($allowedSourceModes !== [] && ! in_array((int) $application->mode_of_study_id, $allowedSourceModes, true)) {
+                    $skipped[] = [
+                        'id' => (int) $application->id,
+                        'reason' => __('students.reassign_programme_source_mode_mismatch'),
+                    ];
+
+                    continue;
+                }
+
                 if (! $actor->can('update', $application)) {
                     throw new AuthorizationException;
                 }
