@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AcademicCalendars\AcademicCalendarClassController;
 use App\Http\Controllers\AcademicCalendars\AcademicCalendarController;
+use App\Http\Controllers\AcademicCalendars\EnrolmentProgressionImportController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('institution')->middleware('auth')->group(function () {
@@ -31,6 +32,10 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::post('academic-calendars/department/{institution_department}/classes/{calendar_year}/show/{academic_calendar_class}/correct-inclusion', [AcademicCalendarController::class, 'correctDepartmentAcademicCalendarClassInclusion'])->where('calendar_year', '[0-9]{4}')->name('academic-calendars.department-classes.correct-inclusion');
     Route::post('academic-calendars/department/{institution_department}/classes/{calendar_year}/show/{academic_calendar_class}/undo-progression', [AcademicCalendarController::class, 'undoDepartmentAcademicCalendarClassProgression'])->where('calendar_year', '[0-9]{4}')->name('academic-calendars.department-classes.undo-progression');
     Route::post('academic-calendars/department/{institution_department}/classes/{calendar_year}/show/{academic_calendar_class}/complete-level', [AcademicCalendarController::class, 'completeDepartmentAcademicCalendarClassStudents'])->where('calendar_year', '[0-9]{4}')->name('academic-calendars.department-classes.complete-level');
+    Route::get('academic-calendars/department/{institution_department}/classes/{calendar_year}/progression-import/{action}', [EnrolmentProgressionImportController::class, 'show'])->where('calendar_year', '[0-9]{4}')->where('action', 'complete-level|advance-phase')->name('academic-calendars.department-classes.progression-import');
+    Route::get('academic-calendars/department/{institution_department}/classes/{calendar_year}/progression-import/{action}/template', [EnrolmentProgressionImportController::class, 'template'])->where('calendar_year', '[0-9]{4}')->where('action', 'complete-level|advance-phase')->name('academic-calendars.department-classes.progression-import.template');
+    Route::post('academic-calendars/department/{institution_department}/classes/{calendar_year}/progression-import/{action}/preview', [EnrolmentProgressionImportController::class, 'preview'])->where('calendar_year', '[0-9]{4}')->where('action', 'complete-level|advance-phase')->name('academic-calendars.department-classes.progression-import.preview');
+    Route::post('academic-calendars/department/{institution_department}/classes/{calendar_year}/progression-import/{action}', [EnrolmentProgressionImportController::class, 'process'])->where('calendar_year', '[0-9]{4}')->where('action', 'complete-level|advance-phase')->name('academic-calendars.department-classes.progression-import.process');
     Route::post('academic-calendars/department/{institution_department}/classes/{calendar_year}', [AcademicCalendarController::class, 'storeDepartmentAcademicCalendarClasses'])->where('calendar_year', '[0-9]{4}')->name('academic-calendars.department-classes.store');
     Route::post('academic-calendars/{institution_department}/classes-config', [AcademicCalendarController::class, 'update'])->name('academic-calendars.classes-config.store');
     Route::post('academic-calendars/{institution_department}/classes-config/{academic_calendar}', [AcademicCalendarController::class, 'storePerClassSizeConfig'])->name('academic-calendars.classes-config.per-class-size.store');

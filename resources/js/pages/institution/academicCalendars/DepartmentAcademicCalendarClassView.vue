@@ -142,6 +142,9 @@ const canCompleteLevel = computed(() => canMoveStudents.value && props.isLastPro
 const selectedStudents = computed(() =>
     filteredStudents.value.filter((student) => selectedStudentEnrolmentIds.value.includes(student.studentEnrolmentId)),
 );
+const eligibleAdvanceStudents = computed(() =>
+    filteredStudents.value.filter((student) => student.canAdvanceToNextPhase !== false),
+);
 const selectedCanAdvancePhase = computed(() =>
     selectedStudents.value.some((student) => student.canAdvanceToNextPhase !== false),
 );
@@ -156,6 +159,44 @@ const advancePhaseBlockReason = computed(() => {
     ];
 
     return reasons.join(' ');
+});
+
+const progressionImportUrl = computed(() => {
+    if (!classConfig.value?.id) {
+        return null;
+    }
+
+    const action = canCompleteLevel.value ? 'complete-level' : canAdvancePhase.value ? 'advance-phase' : null;
+    if (!action) {
+        return null;
+    }
+
+    return route('academic-calendars.department-classes.progression-import', {
+        institution_department: String(department.value.id),
+        calendar_year: String(academicCalendar.value.attributes.calendarYear),
+        action,
+        ...classConfigQuery.value,
+        academic_calendar_class_id: String(academicCalendarClass.value.id),
+    });
+});
+
+const progressionImportTemplateUrl = computed(() => {
+    if (!classConfig.value?.id) {
+        return null;
+    }
+
+    const action = canCompleteLevel.value ? 'complete-level' : canAdvancePhase.value ? 'advance-phase' : null;
+    if (!action) {
+        return null;
+    }
+
+    return route('academic-calendars.department-classes.progression-import.template', {
+        institution_department: String(department.value.id),
+        calendar_year: String(academicCalendar.value.attributes.calendarYear),
+        action,
+        ...classConfigQuery.value,
+        academic_calendar_class_id: String(academicCalendarClass.value.id),
+    });
 });
 
 const singleClassExportOption = computed(() => [
@@ -200,6 +241,40 @@ const onAdvancePhase = async (): Promise<void> => {
     router.post(
         advancePhaseUrl.value,
         { student_enrolment_ids: selectedStudentEnrolmentIds.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                selectedStudentEnrolmentIds.value = [];
+            },
+            onError: (errors) => {
+                errorAlert(firstInertiaErrorMessage(errors, trans('academic_calendar.advance_phase_none')));
+            },
+        },
+    );
+};
+
+const onAdvanceAllEligible = async (): Promise<void> => {
+    const ids = eligibleAdvanceStudents.value.map((student) => student.studentEnrolmentId);
+    if (ids.length === 0) {
+        errorAlert(trans('academic_calendar.advance_phase_none'));
+
+        return;
+    }
+
+    const confirmed = await openConfirmDialog({
+        title: trans('academic_calendar.advance_all_eligible_confirm_title'),
+        message: trans('academic_calendar.advance_all_eligible_confirm_message'),
+        confirmText: trans('academic_calendar.advance_all_eligible'),
+        cancelText: trans('trans.cancel'),
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    router.post(
+        advancePhaseUrl.value,
+        { student_enrolment_ids: ids },
         {
             preserveScroll: true,
             onSuccess: () => {
@@ -347,6 +422,49 @@ const onRemoveStudent = async (student: AcademicCalendarClassPreviewStudent): Pr
                             @click="openProgrammeReassign"
                         >
                             {{ $t('students.reassign_programme') }}
+                        </BaseButton>
+                        <a
+                            v-if="canMoveStudents && progressionImportTemplateUrl"
+                            :href="progressionImportTemplateUrl"
+                            class="inline-flex"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <BaseButton
+                                type="button"
+                                :size="ButtonSize.xs"
+                                :variant="ColorVariant.secondary"
+                                classes="rounded-full"
+                            >
+                                {{ $t('academic_calendar.progression_import_download_template') }}
+                            </BaseButton>
+                        </a>
+                        <BaseButton
+                            v-if="canMoveStudents && progressionImportUrl"
+                            type="button"
+                            :size="ButtonSize.xs"
+                            :variant="ColorVariant.primary_outline"
+                            classes="rounded-full"
+                            @click="router.visit(progressionImportUrl)"
+                        >
+                            <BaseIcon :name="IconName.import" />
+                            {{
+                                canCompleteLevel
+                                    ? $t('academic_calendar.progression_import_action_complete_level')
+                                    : $t('academic_calendar.progression_import_action_advance_phase')
+                            }}
+                            {{ $t('trans.import') }}
+                        </BaseButton>
+                        <BaseButton
+                            v-if="canAdvancePhase && eligibleAdvanceStudents.length > 0"
+                            type="button"
+                            :size="ButtonSize.xs"
+                            :variant="ColorVariant.primary"
+                            classes="rounded-full"
+                            @click="onAdvanceAllEligible"
+                        >
+                            {{ $t('academic_calendar.advance_all_eligible') }}
+                            ({{ eligibleAdvanceStudents.length }})
                         </BaseButton>
                         <BaseButton
                             v-if="canMoveStudents"

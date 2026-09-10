@@ -1475,6 +1475,12 @@ class PortalController extends Controller
             ->orderBy('position')
             ->orderBy('name')
             ->get();
+
+        $nextLevelContext = $this->returningStudentContext->nextLevelApplicationContext($student);
+        if ($nextLevelContext['canApplyToNextLevel'] && $nextLevelContext['nextLevelId'] !== null) {
+            $levels = $levels->where('id', $nextLevelContext['nextLevelId'])->values();
+        }
+
         $openLevelCount = $levels->count();
         $hasActiveIntakes = $openIntakes->isNotEmpty();
         $availabilityIssue = match (true) {
@@ -1492,6 +1498,8 @@ class PortalController extends Controller
             'hasActiveIntakes' => $hasActiveIntakes,
             'availabilityIssue' => $availabilityIssue,
             'selectLevelRoute' => 'portal.profile.applications.select-level',
+            'canApplyToNextLevel' => $nextLevelContext['canApplyToNextLevel'],
+            'nextLevelName' => $nextLevelContext['nextLevelName'],
         ]);
     }
 
@@ -1515,6 +1523,19 @@ class PortalController extends Controller
 
         $data = $request->validate($rules);
         $level = Level::query()->findOrFail($data['level_id']);
+
+        $nextLevelContext = $this->returningStudentContext->nextLevelApplicationContext($student);
+        if (
+            $nextLevelContext['canApplyToNextLevel']
+            && $nextLevelContext['nextLevelId'] !== null
+            && (int) $level->id !== (int) $nextLevelContext['nextLevelId']
+        ) {
+            throw ValidationException::withMessages([
+                'level_id' => [__('trans.returning_student_next_level_only', [
+                    'level' => $nextLevelContext['nextLevelName'] ?? '',
+                ])],
+            ]);
+        }
 
         $intakePeriod = $openIntakes->count() > 1
             ? $this->applicationFeeService->resolvePortalIntakePeriod((int) $data['intake_period_id'])
@@ -1579,13 +1600,18 @@ class PortalController extends Controller
         }
 
         return Inertia::render('portal/application/ReturningApplication', [
-            'returningPrefill' => $this->returningApplicationPrefillService->build($student),
+            'returningPrefill' => $this->returningApplicationPrefillService->build(
+                $student,
+                $this->returningStudentContext->nextLevelApplicationContext($student),
+            ),
             'studentId' => $student->id,
             'targetIntake' => IntakePeriodResource::make($intakePeriod),
             'hasPaidApplicationFee' => PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod),
             'levelsWithPayment' => LevelResource::collection(PaymentHelper::levelsWithApplicationFee()),
             'selectedLevelId' => $applicationFee?->level_id ?? session('application.level_id'),
             'selectedLevelName' => $level?->name,
+            'canApplyToNextLevel' => $this->returningStudentContext->canApplyToNextLevel($student),
+            'nextDepartmentLevelId' => $this->returningStudentContext->nextLevelApplicationContext($student)['nextDepartmentLevelId'],
         ]);
     }
 

@@ -4,15 +4,27 @@ declare(strict_types=1);
 
 namespace App\Services\Students;
 
+use App\Models\Institution\DepartmentCourse;
+use App\Models\Institution\DepartmentLevel;
+use App\Models\Institution\DepartmentLevelCourse;
+use App\Models\Institution\InstitutionDepartment;
 use App\Models\Students\Student;
 use App\Models\Students\StudentAcademicResult;
 
 class ReturningStudentApplicationPrefillService
 {
     /**
+     * @param  array{
+     *     canApplyToNextLevel?: bool,
+     *     nextLevelId?: int|null,
+     *     nextLevelName?: string|null,
+     *     nextDepartmentLevelId?: int|null,
+     *     institutionDepartmentId?: int|null,
+     *     departmentCourseId?: int|null,
+     * }|null  $nextLevelContext
      * @return array<string, mixed>
      */
-    public function build(Student $student): array
+    public function build(Student $student, ?array $nextLevelContext = null): array
     {
         $student->loadMissing([
             'user',
@@ -80,7 +92,88 @@ class ReturningStudentApplicationPrefillService
                 'relationship' => $this->comboOption($nextOfKin?->relationship_id, $nextOfKin?->relationship?->name),
             ],
             $this->buildOLevelPrefill($student),
+            $this->buildNextLevelProgrammePrefill($nextLevelContext),
         );
+    }
+
+    /**
+     * @param  array{
+     *     canApplyToNextLevel?: bool,
+     *     nextLevelId?: int|null,
+     *     nextLevelName?: string|null,
+     *     nextDepartmentLevelId?: int|null,
+     *     institutionDepartmentId?: int|null,
+     *     departmentCourseId?: int|null,
+     * }|null  $nextLevelContext
+     * @return array<string, mixed>
+     */
+    private function buildNextLevelProgrammePrefill(?array $nextLevelContext): array
+    {
+        if (! is_array($nextLevelContext) || ($nextLevelContext['canApplyToNextLevel'] ?? false) !== true) {
+            return [];
+        }
+
+        $departmentLevelId = $nextLevelContext['nextDepartmentLevelId'] ?? null;
+        $institutionDepartmentId = $nextLevelContext['institutionDepartmentId'] ?? null;
+        $previousCourseId = $nextLevelContext['departmentCourseId'] ?? null;
+
+        if (! is_int($departmentLevelId) || $departmentLevelId < 1) {
+            return [];
+        }
+
+        $departmentLevel = DepartmentLevel::query()
+            ->with(['level', 'institutionDepartment.department'])
+            ->find($departmentLevelId);
+
+        if (! $departmentLevel instanceof DepartmentLevel) {
+            return [];
+        }
+
+        $department = $departmentLevel->institutionDepartment;
+        if (! $department instanceof InstitutionDepartment) {
+            return [];
+        }
+
+        $prefill = [
+            'department_id' => (int) $department->id,
+            'level_id' => (int) $departmentLevel->id,
+            'department' => $this->comboOption(
+                (int) $department->id,
+                (string) ($department->department?->name ?? $department->department_code ?? ''),
+            ),
+            'level' => $this->comboOption(
+                (int) $departmentLevel->id,
+                (string) ($departmentLevel->level?->name ?? ''),
+            ),
+            'required_level_completed' => true,
+        ];
+
+        if (is_int($previousCourseId) && $previousCourseId > 0) {
+            $matchingCourse = DepartmentCourse::query()
+                ->with('course')
+                ->where('institution_department_id', $institutionDepartmentId ?? $department->id)
+                ->where('id', $previousCourseId)
+                ->whereNull('deleted_at')
+                ->first();
+
+            if ($matchingCourse instanceof DepartmentCourse) {
+                $hasOffering = DepartmentLevelCourse::query()
+                    ->where('department_level_id', $departmentLevel->id)
+                    ->where('department_course_id', $matchingCourse->id)
+                    ->whereNull('deleted_at')
+                    ->exists();
+
+                if ($hasOffering) {
+                    $prefill['course_id'] = (int) $matchingCourse->id;
+                    $prefill['course'] = $this->comboOption(
+                        (int) $matchingCourse->id,
+                        (string) ($matchingCourse->course?->name ?? ''),
+                    );
+                }
+            }
+        }
+
+        return $prefill;
     }
 
     /**

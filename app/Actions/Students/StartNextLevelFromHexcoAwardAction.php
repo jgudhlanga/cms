@@ -86,7 +86,7 @@ class StartNextLevelFromHexcoAwardAction
 
         $this->closeAwardedLevelIfPresent($student, $awardedLevel);
 
-        $nextLevel = $this->nextDepartmentLevel($awardedLevel);
+        $nextLevel = $this->progression->nextDepartmentLevel($awardedLevel);
 
         if (! $nextLevel instanceof DepartmentLevel) {
             return [...$base, 'status' => 'closed_terminal'];
@@ -223,25 +223,6 @@ class StartNextLevelFromHexcoAwardAction
         if ((int) $completionPhase->student_enrolment_status_id !== $awardStatusId) {
             $this->progression->updateStudentSemesterStatus($completionPhase, $awardStatusId);
         }
-    }
-
-    private function nextDepartmentLevel(DepartmentLevel $awardedLevel): ?DepartmentLevel
-    {
-        $awardedLevel->loadMissing('level');
-        $position = (int) ($awardedLevel->level?->position ?? 0);
-
-        if ($position === 0) {
-            return null;
-        }
-
-        return DepartmentLevel::query()
-            ->where('institution_department_id', $awardedLevel->institution_department_id)
-            ->whereNull('deleted_at')
-            ->whereHas('level', fn ($query) => $query->where('position', '>', $position)->whereNull('deleted_at'))
-            ->with('level')
-            ->get()
-            ->sortBy(fn (DepartmentLevel $departmentLevel): int => (int) ($departmentLevel->level?->position ?? 0))
-            ->first();
     }
 
     private function nextLevelApplication(
