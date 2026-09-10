@@ -1,4 +1,4 @@
-import { errorAlert, successAlert, warningDialog } from '@/lib/alerts';
+import { errorAlert, successAlert, warningAlert, warningDialog } from '@/lib/alerts';
 import customAxios from '@/services/http-init';
 import type {
     EnrolmentVsClassListPreview,
@@ -10,7 +10,8 @@ import type {
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref, type Ref } from 'vue';
 
-const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.csv'];
+// Legacy .xls is not readable by the server-side parser; offering it only produced a 500.
+const ACCEPTED_EXTENSIONS = ['.xlsx', '.csv', '.ods'];
 
 const buildSummaryFromRows = (
     rows: EnrolmentVsClassListPreviewRow[],
@@ -259,12 +260,17 @@ export const useEnrolmentVsClassListImport = (
             const response = await customAxios('').post<EnrolmentVsClassListProcessResult>(processUrl.value, payload);
             processResult.value = response.data;
 
-            successAlert(
-                trans('trans.department_enrolment_vs_class_list_process_success', {
-                    moved: String(response.data.summary.moved),
-                    skipped: String(response.data.summary.skipped),
-                }),
-            );
+            const message = trans('trans.department_enrolment_vs_class_list_process_success', {
+                moved: String(response.data.summary.moved),
+                skipped: String(response.data.summary.skipped),
+            });
+
+            // A run where nothing moved is not a success, however green the toast looks.
+            if (response.data.summary.moved === 0) {
+                warningAlert(message);
+            } else {
+                successAlert(message);
+            }
 
             await runPreview();
 
@@ -340,6 +346,31 @@ export const useEnrolmentVsClassListImport = (
         }
     };
 
+    /**
+     * The server already returns a reason for every skipped row; without this the operator only
+     * ever saw an aggregate count and had no way to tell why rows were rejected.
+     */
+    const processSkipReasons = computed<Array<{ reason: string; rowNumbers: number[] }>>(() => {
+        const grouped = new Map<string, number[]>();
+
+        for (const row of processResult.value?.rows ?? []) {
+            if (row.status !== 'skipped') {
+                continue;
+            }
+
+            const reason = row.reason ?? trans('trans.department_enrolment_vs_class_list_process_row_failed');
+            const existing = grouped.get(reason);
+
+            if (existing) {
+                existing.push(row.rowNumber);
+            } else {
+                grouped.set(reason, [row.rowNumber]);
+            }
+        }
+
+        return [...grouped.entries()].map(([reason, rowNumbers]) => ({ reason, rowNumbers }));
+    });
+
     return {
         selectedFile,
         fileError,
@@ -349,6 +380,7 @@ export const useEnrolmentVsClassListImport = (
         processLoading,
         processError,
         processResult,
+        processSkipReasons,
         templateUrl,
         previewRows,
         extrasRows,

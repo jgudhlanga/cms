@@ -10,8 +10,14 @@ use Illuminate\Http\UploadedFile;
 
 class AcceptedDepartmentReconciliationImportFile implements ValidationRule
 {
-    /** @var list<string> */
-    public const EXTENSIONS = ['xlsx', 'xls', 'csv'];
+    /**
+     * Must stay in step with what the reader can actually open. openspout (behind SimpleExcelReader)
+     * supports csv, xlsx and ods only — listing legacy xls here meant a valid-looking upload threw
+     * UnsupportedTypeException and surfaced as a 500 instead of a validation message.
+     *
+     * @var list<string>
+     */
+    public const EXTENSIONS = ['xlsx', 'csv', 'ods'];
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {

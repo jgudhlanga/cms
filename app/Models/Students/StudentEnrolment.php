@@ -109,11 +109,30 @@ class StudentEnrolment extends Model
 
     public function currentStudentSemester(): ?StudentSemester
     {
-        $this->loadMissing(['studentSemesters.semester']);
+        $this->loadMissing(['studentSemesters.semester', 'studentSemesters.programmeSemester']);
 
         return $this->studentSemesters
-            ->sortBy(fn (StudentSemester $row): int => $this->phaseOrdinal((string) ($row->semester?->slug ?? '')))
+            ->sortBy(fn (StudentSemester $row): array => [$this->phasePosition($row), (int) $row->id])
             ->last();
+    }
+
+    /**
+     * Prefer the pinned programme phase over the calendar slug.
+     *
+     * Calendar slugs wrap within the year (Year 1 Sem 1 and Year 2 Sem 1 both resolve to
+     * "semester-1"), so ordering by slug alone cannot tell two academic years apart. The
+     * programme_semester position is monotonic across the whole programme and is authoritative
+     * wherever it is set; the slug remains the fallback for rows written before phases were pinned.
+     */
+    private function phasePosition(StudentSemester $row): int
+    {
+        $position = $row->programmeSemester?->position;
+
+        if ($position !== null) {
+            return (int) $position;
+        }
+
+        return $this->phaseOrdinal((string) ($row->semester?->slug ?? ''));
     }
 
     public function studentSemesterFor(int $semesterId): ?StudentSemester

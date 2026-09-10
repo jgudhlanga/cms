@@ -17,10 +17,7 @@ use App\Models\Shared\NextOfKin;
 use App\Models\Shared\Relationship;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\ApplicationFee;
-use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
-use App\Models\Tenants\Tenant;
-use App\Models\Users\User;
 use App\Services\Integrations\OnlinePaymentContextResolver;
 use App\Services\Students\ReturningStudentApplicationPrefillService;
 use App\Services\Students\ReturningStudentContextService;
@@ -41,36 +38,6 @@ function returningStudentTestLevel(): Level
             'has_application_fee_payment' => true,
         ],
     );
-}
-
-function createReturningStudentUser(array $studentAttributes = []): array
-{
-    $tenant = Tenant::query()->firstOrFail();
-    $user = User::factory()->create(['tenant_id' => $tenant->id, 'email_verified_at' => now()]);
-    $user->assignRole(RoleEnum::STUDENT->name());
-    $user->givePermissionTo('manageOwnStudentPersonalDetails:students');
-
-    $student = Student::query()->create(array_merge([
-        'tenant_id' => $tenant->id,
-        'user_id' => $user->id,
-        'title_id' => DB::table('titles')->value('id') ?? DB::table('titles')->insertGetId([
-            'name' => 'Mr', 'created_at' => now(), 'updated_at' => now(),
-        ]),
-        'gender_id' => DB::table('genders')->value('id') ?? DB::table('genders')->insertGetId([
-            'title' => 'Male', 'created_at' => now(), 'updated_at' => now(),
-        ]),
-        'marital_status_id' => DB::table('marital_statuses')->value('id') ?? DB::table('marital_statuses')->insertGetId([
-            'title' => 'Single', 'created_at' => now(), 'updated_at' => now(),
-        ]),
-        'id_type_id' => DB::table('id_types')->value('id') ?? DB::table('id_types')->insertGetId([
-            'name' => 'National ID', 'created_at' => now(), 'updated_at' => now(),
-        ]),
-        'date_of_birth' => '2000-01-01',
-        'id_number' => '55-'.uniqid().'C55',
-        'student_number' => 'SN-'.uniqid(),
-    ], $studentAttributes));
-
-    return [$user, $student];
 }
 
 test('returning student context detects can start application for rejected applicant without enrolment', function () {

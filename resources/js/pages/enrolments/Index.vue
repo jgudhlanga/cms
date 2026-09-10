@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LookupPillButton from '@/components/core/button/LookupPillButton.vue';
 import EnrolmentApplicantLookupDrawer from '@/components/enrolments/EnrolmentApplicantLookupDrawer.vue';
 import { canUseEnrolmentApplicantLookup } from '@/lib/enrolmentStatusNavigation';
 import { getUserAbilities } from '@/lib/permissions';
@@ -8,7 +9,6 @@ import { IntakePeriod } from '@/types/institution';
 import { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { Head, router } from '@inertiajs/vue3';
-import { Search } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 
 interface Props {
@@ -51,14 +51,7 @@ const handleFilterChange = (option: SelectOption) => {
     <Head :title="$tChoice('trans.application', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <template v-if="canLookup" #backNavigationTrailing>
-            <button
-                type="button"
-                class="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-muted"
-                @click="lookupOpen = true"
-            >
-                <Search class="h-3.5 w-3.5 shrink-0" />
-                {{ $t('enrolments.find_applicant') }}
-            </button>
+            <LookupPillButton :label="$t('enrolments.find_applicant')" @click="lookupOpen = true" />
         </template>
 
         <DistributionByDepartment

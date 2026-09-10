@@ -7,6 +7,7 @@ use App\Http\Controllers\Students\AcademicRecordController;
 use App\Http\Controllers\Students\SponsorController;
 use App\Http\Controllers\Students\StudentController;
 use App\Http\Controllers\Students\StudentEnrolmentProgressController;
+use App\Http\Controllers\Students\StudentLookupController;
 use App\Http\Controllers\Students\StudentProgrammeReassignmentController;
 use App\Http\Controllers\Students\UserStudentController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,7 @@ Route::prefix('students')->middleware('auth')->group(function () {
 // ===================================== STUDENTS ======================================================================
 Route::prefix('students')->middleware('auth')->group(function () {
     Route::get('export', [StudentController::class, 'export'])->name('students.export');
+    Route::get('lookup', StudentLookupController::class)->name('students.lookup');
     Route::patch('{student}/id-number', [StudentController::class, 'updateIdNumber'])
         ->name('students.id-number.update');
     Route::patch('{student}/student-number', [StudentController::class, 'updateStudentNumber'])

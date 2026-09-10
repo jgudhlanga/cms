@@ -204,6 +204,87 @@ it('rejects programme duration below half a year', function (): void {
     expect((int) $dlc->fresh()->taught_semester_count)->toBe(2);
 });
 
+it('reuses a soft-deleted programme semester when its position is needed again', function (): void {
+    $dlc = createProgrammeStructureDlc();
+    app(SyncProgrammeSemestersForOfferingAction::class)->execute($dlc);
+
+    $ghost = ProgrammeSemester::query()->create([
+        'department_level_course_id' => $dlc->id,
+        'position' => 3,
+        'name' => 'Year 2 Sem 1',
+        'kind' => ProgrammeSemesterKindEnum::TAUGHT,
+    ]);
+    $ghost->delete();
+
+    $dlc->update([
+        'includes_industrial_attachment' => true,
+        'attachment_semester_count' => 1,
+    ]);
+
+    $synced = app(SyncProgrammeSemestersForOfferingAction::class)->execute($dlc->fresh() ?? $dlc);
+
+    expect($synced)->toHaveCount(3)
+        ->and($synced->last()?->is($ghost))->toBeTrue()
+        ->and($synced->last()?->trashed())->toBeFalse()
+        ->and($synced->last()?->name)->toBe('Year 2 Attachment 1')
+        ->and($synced->last()?->kind)->toBe(ProgrammeSemesterKindEnum::INDUSTRIAL_ATTACHMENT)
+        ->and(ProgrammeSemester::withTrashed()->where('department_level_course_id', $dlc->id)->count())->toBe(3);
+});
+
+it('adds a half-year attachment after shrinking a taught-only structure', function (): void {
+    $dlc = createProgrammeStructureDlc();
+    $user = User::factory()->create(['tenant_id' => Tenant::query()->firstOrFail()->id]);
+    $user->givePermissionTo('manage:programme-structures');
+    $from = route('institution-departments.show', $dlc->departmentLevel->institution_department_id);
+
+    $this->actingAs($user)
+        ->from($from)
+        ->post(route('department-level-courses.programme-structure.update', $dlc), [
+            'duration_years' => 1.5,
+            'taught_semester_count' => 3,
+            'includes_industrial_attachment' => false,
+            'attachment_semester_count' => 0,
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    $this->actingAs($user)
+        ->from($from)
+        ->post(route('department-level-courses.programme-structure.update', $dlc), [
+            'duration_years' => 1,
+            'taught_semester_count' => 2,
+            'includes_industrial_attachment' => false,
+            'attachment_semester_count' => 0,
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    $this->actingAs($user)
+        ->from($from)
+        ->post(route('department-level-courses.programme-structure.update', $dlc), [
+            'duration_years' => 1.5,
+            'taught_semester_count' => 2,
+            'includes_industrial_attachment' => true,
+            'attachment_semester_count' => 1,
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    $dlc->refresh()->load('programmeSemesters');
+
+    expect((float) $dlc->duration_years)->toBe(1.5)
+        ->and($dlc->taught_semester_count)->toBe(2)
+        ->and($dlc->includes_industrial_attachment)->toBeTrue()
+        ->and($dlc->attachment_semester_count)->toBe(1)
+        ->and($dlc->programmeSemesters)->toHaveCount(3)
+        ->and($dlc->programmeSemesters->pluck('name')->all())->toBe([
+            'Year 1 Sem 1',
+            'Year 1 Sem 2',
+            'Year 2 Attachment 1',
+        ])
+        ->and(ProgrammeSemester::withTrashed()->where('department_level_course_id', $dlc->id)->count())->toBe(3);
+});
+
 it('includes industrial attachment in duration years without changing taught or attachment counts', function (): void {
     $dlc = createProgrammeStructureDlc();
     $user = User::factory()->create(['tenant_id' => Tenant::query()->firstOrFail()->id]);

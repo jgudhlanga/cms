@@ -2,321 +2,18 @@
 
 declare(strict_types=1);
 
-use App\Actions\Institution\SyncProgrammeSemestersForOfferingAction;
+use App\Actions\Students\SetStudentEnrolmentCurrentPhaseAction;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
 use App\Models\Enrolments\ClassList;
-use App\Models\Institution\Course;
 use App\Models\Institution\Department;
-use App\Models\Institution\DepartmentCourse;
-use App\Models\Institution\DepartmentLevel;
-use App\Models\Institution\DepartmentLevelCourse;
-use App\Models\Institution\InstitutionDepartment;
-use App\Models\Institution\IntakePeriod;
-use App\Models\Institution\Level;
-use App\Models\Institution\ModeOfStudy;
 use App\Models\Institution\ProgrammeSemester;
-use App\Models\Rbac\Permission;
-use App\Models\Shared\Gender;
-use App\Models\Shared\IdType;
-use App\Models\Shared\MaritalStatus;
-use App\Models\Shared\Title;
 use App\Models\Shared\WorkflowStep;
 use App\Models\Students\Student;
-use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentEnrolmentStatus;
-use App\Models\Students\StudentSemester;
-use App\Models\Users\User;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Str;
-
-function actingAsRootDepartmentReconciliationUser(): User
-{
-    Permission::findOrCreate('root:manage', 'web');
-
-    $user = User::factory()->create();
-    $user->givePermissionTo('root:manage');
-    test()->actingAs($user);
-
-    return $user;
-}
-
-/**
- * @return array{
- *     user: User,
- *     tenantId: int,
- *     institutionDepartment: InstitutionDepartment,
- *     otherInstitutionDepartment: InstitutionDepartment,
- *     calendar: AcademicCalendar,
- *     calendarYear: int,
- *     departmentLevel: DepartmentLevel,
- *     departmentCourse: DepartmentCourse,
- *     departmentLevelCourse: DepartmentLevelCourse,
- *     modeOfStudy: ModeOfStudy,
- *     levelName: string,
- *     courseName: string,
- * }
- */
-function makeDepartmentReconciliationContext(): array
-{
-    $user = actingAsRootDepartmentReconciliationUser();
-    $tenantId = (int) $user->tenant_id;
-    $calendarYear = (int) now()->format('Y');
-
-    $department = Department::factory()->create(['name' => 'Engineering '.uniqid()]);
-    $institutionDepartment = InstitutionDepartment::query()->create([
-        'tenant_id' => $tenantId,
-        'department_id' => $department->id,
-        'department_code' => 'ENG-'.uniqid(),
-        'description' => 'Engineering',
-    ]);
-
-    $otherDepartment = Department::factory()->create(['name' => 'Tourism '.uniqid()]);
-    $otherInstitutionDepartment = InstitutionDepartment::query()->create([
-        'tenant_id' => $tenantId,
-        'department_id' => $otherDepartment->id,
-        'department_code' => 'TOUR-'.uniqid(),
-        'description' => 'Tourism',
-    ]);
-
-    foreach (['Semester 1', 'Semester 2'] as $name) {
-        Semester::query()->firstOrCreate(
-            ['slug' => Str::slug($name)],
-            ['name' => $name, 'description' => null],
-        );
-    }
-
-    StudentEnrolmentStatus::query()->firstOrCreate(
-        ['name' => 'Active'],
-        ['description' => 'Test'],
-    );
-
-    $calendar = AcademicCalendar::query()->firstOrCreate(
-        [
-            'calendar_year' => (string) $calendarYear,
-            'type' => 'semester',
-        ],
-        [
-            'opening_date' => now()->subDays(30)->toDateString(),
-            'closing_date' => now()->addMonths(6)->toDateString(),
-        ],
-    );
-
-    $levelName = 'ND1';
-    $courseName = 'Civil Engineering';
-
-    $course = Course::factory()->create(['name' => $courseName]);
-    $departmentCourse = DepartmentCourse::query()->create([
-        'tenant_id' => $tenantId,
-        'institution_department_id' => $institutionDepartment->id,
-        'course_id' => $course->id,
-    ]);
-    $level = Level::factory()->create([
-        'name' => $levelName,
-        'calendar_type' => 'semester',
-    ]);
-    $departmentLevel = DepartmentLevel::query()->create([
-        'tenant_id' => $tenantId,
-        'institution_department_id' => $institutionDepartment->id,
-        'level_id' => $level->id,
-    ]);
-    $departmentLevelCourse = DepartmentLevelCourse::query()->create([
-        'department_course_id' => $departmentCourse->id,
-        'department_level_id' => $departmentLevel->id,
-        'duration_years' => 1,
-        'taught_semester_count' => 2,
-        'includes_industrial_attachment' => false,
-        'attachment_semester_count' => 0,
-    ]);
-
-    app(SyncProgrammeSemestersForOfferingAction::class)->execute($departmentLevelCourse);
-
-    $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Full Time '.uniqid()]);
-
-    return [
-        'user' => $user,
-        'tenantId' => $tenantId,
-        'institutionDepartment' => $institutionDepartment,
-        'otherInstitutionDepartment' => $otherInstitutionDepartment,
-        'calendar' => $calendar,
-        'calendarYear' => $calendarYear,
-        'departmentLevel' => $departmentLevel,
-        'departmentCourse' => $departmentCourse,
-        'departmentLevelCourse' => $departmentLevelCourse->fresh(['programmeSemesters']),
-        'modeOfStudy' => $modeOfStudy,
-        'levelName' => $levelName,
-        'courseName' => $courseName,
-    ];
-}
-
-/**
- * @param  array{
- *     classListType?: string|null,
- *     createEnrolment?: bool,
- *     createClassList?: bool,
- *     createAcceptedWorkflow?: bool,
- *     studentNumber?: string|null,
- *     institutionDepartmentId?: int|null,
- *     departmentLevelId?: int|null,
- *     departmentCourseId?: int|null,
- * }  $options
- * @return array{student: Student, application: StudentApplication|null, enrolment: StudentEnrolment|null}
- */
-function createDepartmentReconciliationStudent(array $context, string $studentNumber, array $options = []): array
-{
-    $title = Title::query()->create(['name' => 'Mr '.uniqid()]);
-    $gender = Gender::query()->create(['title' => 'Gender '.uniqid()]);
-    $marital = MaritalStatus::query()->create(['title' => 'Single '.uniqid()]);
-    $idType = IdType::query()->create(['name' => 'National ID '.uniqid()]);
-
-    $studentUser = User::factory()->create([
-        'tenant_id' => $context['tenantId'],
-        'first_name' => 'Reconcile',
-        'last_name' => 'Student',
-    ]);
-
-    $student = Student::query()->create([
-        'tenant_id' => $context['tenantId'],
-        'user_id' => $studentUser->id,
-        'title_id' => $title->id,
-        'gender_id' => $gender->id,
-        'marital_status_id' => $marital->id,
-        'id_type_id' => $idType->id,
-        'id_number' => '63-'.random_int(1000000, 9999999).'N63',
-        'student_number' => $studentNumber,
-        'date_of_birth' => '2001-01-01',
-    ]);
-
-    $institutionDepartmentId = $options['institutionDepartmentId'] ?? (int) $context['institutionDepartment']->id;
-    $departmentLevelId = $options['departmentLevelId'] ?? (int) $context['departmentLevel']->id;
-    $departmentCourseId = $options['departmentCourseId'] ?? (int) $context['departmentCourse']->id;
-
-    $intakePeriod = IntakePeriod::query()->create([
-        'tenant_id' => $context['tenantId'],
-        'name' => 'Intake '.$student->id,
-        'calendar_year' => (string) $context['calendarYear'],
-        'start_date' => now()->startOfMonth()->toDateString(),
-        'end_date' => now()->endOfMonth()->toDateString(),
-    ]);
-
-    $studentApplication = StudentApplication::query()->create([
-        'tenant_id' => $context['tenantId'],
-        'student_id' => $student->id,
-        'institution_department_id' => $institutionDepartmentId,
-        'department_level_id' => $departmentLevelId,
-        'department_course_id' => $departmentCourseId,
-        'intake_period_id' => $intakePeriod->id,
-        'mode_of_study_id' => $context['modeOfStudy']->id,
-        'application_tracking_number' => 'APP-'.strtoupper(uniqid()),
-    ]);
-
-    if ($options['createAcceptedWorkflow'] ?? true) {
-        $acceptedStep = WorkflowStep::query()->firstOrCreate(
-            ['slug' => WorkflowStepEnum::ACCEPTED->slug()],
-            [
-                'name' => WorkflowStepEnum::ACCEPTED->name(),
-                'position' => WorkflowStepEnum::ACCEPTED->position(),
-                'description' => WorkflowStepEnum::ACCEPTED->description(),
-            ],
-        );
-        WorkflowStep::query()->firstOrCreate(
-            ['slug' => WorkflowStepEnum::ENROLLED->slug()],
-            [
-                'name' => WorkflowStepEnum::ENROLLED->name(),
-                'position' => WorkflowStepEnum::ENROLLED->position(),
-                'description' => WorkflowStepEnum::ENROLLED->description(),
-            ],
-        );
-
-        $studentApplication->update(['workflow_step_id' => $acceptedStep->id]);
-    }
-
-    if ($options['createClassList'] ?? true) {
-        ClassList::query()->create([
-            'tenant_id' => $context['tenantId'],
-            'student_application_id' => $studentApplication->id,
-            'type' => $options['classListType'] ?? ClassListTypeEnum::VERIFIED->value,
-            'attributes' => [],
-        ]);
-    }
-
-    $enrolment = null;
-
-    if ($options['createEnrolment'] ?? false) {
-        $semester = Semester::query()->firstOrCreate(
-            ['slug' => 'semester-1'],
-            ['name' => 'Semester 1', 'description' => null],
-        );
-        $enrolmentStatus = StudentEnrolmentStatus::query()->firstOrCreate(
-            ['name' => 'Active'],
-            ['description' => 'Test'],
-        );
-
-        $programmeSemester = ProgrammeSemester::query()
-            ->where('department_level_course_id', $context['departmentLevelCourse']->id)
-            ->orderBy('position')
-            ->first();
-
-        $enrolment = StudentEnrolment::query()->create([
-            'student_id' => $student->id,
-            'student_application_id' => $studentApplication->id,
-            'institution_department_id' => $institutionDepartmentId,
-            'department_level_id' => $departmentLevelId,
-            'department_course_id' => $departmentCourseId,
-            'semester_id' => $semester->id,
-            'academic_calendar_id' => $context['calendar']->id,
-            'mode_of_study_id' => $context['modeOfStudy']->id,
-            'student_enrolment_status_id' => $enrolmentStatus->id,
-        ]);
-
-        // Observer syncs student_semesters; pin programme phase for reconciliation comparisons.
-        if ($programmeSemester instanceof ProgrammeSemester) {
-            StudentSemester::query()
-                ->where('student_enrolment_id', $enrolment->id)
-                ->where('semester_id', $semester->id)
-                ->update(['programme_semester_id' => $programmeSemester->id]);
-        }
-    }
-
-    return [
-        'student' => $student->fresh(),
-        'application' => $studentApplication->fresh(),
-        'enrolment' => $enrolment?->fresh(['studentSemesters']),
-    ];
-}
-
-/**
- * @param  list<list<string|null>>  $rows
- */
-function storeDepartmentReconciliationCsv(array $headers, array $rows): UploadedFile
-{
-    $relativePath = 'test-department-reconciliation-'.uniqid().'.csv';
-    $fullPath = storage_path('app/'.$relativePath);
-    $handle = fopen($fullPath, 'w');
-    fputcsv($handle, $headers);
-
-    foreach ($rows as $row) {
-        fputcsv($handle, $row);
-    }
-
-    fclose($handle);
-
-    return new UploadedFile($fullPath, 'department-reconciliation.csv', 'text/csv', null, true);
-}
-
-function actingAsDepartmentViewOnlyUser(?int $tenantId = null): User
-{
-    Permission::findOrCreate('view:department-metadata', 'web');
-
-    $user = User::factory()->create($tenantId !== null ? ['tenant_id' => $tenantId] : []);
-    $user->givePermissionTo('view:department-metadata');
-    test()->actingAs($user);
-
-    return $user;
-}
 
 it('renders enrolment vs class list page for authorized users', function (): void {
     $context = makeDepartmentReconciliationContext();
@@ -560,4 +257,325 @@ it('previews and processes semester phase mismatches', function (): void {
 
     expect($current?->programme_semester_id)->toBe($targetPhase->id)
         ->and((int) $enrolment->semester_id)->toBe((int) $current?->semester_id);
+});
+
+it('refuses to elevate an applicant sitting on a failed class list', function (): void {
+    $context = makeDepartmentReconciliationContext();
+
+    $created = createDepartmentReconciliationStudent($context, '26ENGFAILED1HP', [
+        'classListType' => ClassListTypeEnum::FAILED->value,
+    ]);
+
+    $response = $this->postJson(route('department-data-reconciliation.enrolment-vs-class-list.process', [
+        'department' => $context['institutionDepartment']->id,
+    ]), [
+        'calendar_year' => $context['calendarYear'],
+        'rows' => [
+            ['rowNumber' => 2, 'studentApplicationId' => $created['application']->id],
+        ],
+    ]);
+
+    $response->assertSuccessful()
+        ->assertJsonPath('summary.moved', 0)
+        ->assertJsonPath('summary.skipped', 1)
+        ->assertJsonPath('rows.0.status', 'skipped');
+
+    // Nothing may have been written: no enrolment, class list untouched, workflow step untouched.
+    expect(StudentEnrolment::query()->where('student_application_id', $created['application']->id)->exists())
+        ->toBeFalse()
+        ->and(ClassList::query()->where('student_application_id', $created['application']->id)->first()?->type)
+        ->toBe(ClassListTypeEnum::FAILED)
+        ->and((int) $created['application']->fresh()->workflow_step_id)
+        ->toBe((int) $created['application']->workflow_step_id);
+});
+
+it('refuses to elevate a rejected applicant', function (): void {
+    $context = makeDepartmentReconciliationContext();
+
+    $created = createDepartmentReconciliationStudent($context, '26ENGREJECT1HP');
+
+    $rejectedStep = WorkflowStep::query()->firstOrCreate(
+        ['slug' => WorkflowStepEnum::REJECTED->slug()],
+        [
+            'name' => WorkflowStepEnum::REJECTED->name(),
+            'position' => WorkflowStepEnum::REJECTED->position(),
+            'description' => WorkflowStepEnum::REJECTED->description(),
+        ],
+    );
+    $created['application']->update(['workflow_step_id' => $rejectedStep->id]);
+
+    $this->postJson(route('department-data-reconciliation.enrolment-vs-class-list.process', [
+        'department' => $context['institutionDepartment']->id,
+    ]), [
+        'calendar_year' => $context['calendarYear'],
+        'rows' => [
+            ['rowNumber' => 2, 'studentApplicationId' => $created['application']->id],
+        ],
+    ])
+        ->assertSuccessful()
+        ->assertJsonPath('summary.moved', 0)
+        ->assertJsonPath('summary.skipped', 1);
+
+    expect(StudentEnrolment::query()->where('student_application_id', $created['application']->id)->exists())
+        ->toBeFalse()
+        ->and((int) $created['application']->fresh()->workflow_step_id)
+        ->toBe((int) $rejectedStep->id);
+});
+
+it('refuses to elevate an applicant who has not cleared admissions', function (): void {
+    $context = makeDepartmentReconciliationContext();
+
+    $created = createDepartmentReconciliationStudent($context, '26ENGPENDING1HP');
+
+    $pendingStep = WorkflowStep::query()->firstOrCreate(
+        ['slug' => WorkflowStepEnum::REGISTRATION_FEE->slug()],
+        [
+            'name' => WorkflowStepEnum::REGISTRATION_FEE->name(),
+            'position' => WorkflowStepEnum::REGISTRATION_FEE->position(),
+            'description' => WorkflowStepEnum::REGISTRATION_FEE->description(),
+        ],
+    );
+    $created['application']->update(['workflow_step_id' => $pendingStep->id]);
+
+    $this->postJson(route('department-data-reconciliation.enrolment-vs-class-list.process', [
+        'department' => $context['institutionDepartment']->id,
+    ]), [
+        'calendar_year' => $context['calendarYear'],
+        'rows' => [
+            ['rowNumber' => 2, 'studentApplicationId' => $created['application']->id],
+        ],
+    ])
+        ->assertSuccessful()
+        ->assertJsonPath('summary.moved', 0)
+        ->assertJsonPath('summary.skipped', 1);
+
+    expect(StudentEnrolment::query()->where('student_application_id', $created['application']->id)->exists())
+        ->toBeFalse();
+});
+
+it('refuses to elevate an application belonging to another department', function (): void {
+    $context = makeDepartmentReconciliationContext();
+
+    $created = createDepartmentReconciliationStudent($context, '26ENGOTHER1HP', [
+        'institutionDepartmentId' => (int) $context['otherInstitutionDepartment']->id,
+    ]);
+
+    $this->postJson(route('department-data-reconciliation.enrolment-vs-class-list.process', [
+        'department' => $context['institutionDepartment']->id,
+    ]), [
+        'calendar_year' => $context['calendarYear'],
+        'rows' => [
+            ['rowNumber' => 2, 'studentApplicationId' => $created['application']->id],
+        ],
+    ])
+        ->assertSuccessful()
+        ->assertJsonPath('summary.moved', 0)
+        ->assertJsonPath('summary.skipped', 1);
+
+    expect(StudentEnrolment::query()->where('student_application_id', $created['application']->id)->exists())
+        ->toBeFalse();
+});
+
+it('forbids a department scoped user from reconciling a department they are not assigned to', function (): void {
+    $context = makeDepartmentReconciliationContext();
+
+    actingAsDepartmentScopedUser(
+        (int) $context['tenantId'],
+        $context['institutionDepartment'],
+    );
+
+    // Their own department is reachable.
+    $this->getJson(route('department-data-reconciliation.counts', [
+        'department' => $context['institutionDepartment']->id,
+    ]))->assertSuccessful();
+
+    // A department they are not attached to is not.
+    $this->getJson(route('department-data-reconciliation.counts', [
+        'department' => $context['otherInstitutionDepartment']->id,
+    ]))->assertForbidden();
+
+    $this->postJson(route('department-data-reconciliation.enrolment-vs-class-list.process', [
+        'department' => $context['otherInstitutionDepartment']->id,
+    ]), [
+        'calendar_year' => $context['calendarYear'],
+        'rows' => [
+            ['rowNumber' => 2, 'studentApplicationId' => 1],
+        ],
+    ])->assertForbidden();
+
+    $this->postJson(route('department-data-reconciliation.semester-reconciliation.process', [
+        'department' => $context['otherInstitutionDepartment']->id,
+    ]), [
+        'rows' => [
+            ['rowNumber' => 2, 'studentEnrolmentId' => 1, 'programmeSemesterId' => 1],
+        ],
+    ])->assertForbidden();
+});
+
+it('forbids view-only users from processing semester reconciliation', function (): void {
+    $context = makeDepartmentReconciliationContext();
+
+    actingAsDepartmentViewOnlyUser((int) $context['tenantId']);
+
+    $this->postJson(route('department-data-reconciliation.semester-reconciliation.process', [
+        'department' => $context['institutionDepartment']->id,
+    ]), [
+        'rows' => [
+            ['rowNumber' => 2, 'studentEnrolmentId' => 1, 'programmeSemesterId' => 1],
+        ],
+    ])->assertForbidden();
+});
+
+it('makes a year 2 phase current even though it shares a calendar slot with year 1', function (): void {
+    $context = makeDepartmentReconciliationContext();
+    $offering = makeMultiYearOffering($context, years: 2);
+
+    $phases = $offering['phases'];
+    expect($phases)->toHaveCount(4);
+
+    $yearOneSemOne = $phases[0];
+    $yearOneSemTwo = $phases[1];
+    $yearTwoSemOne = $phases[2];
+
+    // Year 1 Sem 1 and Year 2 Sem 1 both map to the "semester-1" calendar slot.
+    $enrolment = makeEnrolmentWithPhases($context, $offering, [
+        ['slug' => 'semester-1', 'phase' => $yearOneSemOne],
+        ['slug' => 'semester-2', 'phase' => $yearOneSemTwo],
+    ]);
+
+    expect($enrolment->currentStudentSemester()?->programme_semester_id)->toBe($yearOneSemTwo->id);
+
+    app(SetStudentEnrolmentCurrentPhaseAction::class)
+        ->execute($enrolment, $yearTwoSemOne);
+
+    $fresh = $enrolment->fresh(['studentSemesters.semester', 'studentSemesters.programmeSemester']);
+
+    // Before the phase-position fix this returned the Year 1 Sem 2 row and the move was a silent no-op.
+    expect($fresh->currentStudentSemester()?->programme_semester_id)->toBe($yearTwoSemOne->id)
+        ->and($fresh->studentSemesters)->toHaveCount(2);
+});
+
+it('refuses a backward phase move instead of silently doing nothing', function (): void {
+    $context = makeDepartmentReconciliationContext();
+    $offering = makeMultiYearOffering($context, years: 2);
+
+    $phases = $offering['phases'];
+    $yearOneSemOne = $phases[0];
+    $yearOneSemTwo = $phases[1];
+
+    $enrolment = makeEnrolmentWithPhases($context, $offering, [
+        ['slug' => 'semester-1', 'phase' => $yearOneSemOne],
+        ['slug' => 'semester-2', 'phase' => $yearOneSemTwo],
+    ]);
+
+    expect(fn () => app(SetStudentEnrolmentCurrentPhaseAction::class)
+        ->execute($enrolment, $yearOneSemOne))
+        ->toThrow(InvalidArgumentException::class);
+
+    // The student is left exactly as they were.
+    $fresh = $enrolment->fresh(['studentSemesters.semester', 'studentSemesters.programmeSemester']);
+    expect($fresh->currentStudentSemester()?->programme_semester_id)->toBe($yearOneSemTwo->id);
+});
+
+it('preserves a blocking enrolment status instead of forcing the student active', function (): void {
+    $context = makeDepartmentReconciliationContext();
+    $offering = makeMultiYearOffering($context, years: 2);
+
+    $phases = $offering['phases'];
+
+    $deferred = StudentEnrolmentStatus::query()->firstOrCreate(
+        ['name' => 'Deferred'],
+        ['description' => 'Test'],
+    );
+    StudentEnrolmentStatus::query()->firstOrCreate(['name' => 'Active'], ['description' => 'Test']);
+
+    $enrolment = makeEnrolmentWithPhases(
+        $context,
+        $offering,
+        [['slug' => 'semester-1', 'phase' => $phases[0]]],
+        statusId: (int) $deferred->id,
+    );
+
+    app(SetStudentEnrolmentCurrentPhaseAction::class)
+        ->execute($enrolment, $phases[1]);
+
+    $fresh = $enrolment->fresh(['studentSemesters']);
+
+    expect((int) $fresh->student_enrolment_status_id)->toBe((int) $deferred->id)
+        ->and($fresh->currentStudentSemester()?->programme_semester_id)->toBe($phases[1]->id);
+});
+
+it('reports a clear reason rather than crashing when an attachment phase has no free calendar slot', function (): void {
+    $context = makeDepartmentReconciliationContext();
+    $offering = makeMultiYearOffering($context, years: 1, attachmentSemesters: 1);
+
+    $phases = $offering['phases'];
+    $attachment = $phases->last();
+
+    expect($attachment->kind->value)->toBe('industrial_attachment');
+
+    $enrolment = makeEnrolmentWithPhases($context, $offering, [
+        ['slug' => 'semester-1', 'phase' => $phases[0]],
+    ]);
+
+    // Previously this hit stu_sem_enrolment_semester_unq and surfaced as a generic row failure.
+    expect(fn () => app(SetStudentEnrolmentCurrentPhaseAction::class)
+        ->execute($enrolment, $attachment))
+        ->toThrow(InvalidArgumentException::class);
+});
+
+it('files a back-year reconciliation against that year, not the current calendar', function (): void {
+    $context = makeDepartmentReconciliationContext();
+    $pastYear = $context['calendarYear'] - 1;
+
+    $pastCalendar = AcademicCalendar::query()->create([
+        'calendar_year' => (string) $pastYear,
+        'type' => 'semester',
+        'opening_date' => $pastYear.'-01-15',
+        'closing_date' => $pastYear.'-11-30',
+    ]);
+
+    $created = createDepartmentReconciliationStudent($context, '26ENGBACKYEAR1HP');
+
+    $this->postJson(route('department-data-reconciliation.enrolment-vs-class-list.process', [
+        'department' => $context['institutionDepartment']->id,
+    ]), [
+        'calendar_year' => $pastYear,
+        'rows' => [
+            ['rowNumber' => 2, 'studentApplicationId' => $created['application']->id],
+        ],
+    ])
+        ->assertSuccessful()
+        ->assertJsonPath('summary.moved', 1);
+
+    $enrolment = StudentEnrolment::query()
+        ->where('student_application_id', $created['application']->id)
+        ->first();
+
+    // Before the fix this landed on the current-year calendar regardless of the year requested.
+    expect($enrolment)->not->toBeNull()
+        ->and((int) $enrolment->academic_calendar_id)->toBe((int) $pastCalendar->id)
+        ->and((int) $enrolment->academic_calendar_id)->not->toBe((int) $context['calendar']->id);
+});
+
+it('skips a row when the requested year has no academic calendar', function (): void {
+    $context = makeDepartmentReconciliationContext();
+
+    $created = createDepartmentReconciliationStudent($context, '26ENGNOCAL1HP');
+
+    $this->postJson(route('department-data-reconciliation.enrolment-vs-class-list.process', [
+        'department' => $context['institutionDepartment']->id,
+    ]), [
+        // No calendar was seeded for this year.
+        'calendar_year' => $context['calendarYear'] - 5,
+        'rows' => [
+            ['rowNumber' => 2, 'studentApplicationId' => $created['application']->id],
+        ],
+    ])
+        ->assertSuccessful()
+        ->assertJsonPath('summary.moved', 0)
+        ->assertJsonPath('summary.skipped', 1);
+
+    expect(StudentEnrolment::query()->where('student_application_id', $created['application']->id)->exists())
+        ->toBeFalse();
 });

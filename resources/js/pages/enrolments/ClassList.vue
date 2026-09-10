@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LookupPillButton from '@/components/core/button/LookupPillButton.vue';
 import EnrolmentApplicantLookupDrawer from '@/components/enrolments/EnrolmentApplicantLookupDrawer.vue';
 import BaseAccordion from '@/components/core/accordion/BaseAccordion.vue';
 import { useUtils } from '@/composables/core/useUtils';
@@ -143,14 +144,7 @@ watch(
         </template>
 
         <template #backNavigationTrailing>
-            <button
-                type="button"
-                class="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-muted"
-                @click="lookupOpen = true"
-            >
-                <Search class="h-3.5 w-3.5 shrink-0" />
-                {{ $t('enrolments.find_applicant') }}
-            </button>
+            <LookupPillButton :label="$t('enrolments.find_applicant')" @click="lookupOpen = true" />
         </template>
 
         <div class="my-3 flex flex-col gap-3">

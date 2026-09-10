@@ -28,6 +28,8 @@ require_once __DIR__.'/Support/LecturerTestHelpers.php';
 require_once __DIR__.'/Support/SyllabusModuleTestHelpers.php';
 require_once __DIR__.'/Support/IntakePeriodTestHelpers.php';
 require_once __DIR__.'/Support/GuestRegistrationTestHelpers.php';
+require_once __DIR__.'/Support/DepartmentReconciliationTestHelpers.php';
+require_once __DIR__.'/Support/ReturningStudentTestHelpers.php';
 require_once __DIR__.'/Support/IdCardTestHelpers.php';
 
 pest()->extend(TestCase::class)
