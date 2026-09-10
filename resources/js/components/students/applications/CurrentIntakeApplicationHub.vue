@@ -22,6 +22,10 @@ export interface ApplicationHubProps {
     canContinueInClass: boolean;
     continueInClassUrl: string;
     canApplyToNextLevel?: boolean;
+    nextLevelId?: number | null;
+    nextLevelName?: string | null;
+    nextDepartmentLevelId?: number | null;
+    institutionDepartmentId?: number | null;
     requiresIntakeSelection: boolean;
 }
 
@@ -101,6 +105,9 @@ const hubStep = computed(() => {
 
     return 'acknowledge';
 });
+
+const isNextLevelApply = computed(() => props.applicationHub.canApplyToNextLevel === true);
+const nextLevelName = computed(() => props.applicationHub.nextLevelName ?? '');
 </script>
 
 <template>
@@ -111,17 +118,35 @@ const hubStep = computed(() => {
                 :key="intake.id"
                 :value="String(intake.id)"
                 :title="intake.attributes?.name ?? ''"
-                :description="$t('trans.returning_student_hub_intake_description')"
+                :description="
+                    isNextLevelApply
+                        ? $t('trans.returning_student_hub_next_level_intake_description', { level: nextLevelName })
+                        : $t('trans.returning_student_hub_intake_description')
+                "
             >
                 <template #trigger-extra>
                     <BaseTag
-                        :title="$t('students.current_intake')"
+                        :title="
+                            isNextLevelApply
+                                ? $t('trans.returning_student_hub_next_level_tag')
+                                : $t('students.current_intake')
+                        "
                         :variant="ColorVariant.success"
                         classes="cursor-default"
                     />
                 </template>
 
                 <div class="space-y-4 p-1">
+                    <BaseAlert
+                        v-if="isNextLevelApply"
+                        :type="TypeVariant.info"
+                        :description="
+                            $t('trans.returning_student_hub_next_level_banner', {
+                                level: nextLevelName,
+                            })
+                        "
+                    />
+
                     <BaseAlert
                         v-if="feePaidHighlight && hubStep === 'continue'"
                         :type="TypeVariant.success"
@@ -130,7 +155,11 @@ const hubStep = computed(() => {
 
                     <template v-if="hubStep === 'acknowledge'">
                         <p class="text-sm text-muted-foreground">
-                            {{ $t('trans.returning_student_onboarding_description') }}
+                            {{
+                                isNextLevelApply
+                                    ? $t('trans.returning_student_hub_next_level_onboarding', { level: nextLevelName })
+                                    : $t('trans.returning_student_onboarding_description')
+                            }}
                         </p>
                         <div
                             v-if="applicationHub.requiresIntakeSelection && intakesWithoutApplication.length > 1"
@@ -150,19 +179,31 @@ const hubStep = computed(() => {
                             type="button"
                             :variant="ColorVariant.primary"
                             :disabled="!acknowledgeForm.acknowledged || (applicationHub.requiresIntakeSelection && !selectedIntakeId)"
-                            :title="$t('trans.returning_student_hub_start')"
+                            :title="
+                                isNextLevelApply
+                                    ? $t('trans.returning_student_hub_next_level_start')
+                                    : $t('trans.returning_student_hub_start')
+                            "
                             @click="submitAcknowledge"
                         />
                     </template>
 
                     <template v-else-if="hubStep === 'level'">
                         <p class="text-sm text-muted-foreground">
-                            {{ $t('trans.returning_student_hub_select_level') }}
+                            {{
+                                isNextLevelApply
+                                    ? $t('trans.returning_student_hub_next_level_select', { level: nextLevelName })
+                                    : $t('trans.returning_student_hub_select_level')
+                            }}
                         </p>
                         <BaseButton
                             type="button"
                             :variant="ColorVariant.primary"
-                            :title="$t('trans.returning_student_hub_go_select_level')"
+                            :title="
+                                isNextLevelApply
+                                    ? $t('trans.returning_student_hub_next_level_go_select', { level: nextLevelName })
+                                    : $t('trans.returning_student_hub_go_select_level')
+                            "
                             @click="goToLevelSelection"
                         />
                     </template>
@@ -170,19 +211,29 @@ const hubStep = computed(() => {
                     <template v-else>
                         <p class="text-sm text-muted-foreground">
                             {{
-                                $t('trans.returning_student_reapply_banner', {
-                                    intake: intake.attributes?.name ?? '',
-                                })
+                                isNextLevelApply
+                                    ? $t('trans.returning_student_hub_next_level_continue_banner', {
+                                          intake: intake.attributes?.name ?? '',
+                                          level: nextLevelName || (applicationHub.paidLevelName ?? ''),
+                                      })
+                                    : $t('trans.returning_student_reapply_banner', {
+                                          intake: intake.attributes?.name ?? '',
+                                      })
                             }}
                         </p>
-                        <p v-if="applicationHub.paidLevelName" class="text-sm text-foreground">
-                            {{ $t('trans.returning_student_hub_level') }}: {{ applicationHub.paidLevelName }}
+                        <p v-if="applicationHub.paidLevelName || nextLevelName" class="text-sm text-foreground">
+                            {{ $t('trans.returning_student_hub_level') }}:
+                            {{ applicationHub.paidLevelName ?? nextLevelName }}
                         </p>
                         <BaseButton
                             type="button"
                             :variant="ColorVariant.primary"
                             :class="{ 'ring-2 ring-primary ring-offset-2': feePaidHighlight }"
-                            :title="$t('trans.returning_student_hub_continue')"
+                            :title="
+                                isNextLevelApply
+                                    ? $t('trans.returning_student_hub_next_level_continue')
+                                    : $t('trans.returning_student_hub_continue')
+                            "
                             @click="continueApplication"
                         />
                     </template>

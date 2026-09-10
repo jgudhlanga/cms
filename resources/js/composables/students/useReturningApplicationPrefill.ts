@@ -126,6 +126,21 @@ export function useReturningApplicationPrefill(prefill: ReturningPrefill, storeR
         });
 
         clearProgrammeSelections(storeRefs);
+
+        const programmeScalars = ['department_id', 'level_id', 'course_id', 'required_level_completed'] as const;
+        programmeScalars.forEach((field) => {
+            const value = prefill[field];
+            if (value !== null && value !== undefined && storeRefs[field]) {
+                (storeRefs[field] as Ref<unknown>).value = value;
+            }
+        });
+
+        (['department', 'level', 'course'] as const).forEach((field) => {
+            const combo = toComboOption(prefill[field]);
+            if (combo && storeRefs[field]) {
+                (storeRefs[field] as Ref<unknown>).value = combo;
+            }
+        });
     };
 
     return { applyPrefill };

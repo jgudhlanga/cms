@@ -2,17 +2,25 @@ import { errorAlert } from '@/lib/alerts';
 import { APP_MODULE_KEYS } from '@/lib/constants';
 import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { hasAbility } from '@/lib/permissions';
+import { applicationIdsForSubmit, pruneSelectionToVisible } from '@/lib/reassignProgrammeSelection';
 import { useModalStore } from '@/store/core/useModalStore';
 import type { ProgrammeUsageRecord, ReassignProgrammeSource } from '@/types/programme-reassign';
 import type { SelectOption } from '@/types/utils';
 import { useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 import { trans } from 'laravel-vue-i18n';
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 
 export function canReassignProgramme(): boolean {
     return hasAbility(['update:student-applications', 'manage:data-maintenance', 'root:manage']);
 }
+
+export const UNSPECIFIED_MODE_ID = 0;
+
+export const recordModeId = (row: ProgrammeUsageRecord): number =>
+    row.mode_of_study_id !== null && row.mode_of_study_id > 0 ? row.mode_of_study_id : UNSPECIFIED_MODE_ID;
+
+export { applicationIdsForSubmit, pruneSelectionToVisible } from '@/lib/reassignProgrammeSelection';
 
 const unanimousOption = (
     rows: ProgrammeUsageRecord[],
@@ -50,11 +58,14 @@ export function useReassignProgramme() {
     const records = ref<ProgrammeUsageRecord[]>([]);
     const loadingRecords = ref(false);
     const selectedApplicationIds = ref<number[]>([]);
+    const filterModeIds = ref<number[]>([]);
     const hydratingDefaults = ref(false);
+    const openedFromOfferingSource = ref(false);
 
     const form = useForm({
         application_ids: [] as number[],
         student_enrolment_ids: [] as number[],
+        source_mode_of_study_ids: [] as number[],
         institution_department_id: null as number | null,
         department_level_id: null as number | null,
         department_course_id: null as number | null,
@@ -66,6 +77,18 @@ export function useReassignProgramme() {
     });
 
     const selectedCount = computed(() => selectedApplicationIds.value.length);
+
+    const filteredRecords = computed(() => {
+        if (filterModeIds.value.length === 0) {
+            return records.value;
+        }
+
+        const selectedModes = new Set(filterModeIds.value);
+
+        return records.value.filter((row) => selectedModes.has(recordModeId(row)));
+    });
+
+    const visibleApplicationIds = computed(() => filteredRecords.value.map((row) => row.application_id));
 
     const selectedRecords = (): ProgrammeUsageRecord[] => {
         if (selectedApplicationIds.value.length === 0) {
@@ -87,14 +110,34 @@ export function useReassignProgramme() {
         form.modeOfStudy = unanimousOption(rows, 'mode_of_study_id', 'mode_of_study');
     };
 
+    const pruneHiddenSelections = (): void => {
+        if (filterModeIds.value.length === 0) {
+            return;
+        }
+
+        selectedApplicationIds.value = pruneSelectionToVisible(
+            selectedApplicationIds.value,
+            visibleApplicationIds.value,
+        );
+    };
+
+    watch(filterModeIds, () => {
+        pruneHiddenSelections();
+    });
+
     const loadOfferingRecords = async (options: {
         applicationIds?: number[];
         studentEnrolmentIds?: number[];
         source?: ReassignProgrammeSource;
+        preselectAll?: boolean;
     }): Promise<void> => {
         const params: Record<string, unknown> = {};
         const applicationIds = (options.applicationIds ?? []).map(Number).filter((id) => id > 0);
         const studentEnrolmentIds = (options.studentEnrolmentIds ?? []).map(Number).filter((id) => id > 0);
+        const fromOfferingSource =
+            applicationIds.length === 0 &&
+            studentEnrolmentIds.length === 0 &&
+            options.source !== undefined;
 
         if (applicationIds.length > 0) {
             params.application_ids = applicationIds;
@@ -123,14 +166,22 @@ export function useReassignProgramme() {
         try {
             const response = await axios.get(route('students.programmes.usage'), { params });
             records.value = Array.isArray(response.data?.data) ? response.data.data : [];
-            selectedApplicationIds.value =
-                applicationIds.length > 0
-                    ? records.value
-                          .map((row) => row.application_id)
-                          .filter((id) => applicationIds.includes(id))
-                    : records.value.map((row) => row.application_id);
 
-            if (selectedApplicationIds.value.length === 0) {
+            if (fromOfferingSource && options.preselectAll !== true) {
+                selectedApplicationIds.value = [];
+            } else if (applicationIds.length > 0) {
+                selectedApplicationIds.value = records.value
+                    .map((row) => row.application_id)
+                    .filter((id) => applicationIds.includes(id));
+            } else {
+                selectedApplicationIds.value = records.value.map((row) => row.application_id);
+            }
+
+            if (
+                !fromOfferingSource &&
+                selectedApplicationIds.value.length === 0 &&
+                options.preselectAll !== false
+            ) {
                 selectedApplicationIds.value = records.value.map((row) => row.application_id);
             }
         } catch {
@@ -152,6 +203,13 @@ export function useReassignProgramme() {
         form.reset();
         form.clearErrors();
         form.student_enrolment_ids = options.studentEnrolmentIds ?? [];
+        form.source_mode_of_study_ids = [];
+        filterModeIds.value = [];
+        openedFromOfferingSource.value =
+            Boolean(options.source) &&
+            (options.applicationIds ?? []).length === 0 &&
+            (options.studentEnrolmentIds ?? []).length === 0 &&
+            !options.records?.length;
 
         if (options.records?.length) {
             records.value = options.records;
@@ -161,7 +219,10 @@ export function useReassignProgramme() {
             (options.applicationIds ?? []).length > 0 ||
             (options.studentEnrolmentIds ?? []).length > 0
         ) {
-            await loadOfferingRecords(options);
+            await loadOfferingRecords({
+                ...options,
+                preselectAll: !openedFromOfferingSource.value,
+            });
         } else {
             records.value = [];
             selectedApplicationIds.value = [];
@@ -174,8 +235,22 @@ export function useReassignProgramme() {
     };
 
     const submitReassignProgramme = (): void => {
-        if (selectedApplicationIds.value.length === 0 && form.student_enrolment_ids.length === 0) {
+        const applicationIds = applicationIdsForSubmit(
+            selectedApplicationIds.value,
+            visibleApplicationIds.value,
+            filterModeIds.value,
+        );
+
+        if (applicationIds.length === 0 && form.student_enrolment_ids.length === 0) {
             errorAlert(trans('students.reassign_programme_none_selected'));
+            return;
+        }
+
+        if (
+            filterModeIds.value.length > 0 &&
+            selectedApplicationIds.value.some((id) => !visibleApplicationIds.value.includes(id))
+        ) {
+            errorAlert(trans('students.reassign_programme_hidden_selection'));
             return;
         }
 
@@ -183,11 +258,15 @@ export function useReassignProgramme() {
         form.department_level_id = Number(form.level?.value ?? 0) || null;
         form.department_course_id = Number(form.course?.value ?? 0) || null;
         form.mode_of_study_id = Number(form.modeOfStudy?.value ?? 0) || null;
-        form.application_ids = selectedApplicationIds.value;
+        form.application_ids = applicationIds;
+        form.source_mode_of_study_ids =
+            filterModeIds.value.length > 0
+                ? filterModeIds.value.filter((id) => id > 0)
+                : [];
         form.student_enrolment_ids = records.value
             .filter(
                 (row) =>
-                    selectedApplicationIds.value.includes(row.application_id) &&
+                    applicationIds.includes(row.application_id) &&
                     row.student_enrolment_id !== null &&
                     row.student_enrolment_id > 0,
             )
@@ -209,10 +288,15 @@ export function useReassignProgramme() {
         records,
         loadingRecords,
         selectedApplicationIds,
+        filterModeIds,
+        filteredRecords,
+        visibleApplicationIds,
         selectedCount,
         hydratingDefaults,
+        openedFromOfferingSource,
         openReassignProgrammeDialog,
         submitReassignProgramme,
         loadOfferingRecords,
+        pruneHiddenSelections,
     };
 }

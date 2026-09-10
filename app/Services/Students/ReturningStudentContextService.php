@@ -9,6 +9,7 @@ use App\Enums\Shared\WorkflowStepEnum;
 use App\Enums\Students\ApplicationTrackEnum;
 use App\Helpers\PaymentHelper;
 use App\Http\Resources\Institution\IntakePeriodResource;
+use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
@@ -212,6 +213,7 @@ class ReturningStudentContextService
         $intakePeriod = $applicationFee?->intakePeriod ?? $openIntakes->first();
         $hasPaid = $intakePeriod !== null
             && PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod);
+        $nextLevelContext = $this->nextLevelApplicationContext($student);
 
         return [
             'openIntakes' => IntakePeriodResource::collection($openIntakes),
@@ -223,7 +225,11 @@ class ReturningStudentContextService
                 && $this->hasReapplyAcknowledgementForIntake($student, $intakePeriod),
             'canContinueInClass' => $this->canContinueInClass($student),
             'continueInClassUrl' => route('portal.returning-student.continue.show'),
-            'canApplyToNextLevel' => $this->canApplyToNextLevel($student),
+            'canApplyToNextLevel' => $nextLevelContext['canApplyToNextLevel'],
+            'nextLevelId' => $nextLevelContext['nextLevelId'],
+            'nextLevelName' => $nextLevelContext['nextLevelName'],
+            'nextDepartmentLevelId' => $nextLevelContext['nextDepartmentLevelId'],
+            'institutionDepartmentId' => $nextLevelContext['institutionDepartmentId'],
             'requiresIntakeSelection' => $openIntakes->count() > 1,
         ];
     }
@@ -359,16 +365,73 @@ class ReturningStudentContextService
 
     public function canApplyToNextLevel(Student $student): bool
     {
+        return $this->nextLevelApplicationContext($student)['canApplyToNextLevel'];
+    }
+
+    /**
+     * @return array{
+     *     canApplyToNextLevel: bool,
+     *     nextLevelId: int|null,
+     *     nextLevelName: string|null,
+     *     nextDepartmentLevelId: int|null,
+     *     institutionDepartmentId: int|null,
+     *     departmentCourseId: int|null,
+     *     awardedEnrolment: StudentEnrolment|null,
+     * }
+     */
+    public function nextLevelApplicationContext(Student $student): array
+    {
+        $empty = [
+            'canApplyToNextLevel' => false,
+            'nextLevelId' => null,
+            'nextLevelName' => null,
+            'nextDepartmentLevelId' => null,
+            'institutionDepartmentId' => null,
+            'departmentCourseId' => null,
+            'awardedEnrolment' => null,
+        ];
+
         $latestEnrolment = $student->enrolments()
-            ->with(['studentEnrolmentStatus', 'departmentLevel.level', 'studentApplication.departmentLevel.level'])
+            ->with([
+                'studentEnrolmentStatus',
+                'departmentLevel.level',
+                'studentApplication.departmentLevel.level',
+                'departmentCourse',
+            ])
             ->latest('id')
             ->first();
 
         if (! $latestEnrolment instanceof StudentEnrolment) {
-            return false;
+            return $empty;
         }
 
-        return $this->progression->canApplyToNextLevel($latestEnrolment);
+        if (! $this->progression->canApplyToNextLevel($latestEnrolment)) {
+            return $empty;
+        }
+
+        $currentDepartmentLevel = $this->progression->departmentLevelForEnrolment($latestEnrolment);
+        if (! $currentDepartmentLevel instanceof DepartmentLevel) {
+            return $empty;
+        }
+
+        $nextDepartmentLevel = $this->progression->nextDepartmentLevel($currentDepartmentLevel);
+        if (! $nextDepartmentLevel instanceof DepartmentLevel) {
+            return $empty;
+        }
+
+        $nextDepartmentLevel->loadMissing('level');
+
+        return [
+            'canApplyToNextLevel' => true,
+            'nextLevelId' => $nextDepartmentLevel->level_id !== null ? (int) $nextDepartmentLevel->level_id : null,
+            'nextLevelName' => $nextDepartmentLevel->level?->name,
+            'nextDepartmentLevelId' => (int) $nextDepartmentLevel->id,
+            'institutionDepartmentId' => (int) $nextDepartmentLevel->institution_department_id,
+            'departmentCourseId' => $latestEnrolment->department_course_id !== null
+                ? (int) $latestEnrolment->department_course_id
+                : null,
+            'awardedEnrolment' => $latestEnrolment,
+        ];
     }
 
     private function hasActiveEnrolment(Student $student): bool

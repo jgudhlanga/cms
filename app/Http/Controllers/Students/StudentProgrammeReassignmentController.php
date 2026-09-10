@@ -73,6 +73,7 @@ class StudentProgrammeReassignmentController extends Controller
             $request->applicationIds(),
             $request->studentEnrolmentIds(),
             $request->target(),
+            $request->sourceModeOfStudyIds(),
         );
 
         if ($result['moved'] === 0 && $result['skipped'] !== []) {

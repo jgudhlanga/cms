@@ -273,16 +273,38 @@ class StudentEnrolmentProgressionService
             return false;
         }
 
+        return $this->nextDepartmentLevel($departmentLevel) instanceof DepartmentLevel;
+    }
+
+    /**
+     * Next qualification in the same department (e.g. NC → ND → HND) by level position.
+     */
+    public function nextDepartmentLevel(DepartmentLevel $departmentLevel): ?DepartmentLevel
+    {
+        $departmentLevel->loadMissing('level');
         $position = (int) ($departmentLevel->level?->position ?? 0);
-        $departmentId = (int) $departmentLevel->institution_department_id;
+
+        if ($position === 0) {
+            return null;
+        }
 
         return DepartmentLevel::query()
-            ->where('institution_department_id', $departmentId)
+            ->where('institution_department_id', $departmentLevel->institution_department_id)
             ->whereNull('deleted_at')
-            ->whereHas('level', function ($query) use ($position): void {
-                $query->where('position', '>', $position)->whereNull('deleted_at');
-            })
-            ->exists();
+            ->whereHas('level', fn ($query) => $query->where('position', '>', $position)->whereNull('deleted_at'))
+            ->with('level')
+            ->get()
+            ->sortBy(fn (DepartmentLevel $candidate): int => (int) ($candidate->level?->position ?? 0))
+            ->first();
+    }
+
+    public function departmentLevelForEnrolment(StudentEnrolment $enrolment): ?DepartmentLevel
+    {
+        $enrolment->loadMissing(['departmentLevel.level', 'studentApplication.departmentLevel.level']);
+
+        $departmentLevel = $enrolment->departmentLevel ?? $enrolment->studentApplication?->departmentLevel;
+
+        return $departmentLevel instanceof DepartmentLevel ? $departmentLevel : null;
     }
 
     public function statusIdBySlug(string $slug): ?int

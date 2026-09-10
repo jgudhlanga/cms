@@ -21,7 +21,10 @@ import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { errorAlert } from '@/lib/alerts';
 import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
+import { hasAbility } from '@/lib/permissions';
 import { Head, Link as InertiaLink, router, useForm } from '@inertiajs/vue3';
+import { BaseButton } from '@/components/core/button';
+import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { computed, toRefs } from 'vue';
 import AcademicCalendarClassPreviewCard from './partials/AcademicCalendarClassPreviewCard.vue';
@@ -97,6 +100,26 @@ const classConfigQuery = computed((): Record<string, string> => {
         mode_of_study_id: String(context.modeOfStudyId ?? ''),
     };
 });
+
+const canManageProgressionImport = computed(
+    () => hasAbility(['update:academic-calendar-student-enrolments']) && classConfig.value != null,
+);
+
+const progressionImportUrl = (action: 'complete-level' | 'advance-phase') =>
+    route('academic-calendars.department-classes.progression-import', {
+        institution_department: String(department.value.id),
+        calendar_year: String(academicCalendar.value.attributes.calendarYear),
+        action,
+        ...classConfigQuery.value,
+    });
+
+const progressionImportTemplateUrl = (action: 'complete-level' | 'advance-phase') =>
+    route('academic-calendars.department-classes.progression-import.template', {
+        institution_department: String(department.value.id),
+        calendar_year: String(academicCalendar.value.attributes.calendarYear),
+        action,
+        ...classConfigQuery.value,
+    });
 
 const courseWorkMarksheetUrl = computed(() =>
     route('academic-calendars.department-classes.course-work-marksheet', {
@@ -307,6 +330,45 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                     :align="'start'"
                 />
                 <div class="flex flex-wrap items-center gap-1.5 sm:justify-end">
+                    <a
+                        v-if="canManageProgressionImport"
+                        :href="progressionImportTemplateUrl('complete-level')"
+                        class="inline-flex"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <BaseButton
+                            type="button"
+                            :title="$t('academic_calendar.progression_import_download_template')"
+                            classes="rounded-full"
+                            :variant="ColorVariant.secondary"
+                            :size="ButtonSize.xs"
+                        />
+                    </a>
+                    <InertiaLink
+                        v-if="canManageProgressionImport"
+                        :href="progressionImportUrl('advance-phase')"
+                    >
+                        <BaseButton
+                            type="button"
+                            :title="$t('academic_calendar.progression_import_action_advance_phase')"
+                            classes="rounded-full"
+                            :variant="ColorVariant.primary_outline"
+                            :size="ButtonSize.xs"
+                        />
+                    </InertiaLink>
+                    <InertiaLink
+                        v-if="canManageProgressionImport"
+                        :href="progressionImportUrl('complete-level')"
+                    >
+                        <BaseButton
+                            type="button"
+                            :title="$t('academic_calendar.progression_import_action_complete_level')"
+                            classes="rounded-full"
+                            :variant="ColorVariant.primary_outline"
+                            :size="ButtonSize.xs"
+                        />
+                    </InertiaLink>
                     <BaseButton
                         v-if="canExportClassLists"
                         type="button"
