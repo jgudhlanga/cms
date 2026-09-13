@@ -44,6 +44,7 @@ return [
     'complete_level_confirm_title' => 'Mark level completed',
     'complete_level_confirm_message' => 'Set enrolment status to Completed for the selected students on this last phase?',
     'advance_all_eligible' => 'Advance all eligible',
+    'advance_all_none_eligible' => 'No eligible students',
     'advance_all_eligible_confirm_title' => 'Advance all eligible students',
     'advance_all_eligible_confirm_message' => 'Continue every eligible student in this class to the next phase? Students with blocking statuses are skipped.',
     'progression_import_action_complete_level' => 'Mark level completed',
@@ -67,6 +68,7 @@ return [
     'progression_import_select_eligible' => 'Select eligible rows to process.',
     'class_config_semester_collision' => 'Another class configuration already exists for this course, level, mode, year, and semester.',
     'class_config_year_limit_reached' => 'This :type level already has :max class configurations for :year.',
+    'class_config_period_not_offered_in_mode' => 'This period is not available for the selected mode of study. Industrial attachment periods can only be configured under OJET.',
     'add_class_config' => 'Add class config',
     'add_class_config_period' => 'Add :period',
     'class_config_not_found' => 'That class configuration could not be found for this department.',
@@ -115,7 +117,7 @@ return [
     'course_work_student_filter_class_only' => 'Student filter is only supported with an academic calendar class.',
     'course_work_class_config_not_found' => 'Class configuration not found.',
     'course_work_enrolment_not_in_class_config' => 'The student enrolment does not belong to this class configuration.',
-    'course_work_open_marksheet' => 'Course work marksheet',
+    'course_work_open_marksheet' => 'Capture course work marks',
     'course_work_candidate_number' => 'Candidate #',
     'course_work_class_column' => 'Class',
     'course_work_class_not_found' => 'Academic calendar class not found.',
@@ -252,4 +254,20 @@ return [
     'view_profile' => 'View profile',
     'move_class' => 'Move class',
     'class_roster_student_count' => ':count student|:count students',
+
+    // Toolbar actions dropdown
+    'actions_group_progression' => 'Progression',
+    'actions_group_reports' => 'Reports & exports',
+    'actions_group_students' => 'Students',
+    'action_requires_classes' => 'Generate classes first',
+
+    // One line under each dropdown option saying what it actually does
+    'action_hint_advance_phase' => 'Move students up into the next programme phase',
+    'action_hint_complete_level' => 'Set enrolment status to Completed on the final phase',
+    'action_hint_progression_import' => 'Upload an edited list to process students in bulk',
+    'action_hint_advance_all_eligible' => 'Advances everyone in this class except blocked students',
+    'action_hint_export_class_lists' => 'PDF register with blank signature columns',
+    'action_hint_course_work_marksheet' => 'Marksheet grid covering every student and module in this class',
+    'action_hint_reassign_programme' => 'Move students onto a different course, level or mode',
+    'action_hint_add_student' => 'Place unassigned confirmed students into this class',
 ];

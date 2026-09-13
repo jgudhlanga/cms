@@ -70,8 +70,16 @@ const resetFilters = (): void => {
 </script>
 
 <template>
-    <div class="w-full min-w-0">
-        <div class="grid min-w-0 grid-cols-1 items-center gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,12rem)_auto]">
+    <!--
+        The actions sit in a sibling flex child rather than inside the filter
+        grid. While they shared the grid's trailing `auto` track under
+        `flex-nowrap`, that cell grew to fit every button and the two search
+        inputs — floored at `minmax(0, …)` — collapsed to nothing.
+    -->
+    <div class="flex w-full min-w-0 flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div
+            class="grid min-w-0 flex-1 grid-cols-1 items-center gap-2 sm:grid-cols-2 md:grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_minmax(0,10rem)_auto]"
+        >
             <div class="min-w-0">
                 <BaseInputWithIcon
                     v-model="name"
@@ -98,10 +106,12 @@ const resetFilters = (): void => {
                     class="rounded-full"
                 />
             </div>
-            <div class="flex flex-nowrap items-center justify-end gap-1.5">
+            <div class="flex items-center sm:justify-end">
                 <ResetButton :size="ButtonSize.xs" @click="resetFilters" />
-                <slot name="actions" />
             </div>
+        </div>
+        <div class="flex shrink-0 flex-wrap items-center gap-1.5 md:justify-end">
+            <slot name="actions" />
         </div>
     </div>
 </template>

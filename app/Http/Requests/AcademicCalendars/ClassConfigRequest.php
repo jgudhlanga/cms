@@ -8,6 +8,7 @@ use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\ModeOfStudy;
 use App\Models\Institution\ProgrammeSemester;
 use App\Services\Institution\ProgrammeSemesterResolver;
 use Illuminate\Foundation\Http\FormRequest;
@@ -146,9 +147,62 @@ class ClassConfigRequest extends FormRequest
                 }
             }
 
+            $this->rejectPeriodNotOfferedInMode($validator);
             $this->rejectSemesterCollision($validator);
             $this->rejectYearCap($validator);
         });
+    }
+
+    /**
+     * Attachment periods are OJET-only, and OJET configures nothing else. An edit that
+     * keeps its stored period is let through so configs saved before this rule stay editable.
+     */
+    private function rejectPeriodNotOfferedInMode(Validator $validator): void
+    {
+        if ($validator->errors()->isNotEmpty()) {
+            return;
+        }
+
+        $isOjetMode = $this->isOjetMode();
+        $programmeSemester = $this->offeringProgrammeSemester($this->positiveInt('programme_semester_id'));
+
+        // Without a programme structure there is no attachment period, so OJET has nothing to pick.
+        $offered = $programmeSemester instanceof ProgrammeSemester
+            ? $programmeSemester->isOfferedInMode($isOjetMode)
+            : ! $isOjetMode;
+
+        if ($offered || $this->keepsStoredPeriod()) {
+            return;
+        }
+
+        $validator->errors()->add('semester_id', __('academic_calendar.class_config_period_not_offered_in_mode'));
+    }
+
+    private function isOjetMode(): bool
+    {
+        $modeOfStudyId = $this->positiveInt('mode_of_study_id');
+        $modeOfStudy = $modeOfStudyId !== null ? ModeOfStudy::query()->find($modeOfStudyId) : null;
+
+        return $modeOfStudy instanceof ModeOfStudy && $modeOfStudy->isOjet();
+    }
+
+    private function keepsStoredPeriod(): bool
+    {
+        $classConfigId = $this->positiveInt('class_config_id');
+        $stored = $classConfigId !== null ? ClassConfig::query()->find($classConfigId) : null;
+
+        if (! $stored instanceof ClassConfig) {
+            return false;
+        }
+
+        $programmeSemesterId = $this->positiveInt('programme_semester_id');
+
+        if ($programmeSemesterId !== null) {
+            return (int) $stored->programme_semester_id === $programmeSemesterId;
+        }
+
+        return $stored->programme_semester_id === null
+            && (int) $stored->semester_id === (int) $this->positiveInt('semester_id');
     }
 
     private function rejectSemesterCollision(Validator $validator): void

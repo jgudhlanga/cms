@@ -2,6 +2,7 @@
 
 namespace App\Models\Institution;
 
+use App\Enums\Institution\ModeOfStudyEnum;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -22,6 +23,11 @@ class ModeOfStudy extends Model
     use HasFactory, SoftDeletes, Filterable, Paginatable, LogsActivity;
 
     protected $fillable = ['name', 'description'];
+
+    public function isOjet(): bool
+    {
+        return ModeOfStudyEnum::tryFromLabel((string) $this->name) === ModeOfStudyEnum::OJET;
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

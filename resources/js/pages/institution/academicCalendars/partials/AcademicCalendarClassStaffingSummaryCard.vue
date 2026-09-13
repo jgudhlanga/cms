@@ -66,6 +66,21 @@ const modulesComplete = computed(
         props.staffingSummary.modulesTotal > 0
         && props.staffingSummary.moduleSlotsStaffed >= props.staffingSummary.modulesTotal,
 );
+
+/**
+ * Staffing pills carry three states: complete, in progress, and nothing to staff.
+ * The green/amber ramps need explicit dark variants — the light-only values these
+ * previously used washed out to near-invisible on a dark ground.
+ */
+const COMPLETE_PILL = 'border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300';
+const PENDING_PILL = 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300';
+const EMPTY_PILL = 'border-border bg-muted text-muted-foreground';
+
+const pillClass = (complete: boolean, total: number): string =>
+    complete ? COMPLETE_PILL : total > 0 ? PENDING_PILL : EMPTY_PILL;
+
+const tutorsPillClass = computed(() => pillClass(tutorsComplete.value, props.staffingSummary.classCount));
+const modulesPillClass = computed(() => pillClass(modulesComplete.value, props.staffingSummary.modulesTotal));
 </script>
 
 <template>
@@ -87,34 +102,19 @@ const modulesComplete = computed(
         >
             {{ periodLabel }}
         </span>
-        <span
-            class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium"
-            :class="
-                tutorsComplete
-                    ? 'border-green-200 bg-green-50 text-green-700'
-                    : staffingSummary.classCount > 0
-                      ? 'border-amber-200 bg-amber-50 text-amber-800'
-                      : 'border-border bg-muted text-muted-foreground'
-            "
-        >
+        <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium" :class="tutorsPillClass">
             {{ tutorsProgressLabel }}
         </span>
         <span
             v-if="hasPeriod"
             class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium"
-            :class="
-                modulesComplete
-                    ? 'border-green-200 bg-green-50 text-green-700'
-                    : staffingSummary.modulesTotal > 0
-                      ? 'border-amber-200 bg-amber-50 text-amber-800'
-                      : 'border-border bg-muted text-muted-foreground'
-            "
+            :class="modulesPillClass"
         >
             {{ modulesProgressLabel }}
         </span>
         <p
             v-if="hasPeriod && !semesterConfigHasSyllabi"
-            class="w-full text-[11px] text-amber-700"
+            class="w-full text-[11px] text-amber-700 dark:text-amber-400"
         >
             {{ $t('academic_calendar.semester_config_missing') }}
         </p>
