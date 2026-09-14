@@ -11,6 +11,12 @@ const props = defineProps<{
     staffingSummary: ClassStaffingSummary;
     selectedSemesterId: number | null;
     semesterConfigHasSyllabi: boolean;
+    lecturerInChargeName?: string | null;
+    canAssignLecturerInCharge?: boolean;
+}>();
+
+const emit = defineEmits<{
+    (event: 'assign-lecturer-in-charge'): void;
 }>();
 
 const courseName = computed(() => props.classConfig?.attributes?.departmentCourse ?? props.title);
@@ -112,6 +118,26 @@ const modulesPillClass = computed(() => pillClass(modulesComplete.value, props.s
         >
             {{ modulesProgressLabel }}
         </span>
+        <span
+            v-if="classConfig"
+            class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium"
+            :class="lecturerInChargeName ? COMPLETE_PILL : PENDING_PILL"
+        >
+            {{ $t('academic_calendar.lecturer_in_charge') }}:
+            {{ lecturerInChargeName || $t('academic_calendar.lecturer_in_charge_not_assigned') }}
+        </span>
+        <button
+            v-if="classConfig && canAssignLecturerInCharge"
+            type="button"
+            class="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            @click="emit('assign-lecturer-in-charge')"
+        >
+            {{
+                lecturerInChargeName
+                    ? $t('academic_calendar.lecturer_in_charge_change_action')
+                    : $t('academic_calendar.lecturer_in_charge_assign_action')
+            }}
+        </button>
         <p
             v-if="hasPeriod && !semesterConfigHasSyllabi"
             class="w-full text-[11px] text-amber-700 dark:text-amber-400"

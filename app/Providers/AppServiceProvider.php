@@ -8,15 +8,21 @@ use App\Importers\Finance\FinanceExchangeRateImporter;
 use App\Importers\Institution\CourseSyllabusImporter;
 use App\Importers\Institution\CourseSyllabusModuleImporter;
 use App\JsonApi\V1\JsonApiAuthorizer;
+use App\Models\AcademicCalendars\CourseWorkCaptureExtension;
 use App\Models\AcademicCalendars\CourseWorkMark;
+use App\Models\AcademicCalendars\CourseWorkProgressReport;
 use App\Models\Examinations\ExaminationResult;
 use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
+use App\Models\Institution\AssessmentCalendar\DepartmentAssessmentCalendar;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Users\User;
+use App\Policies\AcademicCalendars\CourseWorkCaptureExtensionPolicy;
 use App\Policies\AcademicCalendars\CourseWorkPolicy;
+use App\Policies\AcademicCalendars\CourseWorkProgressReportPolicy;
 use App\Policies\Examinations\ExaminationPolicy;
 use App\Policies\Institution\AssessmentCalendarPolicy;
 use App\Policies\Institution\CourseSyllabusPolicy;
+use App\Policies\Institution\DepartmentAssessmentCalendarPolicy;
 use App\Services\Students\PdfCardPrinter;
 use App\Services\Students\PhysicalCardPrinter;
 use App\Support\Auth\SyncSessionPasswordHash;
@@ -76,6 +82,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(CourseSyllabus::class, CourseSyllabusPolicy::class);
         Gate::policy(CourseWorkMark::class, CourseWorkPolicy::class);
         Gate::policy(AssessmentCalendar::class, AssessmentCalendarPolicy::class);
+        Gate::policy(DepartmentAssessmentCalendar::class, DepartmentAssessmentCalendarPolicy::class);
+        Gate::policy(CourseWorkCaptureExtension::class, CourseWorkCaptureExtensionPolicy::class);
+        Gate::policy(CourseWorkProgressReport::class, CourseWorkProgressReportPolicy::class);
         Gate::policy(ExaminationResult::class, ExaminationPolicy::class);
 
         // Track user login statistics

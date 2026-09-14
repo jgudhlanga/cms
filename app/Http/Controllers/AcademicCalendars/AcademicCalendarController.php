@@ -17,6 +17,7 @@ use App\Http\Requests\AcademicCalendars\AcademicCalendarRequest;
 use App\Http\Requests\AcademicCalendars\BulkAcademicCalendarClassStudentsRequest;
 use App\Http\Requests\AcademicCalendars\ClassConfigRequest;
 use App\Http\Requests\AcademicCalendars\CorrectProgrammeSemesterInclusionRequest;
+use App\Http\Requests\AcademicCalendars\CourseWorkImportPreviewRequest;
 use App\Http\Requests\AcademicCalendars\CourseWorkImportProcessRequest;
 use App\Http\Requests\AcademicCalendars\MoveAcademicCalendarClassStudentsRequest;
 use App\Http\Requests\AcademicCalendars\StoreAcademicCalendarClassesRequest;
@@ -43,6 +44,9 @@ use App\Services\AcademicCalendars\AcademicCalendarClassNameFormatter;
 use App\Services\AcademicCalendars\ClassListDataService;
 use App\Services\AcademicCalendars\ClassListPdfService;
 use App\Services\AcademicCalendars\ClassStaffingService;
+use App\Services\AcademicCalendars\CourseWorkAssessmentLockService;
+use App\Services\AcademicCalendars\LecturerInChargeService;
+use App\Support\Rbac\UserAccessScope;
 use App\Services\AcademicCalendars\CourseWorkImportService;
 use App\Services\AcademicCalendars\CourseWorkImportTemplateService;
 use App\Services\AcademicCalendars\CourseWorkMarksheetDataService;
@@ -227,6 +231,15 @@ class AcademicCalendarController extends Controller
             'canViewCourseWork' => auth()->user()?->can('viewAny', CourseWorkMark::class) ?? false,
             'canExportClassList' => auth()->user()?->can('export', AcademicCalendar::class) ?? false,
             'assessmentWindows' => $this->publicWindowsForMode($calendarWindows, $modeId),
+            'lecturerInCharge' => $classConfig instanceof ClassConfig
+                ? app(LecturerInChargeService::class)->lecturerInChargeFor($classConfig)
+                : null,
+            'canAssignLecturerInCharge' => $classConfig instanceof ClassConfig
+                && (auth()->user()?->can('assign:lecturer-in-charge') ?? false)
+                && UserAccessScope::for(auth()->user())->canReachDepartment((int) $institutionDepartment->id),
+            'canViewCourseWorkProgress' => $classConfig instanceof ClassConfig
+                && (auth()->user()?->can('view:course-work-progress') ?? false)
+                && UserAccessScope::for(auth()->user())->canReachDepartment((int) $institutionDepartment->id),
         ]);
     }
 
@@ -334,6 +347,7 @@ class AcademicCalendarController extends Controller
             'canUpdateCourseWork' => auth()->user()?->can('update', CourseWorkMark::class) ?? false,
             'canExportCourseWork' => auth()->user()?->can('export', CourseWorkMark::class) ?? false,
             'canImportCourseWork' => auth()->user()?->can('import', CourseWorkMark::class) ?? false,
+            'moduleLocks' => $this->courseWorkLocksForClassConfig($classConfig),
         ]);
     }
 
@@ -361,6 +375,7 @@ class AcademicCalendarController extends Controller
             'classConfig' => ClassConfigResource::make($classConfig),
             'classConfigQuery' => $this->classConfigQueryParams($classConfig, $request),
             'canImportCourseWork' => auth()->user()?->can('import', CourseWorkMark::class) ?? false,
+            'moduleLocks' => $this->courseWorkLocksForClassConfig($classConfig),
             'initialCourseWorkModuleId' => $this->initialCourseWorkModuleIdFromRequest($request),
             'courseWorkImportResult' => session('courseWorkImportResult'),
         ]);
@@ -380,7 +395,7 @@ class AcademicCalendarController extends Controller
         $moduleId = (int) $request->query('module', 0);
         abort_if($moduleId < 1, 422, __('academic_calendar.course_work_module_required'));
 
-        app(LecturerCourseWorkAccess::class)->assertCanAccessModuleInClassConfig(
+        app(LecturerCourseWorkAccess::class)->assertCanCaptureModuleInClassConfig(
             $request->user(),
             (int) $classConfig->id,
             $moduleId,
@@ -408,7 +423,7 @@ class AcademicCalendarController extends Controller
 
         abort_if($file === null, 422);
 
-        app(LecturerCourseWorkAccess::class)->assertCanAccessModuleInClassConfig(
+        app(LecturerCourseWorkAccess::class)->assertCanCaptureModuleInClassConfig(
             $request->user(),
             (int) $classConfig->id,
             $moduleId,
@@ -433,7 +448,7 @@ class AcademicCalendarController extends Controller
         $moduleId = (int) $request->validated('module');
         $previewToken = (string) $request->validated('preview_token');
 
-        app(LecturerCourseWorkAccess::class)->assertCanAccessModuleInClassConfig(
+        app(LecturerCourseWorkAccess::class)->assertCanCaptureModuleInClassConfig(
             $request->user(),
             (int) $classConfig->id,
             $moduleId,
@@ -620,6 +635,10 @@ class AcademicCalendarController extends Controller
             'canCreateCourseWork' => auth()->user()?->can('create', CourseWorkMark::class) ?? false,
             'canUpdateCourseWork' => auth()->user()?->can('update', CourseWorkMark::class) ?? false,
             'canViewCourseWorkAuditTrail' => auth()->user()?->can('viewAuditTrail', CourseWorkMark::class) ?? false,
+            'moduleLocks' => app(CourseWorkAssessmentLockService::class)->locksForClassAndModules(
+                $academicCalendarClass,
+                $this->classStaffingService->resolveSemesterModules($classConfig),
+            ),
         ]);
     }
 
@@ -660,6 +679,20 @@ class AcademicCalendarController extends Controller
         $fileName = sprintf('%s-course-work-marksheet-%s.xlsx', $subjectCode, time());
 
         return Excel::download(new CourseWorkMarksheetExport($data), $fileName);
+    }
+
+    /**
+     * Lock state (capture switch and closed assessment windows) for every module in the class config,
+     * so department capture pages show the same read-only state the server enforces on save.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function courseWorkLocksForClassConfig(ClassConfig $classConfig): array
+    {
+        return app(CourseWorkAssessmentLockService::class)->locksForClassConfigAndModules(
+            $classConfig,
+            $this->classStaffingService->resolveSemesterModules($classConfig),
+        );
     }
 
     public function moveDepartmentAcademicCalendarClassStudents(

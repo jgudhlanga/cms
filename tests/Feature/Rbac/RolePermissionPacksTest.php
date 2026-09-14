@@ -213,6 +213,117 @@ test('vice principal academics pack includes class list confirmation', function 
         ->and(PermissionHelper::vpAcademicsPermissions())->toContain('manage-final:class-lists');
 });
 
+test('hod pack manages department assessment calendars, extensions and lecturers in charge but cannot approve beyond the global deadline', function () {
+    $permissions = PermissionHelper::hodPermissions();
+
+    expect($permissions)->toContain('create:department-assessment-calendar')
+        ->and($permissions)->toContain('update:department-assessment-calendar')
+        ->and($permissions)->toContain('captureForOthers:course-work')
+        ->and($permissions)->toContain('approve:course-work-extensions')
+        ->and($permissions)->toContain('assign:lecturer-in-charge')
+        ->and($permissions)->toContain('acknowledge:course-work-progress-reports')
+        ->and($permissions)->toContain('view:missing-marks-report')
+        ->and($permissions)->not->toContain('approveBeyondGlobal:course-work-extensions')
+        ->and($permissions)->not->toContain('updateClosed:assessment-calendar')
+        ->and($permissions)->not->toContain('escalate:missing-marks');
+});
+
+test('lecturer pack can request extensions but cannot capture for others or approve', function () {
+    $permissions = PermissionHelper::lecturerPermissions();
+
+    expect($permissions)->toContain('request:course-work-extensions')
+        ->and($permissions)->not->toContain('captureForOthers:course-work')
+        ->and($permissions)->not->toContain('approve:course-work-extensions')
+        ->and($permissions)->not->toContain('submit:course-work-progress-reports');
+});
+
+test('lecturer in charge role is seeded with progress reporting on top of the lecturer pack', function () {
+    $role = Role::query()->where('name', RoleEnum::LECTURER_IN_CHARGE->name())->firstOrFail();
+    $permissions = $role->permissions->pluck('name')->all();
+
+    expect($permissions)->toContain('create:course-work')
+        ->and($permissions)->toContain('view:course-work-progress')
+        ->and($permissions)->toContain('submit:course-work-progress-reports')
+        ->and($permissions)->not->toContain('captureForOthers:course-work')
+        ->and($permissions)->not->toContain('assign:lecturer-in-charge');
+});
+
+test('vice principal academics pack can approve extensions beyond the global deadline and edit closed calendars', function () {
+    $permissions = PermissionHelper::vpAcademicsPermissions();
+
+    expect($permissions)->toContain('approveBeyondGlobal:course-work-extensions')
+        ->and($permissions)->toContain('updateClosed:assessment-calendar')
+        ->and($permissions)->toContain('captureForOthers:course-work')
+        ->and($permissions)->not->toContain('create:department-assessment-calendar');
+});
+
+test('coursework window permission migration grants every new permission to the super user', function () {
+    $newPermissions = [
+        'updateClosed:assessment-calendar',
+        'viewAny:department-assessment-calendar',
+        'view:department-assessment-calendar',
+        'create:department-assessment-calendar',
+        'update:department-assessment-calendar',
+        'delete:department-assessment-calendar',
+        'restore:department-assessment-calendar',
+        'forceDelete:department-assessment-calendar',
+        'viewAuditTrail:department-assessment-calendar',
+        'captureForOthers:course-work',
+        'request:course-work-extensions',
+        'viewAny:course-work-extensions',
+        'approve:course-work-extensions',
+        'approveBeyondGlobal:course-work-extensions',
+        'revoke:course-work-extensions',
+        'assign:lecturer-in-charge',
+        'view:course-work-progress',
+        'submit:course-work-progress-reports',
+        'acknowledge:course-work-progress-reports',
+    ];
+
+    $superUser = Role::query()->where('name', RoleEnum::SUPER_USER->name())->firstOrFail();
+    $superUser->revokePermissionTo($newPermissions);
+    app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
+    $migration = require database_path('migrations/2026_09_14_090000_grant_coursework_window_permissions.php');
+    $migration->up();
+
+    $superUser = $superUser->fresh();
+
+    foreach ($newPermissions as $permission) {
+        expect($superUser->hasPermissionTo($permission))->toBeTrue();
+    }
+});
+
+test('user access scope reaches only own departments for department scoped users', function () {
+    $tenantId = TenantEnum::HARARE_POLY->id();
+    $user = User::factory()->create(['tenant_id' => $tenantId]);
+    $staff = createStaffForRolePermissionTest($user);
+
+    Permission::findOrCreate('viewOnlyOwnDepartment:departments', 'web');
+    $user->givePermissionTo('viewOnlyOwnDepartment:departments');
+
+    $ownDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $tenantId,
+        'department_id' => Department::query()->create(['name' => 'Own '.uniqid(), 'is_academic' => true])->id,
+        'department_code' => 'OWN',
+    ]);
+    $otherDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $tenantId,
+        'department_id' => Department::query()->create(['name' => 'Other '.uniqid(), 'is_academic' => true])->id,
+        'department_code' => 'OTH',
+    ]);
+    $staff->institutionDepartments()->attach($ownDepartment->id);
+
+    $scope = UserAccessScope::for($user->fresh());
+    $collegeScope = UserAccessScope::for(User::factory()->create(['tenant_id' => $tenantId]));
+
+    expect($scope->canReachDepartment((int) $ownDepartment->id))->toBeTrue()
+        ->and($scope->canReachDepartment((int) $otherDepartment->id))->toBeFalse()
+        ->and($scope->canReachDepartment(0))->toBeFalse()
+        ->and($collegeScope->canReachDepartment((int) $otherDepartment->id))->toBeTrue()
+        ->and((new UserAccessScope(null))->canReachDepartment((int) $ownDepartment->id))->toBeFalse();
+});
+
 test('hod permissions pack includes department metadata management', function () {
     $permissions = PermissionHelper::hodPermissions();
 

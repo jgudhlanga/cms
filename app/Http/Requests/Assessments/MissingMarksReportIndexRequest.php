@@ -17,10 +17,13 @@ class MissingMarksReportIndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'academic_calendar_id' => ['nullable', 'integer'],
-            'assessment_type_id' => ['nullable', 'integer'],
+            'calendar_year' => ['nullable', 'integer'],
             'institution_department_id' => ['nullable', 'integer'],
+            'level_id' => ['nullable', 'integer'],
+            'course_id' => ['nullable', 'integer'],
+            'module_id' => ['nullable', 'integer'],
             'lecturer_staff_id' => ['nullable', 'integer'],
+            'assessment_type_id' => ['nullable', 'integer'],
         ];
     }
 }

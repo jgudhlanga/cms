@@ -53,6 +53,45 @@ describe('buildDepartmentClassesActionGroups', () => {
         expect(flatten(groups).every((item) => item.disabled !== true)).toBe(true);
     });
 
+    it('offers the department assessment calendar even before classes exist when the viewer may see it', () => {
+        const groups = buildDepartmentClassesActionGroups(
+            departmentInput({
+                hasGeneratedClasses: false,
+                canViewAssessmentCalendar: true,
+                assessmentCalendarUrl: '/departments/1/assessment-calendars',
+            }),
+        );
+        const item = find(groups, 'department-assessment-calendar');
+
+        expect(item?.href).toBe('/departments/1/assessment-calendars');
+        expect(item?.disabled).toBeUndefined();
+    });
+
+    it('offers coursework progress once classes exist and disables it before', () => {
+        const withClasses = buildDepartmentClassesActionGroups(
+            departmentInput({ canViewCourseWorkProgress: true, courseWorkProgressUrl: '/teaching/course-work-progress/5' }),
+        );
+        const beforeClasses = buildDepartmentClassesActionGroups(
+            departmentInput({
+                hasGeneratedClasses: false,
+                canViewCourseWorkProgress: true,
+                courseWorkProgressUrl: '/teaching/course-work-progress/5',
+            }),
+        );
+
+        expect(find(withClasses, 'course-work-progress')?.href).toBe('/teaching/course-work-progress/5');
+        expect(find(beforeClasses, 'course-work-progress')?.disabled).toBe(true);
+        expect(keys(buildDepartmentClassesActionGroups(departmentInput()))).not.toContain('course-work-progress');
+    });
+
+    it('omits the department assessment calendar without the permission', () => {
+        const groups = buildDepartmentClassesActionGroups(
+            departmentInput({ canViewAssessmentCalendar: false, assessmentCalendarUrl: '/departments/1/assessment-calendars' }),
+        );
+
+        expect(keys(groups)).not.toContain('department-assessment-calendar');
+    });
+
     // The template belongs to the import wizard, next to the upload field and
     // built for the action actually chosen there — not to this list page.
     it('does not offer a template download', () => {

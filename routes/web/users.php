@@ -1,7 +1,14 @@
 <?php
 
+use App\Http\Controllers\Users\NotificationController;
 use App\Http\Controllers\Users\UserController;
 use Illuminate\Support\Facades\Route;
+
+Route::middleware('auth')->group(function () {
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+});
 
 Route::middleware(['auth', 'verified', 'redirect.student'])->group(function () {
     Route::get('users/audit-trail', [UserController::class, 'auditTrail'])->name('users.audit-trail');

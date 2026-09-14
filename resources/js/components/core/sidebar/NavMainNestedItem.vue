@@ -117,6 +117,7 @@ function onChildNavigate() {
 					:class="isActive(subItem.url, childUrls) ? 'bg-sidebar-primary/12 font-medium text-sidebar-foreground shadow-[inset_-1px_0_0_0_hsl(var(--sidebar-primary))]' : ''"
 					@click="onChildNavigate"
 				>
+					<component :is="subItem.icon" v-if="subItem.icon" class="mr-2 size-4 shrink-0" aria-hidden="true" />
 					<TransText :item="subItem" variant="nav" />
 				</Link>
 			</HoverCardContent>
@@ -158,6 +159,7 @@ function onChildNavigate() {
 					>
 						<SidebarMenuSubButton as-child :is-active="isActive(subItem.url, childUrls)">
 							<Link :href="subItem.url ?? ''" @click="onChildNavigate">
+								<component :is="subItem.icon" v-if="subItem.icon" class="size-4 shrink-0" aria-hidden="true" />
 								<TransText :item="subItem" variant="nav" />
 							</Link>
 						</SidebarMenuSubButton>

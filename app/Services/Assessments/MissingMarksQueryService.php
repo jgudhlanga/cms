@@ -50,7 +50,8 @@ class MissingMarksQueryService
             ->with([
                 'student.user',
                 'institutionDepartment.department',
-                'academicCalendarStudentEnrolment.academicCalendarClass.classConfig',
+                'academicCalendarStudentEnrolment.academicCalendarClass.classConfig.departmentLevel.level',
+                'academicCalendarStudentEnrolment.academicCalendarClass.classConfig.departmentCourse.course',
             ])
             ->get();
 
@@ -59,6 +60,38 @@ class MissingMarksQueryService
         }
 
         return $this->missingRowsForEnrolments($enrolments, (int) $assessmentType->id);
+    }
+
+    /**
+     * Departments with students enrolled under this calendar's academic calendar and modes of study.
+     *
+     * @return list<int>
+     */
+    public function institutionDepartmentIdsForCalendar(AssessmentCalendar $calendar): array
+    {
+        $assessmentType = $calendar->assessmentType ?? $calendar->assessmentType()->first();
+
+        if (! $assessmentType instanceof AssessmentType) {
+            return [];
+        }
+
+        $modeIds = array_values(array_filter(
+            array_map('intval', $assessmentType->modes_of_study ?? []),
+            static fn (int $id): bool => $id > 0,
+        ));
+
+        if ($modeIds === []) {
+            return [];
+        }
+
+        return $this->enrolmentsQuery($calendar, $modeIds, null)
+            ->whereNotNull('institution_department_id')
+            ->distinct()
+            ->pluck('institution_department_id')
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**
@@ -94,7 +127,8 @@ class MissingMarksQueryService
         $enrolment->loadMissing([
             'student.user',
             'institutionDepartment.department',
-            'academicCalendarStudentEnrolment.academicCalendarClass.classConfig',
+            'academicCalendarStudentEnrolment.academicCalendarClass.classConfig.departmentLevel.level',
+            'academicCalendarStudentEnrolment.academicCalendarClass.classConfig.departmentCourse.course',
         ]);
 
         return $this->missingRowsForEnrolments(collect([$enrolment]), (int) $assessmentType->id);
@@ -125,6 +159,11 @@ class MissingMarksQueryService
                     'departmentId' => (int) $first['departmentId'],
                     'departmentName' => (string) $first['departmentName'],
                     'institutionDepartmentId' => (int) $first['institutionDepartmentId'],
+                    'levelId' => (int) ($first['levelId'] ?? 0),
+                    'levelName' => (string) ($first['levelName'] ?? ''),
+                    'courseId' => (int) ($first['courseId'] ?? 0),
+                    'courseName' => (string) ($first['courseName'] ?? ''),
+                    'lecturers' => $group->pluck('lecturers')->flatten(1)->unique('staffId')->values()->all(),
                     'lecturerStaffIds' => array_values(array_unique(array_merge(...$group->pluck('lecturerStaffIds')->all()))),
                     'lecturerUserIds' => array_values(array_unique(array_merge(...$group->pluck('lecturerUserIds')->all()))),
                     'lecturerNames' => array_values(array_unique(array_merge(...$group->pluck('lecturerNames')->all()))),
@@ -234,6 +273,11 @@ class MissingMarksQueryService
                     'departmentId' => (int) ($department?->id ?? 0),
                     'departmentName' => (string) ($department?->name ?? __('dashboard.academic_unknown_department')),
                     'institutionDepartmentId' => (int) $enrolment->institution_department_id,
+                    'levelId' => (int) ($classConfig->departmentLevel?->level_id ?? 0),
+                    'levelName' => (string) ($classConfig->departmentLevel?->level?->name ?? ''),
+                    'courseId' => (int) ($classConfig->departmentCourse?->course_id ?? 0),
+                    'courseName' => (string) ($classConfig->departmentCourse?->course?->name ?? ''),
+                    'lecturers' => $lecturers,
                     'lecturerStaffIds' => array_values(array_map(fn (array $lecturer): int => $lecturer['staffId'], $lecturers)),
                     'lecturerUserIds' => array_values(array_filter(array_map(
                         fn (array $lecturer): ?int => $lecturer['userId'],

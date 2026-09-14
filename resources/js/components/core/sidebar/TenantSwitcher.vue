@@ -18,8 +18,8 @@ const page = usePage<PageProps>();
 const appVersion = computed(() => page.props.appVersion);
 
 const logoShellClass =
-    'flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white aspect-[671/1080]';
-const logoImageClass = 'size-full object-contain';
+    'flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-white aspect-[671/1080]';
+const logoImageClass = 'size-full cursor-pointer object-contain';
 </script>
 <template>
     <div
@@ -27,9 +27,14 @@ const logoImageClass = 'size-full object-contain';
         :class="isMobile ? 'px-3 py-4' : state === 'collapsed' ? 'px-0 py-1' : 'p-2'"
     >
         <div v-if="isMobile" class="flex items-start gap-3 pr-10 text-left">
-            <div :class="[logoShellClass, 'h-20']">
+            <button
+                type="button"
+                :class="[logoShellClass, 'h-20']"
+                :aria-label="$t('trans.ui_toggle_sidebar')"
+                @click="toggleSidebar"
+            >
                 <component :is="activeTenant.attributes.logo" :classes="logoImageClass" />
-            </div>
+            </button>
             <div class="grid min-w-0 flex-1 justify-items-start gap-1 text-sm leading-normal">
                 <span class="text-white w-full min-w-0 truncate font-semibold uppercase">
                     {{ activeTenant.attributes.name }}
@@ -43,14 +48,24 @@ const logoImageClass = 'size-full object-contain';
             </div>
         </div>
         <div v-else-if="state === 'collapsed'" class="flex flex-col items-center gap-2 text-center">
-            <div :class="[logoShellClass, 'h-14']">
+            <button
+                type="button"
+                :class="[logoShellClass, 'h-14']"
+                :aria-label="$t('trans.ui_toggle_sidebar')"
+                @click="toggleSidebar"
+            >
                 <component :is="activeTenant.attributes.logo" :classes="logoImageClass" />
-            </div>
+            </button>
         </div>
         <div v-else class="flex items-center space-x-2">
-            <div :class="[logoShellClass, 'h-16']">
+            <button
+                type="button"
+                :class="[logoShellClass, 'h-16']"
+                :aria-label="$t('trans.ui_toggle_sidebar')"
+                @click="toggleSidebar"
+            >
                 <component :is="activeTenant.attributes.logo" :classes="logoImageClass" />
-            </div>
+            </button>
             <div class="grid min-w-0 flex-1 justify-items-start text-left text-sm leading-tight">
                 <span class="text-white w-full min-w-0 truncate font-semibold uppercase">
                     {{ activeTenant.attributes.name }}

@@ -81,6 +81,42 @@ export function useSidebarMenu() {
             show: canShowMenuItem('view:lecturer-modules', 'institution', moduleState),
         },
         (() => {
+            const courseWorkChildren: MenuItemInterface[] = [
+                {
+                    transChoiceKey: 'academic_calendar.course_work_nav_progress',
+                    icon: icons[IconName.chart_increasing],
+                    url: route('teaching.course-work-progress.index'),
+                    show: canShowMenuItem('view:course-work-progress', 'institution', moduleState),
+                },
+                {
+                    transChoiceKey: 'academic_calendar.course_work_nav_progress_reports',
+                    icon: icons[IconName.clipboard_check],
+                    url: route('course-work-progress-reports.index'),
+                    show: canShowMenuItem('acknowledge:course-work-progress-reports', 'institution', moduleState),
+                },
+                {
+                    transChoiceKey: 'academic_calendar.course_work_nav_missing_marks',
+                    icon: icons[IconName.file_warning],
+                    url: route('missing-marks-report.index'),
+                    show: canShowMenuItem('view:missing-marks-report', 'institution', moduleState),
+                },
+                {
+                    transChoiceKey: 'academic_calendar.course_work_nav_extensions',
+                    icon: icons[IconName.calendar_clock],
+                    url: route('course-work-extensions.index'),
+                    show: canShowMenuItem('viewAny:course-work-extensions', 'institution', moduleState),
+                },
+            ].filter((child) => child.show);
+
+            return {
+                groupKey: 'lecturer' as const,
+                transChoiceKey: 'academic_calendar.course_work',
+                icon: icons[IconName.clipboard_pen],
+                items: courseWorkChildren,
+                show: courseWorkChildren.length > 0,
+            };
+        })(),
+        (() => {
             const canSearchStudents = canShowMenuItem('view:students', 'students', moduleState);
             const canViewApplications = canShowMenuItem('view:student-applications', 'enrolments', moduleState);
             const canViewStudentIds = canShowMenuItem(

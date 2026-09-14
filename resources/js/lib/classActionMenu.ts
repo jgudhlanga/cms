@@ -28,11 +28,17 @@ export type DepartmentClassesActionInput = {
     canExportClassList: boolean;
     /** Permission: may view course work. */
     canViewCourseWork: boolean;
+    /** Permission: may view the department's assessment calendar windows. */
+    canViewAssessmentCalendar?: boolean;
+    /** Permission: may follow coursework capture progress for this programme. */
+    canViewCourseWorkProgress?: boolean;
+    courseWorkProgressUrl?: string | null;
     /** State: at least one class has been generated for this configuration. */
     hasGeneratedClasses: boolean;
     advancePhaseUrl: string;
     completeLevelUrl: string;
     courseWorkMarksheetUrl: string;
+    assessmentCalendarUrl?: string | null;
     onExportClassLists: () => void;
 };
 
@@ -83,6 +89,28 @@ export function buildDepartmentClassesActionGroups(input: DepartmentClassesActio
             icon: IconName.list,
             href: input.courseWorkMarksheetUrl,
             ...requiresClasses,
+        });
+    }
+
+    if (input.canViewCourseWorkProgress && input.courseWorkProgressUrl) {
+        reports.push({
+            key: 'course-work-progress',
+            label: trans('academic_calendar.course_work_progress_title'),
+            description: trans('academic_calendar.course_work_progress_description'),
+            icon: IconName.list,
+            href: input.courseWorkProgressUrl,
+            ...requiresClasses,
+        });
+    }
+
+    // Capture windows are set per department, so this does not wait for classes to exist.
+    if (input.canViewAssessmentCalendar && input.assessmentCalendarUrl) {
+        reports.push({
+            key: 'department-assessment-calendar',
+            label: trans('academic_calendar.department_assessment_calendar_title'),
+            description: trans('academic_calendar.action_hint_department_assessment_calendar'),
+            icon: IconName.list,
+            href: input.assessmentCalendarUrl,
         });
     }
 

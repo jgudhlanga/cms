@@ -11,12 +11,21 @@ class AssessmentCalendarNotificationDispatch extends Model
 {
     use BelongsToTenant;
 
+    public const string SCOPE_GLOBAL = 'global';
+
     protected $fillable = [
         'tenant_id',
         'assessment_calendar_id',
+        'institution_department_id',
+        'scope_key',
         'tier',
         'sent_at',
     ];
+
+    public static function departmentScope(int $institutionDepartmentId): string
+    {
+        return 'dept:'.$institutionDepartmentId;
+    }
 
     protected function casts(): array
     {

@@ -95,7 +95,8 @@ class DepartmentCourseController extends Controller
 
     public function storeCourseLevelModes(DepartmentCourse $departmentCourse, CourseLevelModeRequest $request): void
     {
-        $this->authorize('updateDepartmentMetaData');
+        $departmentCourse->loadMissing('institutionDepartment');
+        $this->authorize('updateDepartmentMetaData', $departmentCourse->institutionDepartment);
         $this->courseLevelModes->sync($departmentCourse, $request->mode_ids ?? []);
     }
 
@@ -122,7 +123,8 @@ class DepartmentCourseController extends Controller
 
     public function update(DepartmentCourse $departmentCourse, DepartmentCourseUpdateRequest $request): void
     {
-        $this->authorize('updateDepartmentMetaData');
+        $departmentCourse->loadMissing('institutionDepartment');
+        $this->authorize('updateDepartmentMetaData', $departmentCourse->institutionDepartment);
         $this->repository->update($departmentCourse, DepartmentCourseUpdateDto::fromDepartmentCourseUpdateRequest($request));
     }
 

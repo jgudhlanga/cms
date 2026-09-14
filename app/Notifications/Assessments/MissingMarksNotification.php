@@ -22,6 +22,9 @@ class MissingMarksNotification extends Notification implements ShouldQueue
         public int $incompleteCount,
         public array $groupedRows,
         public bool $isEscalation = false,
+        public ?string $departmentName = null,
+        public ?string $effectiveEndDate = null,
+        public ?string $escalationNotes = null,
     ) {}
 
     /**
@@ -34,8 +37,8 @@ class MissingMarksNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $assessmentName = (string) ($this->calendar->assessmentType?->name ?? __('trans.assessment_type'));
-        $endDate = $this->calendar->end_date?->toDateString() ?? '';
+        $assessmentName = $this->assessmentName();
+        $endDate = $this->endDate();
         $name = $notifiable->full_name ?? $notifiable->email;
 
         $mail = (new MailMessage)
@@ -43,6 +46,13 @@ class MissingMarksNotification extends Notification implements ShouldQueue
             ->greeting("Hello {$name},")
             ->line($this->introLine($assessmentName, $endDate))
             ->line(__('assessments.missing_marks_mail_count', ['count' => $this->incompleteCount]));
+
+        if ($this->departmentName !== null) {
+            $mail->line(__('academic_calendar.missing_marks_department_context', [
+                'department' => $this->departmentName,
+                'end_date' => $endDate,
+            ]));
+        }
 
         foreach (array_slice($this->groupedRows, 0, 8) as $row) {
             $lecturers = implode(', ', $row['lecturerNames'] ?? []) ?: '—';
@@ -64,6 +74,10 @@ class MissingMarksNotification extends Notification implements ShouldQueue
         }
 
         if ($this->isEscalation) {
+            if ($this->escalationNotes !== null && trim($this->escalationNotes) !== '') {
+                $mail->line(__('assessments.missing_marks_mail_escalation_note', ['notes' => trim($this->escalationNotes)]));
+            }
+
             $mail->line(__('assessments.missing_marks_mail_escalated'));
         }
 
@@ -75,14 +89,33 @@ class MissingMarksNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
+        $assessmentName = $this->assessmentName();
+
         return [
             'kind' => $this->isEscalation ? 'missing_marks_escalation' : 'missing_marks',
             'tier' => $this->tier->value,
             'assessmentCalendarId' => $this->calendar->id,
             'assessmentTypeName' => $this->calendar->assessmentType?->name,
-            'endDate' => $this->calendar->end_date?->toDateString(),
+            'endDate' => $this->endDate(),
+            'departmentName' => $this->departmentName,
             'incompleteCount' => $this->incompleteCount,
+            'notes' => $this->isEscalation ? $this->escalationNotes : null,
+            'title' => $this->subjectLine($assessmentName),
+            'body' => $this->introLine($assessmentName, $this->endDate()),
+            'url' => method_exists($notifiable, 'can') && $notifiable->can('view:missing-marks-report')
+                ? route('missing-marks-report.index')
+                : route('teaching.classes.index'),
         ];
+    }
+
+    private function assessmentName(): string
+    {
+        return (string) ($this->calendar->assessmentType?->name ?? __('trans.assessment_type'));
+    }
+
+    private function endDate(): string
+    {
+        return $this->effectiveEndDate ?? ($this->calendar->end_date?->toDateString() ?? '');
     }
 
     private function subjectLine(string $assessmentName): string

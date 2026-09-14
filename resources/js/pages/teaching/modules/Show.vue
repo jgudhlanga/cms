@@ -18,6 +18,12 @@ interface ModuleClass {
     classConfigId: number;
     institutionDepartmentId: number;
     calendarYear: string;
+    courseWorkLock: {
+        hasEditableCourseWork: boolean;
+        allAssessmentTypesLocked: boolean;
+        lockedAssessmentTypeIds: number[];
+        readOnlyMessage: string | null;
+    };
 }
 
 interface ModuleDetail {
@@ -99,9 +105,16 @@ const importUrl = (classId: number): string =>
                                     </Link>
                                 </td>
                                 <td class="py-2.5">
+                                    <p
+                                        v-if="row.courseWorkLock.readOnlyMessage"
+                                        :id="`module-class-lock-${row.id}`"
+                                        class="mb-2 text-right text-xs text-muted-foreground"
+                                    >
+                                        {{ row.courseWorkLock.readOnlyMessage }}
+                                    </p>
                                     <div class="flex flex-wrap justify-end gap-2">
                                         <Link
-                                            v-if="canEnterMarks"
+                                            v-if="canEnterMarks && row.courseWorkLock.hasEditableCourseWork"
                                             :href="marksheetUrl(row.id)"
                                             class="inline-flex"
                                         >
@@ -115,7 +128,7 @@ const importUrl = (classId: number): string =>
                                             </BaseButton>
                                         </Link>
                                         <Link
-                                            v-if="canImportCourseWork"
+                                            v-if="canImportCourseWork && row.courseWorkLock.hasEditableCourseWork"
                                             :href="importUrl(row.id)"
                                             class="inline-flex"
                                         >

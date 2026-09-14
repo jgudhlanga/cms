@@ -78,6 +78,7 @@ class HandleInertiaRequests extends Middleware
                 'impersonating' => $isImpersonating,
             ],
             'moduleState' => fn () => app(RbacModuleStateService::class)->all(),
+            'notifications' => fn () => $user ? ['unreadCount' => $user->unreadNotifications()->count()] : null,
             'registration' => fn () => app(RegistrationAvailabilityService::class)->sharedProps(),
             'returningStudent' => fn () => $this->returningStudentProps($user),
             'purgeArchiveRetentionDays' => (int) config('purge.archive_retention_days', 30),

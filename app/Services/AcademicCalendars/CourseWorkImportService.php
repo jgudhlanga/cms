@@ -8,6 +8,8 @@ use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Users\User;
+use App\Support\AcademicCalendars\CourseWorkTemplateSignature;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +20,8 @@ use Illuminate\Validation\ValidationException;
 use LaravelIngest\Enums\IngestStatus;
 use LaravelIngest\Models\IngestRow;
 use LaravelIngest\Models\IngestRun;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Spatie\SimpleExcel\SimpleExcelReader;
 use Throwable;
 
@@ -299,6 +303,8 @@ class CourseWorkImportService
                 ]);
             }
 
+            $this->assertSignedTemplate($fullPath, $rawRows, $headerRowIndex, $importer, 'mark_only');
+
             return $this->analyseMarkOnlyFile($rawRows, $headerRowIndex, $importer, $dryRun);
         }
 
@@ -308,7 +314,148 @@ class CourseWorkImportService
             ]);
         }
 
+        $this->assertSignedTemplate($fullPath, $rawRows, $headerRowIndex, $importer, 'wide');
+
         return $this->analyseWideFile($rawRows, $headerRowIndex, $importer, $dryRun);
+    }
+
+    /**
+     * Rejects any file that is not an unaltered template issued by the system for this class config and
+     * module: missing or forged signature, other class/module/layout/tenant, too old, downloaded by
+     * someone else (unless the uploader may capture for others), or student rows/columns changed.
+     *
+     * @param  list<array<int|string, mixed>>  $rawRows
+     */
+    private function assertSignedTemplate(
+        string $fullPath,
+        array $rawRows,
+        int $headerRowIndex,
+        CourseWorkMarkImporter $importer,
+        string $layout,
+    ): void {
+        $payload = $this->readTemplatePayload($fullPath);
+
+        if ($payload === null) {
+            throw ValidationException::withMessages([
+                'file' => [__('academic_calendar.course_work_import_template_unsigned')],
+            ]);
+        }
+
+        $user = Auth::user();
+        $payloadTenantId = $payload['tenantId'] ?? null;
+
+        if (
+            (int) ($payload['classConfigId'] ?? 0) !== $importer->classConfigId()
+            || (int) ($payload['moduleId'] ?? 0) !== $importer->moduleId()
+            || ($payload['layout'] ?? null) !== $layout
+            || ($user instanceof User && $payloadTenantId !== null && (int) $payloadTenantId !== (int) $user->tenant_id)
+        ) {
+            throw ValidationException::withMessages([
+                'file' => [__('academic_calendar.course_work_import_template_mismatch')],
+            ]);
+        }
+
+        $ttlDays = (int) config('coursework.template_ttl_days', 14);
+
+        try {
+            $generatedAt = Carbon::parse((string) ($payload['generatedAt'] ?? ''));
+        } catch (Throwable) {
+            $generatedAt = null;
+        }
+
+        if ($generatedAt === null || $generatedAt->lt(now()->subDays($ttlDays))) {
+            throw ValidationException::withMessages([
+                'file' => [__('academic_calendar.course_work_import_template_expired', ['days' => $ttlDays])],
+            ]);
+        }
+
+        $payloadUserId = $payload['userId'] ?? null;
+
+        if (
+            $payloadUserId !== null
+            && $user instanceof User
+            && (int) $payloadUserId !== (int) $user->id
+            && ! $user->can('captureForOthers:course-work')
+        ) {
+            throw ValidationException::withMessages([
+                'file' => [__('academic_calendar.course_work_import_template_other_user')],
+            ]);
+        }
+
+        /** @var array<string, string> $signedStudents */
+        $signedStudents = is_array($payload['students'] ?? null) ? $payload['students'] : [];
+        $dataRowOffset = $layout === 'mark_only' ? 1 : 2;
+
+        for ($index = $headerRowIndex + $dataRowOffset; $index < count($rawRows); $index++) {
+            if (! $this->rowHasContent($rawRows[$index])) {
+                continue;
+            }
+
+            $values = array_values($rawRows[$index]);
+            $enrolmentKey = is_numeric($values[0] ?? null) ? (string) (int) $values[0] : null;
+
+            if (
+                $enrolmentKey === null
+                || ! array_key_exists($enrolmentKey, $signedStudents)
+                || $this->normaliseStudentNumber($signedStudents[$enrolmentKey]) !== $this->normaliseStudentNumber($values[1] ?? null)
+            ) {
+                throw ValidationException::withMessages([
+                    'file' => [__('academic_calendar.course_work_import_template_rows_tampered', ['row' => $index + 1])],
+                ]);
+            }
+        }
+
+        if ($layout === 'wide') {
+            $columnOrder = array_values(CourseWorkMarkImporter::parseWideColumnMap($rawRows[$headerRowIndex + 1] ?? []));
+            $signedOrder = array_map('intval', is_array($payload['typeColumnOrder'] ?? null) ? $payload['typeColumnOrder'] : []);
+
+            if ($columnOrder !== $signedOrder) {
+                throw ValidationException::withMessages([
+                    'file' => [__('academic_calendar.course_work_import_template_columns_tampered')],
+                ]);
+            }
+        }
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function readTemplatePayload(string $fullPath): ?array
+    {
+        try {
+            $reader = IOFactory::createReader('Xlsx');
+            $reader->setReadDataOnly(true);
+            $reader->setLoadSheetsOnly([CourseWorkTemplateSignature::META_SHEET_TITLE]);
+            $spreadsheet = $reader->load($fullPath);
+            $sheet = $spreadsheet->getSheetByName(CourseWorkTemplateSignature::META_SHEET_TITLE);
+            $payload = $sheet instanceof Worksheet ? (string) $sheet->getCell('A1')->getValue() : '';
+            $signature = $sheet instanceof Worksheet ? (string) $sheet->getCell('A2')->getValue() : '';
+            $spreadsheet->disconnectWorksheets();
+        } catch (Throwable) {
+            return null;
+        }
+
+        if (
+            ! str_starts_with($payload, CourseWorkTemplateSignature::PAYLOAD_PREFIX)
+            || ! str_starts_with($signature, CourseWorkTemplateSignature::SIGNATURE_PREFIX)
+        ) {
+            return null;
+        }
+
+        return CourseWorkTemplateSignature::verify(
+            substr($payload, strlen(CourseWorkTemplateSignature::PAYLOAD_PREFIX)),
+            substr($signature, strlen(CourseWorkTemplateSignature::SIGNATURE_PREFIX)),
+        );
+    }
+
+    /**
+     * Spreadsheet apps may turn purely numeric student numbers into numbers, dropping leading zeros.
+     */
+    private function normaliseStudentNumber(mixed $value): string
+    {
+        $normalised = trim((string) ($value ?? ''));
+
+        return ctype_digit($normalised) ? (ltrim($normalised, '0') ?: '0') : $normalised;
     }
 
     /**

@@ -19,14 +19,7 @@ class DepartmentMetaDataPolicy
             return true;
         }
 
-        if ($user->can('root:manage')) {
-            return true;
-        }
-
-        $permitted = UserAccessScope::for($user)->departmentIds();
-
-        // Null means unrestricted (college-wide); an empty array means no accessible departments.
-        return $permitted === null || in_array((int) $department->id, $permitted, true);
+        return UserAccessScope::for($user)->canReachDepartment((int) $department->id);
     }
 
     public function viewAnyDepartmentMetaData(User $user): bool

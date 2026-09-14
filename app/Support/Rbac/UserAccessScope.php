@@ -80,6 +80,32 @@ class UserAccessScope
             ->all();
     }
 
+    /**
+     * Whether the user may act on the given institution department. Root users and college-wide
+     * users reach every department; department- and division-scoped users only reach their own.
+     */
+    public function canReachDepartment(int $institutionDepartmentId): bool
+    {
+        $user = $this->user;
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        if ($user->can('root:manage')) {
+            return true;
+        }
+
+        if ($institutionDepartmentId < 1) {
+            return false;
+        }
+
+        $permitted = $this->departmentIds();
+
+        // Null means unrestricted (college-wide); an empty array means no accessible departments.
+        return $permitted === null || in_array($institutionDepartmentId, $permitted, true);
+    }
+
     public function isScopedToDepartments(): bool
     {
         return in_array($this->level(), [ScopeLevelEnum::Department, ScopeLevelEnum::Division], true);

@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\AcademicCalendars\CourseWorkCaptureExtensionController;
 use App\Http\Controllers\AcademicCalendars\SemesterController;
+use App\Http\Controllers\Institution\Assessments\CourseWorkProgressReportController;
 use App\Http\Controllers\Institution\Assessments\MissingMarksReportController;
 use App\Http\Controllers\Institution\Config\AssessmentCalendarController;
 use App\Http\Controllers\Institution\Config\AssessmentTypeController;
@@ -10,6 +12,7 @@ use App\Http\Controllers\Institution\Config\InstitutionFeatureController;
 use App\Http\Controllers\Institution\Config\IntakePeriodController;
 use App\Http\Controllers\Institution\Departments\CourseSyllabusController;
 use App\Http\Controllers\Institution\Departments\CourseSyllabusModuleController;
+use App\Http\Controllers\Institution\Departments\DepartmentAssessmentCalendarController;
 use App\Http\Controllers\Institution\Departments\DepartmentClassSizeController;
 use App\Http\Controllers\Institution\Departments\DepartmentCourseController;
 use App\Http\Controllers\Institution\Departments\DepartmentDataReconciliationController;
@@ -131,6 +134,21 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::get('missing-marks-report/export', [MissingMarksReportController::class, 'export'])->name('missing-marks-report.export');
     Route::post('missing-marks-report/escalate', [MissingMarksReportController::class, 'escalate'])->name('missing-marks-report.escalate');
     Route::post('missing-marks-report/remind', [MissingMarksReportController::class, 'remind'])->name('missing-marks-report.remind');
+    // ==================================== DEPARTMENT ASSESSMENT CALENDARS =============================================
+    Route::get('departments/{department}/assessment-calendars', [DepartmentAssessmentCalendarController::class, 'index'])->name('department-assessment-calendars.index');
+    Route::post('departments/{department}/assessment-calendars', [DepartmentAssessmentCalendarController::class, 'store'])->name('department-assessment-calendars.store');
+    Route::put('departments/{department}/assessment-calendars/{department_assessment_calendar}', [DepartmentAssessmentCalendarController::class, 'update'])->name('department-assessment-calendars.update');
+    Route::delete('departments/{department}/assessment-calendars/{department_assessment_calendar}', [DepartmentAssessmentCalendarController::class, 'destroy'])->name('department-assessment-calendars.destroy');
+    Route::put('departments/{department}/assessment-calendars/{department_assessment_calendar}/restore', [DepartmentAssessmentCalendarController::class, 'restore'])->name('department-assessment-calendars.restore');
+    // ==================================== COURSE WORK CAPTURE EXTENSIONS ==============================================
+    Route::get('course-work-extensions', [CourseWorkCaptureExtensionController::class, 'index'])->name('course-work-extensions.index');
+    Route::post('course-work-extensions/{course_work_capture_extension}/approve', [CourseWorkCaptureExtensionController::class, 'approve'])->name('course-work-extensions.approve');
+    Route::post('course-work-extensions/{course_work_capture_extension}/reject', [CourseWorkCaptureExtensionController::class, 'reject'])->name('course-work-extensions.reject');
+    Route::post('course-work-extensions/{course_work_capture_extension}/revoke', [CourseWorkCaptureExtensionController::class, 'revoke'])->name('course-work-extensions.revoke');
+    Route::post('course-work-extensions/{course_work_capture_extension}/cancel', [CourseWorkCaptureExtensionController::class, 'cancel'])->name('course-work-extensions.cancel');
+    // ==================================== COURSE WORK PROGRESS REPORTS ================================================
+    Route::get('course-work-progress-reports', [CourseWorkProgressReportController::class, 'index'])->name('course-work-progress-reports.index');
+    Route::post('course-work-progress-reports/{course_work_progress_report}/acknowledge', [CourseWorkProgressReportController::class, 'acknowledge'])->name('course-work-progress-reports.acknowledge');
     // ==================================== DOCUMENT TEMPLATES ==============================================================
     Route::get('document-templates/{document_template}/preview', [DocumentTemplateController::class, 'preview'])->name('document-templates.preview');
     Route::put('document-templates/{document_template}/restore', [DocumentTemplateController::class, 'restore'])->name('document-templates.restore');

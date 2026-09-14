@@ -25,15 +25,37 @@ export type MissingMarksReportFilterOption = {
 };
 
 export type MissingMarksReportFilters = {
-    academicCalendarId: number | null;
-    assessmentTypeId: number | null;
+    calendarYear: number;
     departmentId: number | null;
+    levelId: number | null;
+    courseId: number | null;
+    moduleId: number | null;
     lecturerStaffId: number | null;
+    assessmentTypeId: number | null;
+};
+
+export type MissingMarksReportFilterOptions = {
+    departments: MissingMarksReportFilterOption[];
+    levels: MissingMarksReportFilterOption[];
+    courses: MissingMarksReportFilterOption[];
+    modules: MissingMarksReportFilterOption[];
+    lecturers: MissingMarksReportFilterOption[];
+    assessmentTypes: MissingMarksReportFilterOption[];
+};
+
+export type MissingMarksEscalationTarget = {
+    assessmentCalendarId: number;
+    assessmentTypeName: string;
+    dueDate: string | null;
 };
 
 export type MissingMarksReportRow = {
     assessmentCalendarId: number;
+    assessmentTypeId: number;
     assessmentTypeName: string;
+    departmentName: string;
+    levelName: string;
+    courseName: string;
     className: string;
     moduleName: string;
     moduleCode: string;

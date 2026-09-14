@@ -389,7 +389,7 @@ test('phase10 coursework capture disabled blocks mark mutations', function () {
     ))->toThrow(ValidationException::class);
 });
 
-test('phase10 capture mark only modules bypass coursework capture disable', function () {
+test('phase10 capture mark only modules also respect coursework capture disable', function () {
     $context = createCourseWorkJsonApiContext();
     $classConfig = $context['classConfig']->load('departmentCourse');
     $classConfig->departmentCourse->update(['coursework_capture_enabled' => false]);
@@ -398,13 +398,17 @@ test('phase10 capture mark only modules bypass coursework capture disable', func
 
     $service = app(CourseWorkAssessmentLockService::class);
 
-    $service->assertMutationAllowed(
+    expect(fn () => $service->assertMutationAllowed(
         $classConfig->fresh()->load('departmentCourse'),
         $module->fresh(),
-        $context['assessmentType']->id,
-    );
+        null,
+    ))->toThrow(ValidationException::class);
 
-    expect(true)->toBeTrue();
+    $locks = $service->locksForClassConfigAndModules($classConfig->fresh(), [$module->fresh()]);
+
+    expect($locks[(int) $module->id]['hasEditableCourseWork'])->toBeFalse()
+        ->and($locks[(int) $module->id]['allAssessmentTypesLocked'])->toBeTrue()
+        ->and($locks[(int) $module->id]['readOnlyMessage'])->toBe(__('academic_calendar.course_work_capture_disabled'));
 });
 
 test('phase10 vp academics pack includes toggle coursework capture and edit ui exists', function () {

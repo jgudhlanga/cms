@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { AssessmentCalendarWindow } from '@/types/assessments';
 
-const props = withDefaults(
+withDefaults(
     defineProps<{
         windows: AssessmentCalendarWindow[];
         compact?: boolean;
@@ -40,18 +40,35 @@ const rowClass = (window: AssessmentCalendarWindow): string => {
     const highlight = shouldHighlight(window);
 
     if (highlight && window.severity === 'critical') {
-        return 'border-rose-300 bg-rose-50';
+        return 'border-rose-300 bg-rose-50 dark:border-rose-900/60 dark:bg-rose-950/40';
     }
 
     if (highlight && window.severity === 'warning') {
-        return 'border-amber-300 bg-amber-50';
+        return 'border-amber-300 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/40';
     }
 
     if (highlight) {
-        return 'border-sky-300 bg-sky-50';
+        return 'border-sky-300 bg-sky-50 dark:border-sky-900/60 dark:bg-sky-950/40';
     }
 
     return 'border-border/70 bg-muted/30';
+};
+
+/** Row colour has a matching text label so severity is not conveyed by colour alone. */
+const severityLabelKey = (window: AssessmentCalendarWindow): string | null => {
+    if (!shouldHighlight(window)) {
+        return null;
+    }
+
+    if (window.severity === 'critical') {
+        return 'academic_calendar.assessment_window_severity_critical';
+    }
+
+    if (window.severity === 'warning') {
+        return 'academic_calendar.assessment_window_severity_warning';
+    }
+
+    return 'academic_calendar.assessment_window_severity_info';
 };
 </script>
 
@@ -92,7 +109,7 @@ const rowClass = (window: AssessmentCalendarWindow): string => {
                             class="rounded-full px-2 py-0.5 text-[10px] font-medium"
                             :class="
                                 window.isOpen
-                                    ? 'bg-green-50 text-green-700'
+                                    ? 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300'
                                     : 'bg-muted text-muted-foreground'
                             "
                         >
@@ -103,10 +120,16 @@ const rowClass = (window: AssessmentCalendarWindow): string => {
                             }}
                         </span>
                         <span
-                            v-if="window.missingCount > 0"
-                            class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800"
+                            v-if="severityLabelKey(window)"
+                            class="text-[10px] font-semibold text-foreground"
                         >
-                            {{ $t('assessments.dashboard_missing_count', { count: window.missingCount }) }}
+                            {{ $t(severityLabelKey(window)!) }}
+                        </span>
+                        <span
+                            v-if="window.missingCount > 0"
+                            class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-200"
+                        >
+                            {{ $t('assessments.dashboard_missing_count', { count: String(window.missingCount) }) }}
                         </span>
                     </div>
                 </div>

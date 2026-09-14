@@ -68,7 +68,25 @@ class PermissionHelper
             'import:course-work',
             'export:course-work',
             'view:academic-calendars',
+            'request:course-work-extensions',
+            'viewAny:course-work-extensions',
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function lecturerInChargePermissions(): array
+    {
+        return array_values(array_unique(array_merge(
+            self::lecturerPermissions(),
+            [
+                'view:course-work-progress',
+                'submit:course-work-progress-reports',
+                'viewAny:department-assessment-calendar',
+                'view:department-assessment-calendar',
+            ]
+        )));
     }
 
     /**
@@ -130,6 +148,22 @@ class PermissionHelper
                 'view:assessment-calendar',
                 'viewAny:academic-calendars',
                 'view:academic-calendars',
+                'viewAny:department-assessment-calendar',
+                'view:department-assessment-calendar',
+                'create:department-assessment-calendar',
+                'update:department-assessment-calendar',
+                'delete:department-assessment-calendar',
+                'restore:department-assessment-calendar',
+                'captureForOthers:course-work',
+                'viewAny:course-work-extensions',
+                'approve:course-work-extensions',
+                'revoke:course-work-extensions',
+                'assign:lecturer-in-charge',
+                'view:course-work-progress',
+                'acknowledge:course-work-progress-reports',
+                'view:missing-marks-report',
+                'export:missing-marks-report',
+                'remind:missing-marks',
             ],
             self::lecturerPermissions()
         )));
@@ -214,6 +248,15 @@ class PermissionHelper
             'export:missing-marks-report',
             'escalate:missing-marks',
             'remind:missing-marks',
+            'updateClosed:assessment-calendar',
+            'viewAny:department-assessment-calendar',
+            'view:department-assessment-calendar',
+            'captureForOthers:course-work',
+            'viewAny:course-work-extensions',
+            'approve:course-work-extensions',
+            'approveBeyondGlobal:course-work-extensions',
+            'revoke:course-work-extensions',
+            'view:course-work-progress',
             'view:institution-settings',
             ...self::resourceAbilities(['divisions', 'departments', 'intake-periods', 'assessment-types'], ['viewAny', 'view', 'create', 'update']),
             ...self::resourceAbilities(['document-templates'], ['viewAny', 'view', 'create', 'update']),

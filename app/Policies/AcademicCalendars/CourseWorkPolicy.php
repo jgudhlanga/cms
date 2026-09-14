@@ -41,7 +41,7 @@ class CourseWorkPolicy
             return true;
         }
 
-        return app(LecturerCourseWorkAccess::class)->canAccessMark($user, $courseWorkMark);
+        return app(LecturerCourseWorkAccess::class)->canCaptureMark($user, $courseWorkMark);
     }
 
     public function delete(User $user, ?CourseWorkMark $courseWorkMark = null): bool
@@ -54,7 +54,7 @@ class CourseWorkPolicy
             return true;
         }
 
-        return app(LecturerCourseWorkAccess::class)->canAccessMark($user, $courseWorkMark);
+        return app(LecturerCourseWorkAccess::class)->canCaptureMark($user, $courseWorkMark);
     }
 
     public function restore(User $user, ?CourseWorkMark $courseWorkMark = null): bool
@@ -67,7 +67,7 @@ class CourseWorkPolicy
             return true;
         }
 
-        return app(LecturerCourseWorkAccess::class)->canAccessMark($user, $courseWorkMark);
+        return app(LecturerCourseWorkAccess::class)->canCaptureMark($user, $courseWorkMark);
     }
 
     public function forceDelete(User $user, ?CourseWorkMark $courseWorkMark = null): bool
@@ -80,7 +80,7 @@ class CourseWorkPolicy
             return true;
         }
 
-        return app(LecturerCourseWorkAccess::class)->canAccessMark($user, $courseWorkMark);
+        return app(LecturerCourseWorkAccess::class)->canCaptureMark($user, $courseWorkMark);
     }
 
     public function viewAuditTrail(User $user): bool

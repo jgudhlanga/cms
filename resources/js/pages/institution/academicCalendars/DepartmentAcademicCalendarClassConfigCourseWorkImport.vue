@@ -20,9 +20,23 @@ const props = defineProps<{
     canImportCourseWork?: boolean;
     initialCourseWorkModuleId?: number | null;
     courseWorkImportResult?: CourseWorkImportResult | null;
+    moduleLocks?: Record<
+        number,
+        {
+            hasEditableCourseWork: boolean;
+            allAssessmentTypesLocked: boolean;
+            lockedAssessmentTypeIds: number[];
+            lockedAssessmentTypeNames: string[];
+            readOnlyMessage: string | null;
+        }
+    >;
 }>();
 
 const { department, academicCalendar, course, level, mode, classConfig, classConfigQuery } = toRefs(props);
+
+const selectedModuleLock = computed(() =>
+    props.initialCourseWorkModuleId ? (props.moduleLocks?.[props.initialCourseWorkModuleId] ?? null) : null,
+);
 
 const courseWorkMarksheetUrl = computed(() =>
     route('academic-calendars.department-classes.course-work-marksheet', {
@@ -102,6 +116,8 @@ const breadcrumbs = computed<Array<Link>>(() => {
             :course-work-import-preview-url="courseWorkImportPreviewUrl"
             :course-work-import-process-url="courseWorkImportProcessUrl"
             :course-work-import-result="courseWorkImportResult"
+            :read-only="selectedModuleLock?.allAssessmentTypesLocked ?? false"
+            :read-only-message="selectedModuleLock?.readOnlyMessage ?? null"
         />
     </PageContainer>
 </template>

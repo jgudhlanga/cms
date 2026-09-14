@@ -19,7 +19,8 @@ import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { errorAlert } from '@/lib/alerts';
+import { errorAlert, openModal } from '@/lib/alerts';
+import { APP_MODULE_KEYS } from '@/lib/constants';
 import { buildDepartmentClassesActionGroups } from '@/lib/classActionMenu';
 import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { hasAbility } from '@/lib/permissions';
@@ -30,6 +31,7 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { computed, toRefs } from 'vue';
 import AcademicCalendarClassPreviewCard from './partials/AcademicCalendarClassPreviewCard.vue';
 import AcademicCalendarClassStaffingSummaryCard from './partials/AcademicCalendarClassStaffingSummaryCard.vue';
+import LecturerInChargeAssignModal from './partials/LecturerInChargeAssignModal.vue';
 import AssessmentCalendarWindowsList from '@/components/assessments/AssessmentCalendarWindowsList.vue';
 import type { AssessmentCalendarWindow } from '@/types/assessments';
 
@@ -54,8 +56,14 @@ const props = withDefaults(
         canViewCourseWork?: boolean;
         canExportClassList?: boolean;
         assessmentWindows?: AssessmentCalendarWindow[];
+        lecturerInCharge?: { staffId: number; userId: number | null; name: string } | null;
+        canAssignLecturerInCharge?: boolean;
+        canViewCourseWorkProgress?: boolean;
     }>(),
     {
+        lecturerInCharge: null,
+        canAssignLecturerInCharge: false,
+        canViewCourseWorkProgress: false,
         canAssignStaffing: false,
         canViewCourseWork: false,
         canExportClassList: false,
@@ -95,6 +103,10 @@ const canOpenCourseWorkMarksheet = computed(() => props.canViewCourseWork && cla
 
 const canExportClassLists = computed(() => props.canExportClassList);
 
+const openLecturerInChargeModal = (): void => {
+    openModal({ name: APP_MODULE_KEYS.lecturer_in_charge_assign });
+};
+
 const classConfigQuery = computed((): Record<string, string> => {
     const context = generationContext.value;
 
@@ -131,10 +143,17 @@ const actionGroups = computed(() =>
         canManageProgressionImport: canManageProgressionImport.value,
         canExportClassList: canExportClassLists.value,
         canViewCourseWork: canOpenCourseWorkMarksheet.value,
+        canViewAssessmentCalendar: hasAbility(['viewAny:department-assessment-calendar', 'view:department-assessment-calendar']),
         hasGeneratedClasses: hasGeneratedClasses.value,
         advancePhaseUrl: progressionImportUrl('advance-phase'),
         completeLevelUrl: progressionImportUrl('complete-level'),
         courseWorkMarksheetUrl: courseWorkMarksheetUrl.value,
+        canViewCourseWorkProgress: props.canViewCourseWorkProgress,
+        courseWorkProgressUrl: classConfig.value ? route('teaching.course-work-progress.show', { class_config: classConfig.value.id }) : null,
+        assessmentCalendarUrl: route('department-assessment-calendars.index', {
+            department: String(department.value.id),
+            calendar_year: String(academicCalendar.value.attributes.calendarYear),
+        }),
         onExportClassLists: openClassListExportModal,
     }),
 );
@@ -320,6 +339,9 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                 :staffing-summary="staffingSummary"
                 :selected-semester-id="selectedSemesterId"
                 :semester-config-has-syllabi="semesterConfigHasSyllabi"
+                :lecturer-in-charge-name="lecturerInCharge?.name ?? null"
+                :can-assign-lecturer-in-charge="canAssignLecturerInCharge"
+                @assign-lecturer-in-charge="openLecturerInChargeModal"
             />
 
             <div
@@ -382,5 +404,12 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                 :classes="exportablePreviewClasses"
             />
         </div>
+        <LecturerInChargeAssignModal
+            v-if="classConfig && canAssignLecturerInCharge"
+            :department-id="department.id!"
+            :calendar-year="String(academicCalendar.attributes.calendarYear)"
+            :class-config-id="classConfig.id"
+            :current="lecturerInCharge ? { staffId: lecturerInCharge.staffId, name: lecturerInCharge.name } : null"
+        />
     </PageContainer>
 </template>

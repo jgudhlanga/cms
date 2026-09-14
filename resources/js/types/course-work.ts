@@ -40,6 +40,7 @@ export type CourseWorkStudent = {
     studentId: number;
     name: string;
     studentNumber: string | null;
+    candidateNumber?: string | null;
     academicCalendarClassId?: number;
     className?: string | null;
     assessments: CourseWorkAssessment[];

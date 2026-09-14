@@ -101,6 +101,11 @@ import {
     Grid2x2,
     Printer,
     Accessibility,
+    CalendarClock,
+    ChartColumnIncreasing,
+    ClipboardCheck,
+    ClipboardPenLine,
+    FileWarning,
 } from 'lucide-vue-next';
 import { MonitorCog as Scheme, Mars, Venus } from '@lucide/vue';
 import type { Component } from 'vue';
@@ -218,6 +223,11 @@ const icons: Record<IconName, Component> = {
     [IconName.accessibility]: Accessibility,
     [IconName.venus]: Venus,
     [IconName.mars]: Mars,
+    [IconName.clipboard_pen]: ClipboardPenLine,
+    [IconName.chart_increasing]: ChartColumnIncreasing,
+    [IconName.clipboard_check]: ClipboardCheck,
+    [IconName.file_warning]: FileWarning,
+    [IconName.calendar_clock]: CalendarClock,
 };
 
 export { IconName, icons };

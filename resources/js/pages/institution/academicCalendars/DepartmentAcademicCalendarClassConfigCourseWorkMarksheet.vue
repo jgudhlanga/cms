@@ -20,6 +20,16 @@ const props = defineProps<{
     canUpdateCourseWork?: boolean;
     canExportCourseWork?: boolean;
     canImportCourseWork?: boolean;
+    moduleLocks?: Record<
+        number,
+        {
+            hasEditableCourseWork: boolean;
+            allAssessmentTypesLocked: boolean;
+            lockedAssessmentTypeIds: number[];
+            lockedAssessmentTypeNames: string[];
+            readOnlyMessage: string | null;
+        }
+    >;
 }>();
 
 const { department, academicCalendar, course, level, mode, classConfig, classConfigQuery } = toRefs(props);
@@ -79,6 +89,7 @@ const courseWorkImportUrl = (moduleId: number): string =>
             :can-update="canUpdateCourseWork"
             :can-export="canExportCourseWork"
             :can-import="canImportCourseWork"
+            :module-locks="moduleLocks"
             :course-work-export-url="courseWorkExportUrl"
             :course-work-import-url="courseWorkImportUrl"
         />

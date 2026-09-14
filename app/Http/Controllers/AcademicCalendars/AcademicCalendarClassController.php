@@ -11,6 +11,7 @@ use App\Http\Controllers\Concerns\ResolvesAcademicCalendarFromCalendarYear;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AcademicCalendars\AddAcademicCalendarClassStudentsRequest;
 use App\Http\Requests\AcademicCalendars\AssignAcademicCalendarClassTutorRequest;
+use App\Http\Requests\AcademicCalendars\AssignLecturerInChargeRequest;
 use App\Http\Requests\AcademicCalendars\BulkAcademicCalendarClassStudentsRequest;
 use App\Http\Requests\AcademicCalendars\CopySyllabusModuleLecturersToClassRequest;
 use App\Http\Requests\AcademicCalendars\SyncAcademicCalendarClassModuleLecturersRequest;
@@ -22,6 +23,7 @@ use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Queries\AcademicCalendars\UnassignedClassConfigStudentsQuery;
 use App\Services\AcademicCalendars\ClassStaffingService;
+use App\Services\AcademicCalendars\LecturerInChargeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 
@@ -95,6 +97,30 @@ class AcademicCalendarClassController extends Controller
             $staffId === null
                 ? __('academic_calendar.tutor_removed_success')
                 : __('academic_calendar.tutor_assigned_success'),
+        );
+    }
+
+    public function assignLecturerInCharge(
+        AssignLecturerInChargeRequest $request,
+        InstitutionDepartment $institutionDepartment,
+        string $calendar_year,
+        ClassConfig $classConfig,
+        LecturerInChargeService $lecturersInCharge,
+    ): RedirectResponse {
+        abort_unless(
+            (int) $classConfig->institution_department_id === (int) $institutionDepartment->id
+            && (string) $classConfig->calendar_year === $calendar_year,
+            404
+        );
+
+        $staffId = $request->validated('staff_id');
+        $lecturersInCharge->assign($classConfig, $staffId !== null ? (int) $staffId : null, $request->user());
+
+        return back()->with(
+            'success',
+            $staffId === null
+                ? __('academic_calendar.lecturer_in_charge_removed')
+                : __('academic_calendar.lecturer_in_charge_assigned'),
         );
     }
 
