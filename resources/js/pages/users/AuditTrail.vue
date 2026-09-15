@@ -10,7 +10,7 @@ import type { Link } from '@/types/ui';
 import type { SelectOption } from '@/types/utils';
 import { Head, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
-import { debounce } from 'lodash';
+import { debounce } from '@/lib/debounce';
 import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{

@@ -20,6 +20,7 @@ import { getMenuItemKey } from '@/composables/core/useSidebarMenu';
 import { useSidebarNavActive } from '@/composables/core/useSidebarNavActive';
 import { IconName } from '@/enums/icons';
 import { icons } from '@/lib/icons';
+import { PREFETCH_CACHE_FOR } from '@/lib/prefetch';
 import type { MenuItemInterface } from '@/types/ui';
 import { Link } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
@@ -99,6 +100,8 @@ function onChildNavigate() {
 				<Link
 					v-if="item.url"
 					:href="item.url"
+					prefetch
+					:cache-for="PREFETCH_CACHE_FOR"
 					class="flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-hidden transition-colors hover:bg-sidebar-accent/10 focus:bg-sidebar-accent/10"
 					:class="overviewActive ? 'bg-sidebar-primary/12 font-medium text-sidebar-foreground shadow-[inset_-1px_0_0_0_hsl(var(--sidebar-primary))]' : ''"
 					@click="onChildNavigate"
@@ -113,6 +116,8 @@ function onChildNavigate() {
 					v-for="subItem in visibleChildren"
 					:key="getMenuItemKey(subItem)"
 					:href="subItem.url ?? ''"
+					prefetch
+					:cache-for="PREFETCH_CACHE_FOR"
 					class="flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-hidden transition-colors hover:bg-sidebar-accent/10 focus:bg-sidebar-accent/10"
 					:class="isActive(subItem.url, childUrls) ? 'bg-sidebar-primary/12 font-medium text-sidebar-foreground shadow-[inset_-1px_0_0_0_hsl(var(--sidebar-primary))]' : ''"
 					@click="onChildNavigate"
@@ -148,7 +153,7 @@ function onChildNavigate() {
 				<SidebarMenuSub class="mt-0.5 mb-1">
 					<SidebarMenuSubItem v-if="item.url">
 						<SidebarMenuSubButton as-child :is-active="overviewActive">
-							<Link :href="item.url" @click="onChildNavigate">
+							<Link :href="item.url" prefetch :cache-for="PREFETCH_CACHE_FOR" @click="onChildNavigate">
 								{{ $t('trans.overview') }}
 							</Link>
 						</SidebarMenuSubButton>
@@ -158,7 +163,7 @@ function onChildNavigate() {
 						:key="getMenuItemKey(subItem)"
 					>
 						<SidebarMenuSubButton as-child :is-active="isActive(subItem.url, childUrls)">
-							<Link :href="subItem.url ?? ''" @click="onChildNavigate">
+							<Link :href="subItem.url ?? ''" prefetch :cache-for="PREFETCH_CACHE_FOR" @click="onChildNavigate">
 								<component :is="subItem.icon" v-if="subItem.icon" class="size-4 shrink-0" aria-hidden="true" />
 								<TransText :item="subItem" variant="nav" />
 							</Link>

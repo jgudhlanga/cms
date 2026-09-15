@@ -6,7 +6,7 @@ import { IconName } from '@/enums/icons';
 import type { Hostel, HostelAllocationStatus, HostelAllocationType, HostelStudentFiltersState } from '@/types/hms';
 import type { SelectOption } from '@/types/utils';
 import { useDebounceFn } from '@vueuse/core';
-import { debounce } from 'lodash';
+import { debounce } from '@/lib/debounce';
 import { computed, onMounted, ref, watch } from 'vue';
 import { trans } from 'laravel-vue-i18n';
 

@@ -66,7 +66,15 @@ class AuditTrailResource extends JsonResource
             return $causer->full_name;
         }
 
-        return User::query()->find(User::SUPER_ADMINISTRATOR)?->full_name ?? '';
+        return self::superAdministratorName();
+    }
+
+    /**
+     * System-caused entries all show the same name, so it is looked up once per request, not per row.
+     */
+    private static function superAdministratorName(): string
+    {
+        return once(fn (): string => User::query()->find(User::SUPER_ADMINISTRATOR)?->full_name ?? '');
     }
 
     /**

@@ -727,7 +727,7 @@ class PortalController extends Controller
         $this->assertOwnsStudentApplication($studentApplication);
         $application = StudentApplicationResource::make($studentApplication);
         $student = StudentResource::make($this->getStudent(request()));
-        $audit = AuditTrailResource::collection($studentApplication->activities);
+        $audit = AuditTrailResource::collection($studentApplication->activities()->with('causer')->get());
 
         return Inertia::render('portal/student/ApplicationTrack', compact('application', 'student', 'audit'));
     }

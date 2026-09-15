@@ -4,6 +4,8 @@ namespace App\Models\Institution;
 
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Http\Filters\Shared\SharedNameFilter;
+use App\Services\Students\ApplicationFeeService;
+use App\Services\Students\RegistrationAvailabilityService;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -22,6 +24,18 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class IntakePeriod extends Model
 {
     use BelongsToTenant, Filterable, HasFactory, LogsActivity, Paginatable, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        $forgetIntakeLookups = function (): void {
+            app(RegistrationAvailabilityService::class)->forgetSharedProps();
+            ApplicationFeeService::forgetOpenIntakePeriodsForPortal();
+        };
+
+        static::saved($forgetIntakeLookups);
+        static::deleted($forgetIntakeLookups);
+        static::restored($forgetIntakeLookups);
+    }
 
     protected $fillable = [
         'tenant_id',

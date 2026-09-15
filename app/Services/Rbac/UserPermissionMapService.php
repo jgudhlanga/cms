@@ -6,6 +6,7 @@ use App\Enums\Rbac\RoleEnum;
 use App\Helpers\PermissionHelper;
 use App\Models\Users\User;
 use App\Support\Rbac\PermissionRegistry;
+use App\Support\Rbac\UserAccessScope;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -33,6 +34,7 @@ class UserPermissionMapService
     public function forgetForUser(int $userId): void
     {
         Cache::forget($this->cacheKey($userId));
+        UserAccessScope::flush();
     }
 
     public function forgetForUsers(iterable $userIds): void
@@ -53,6 +55,7 @@ class UserPermissionMapService
     public function flushAll(): void
     {
         Cache::forever(self::VERSION_KEY, $this->version() + 1);
+        UserAccessScope::flush();
     }
 
     private function cacheKey(int $userId): string

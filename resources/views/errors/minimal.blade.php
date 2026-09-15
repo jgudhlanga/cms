@@ -68,10 +68,10 @@
                 z-index: -3;
                 inset: -3%;
                 background-color: #020617;
-                background-image: url("/assets/images/poly.png");
+                background-image: url("/assets/images/poly.jpg");
                 background-image: image-set(
                     url("/assets/images/poly.webp") type("image/webp"),
-                    url("/assets/images/poly.png") type("image/png")
+                    url("/assets/images/poly.jpg") type("image/jpeg")
                 );
                 background-position: center;
                 background-size: cover;
@@ -295,7 +295,7 @@
         <main class="page">
             <div class="shell">
                 <a class="brand" href="{{ url('/') }}" aria-label="{{ __('trans.error_go_home') }}">
-                    <img src="{{ asset('assets/images/logo.png') }}" alt="">
+                    <img src="{{ asset('assets/images/logo.webp') }}" alt="">
                     <span>{{ $institutionName }}</span>
                 </a>
 

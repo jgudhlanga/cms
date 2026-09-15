@@ -2,7 +2,8 @@ import { RadioGroupOption } from '@/types/forms';
 
 const DEFAULT_AVATAR: string = '/assets/images/user.png';
 const DEFAULT_IMAGE: string = '/assets/images/object.svg';
-const LOGO: string = '/assets/images/logo.png';
+// WebP for the browser (87 KB vs 570 KB); PDFs keep using logo.png.
+const LOGO: string = '/assets/images/logo.webp';
 const PAYMENT_METHODS: string = '/assets/images/payment_methods.png';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_VERSION = 'v1';

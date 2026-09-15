@@ -36,5 +36,9 @@ export const usePreferencesStore = defineStore('preferences', {
 			this.hydratedFromServer = true;
 		},
 	},
-	persist: true
+	// Only display settings survive a reload. The preference id and hydration flag belong to the signed-in
+	// user and must not carry over to the next person on a shared computer.
+	persist: {
+		pick: ['locale', 'sideBarState', 'sidebarCollapsed'],
+	},
 });

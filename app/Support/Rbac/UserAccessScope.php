@@ -8,17 +8,63 @@ use App\Models\Institution\Division;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Staff;
 use App\Models\Users\User;
+use ArrayObject;
 
 class UserAccessScope
 {
+    private const string REQUEST_CACHE = 'rbac.user-access-scopes';
+
+    private ?ScopeLevelEnum $level = null;
+
+    /** @var list<int>|null */
+    private ?array $departmentIds = null;
+
+    private bool $departmentIdsResolved = false;
+
+    private ?bool $headOfDivision = null;
+
     public function __construct(private readonly ?User $user = null) {}
 
+    /**
+     * Reuses one scope per user object for the current request or queue job (a scoped binding), so
+     * the staff, division and department lookups run once however many policies and helpers ask.
+     */
     public static function for(?User $user = null): self
     {
-        return new self($user ?? auth()->user());
+        $user ??= auth()->user();
+
+        if (! $user instanceof User) {
+            return new self;
+        }
+
+        app()->scopedIf(self::REQUEST_CACHE, fn (): ArrayObject => new ArrayObject);
+
+        /** @var ArrayObject<int|string, self> $scopes */
+        $scopes = app(self::REQUEST_CACHE);
+        $key = $user->getKey();
+
+        if (! isset($scopes[$key]) || $scopes[$key]->user !== $user) {
+            $scopes[$key] = new self($user);
+        }
+
+        return $scopes[$key];
+    }
+
+    /**
+     * Drops memoized scopes, for when permissions or staff departments change within the same request
+     * or process. Runs automatically after every HTTP request.
+     */
+    public static function flush(): void
+    {
+        app()->forgetInstance(self::REQUEST_CACHE);
     }
 
     public function level(): ScopeLevelEnum
+    {
+        return $this->level ??= $this->resolveLevel();
+    }
+
+    private function resolveLevel(): ScopeLevelEnum
     {
         $user = $this->user;
 
@@ -48,11 +94,16 @@ class UserAccessScope
      */
     public function departmentIds(): ?array
     {
-        return match ($this->level()) {
-            ScopeLevelEnum::Department => $this->staffDepartmentIds(),
-            ScopeLevelEnum::Division => $this->divisionDepartmentIds(),
-            default => null,
-        };
+        if (! $this->departmentIdsResolved) {
+            $this->departmentIds = match ($this->level()) {
+                ScopeLevelEnum::Department => $this->staffDepartmentIds(),
+                ScopeLevelEnum::Division => $this->divisionDepartmentIds(),
+                default => null,
+            };
+            $this->departmentIdsResolved = true;
+        }
+
+        return $this->departmentIds;
     }
 
     /**
@@ -163,13 +214,14 @@ class UserAccessScope
 
     private function isHeadOfDivisionStaff(): bool
     {
-        $staff = $this->staff();
-
-        if (! $staff instanceof Staff) {
-            return false;
+        if ($this->headOfDivision !== null) {
+            return $this->headOfDivision;
         }
 
-        return Division::query()->where('head_of_division_id', $staff->id)->exists();
+        $staff = $this->staff();
+
+        return $this->headOfDivision = $staff instanceof Staff
+            && Division::query()->where('head_of_division_id', $staff->id)->exists();
     }
 
     private function staff(): ?Staff

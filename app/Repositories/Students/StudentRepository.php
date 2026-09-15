@@ -53,6 +53,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         $page = LengthAwarePaginator::resolveCurrentPage();
 
         $items = (clone $query)
+            ->with($this->indexResourceRelations())
             ->latest('students.created_at')
             ->forPage($page, $perPage)
             ->get();
@@ -128,6 +129,40 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             ])
             ->whereHas('enrolments')
             ->select('students.*');
+    }
+
+    /**
+     * Everything StudentResource and its nested resources read, so a page of students runs a fixed
+     * number of queries instead of about thirty per student. Exports use their own lighter mapping.
+     *
+     * @return array<int|string, mixed>
+     */
+    private function indexResourceRelations(): array
+    {
+        return [
+            'media',
+            'apprentices',
+            'studentSponsors',
+            'transfers.studentApplication',
+            'latestEnrolment.studentSemesters.semester',
+            'latestEnrolment.studentSemesters.studentEnrolmentStatus',
+            'latestEnrolment.studentApplication.workflowStep',
+            'latestEnrolment.studentApplication.intakePeriod',
+            'latestEnrolment.studentApplication.transfer',
+            'latestApplication.transfer',
+            'latestApplication.receiptLedgers.feeType',
+            'latestApplication.student.user.receiptLedgers.feeType',
+            'latestApplication.departmentLevel.requirement',
+            'latestApplication.departmentCourse.requirements',
+            'latestApplication.departmentCourse.courseLevelModes',
+            'latestApplication.departmentCourse.departmentCourseLevels.departmentLevel.level',
+            'latestApplication.departmentCourse.departmentCourseLevels.departmentCourse.course',
+            'latestApplication.departmentCourse.departmentCourseLevels.programmeSemesters',
+            'latestApplication.institutionDepartment' => fn ($query) => $query->withCount(['departmentCourses', 'staff']),
+            'latestApplication.institutionDepartment.division.headOfDivision.user',
+            'latestApplication.institutionDepartment.staff.user.roles',
+            'latestApplication.institutionDepartment.departmentLevels.level',
+        ];
     }
 
     private function baseStatsQuery(): Builder

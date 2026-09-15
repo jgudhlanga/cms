@@ -140,14 +140,22 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail
         return $this->hasOne(Media::class, 'id', 'avatar_id');
     }
 
-    public function getAvatarUrlAttribute(): ?array
+    public function getAvatarUrlAttribute(): ?string
     {
-        return ($this->avatar_id > 0) ? ['thumb' => $this->image->getFullUrl('thumb'), 'card' => $this->image->getFullUrl('card')] : null;
+        return $this->avatar_id > 0 ? $this->avatar?->getFullUrl() : null;
     }
 
     public function ledgers(): MorphMany
     {
         return $this->morphMany(Ledger::class, 'ledgerable');
+    }
+
+    /**
+     * Receipt ledgers only, eager loaded when list views check paid fees for many students.
+     */
+    public function receiptLedgers(): MorphMany
+    {
+        return $this->morphMany(Ledger::class, 'ledgerable')->where('type', 'receipt');
     }
 
     public function canImpersonate(): bool

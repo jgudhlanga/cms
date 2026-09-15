@@ -19,81 +19,134 @@ import { useDashboardStore } from '@/store/dashboard/useDashboardStore';
 import { Head, router } from '@inertiajs/vue3';
 import { School } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
-import { computed, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, ref, watch } from 'vue';
 
-import AcademicTab from './tabs/AcademicTab.vue';
-import AttendanceTab from './tabs/AttendanceTab.vue';
-import EnrolmentsTab from './tabs/EnrolmentsTab.vue';
-import ExaminationsTab from './tabs/ExaminationsTab.vue';
-import FinanceTab from './tabs/FinanceTab.vue';
-import HostelTab from './tabs/HostelTab.vue';
-import OverviewTab from './tabs/OverviewTab.vue';
-import StaffTab from './tabs/StaffTab.vue';
-import TeachingTab from './tabs/TeachingTab.vue';
+import TabSkeleton from './tabs/TabSkeleton.vue';
+
+// Each tab, with its charts, downloads the first time it is opened.
+const AcademicTab = defineAsyncComponent(() => import('./tabs/AcademicTab.vue'));
+const AttendanceTab = defineAsyncComponent(() => import('./tabs/AttendanceTab.vue'));
+const EnrolmentsTab = defineAsyncComponent(() => import('./tabs/EnrolmentsTab.vue'));
+const ExaminationsTab = defineAsyncComponent(() => import('./tabs/ExaminationsTab.vue'));
+const FinanceTab = defineAsyncComponent(() => import('./tabs/FinanceTab.vue'));
+const HostelTab = defineAsyncComponent(() => import('./tabs/HostelTab.vue'));
+const OverviewTab = defineAsyncComponent(() => import('./tabs/OverviewTab.vue'));
+const StaffTab = defineAsyncComponent(() => import('./tabs/StaffTab.vue'));
+const TeachingTab = defineAsyncComponent(() => import('./tabs/TeachingTab.vue'));
 
 const breadcrumbs: BreadcrumbItemInterface[] = [{ transChoiceKey: 'dashboard' }];
 
 interface Props {
     auth: AuthObject;
     errors: object;
-    departmentDistribution: DepartmentDistribution[];
-    levelDistribution: LevelDistribution[];
-    dailyDistribution: DailyDistribution[];
-    enrolmentSummary: EnrolmentSummary;
-    overviewDashboard: OverviewDashboard | null;
-    hostelDashboard: HostelDashboard | null;
-    financeDashboard: FinanceDashboard | null;
-    staffDashboard: StaffDashboard | null;
-    academicDashboard: AcademicDashboard | null;
-    teachingDashboard: LecturerDashboard | null;
+    // Tab data is undefined until its tab has been loaded (see TAB_PROP_KEYS), and null when not permitted.
+    departmentDistribution?: DepartmentDistribution[];
+    levelDistribution?: LevelDistribution[];
+    dailyDistribution?: DailyDistribution[];
+    enrolmentSummary?: EnrolmentSummary;
+    overviewDashboard?: OverviewDashboard | null;
+    hostelDashboard?: HostelDashboard | null;
+    financeDashboard?: FinanceDashboard | null;
+    staffDashboard?: StaffDashboard | null;
+    academicDashboard?: AcademicDashboard | null;
+    teachingDashboard?: LecturerDashboard | null;
     academicCalendar: AcademicCalendar;
     academicContextSubtitle: string;
     intakePeriods: IntakePeriod[];
     intakePeriod: IntakePeriod;
     visibleTabs: string[];
+    activeTab: string | null;
     dashboardTitle: string;
     moduleEnabled: boolean;
-    filters: ExaminationDashboardFiltersState | null;
-    filterOptions: ExaminationFilterOptions | null;
-    statusCounts: ExaminationStatusCounts | null;
-    statusLabels: ExaminationStatusLabels | null;
-    chartLabels: ExaminationChartLabels | null;
-    totalCandidates: number | null;
-    passRate: number | null;
-    onlineViewedCount: number | null;
-    onlineViewedRate: number | null;
-    comparison: ExaminationComparison | null;
+    filters?: ExaminationDashboardFiltersState | null;
+    filterOptions?: ExaminationFilterOptions | null;
+    statusCounts?: ExaminationStatusCounts | null;
+    statusLabels?: ExaminationStatusLabels | null;
+    chartLabels?: ExaminationChartLabels | null;
+    totalCandidates?: number | null;
+    passRate?: number | null;
+    onlineViewedCount?: number | null;
+    onlineViewedRate?: number | null;
+    comparison?: ExaminationComparison | null;
 }
 
 const props = defineProps<Props>();
 
-const { activeTab } = storeToRefs(useDashboardStore());
+const { activeTab: storedActiveTab } = storeToRefs(useDashboardStore());
 const intakePeriodModel = ref<SelectOption | null>(null);
 
-const defaultTab = computed(() => props.visibleTabs[0] ?? 'overview');
+const defaultTab = computed(() => props.activeTab ?? props.visibleTabs[0] ?? 'overview');
 
 const resolvedActiveTab = computed({
-    get: () => (props.visibleTabs.includes(activeTab.value) ? activeTab.value : defaultTab.value),
+    get: () => (props.visibleTabs.includes(storedActiveTab.value) ? storedActiveTab.value : defaultTab.value),
     set: (value: string) => {
-        activeTab.value = value;
+        storedActiveTab.value = value;
     },
 });
 
 const showTab = (tab: string) => props.visibleTabs.includes(tab);
 
+// The server sends only the active tab's data with the page; other tabs load the first time they open.
+const TAB_PROP_KEYS: Record<string, Array<keyof Props>> = {
+    overview: ['overviewDashboard'],
+    academic: ['academicDashboard', 'teachingDashboard'],
+    enrolments: ['departmentDistribution', 'levelDistribution', 'dailyDistribution', 'enrolmentSummary'],
+    staff: ['staffDashboard'],
+    finance: ['financeDashboard'],
+    hostel: ['hostelDashboard'],
+    examinations: [
+        'filters',
+        'filterOptions',
+        'statusCounts',
+        'statusLabels',
+        'chartLabels',
+        'totalCandidates',
+        'passRate',
+        'onlineViewedCount',
+        'onlineViewedRate',
+        'comparison',
+    ],
+};
+
+const isTabLoaded = (tab: string): boolean => (TAB_PROP_KEYS[tab] ?? []).every((key) => props[key] !== undefined);
+
+const loadingTab = ref<string | null>(null);
+
+watch(
+    resolvedActiveTab,
+    (tab) => {
+        if (isTabLoaded(tab) || loadingTab.value === tab) {
+            return;
+        }
+
+        loadingTab.value = tab;
+        router.reload({
+            only: TAB_PROP_KEYS[tab] as string[],
+            data: { tab },
+            onFinish: () => {
+                if (loadingTab.value === tab) {
+                    loadingTab.value = null;
+                }
+            },
+        });
+    },
+    { immediate: true },
+);
+
 const examinationExtraQuery = computed(() => ({
+    tab: 'examinations',
     intake_period_id: props.intakePeriod?.id ? String(props.intakePeriod.id) : undefined,
     academic_calendar_id: props.academicCalendar?.id ? String(props.academicCalendar.id) : undefined,
 }));
 
 const hasExaminationDashboard = computed(
     () =>
-        props.filters !== null
-        && props.filterOptions !== null
-        && props.statusCounts !== null
-        && props.statusLabels !== null
-        && props.chartLabels !== null
-        && props.totalCandidates !== null,
+        props.filters != null
+        && props.filterOptions != null
+        && props.statusCounts != null
+        && props.statusLabels != null
+        && props.chartLabels != null
+        && props.totalCandidates != null,
 );
 
 watch(
@@ -110,6 +163,7 @@ const handleFilterChange = (option: SelectOption) => {
     router.get(
         window.location.pathname,
         {
+            tab: resolvedActiveTab.value,
             intake_period_id: String(option.value),
             academic_calendar_id: String(props.academicCalendar.id),
             session: props.filters?.session ?? undefined,
@@ -200,25 +254,29 @@ const handleFilterChange = (option: SelectOption) => {
                 </TabsList>
 
                 <TabsContent v-if="showTab('overview')" value="overview" class="mt-0">
+                    <TabSkeleton v-if="!isTabLoaded('overview')" />
                     <OverviewTab
-                        v-if="overviewDashboard"
+                        v-else-if="overviewDashboard"
                         :overview-dashboard="overviewDashboard"
                         :visible-tabs="visibleTabs"
                     />
                 </TabsContent>
 
                 <TabsContent v-if="showTab('academic')" value="academic" class="mt-0">
-                    <div class="space-y-3">
+                    <TabSkeleton v-if="!isTabLoaded('academic')" />
+                    <div v-else class="space-y-3">
                         <AcademicTab v-if="academicDashboard" :academic-dashboard="academicDashboard" />
                         <TeachingTab v-if="teachingDashboard" :teaching-dashboard="teachingDashboard" />
                     </div>
                 </TabsContent>
 
                 <TabsContent v-if="showTab('enrolments')" value="enrolments" class="mt-0">
+                    <TabSkeleton v-if="!isTabLoaded('enrolments') || !enrolmentSummary" />
                     <EnrolmentsTab
-                        :department-distribution="departmentDistribution"
-                        :level-distribution="levelDistribution"
-                        :daily-distribution="dailyDistribution"
+                        v-else
+                        :department-distribution="departmentDistribution ?? []"
+                        :level-distribution="levelDistribution ?? []"
+                        :daily-distribution="dailyDistribution ?? []"
                         :enrolment-summary="enrolmentSummary"
                         :intake-periods="intakePeriods"
                         v-model:intakePeriodModel="intakePeriodModel"
@@ -231,30 +289,34 @@ const handleFilterChange = (option: SelectOption) => {
                 </TabsContent>
 
                 <TabsContent v-if="showTab('staff')" value="staff" class="mt-0">
-                    <StaffTab v-if="staffDashboard" :staff-dashboard="staffDashboard" />
+                    <TabSkeleton v-if="!isTabLoaded('staff')" />
+                    <StaffTab v-else-if="staffDashboard" :staff-dashboard="staffDashboard" />
                 </TabsContent>
 
                 <TabsContent v-if="showTab('finance')" value="finance" class="mt-0">
-                    <FinanceTab v-if="financeDashboard" :finance-dashboard="financeDashboard" />
+                    <TabSkeleton v-if="!isTabLoaded('finance')" />
+                    <FinanceTab v-else-if="financeDashboard" :finance-dashboard="financeDashboard" />
                 </TabsContent>
 
                 <TabsContent v-if="showTab('hostel')" value="hostel" class="mt-0">
-                    <HostelTab v-if="hostelDashboard" :hostel-dashboard="hostelDashboard" />
+                    <TabSkeleton v-if="!isTabLoaded('hostel')" />
+                    <HostelTab v-else-if="hostelDashboard" :hostel-dashboard="hostelDashboard" />
                 </TabsContent>
 
                 <TabsContent v-if="showTab('examinations')" value="examinations" class="mt-0">
+                    <TabSkeleton v-if="!isTabLoaded('examinations')" />
                     <ExaminationsTab
-                        v-if="hasExaminationDashboard"
+                        v-else-if="hasExaminationDashboard"
                         :filters="filters!"
                         :filter-options="filterOptions!"
                         :status-counts="statusCounts!"
                         :status-labels="statusLabels!"
                         :chart-labels="chartLabels!"
                         :total-candidates="totalCandidates!"
-                        :pass-rate="passRate"
+                        :pass-rate="passRate ?? null"
                         :online-viewed-count="onlineViewedCount!"
-                        :online-viewed-rate="onlineViewedRate"
-                        :comparison="comparison"
+                        :online-viewed-rate="onlineViewedRate ?? null"
+                        :comparison="comparison ?? null"
                         :extra-query="examinationExtraQuery"
                     />
                 </TabsContent>

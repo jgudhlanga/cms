@@ -18,6 +18,7 @@ use App\Services\AcademicCalendars\CourseWorkImportTemplateService;
 use App\Services\Assessments\AssessmentCalendarWindowService;
 use App\Services\Assessments\MissingMarksQueryService;
 use App\Support\AcademicCalendars\CourseWorkGradeBand;
+use App\Support\Rbac\UserAccessScope;
 use Carbon\Carbon;
 use Database\Seeders\AcademicCalendars\ClassMetaDataTypeSeeder;
 use Illuminate\Support\Facades\Cache;
@@ -681,6 +682,8 @@ describe('missing marks corners', function () {
             'description' => 'Other department',
         ]);
         $vpStaff->institutionDepartments()->sync([$otherDepartment->id]);
+        // Access scopes are memoized per request; this test changes departments mid-request.
+        UserAccessScope::flush();
 
         $rowsOutside = app(MissingMarksQueryService::class)->forCalendarForCurrentUser($calendar);
         expect($rowsOutside)->toBe([]);

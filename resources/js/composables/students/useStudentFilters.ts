@@ -6,7 +6,7 @@ import type { InstitutionDepartment, Level } from '@/types/institution';
 import type { StudentFiltersState } from '@/types/students';
 import type { SelectOption } from '@/types/utils';
 import { useDebounceFn } from '@vueuse/core';
-import { debounce } from 'lodash';
+import { debounce } from '@/lib/debounce';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { computed, onMounted, ref, watch, type Ref } from 'vue';
 

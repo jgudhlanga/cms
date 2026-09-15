@@ -5,10 +5,19 @@ namespace App\Services\Students;
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Students\ApplicationTrackEnum;
 use App\Models\Institution\IntakePeriod;
+use App\Models\Users\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class RegistrationAvailabilityService
 {
+    private const string SHARED_PROPS_CACHE_PREFIX = 'registration_availability:';
+
+    private const string SHARED_PROPS_VERSION_KEY = 'registration_availability_version';
+
+    private const int SHARED_PROPS_TTL_SECONDS = 60;
+
     public function currentRegularIntakePeriod(): ?IntakePeriod
     {
         return IntakePeriod::query()
@@ -105,7 +114,12 @@ class RegistrationAvailabilityService
 
     public function blockReason(): ?IntakePeriodStatusEnum
     {
-        if ($this->isRegularRegistrationOpen()) {
+        return $this->blockReasonWhen($this->isRegularRegistrationOpen());
+    }
+
+    private function blockReasonWhen(bool $regularOpen): ?IntakePeriodStatusEnum
+    {
+        if ($regularOpen) {
             return null;
         }
 
@@ -131,17 +145,53 @@ class RegistrationAvailabilityService
     }
 
     /**
-     * @return array{regularOpen: bool, continuousOpen: bool, apprenticeOpen: bool, isOpen: bool, status: string|null}
+     * Shared with every guest and student page, so the intake lookups run once and are cached
+     * briefly. Any intake period change flushes the cache (see IntakePeriod::booted).
+     *
+     * @return array{regularOpen: bool, continuousOpen: bool, apprenticeOpen: bool, isOpen: bool, status: string|null, maintenanceUrl: string}
      */
     public function sharedProps(): array
     {
+        /** @var array{regularOpen: bool, continuousOpen: bool, apprenticeOpen: bool, isOpen: bool, status: string|null} $availability */
+        $availability = Cache::remember($this->sharedPropsCacheKey(), self::SHARED_PROPS_TTL_SECONDS, function (): array {
+            $regularOpen = $this->isRegularRegistrationOpen();
+            $continuousOpen = $this->isContinuousRegistrationOpen();
+
+            return [
+                'regularOpen' => $regularOpen,
+                'continuousOpen' => $continuousOpen,
+                'apprenticeOpen' => $regularOpen,
+                'isOpen' => $regularOpen || $continuousOpen,
+                'status' => $this->blockReasonWhen($regularOpen)?->value,
+            ];
+        });
+
         return [
-            'regularOpen' => $this->isRegularRegistrationOpen(),
-            'continuousOpen' => $this->isContinuousRegistrationOpen(),
-            'apprenticeOpen' => $this->isApprenticeRegistrationOpen(),
-            'isOpen' => $this->isAnyRegistrationOpen(),
-            'status' => $this->blockReason()?->value,
+            ...$availability,
             'maintenanceUrl' => route('portal.registration.maintenance'),
         ];
+    }
+
+    public function forgetSharedProps(): void
+    {
+        Cache::forever(self::SHARED_PROPS_VERSION_KEY, $this->sharedPropsVersion() + 1);
+    }
+
+    /**
+     * Intake queries are tenant scoped for non-root users (TenantScope), so the key follows the same rule.
+     */
+    private function sharedPropsCacheKey(): string
+    {
+        $user = Auth::user();
+        $scope = $user instanceof User && $user->tenant_id && ! $user->can('root:manage')
+            ? 'tenant:'.$user->tenant_id
+            : 'all';
+
+        return self::SHARED_PROPS_CACHE_PREFIX.'v'.$this->sharedPropsVersion().':'.$scope;
+    }
+
+    private function sharedPropsVersion(): int
+    {
+        return (int) Cache::get(self::SHARED_PROPS_VERSION_KEY, 0);
     }
 }

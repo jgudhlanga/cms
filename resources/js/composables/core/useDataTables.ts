@@ -23,7 +23,7 @@ import {
     useVueTable,
 } from '@tanstack/vue-table';
 import { trans } from 'laravel-vue-i18n';
-import { debounce } from 'lodash';
+import { debounce } from '@/lib/debounce';
 import { h, Ref, ref } from 'vue';
 import TextEditLink from '@/components/core/util/TextEditLink.vue';
 import BaseAnchor from '@/components/core/util/BaseAnchor.vue';

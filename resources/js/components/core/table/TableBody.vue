@@ -3,8 +3,10 @@ import Empty from '@/components/core/util/Empty.vue';
 import { useShared } from '@/composables/shared/useShared';
 import { getIdParams } from '@/lib/utils';
 import { FlexRender, type Table } from '@tanstack/vue-table';
-import { ref, useSlots, watchEffect } from 'vue';
-import draggable from 'vuedraggable';
+import { computed, defineAsyncComponent, ref, useSlots, watchEffect } from 'vue';
+
+// Sortable tables are rare; only they download the drag-and-drop library (~95 KB).
+const draggable = defineAsyncComponent(() => import('vuedraggable'));
 
 interface Props {
     table: Table<any>;
@@ -25,9 +27,9 @@ watchEffect(() => {
     }
 });
 
-const getRowByOriginal = (original: any) => {
-    return props.table.getRowModel().rows.find((r) => r.original.id === original.id);
-};
+const rowsById = computed(() => new Map(props.table.getRowModel().rows.map((row) => [row.original?.id, row])));
+
+const getRowByOriginal = (original: any) => rowsById.value.get(original?.id);
 
 const rowKey = (original: any): string => String(original?.id ?? '');
 

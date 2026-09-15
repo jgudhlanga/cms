@@ -23,17 +23,22 @@ use App\Policies\Examinations\ExaminationPolicy;
 use App\Policies\Institution\AssessmentCalendarPolicy;
 use App\Policies\Institution\CourseSyllabusPolicy;
 use App\Policies\Institution\DepartmentAssessmentCalendarPolicy;
+use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\PdfCardPrinter;
 use App\Services\Students\PhysicalCardPrinter;
 use App\Support\Auth\SyncSessionPasswordHash;
+use App\Support\Rbac\UserAccessScope;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -68,7 +73,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Model::preventLazyLoading($this->app->environment('local'));
+        $this->configureLazyLoadingDetection();
 
         Password::defaults(fn () => Password::min(8)
             ->letters()
@@ -102,9 +107,53 @@ class AppServiceProvider extends ServiceProvider
 
         $this->registerDataMaintenanceGate();
 
+        // Per-request lookups must not carry into the next request handled by the same process.
+        Event::listen(RequestHandled::class, function (): void {
+            UserAccessScope::flush();
+            ApplicationFeeService::forgetOpenIntakePeriodsForPortal();
+        });
+
         $this->registerRateLimiters();
 
         $this->registerLocalMailRedirect();
+    }
+
+    /**
+     * Lazy loading throws locally. In production each model/relation violation is logged at most
+     * once an hour instead, so N+1 queries show up in the logs without breaking pages.
+     */
+    private function configureLazyLoadingDetection(): void
+    {
+        if ($this->app->environment('local')) {
+            Model::preventLazyLoading();
+
+            return;
+        }
+
+        if (! $this->app->isProduction()) {
+            return;
+        }
+
+        Model::preventLazyLoading();
+        Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation): void {
+            static $reported = [];
+
+            $key = 'lazy-loading-violation:'.$model::class.':'.$relation;
+
+            if (isset($reported[$key])) {
+                return;
+            }
+
+            $reported[$key] = true;
+
+            if (Cache::add($key, true, now()->addHour())) {
+                Log::warning('Lazy loading detected', [
+                    'model' => $model::class,
+                    'relation' => $relation,
+                    'url' => app()->runningInConsole() ? null : request()->fullUrl(),
+                ]);
+            }
+        });
     }
 
     private function registerDataMaintenanceGate(): void

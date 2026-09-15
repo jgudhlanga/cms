@@ -5,7 +5,7 @@ import { clearFormErrors } from '@/lib/forms';
 import { Grade } from '@/types/institution';
 import { SelectOption } from '@/types/utils';
 import { InertiaForm } from '@inertiajs/vue3';
-import { debounce } from 'lodash';
+import { debounce } from '@/lib/debounce';
 import { computed, onMounted } from 'vue';
 
 interface Props {

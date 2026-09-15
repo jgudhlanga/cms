@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { IconButton } from '@/components/core/button';
 import { useSidebar } from '@/components/ui/sidebar';
-import { useSidebarMenu } from '@/composables/core/useSidebarMenu';
 import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/lib/icons';
+import { tenants } from '@/lib/tenants';
 import { PageProps } from '@/types';
 import { TenantInterface } from '@/types/tenants';
 import { usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-
-const { tenants } = useSidebarMenu();
 
 const activeTenant = ref<TenantInterface>(tenants[0]);
 const { isMobile, state, toggleSidebar } = useSidebar();

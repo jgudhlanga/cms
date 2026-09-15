@@ -1,5 +1,5 @@
 import { useUtils } from '@/composables/core/useUtils';
-import { grantedAbilitiesFromCanMap } from '@/lib/grantedAbilities';
+import { grantedAbilitiesFromCanMap, grantedAbilitySet } from '@/lib/grantedAbilities';
 import { ModuleState, PageProps } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 
@@ -13,10 +13,11 @@ export function getUserAbilities(): string[] {
  * Checks if user has at least one of the required abilities.
  */
 export function hasAbility(required: string | string[]): boolean {
-    const userAbilities = getUserAbilities();
+    const { props } = usePage<PageProps>();
+    const granted = grantedAbilitySet(props?.auth?.can);
     const requiredList = Array.isArray(required) ? required : [required];
 
-    return requiredList.some((ability) => userAbilities.includes(ability));
+    return requiredList.some((ability) => granted.has(ability));
 }
 
 export function hasStudentProfile(): boolean {

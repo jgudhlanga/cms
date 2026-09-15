@@ -9,6 +9,8 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        $this->authorize('viewDashboard');
+
         $metrics = new ApplicationMetricsService();
         $departmentDistribution = $metrics->applicationsByDepartment();
         return response()->json([
