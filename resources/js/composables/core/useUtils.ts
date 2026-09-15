@@ -4,7 +4,7 @@ import { IconName } from '@/enums/icons';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { router, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
-import moment from 'moment';
+import { formatDate as formatDateValue } from '@/lib/dates';
 import { v4 as uuidv4 } from 'uuid';
 import { isValidZimbabweanIdNumber } from '@/lib/zimbabweanId';
 import { h } from 'vue';
@@ -19,21 +19,7 @@ export function useUtils() {
             });
     };
     const formatDate = (date: Date | string, format = 'L') => {
-        return moment(date).format(format);
-    };
-    const formatRelativeDate = (date: Date | string) => {
-        return moment(date).fromNow();
-    };
-    const getAgeFromDate = (date: Date) => {
-        return moment().diff(date, 'years');
-    };
-
-    const getStartOfNextMonth = () => {
-        return moment().add(1, 'M').startOf('month').format('L');
-    };
-
-    const getAnniversaryDate = (date: Date | string, format = 'LL') => {
-        return moment(date).add(1, 'year').format(format);
+        return formatDateValue(date, format);
     };
 
     const getSomeYearsAgoDate = (yearsBack: number) => {
@@ -173,13 +159,9 @@ export function useUtils() {
         extractInitials,
         formatCurrency,
         formatDate,
-        formatRelativeDate,
-        getAgeFromDate,
-        getAnniversaryDate,
         getBirthdayFromID,
         getGenderFromID,
         getSomeYearsAgoDate,
-        getStartOfNextMonth,
         isItTrue,
         isSACitizen,
         numberInRange,

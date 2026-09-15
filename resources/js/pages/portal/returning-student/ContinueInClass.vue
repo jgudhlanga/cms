@@ -81,6 +81,7 @@ const submitContinue = () => {
                     type="submit"
                     :variant="ColorVariant.primary"
                     :disabled="!continueForm.acknowledged || !continueForm.student_number || !selectedIntakeId"
+                    :processing="continueForm.processing"
                     :title="$t('trans.returning_student_continue_submit')"
                 />
             </form>

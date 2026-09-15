@@ -14,6 +14,7 @@ use App\Models\Institution\ModeOfStudy;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\WorkflowStep;
 use App\Observers\Students\StudentApplicationObserver;
+use App\Support\Media\ProofOfPaymentMedia;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -108,8 +109,8 @@ class StudentApplication extends Model implements HasMedia
         $this->addMediaCollection('offer-letter')->singleFile();
 
         $proofOfPaymentMimeTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
-        $this->addMediaCollection('application-fee')->acceptsMimeTypes($proofOfPaymentMimeTypes);
-        $this->addMediaCollection('tuition-fee')->acceptsMimeTypes($proofOfPaymentMimeTypes);
+        $this->addMediaCollection('application-fee')->acceptsMimeTypes($proofOfPaymentMimeTypes)->useDisk(ProofOfPaymentMedia::DISK);
+        $this->addMediaCollection('tuition-fee')->acceptsMimeTypes($proofOfPaymentMimeTypes)->useDisk(ProofOfPaymentMedia::DISK);
     }
 
     public function hasPaid(FeeTypeEnum $feeType): bool

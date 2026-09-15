@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Documents\DocumentController;
+use App\Http\Controllers\Documents\ProofOfPaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('documents')->group(function () {
@@ -10,5 +11,8 @@ Route::prefix('documents')->group(function () {
     Route::middleware('auth')->group(function () {
         Route::get('transaction-statement/{student}', [DocumentController::class, 'exportTransactionStatement'])
             ->name('documents.transaction-statement');
+
+        Route::get('proofs-of-payment/{media}', [ProofOfPaymentController::class, 'show'])
+            ->name('documents.proof-of-payment');
     });
 });

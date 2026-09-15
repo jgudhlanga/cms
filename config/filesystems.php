@@ -67,6 +67,14 @@ return [
             'throw' => false,
             'report' => false,
         ],
+        // Proofs of payment: never web-served directly, only through the documents.proof-of-payment route.
+        'proofs-of-payment' => [
+            'driver' => 'local',
+            'root' => storage_path('app/proofs-of-payment'),
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
 
         's3' => [
             'driver' => 's3',

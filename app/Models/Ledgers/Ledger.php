@@ -6,6 +6,7 @@ use App\Http\Filters\Ledgers\LedgerFilter;
 use App\Models\Institution\Level;
 use App\Models\Shared\FeeType;
 use App\Observers\Ledgers\LedgerObserver;
+use App\Support\Media\ProofOfPaymentMedia;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -88,12 +89,12 @@ class Ledger extends Model implements HasMedia
 
     public function getProofOfPaymentUrlAttribute(): ?string
     {
-        return ($this->proof_of_payment_id > 0) ? $this->proofOfPayment->getFullUrl() : null;
+        return $this->proof_of_payment_id > 0 ? ProofOfPaymentMedia::url((int) $this->proof_of_payment_id) : null;
     }
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('receipts')->singleFile();
+        $this->addMediaCollection('receipts')->singleFile()->useDisk(ProofOfPaymentMedia::DISK);
     }
 
     public function getActivitylogOptions(): LogOptions

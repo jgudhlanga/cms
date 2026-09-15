@@ -1,7 +1,7 @@
 import { useUtils } from '@/composables/core/useUtils';
 import type { ParsedStudentPaymentReceipt, StudentPaymentReceipt } from '@/types/finance';
 import { trans } from 'laravel-vue-i18n';
-import moment from 'moment';
+import { formatDate, parseStrictDate } from '@/lib/dates';
 import { type MaybeRefOrGetter, computed, toValue } from 'vue';
 
 export type StudentPaymentReceiptContext = {
@@ -53,8 +53,8 @@ export function useStudentPaymentReceiptPresentation(context: MaybeRefOrGetter<S
             return notAvailable();
         }
 
-        const parsedDate = moment(value, ['DD-MM-YY HH:mm:ss', 'DD-MM-YYYY HH:mm:ss', moment.ISO_8601], true);
-        return parsedDate.isValid() ? parsedDate.format('ll') : notAvailable();
+        const parsedDate = parseStrictDate(value, ['DD-MM-YY HH:mm:ss', 'DD-MM-YYYY HH:mm:ss', 'ISO_8601']);
+        return parsedDate ? formatDate(parsedDate, 'll') : notAvailable();
     };
 
     const sanitizeReceiptDescription = (receipt: StudentPaymentReceipt | ParsedStudentPaymentReceipt): string => {
@@ -126,15 +126,15 @@ export function useStudentPaymentReceiptPresentation(context: MaybeRefOrGetter<S
             return null;
         }
 
-        const parsedDate = moment(attributes.usdConversionRateDate, ['YYYY-MM-DD', moment.ISO_8601], true);
-        if (!parsedDate.isValid()) {
+        const parsedDate = parseStrictDate(attributes.usdConversionRateDate, ['YYYY-MM-DD', 'ISO_8601']);
+        if (!parsedDate) {
             return null;
         }
 
         const formattedAmount = formatCurrency(String(originalAmount));
         const amountWithSymbol = formattedAmount.includes('$') ? formattedAmount : `$${formattedAmount}`;
 
-        return `${attributes.originalIsoCurrencyCode.toUpperCase()} ${amountWithSymbol} | ${parsedDate.format('YYYY-MM-DD')} | @ ${attributes.usdConversionRate}`;
+        return `${attributes.originalIsoCurrencyCode.toUpperCase()} ${amountWithSymbol} | ${formatDate(parsedDate, 'YYYY-MM-DD')} | @ ${attributes.usdConversionRate}`;
     };
 
     const isUsdAmount = (receipt: StudentPaymentReceipt | ParsedStudentPaymentReceipt): boolean => {
@@ -173,8 +173,8 @@ export function useStudentPaymentReceiptPresentation(context: MaybeRefOrGetter<S
             return notAvailable();
         }
 
-        const parsedDate = moment(value, ['DD-MM-YY HH:mm:ss', 'DD-MM-YYYY HH:mm:ss', moment.ISO_8601], true);
-        return parsedDate.isValid() ? parsedDate.format('YYYY-MM-DD') : notAvailable();
+        const parsedDate = parseStrictDate(value, ['DD-MM-YY HH:mm:ss', 'DD-MM-YYYY HH:mm:ss', 'ISO_8601']);
+        return parsedDate ? formatDate(parsedDate, 'YYYY-MM-DD') : notAvailable();
     };
 
     const formatUsdDisplay = (formatted: string): string => {

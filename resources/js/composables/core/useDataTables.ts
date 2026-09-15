@@ -71,7 +71,7 @@ export function useDataTables() {
      * @param props.columns - An array of objects representing the columns of the data table.
      * @returns A Vue Table instance.
      */
-    const initialize = (props: { data: Array<any>; columns: Array<any> }) =>
+    const initialize = (props: { data: Array<any>; columns: Array<any>; pagination?: unknown }) =>
         useVueTable({
             get data() {
                 return props.data;
@@ -80,7 +80,8 @@ export function useDataTables() {
                 return props.columns;
             },
             getCoreRowModel: getCoreRowModel(),
-            getPaginationRowModel: getPaginationRowModel(),
+            // Tables without a pager have no way to reach a second page, so they show every row.
+            ...(props.pagination ? { getPaginationRowModel: getPaginationRowModel() } : {}),
             getSortedRowModel: getSortedRowModel(),
             getFilteredRowModel: getFilteredRowModel(),
             state: {
