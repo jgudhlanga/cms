@@ -11,33 +11,35 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * @var array<string, list<list<string>>>
+     * Index names are spelled out: generated names can pass MySQL's 64-character identifier limit.
+     *
+     * @var array<string, array<string, list<string>>>
      */
     private array $indexes = [
         'ledgers' => [
-            ['student_application_id', 'type', 'payment_status'],
-            ['intake_period_id'],
-            ['proof_of_payment_id'],
+            'ledgers_application_type_status_idx' => ['student_application_id', 'type', 'payment_status'],
+            'ledgers_intake_period_idx' => ['intake_period_id'],
+            'ledgers_proof_of_payment_idx' => ['proof_of_payment_id'],
         ],
         'class_lists' => [
-            ['type'],
+            'class_lists_type_idx' => ['type'],
         ],
         'student_applications' => [
-            ['program_status_id'],
-            ['offer_letter_id'],
+            'student_applications_program_status_idx' => ['program_status_id'],
+            'student_applications_offer_letter_idx' => ['offer_letter_id'],
         ],
     ];
 
     public function up(): void
     {
         foreach ($this->indexes as $table => $indexes) {
-            foreach ($indexes as $columns) {
+            foreach ($indexes as $name => $columns) {
                 if (! Schema::hasColumns($table, $columns) || Schema::hasIndex($table, $columns)) {
                     continue;
                 }
 
-                Schema::table($table, function (Blueprint $blueprint) use ($table, $columns): void {
-                    $blueprint->index($columns, $this->indexName($table, $columns));
+                Schema::table($table, function (Blueprint $blueprint) use ($name, $columns): void {
+                    $blueprint->index($columns, $name);
                 });
             }
         }
@@ -46,9 +48,7 @@ return new class extends Migration
     public function down(): void
     {
         foreach ($this->indexes as $table => $indexes) {
-            foreach ($indexes as $columns) {
-                $name = $this->indexName($table, $columns);
-
+            foreach (array_keys($indexes) as $name) {
                 if (! Schema::hasTable($table) || ! Schema::hasIndex($table, $name)) {
                     continue;
                 }
@@ -58,13 +58,5 @@ return new class extends Migration
                 });
             }
         }
-    }
-
-    /**
-     * @param  list<string>  $columns
-     */
-    private function indexName(string $table, array $columns): string
-    {
-        return $table.'_'.implode('_', $columns).'_hot_path_index';
     }
 };
