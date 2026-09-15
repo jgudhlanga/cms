@@ -74,7 +74,7 @@ const acknowledge = () => {
                     class="rounded-full border border-border px-3 py-1"
                     :class="status === 'all' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'"
                 >
-                    {{ $t('trans.all') }}
+                    {{ $t('academic_calendar.course_work_progress_filter_all') }}
                 </Link>
             </nav>
 

@@ -32,7 +32,7 @@ const breadcrumbs = computed<BreadcrumbItemInterface[]>(() => [
 ]);
 
 const statusFilters = computed(() => [
-    { value: 'all', label: trans('trans.all') },
+    { value: 'all', label: trans('academic_calendar.course_work_extension_filter_all') },
     ...props.statuses,
 ]);
 
