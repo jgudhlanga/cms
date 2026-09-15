@@ -12,6 +12,7 @@ use App\Models\Students\Student;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Services\Students\StudentProgrammeDataService;
 use App\Traits\HttpUtil;
+use Illuminate\Support\Facades\Gate;
 
 class StudentController
 {
@@ -24,6 +25,8 @@ class StudentController
 
     public function index()
     {
+        Gate::authorize('viewIndex', Student::class);
+
         $students = $this->repository->paginateForIndex(
             request()->only([
                 'search',
@@ -47,6 +50,8 @@ class StudentController
 
     public function stats()
     {
+        Gate::authorize('viewIndex', Student::class);
+
         return response()->json(
             $this->repository->statsForIndex(
                 request()->only([
@@ -76,11 +81,15 @@ class StudentController
     // ====== STUDENT ===========
     public function personal(Student $student)
     {
+        Gate::authorize('view', $student);
+
         return StudentResource::make($student);
     }
 
     public function programs(Student $student)
     {
+        Gate::authorize('view', $student);
+
         $student->loadMissing([
             'applications.student.user',
             'applications.student.idType',
@@ -105,16 +114,22 @@ class StudentController
 
     public function addresses(Student $student)
     {
+        Gate::authorize('view', $student);
+
         return AddressResource::collection($student->addresses);
     }
 
     public function contacts(Student $student)
     {
+        Gate::authorize('view', $student);
+
         return ContactResource::collection($student->contacts);
     }
 
     public function sponsors(Student $student)
     {
+        Gate::authorize('view', $student);
+
         $student->loadMissing(['sponsors.sponsorType', 'sponsors.contacts', 'sponsors.addresses']);
 
         return SponsorResource::collection($student->sponsors);
@@ -122,6 +137,8 @@ class StudentController
 
     public function nextOfKin(Student $student)
     {
+        Gate::authorize('view', $student);
+
         $student->loadMissing(['nextOfKins.relationship', 'nextOfKins.contacts', 'nextOfKins.addresses']);
 
         return NextOfKinResource::collection($student->nextOfKins);

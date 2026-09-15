@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Students;
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
+use App\Enums\Institution\LevelEnum;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\ProgrammeSemester;
 use App\Models\Students\Student;
@@ -168,6 +169,7 @@ class StudentCoursePathwayProgressService
     {
         $included = [];
         $localPositions = [];
+        $localTracks = [];
 
         foreach ($offerings as $index => $offering) {
             $levelId = (int) $offering->department_level_id;
@@ -176,6 +178,7 @@ class StudentCoursePathwayProgressService
             if (in_array($levelId, $localLevelIds, true)) {
                 $included[$index] = true;
                 $localPositions[] = $position;
+                $localTracks[$this->pathwayTrack($offering)] = true;
             }
         }
 
@@ -191,9 +194,15 @@ class StudentCoursePathwayProgressService
             foreach ($offerings as $index => $offering) {
                 $position = (int) ($offering->departmentLevel?->level?->position ?? $index);
 
-                if ($position > $minLocalPosition) {
-                    $included[$index] = true;
+                if ($position <= $minLocalPosition) {
+                    continue;
                 }
+
+                if (! isset($localTracks[$this->pathwayTrack($offering)])) {
+                    continue;
+                }
+
+                $included[$index] = true;
             }
         }
 
@@ -224,8 +233,15 @@ class StudentCoursePathwayProgressService
                 return;
             }
 
+            $prior = $offerings->get((int) $priorIndex);
+
+            if (! $prior instanceof DepartmentLevelCourse
+                || $this->pathwayTrack($current) !== $this->pathwayTrack($prior)) {
+                return;
+            }
+
             $included[(int) $priorIndex] = true;
-            $current = $offerings->get((int) $priorIndex);
+            $current = $prior;
             $guard++;
         }
     }
@@ -500,6 +516,17 @@ class StudentCoursePathwayProgressService
         }
 
         return max(1, ProgrammeSemesterNameFormatter::periodsPerYear($calendarType));
+    }
+
+    private function pathwayTrack(DepartmentLevelCourse $offering): string
+    {
+        $name = trim((string) ($offering->departmentLevel?->level?->name ?? ''));
+
+        if ($name === '') {
+            return 'unknown:'.(int) $offering->department_level_id;
+        }
+
+        return LevelEnum::tryFrom($name)?->pathwayTrack() ?? $name;
     }
 
     private function requiredGlobalLevelId(DepartmentLevelCourse $offering): ?int

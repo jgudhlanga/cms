@@ -42,6 +42,11 @@ class UserPermissionMapService
         }
     }
 
+    public function isSuperUser(User $user): bool
+    {
+        return $user->hasRole(RoleEnum::SUPER_USER->name());
+    }
+
     /**
      * Bust all cached maps when role permission definitions change.
      */

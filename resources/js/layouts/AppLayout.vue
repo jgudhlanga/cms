@@ -39,8 +39,8 @@ onMounted(async () => {
 <template>
     <SidebarProvider :open="preferencesStore.sideBarState" @update:open="updateSidebarState">
         <AppSidebar />
-        <SidebarInset class="min-w-0 overflow-x-clip">
-            <div class="flex h-full min-w-0 w-full max-w-full flex-1 flex-col gap-3 overflow-x-clip rounded-xl px-3 sm:gap-4 sm:px-5 lg:px-8">
+        <SidebarInset class="min-w-0 overflow-x-auto">
+            <div class="flex h-full min-w-0 w-full max-w-full flex-1 flex-col gap-3 overflow-x-auto rounded-xl px-3 sm:gap-4 sm:px-5 lg:px-8">
                 <slot />
             </div>
         </SidebarInset>

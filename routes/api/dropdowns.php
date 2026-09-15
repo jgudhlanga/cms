@@ -27,54 +27,55 @@ use App\Http\Controllers\Api\V1\Shared\WorkflowStepController;
 use App\Http\Controllers\Api\V1\Students\StudentEnrolmentStatusController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->group(function () {
+// Public read-only lookups (public website, registration forms). Empty write stubs are not routed.
+Route::prefix('v1')->middleware('throttle:public-lookups')->group(function () {
     // ==================================== ADDRESS TYPES =================================================
-    Route::apiResource('address-types', AddressTypeController::class)->names('v1.address-types');
+    Route::apiResource('address-types', AddressTypeController::class)->only(['index'])->names('v1.address-types');
     // ==================================== PROVINCES ======================================================
-    Route::apiResource('provinces', ProvinceController::class)->names('v1.provinces');
+    Route::apiResource('provinces', ProvinceController::class)->only(['index'])->names('v1.provinces');
     // ==================================== DEPARTMENTS ======================================================
-    Route::apiResource('departments', DepartmentController::class)->names('v1.departments');
+    Route::apiResource('departments', DepartmentController::class)->only(['index'])->names('v1.departments');
     // ==================================== LEVELS ======================================================
-    Route::apiResource('levels', LevelController::class)->names('v1.levels');
+    Route::apiResource('levels', LevelController::class)->only(['index'])->names('v1.levels');
     // ==================================== COURSES ======================================================
-    Route::apiResource('courses', CourseController::class)->names('v1.courses');
+    Route::apiResource('courses', CourseController::class)->only(['index'])->names('v1.courses');
     // ==================================== GENDERS ======================================================
-    Route::apiResource('genders', GenderController::class)->names('v1.genders');
+    Route::apiResource('genders', GenderController::class)->only(['index'])->names('v1.genders');
     // ==================================== TITLES ======================================================
-    Route::apiResource('titles', TitleController::class)->names('v1.titles');
+    Route::apiResource('titles', TitleController::class)->only(['index'])->names('v1.titles');
     // ==================================== COUNTRIES ======================================================
-    Route::apiResource('countries', CountryController::class)->names('v1.countries');
+    Route::apiResource('countries', CountryController::class)->only(['index'])->names('v1.countries');
     // ==================================== DISTRICTS ======================================================
-    Route::apiResource('districts', DistrictController::class)->names('v1.districts');
+    Route::apiResource('districts', DistrictController::class)->only(['index'])->names('v1.districts');
     // ==================================== SUBJECTS ======================================================
-    Route::apiResource('subjects', SubjectController::class)->names('v1.subjects');
+    Route::apiResource('subjects', SubjectController::class)->only(['index'])->names('v1.subjects');
     // ==================================== SUBJECTS ======================================================
-    Route::apiResource('grades', GradeController::class)->names('v1.grades');
+    Route::apiResource('grades', GradeController::class)->only(['index'])->names('v1.grades');
     // ==================================== MARITAL STATUSES ======================================================
-    Route::apiResource('marital-statuses', MaritalStatusController::class)->names('v1.marital-statuses');
+    Route::apiResource('marital-statuses', MaritalStatusController::class)->only(['index'])->names('v1.marital-statuses');
     // ==================================== RACES ======================================================
-    Route::apiResource('races', RaceController::class)->names('v1.races');
+    Route::apiResource('races', RaceController::class)->only(['index'])->names('v1.races');
     // ==================================== RELATIONSHIPS ======================================================
-    Route::apiResource('relationships', RelationshipController::class)->names('v1.relationships');
+    Route::apiResource('relationships', RelationshipController::class)->only(['index'])->names('v1.relationships');
     // ==================================== RELIGIONS ======================================================
-    Route::apiResource('religions', ReligionController::class)->names('v1.religions');
+    Route::apiResource('religions', ReligionController::class)->only(['index'])->names('v1.religions');
     // ==================================== ACADEMIC LEVELS ======================================================
-    Route::apiResource('academic-levels', AcademicLevelController::class)->names('v1.academic-levels');
+    Route::apiResource('academic-levels', AcademicLevelController::class)->only(['index'])->names('v1.academic-levels');
     // ==================================== SPONSOR TYPE ======================================================
-    Route::apiResource('sponsor-types', SponsorTypeController::class)->names('v1.sponsor-types');
+    Route::apiResource('sponsor-types', SponsorTypeController::class)->only(['index'])->names('v1.sponsor-types');
     // ==================================== EMPLOYMENT TYPE ======================================================
-    Route::apiResource('employment-types', EmploymentTypeController::class)->names('v1.employment-types');
+    Route::apiResource('employment-types', EmploymentTypeController::class)->only(['index'])->names('v1.employment-types');
     // ==================================== ID TYPE ======================================================
-    Route::apiResource('id-types', IdTypeController::class)->names('v1.id-types');
+    Route::apiResource('id-types', IdTypeController::class)->only(['index'])->names('v1.id-types');
     // ==================================== WORKFLOW STEPS ======================================================
-    Route::apiResource('workflow-steps', WorkflowStepController::class)->names('v1.workflow-steps');
-    Route::apiResource('workflow-step-actions', WorkflowStepActionController::class)->names('v1.workflow-step-actions');
+    Route::apiResource('workflow-steps', WorkflowStepController::class)->only(['index'])->names('v1.workflow-steps');
+    Route::apiResource('workflow-step-actions', WorkflowStepActionController::class)->only(['index'])->names('v1.workflow-step-actions');
     // ==================================== DOCUMENT TYPE ======================================================
-    Route::apiResource('document-types', DocumentTypeController::class)->names('v1.document-types');
+    Route::apiResource('document-types', DocumentTypeController::class)->only(['index'])->names('v1.document-types');
     // ==================================== FEE TYPE ======================================================
-    Route::apiResource('fee-types', FeeTypeController::class)->names('v1.fee-types');
+    Route::apiResource('fee-types', FeeTypeController::class)->only(['index'])->names('v1.fee-types');
     // ==================================== STUDENT ENROLMENT STATUS ======================================================
-    Route::apiResource('student-enrolment-statuses', StudentEnrolmentStatusController::class)->names('v1.student-enrolment-statuses');
+    Route::apiResource('student-enrolment-statuses', StudentEnrolmentStatusController::class)->only(['index'])->names('v1.student-enrolment-statuses');
     // ==================================== ACADEMIC YEAR OPTIONS ======================================================
-    Route::apiResource('semesters', SemesterController::class)->names('v1.semesters');
+    Route::apiResource('semesters', SemesterController::class)->only(['index'])->names('v1.semesters');
 });

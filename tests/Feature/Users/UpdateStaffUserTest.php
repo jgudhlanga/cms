@@ -2,10 +2,10 @@
 
 use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\EmploymentTypeEnum;
-use App\Models\Rbac\Role;
 use App\Models\Institution\Department;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\Staff;
+use App\Models\Rbac\Role;
 use App\Models\Shared\EmploymentType;
 use App\Models\Shared\Gender;
 use App\Models\Shared\MaritalStatus;
@@ -114,6 +114,7 @@ test('update staff user syncs roles and departments on save', function () {
     $context = makeStaffUserUpdateContext();
 
     $admin = User::factory()->create(['tenant_id' => Tenant::query()->firstOrFail()->id]);
+    $admin->givePermissionTo('update:users');
     $this->actingAs($admin);
 
     $payload = [

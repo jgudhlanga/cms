@@ -2,6 +2,7 @@
 
 namespace App\Mail\Enrolments;
 
+use App\Services\Students\StudentOfferLetterService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
@@ -40,7 +41,8 @@ class VerifiedStudentsOfferLetterMail extends Mailable
             markdown: 'emails.enrolments.offer-letter-mail',
             with: [
                 'name' => $this->name,
-                'applicationId' => $this->applicationId
+                'applicationId' => $this->applicationId,
+                'downloadUrl' => app(StudentOfferLetterService::class)->signedDownloadUrl($this->applicationId),
             ]
         );
     }

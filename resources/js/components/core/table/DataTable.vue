@@ -134,8 +134,8 @@ const showToolBar = computed(() => {
 </script>
 
 <template>
-    <div class="data-table w-full">
-    <div class="relative inline-block min-w-full rounded-xl pb-6 align-middle">
+    <div class="data-table w-full min-w-0">
+    <div class="relative w-full min-w-0 rounded-xl pb-6">
         <div
             v-if="loading"
             class="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/70 px-6 backdrop-blur-[1px]"
@@ -166,7 +166,7 @@ const showToolBar = computed(() => {
         <div v-if="dragItems" class="text-primary my-2 flex w-1/4 rounded-full bg-muted px-3 py-1 text-xs font-bold">
             {{ $t('trans.draggable_description') }}
         </div>
-        <div class="overflow-x-auto">
+        <div class="w-full min-w-0 overflow-x-auto">
             <table class="hava-table">
                 <TableHead :table="table" />
                 <TableBody

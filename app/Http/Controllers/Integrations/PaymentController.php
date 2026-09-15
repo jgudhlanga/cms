@@ -749,14 +749,18 @@ class PaymentController extends Controller
 
     private function assertValidPaymentWebhook(Request $request): void
     {
-        $apiKey = config('custom.payments.payment-gateway.api_key');
-        $secret = config('custom.payments.payment-gateway.secret');
+        $apiKey = (string) config('custom.payments.payment-gateway.api_key');
+        $secret = (string) config('custom.payments.payment-gateway.secret');
 
-        if (empty($apiKey) && empty($secret)) {
+        if ($apiKey === '' && $secret === '') {
+            // Unconfigured gateway credentials are only tolerated in local development and tests.
+            abort_unless(app()->environment('local', 'testing'), 503, 'Payment webhook is not configured');
+
             return;
         }
 
-        if ($request->header('x-api-key') !== $apiKey || $request->header('x-api-secret') !== $secret) {
+        if (! hash_equals($apiKey, (string) $request->header('x-api-key'))
+            || ! hash_equals($secret, (string) $request->header('x-api-secret'))) {
             abort(401, 'Unauthorized payment webhook');
         }
     }

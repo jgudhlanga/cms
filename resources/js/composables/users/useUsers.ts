@@ -16,7 +16,7 @@ import { Auth, PageProps } from '@/types';
 import { ApiFilterResponse } from '@/types/data-pagination';
 import type { Link } from '@/types/ui';
 import { User } from '@/types/users';
-import { InertiaForm, usePage } from '@inertiajs/vue3';
+import { InertiaForm, router, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 import { z, ZodObject } from 'zod';
@@ -66,7 +66,7 @@ export const useUsers = () => {
                               return canBeImpersonated
                                   ? actionButton({
                                         title: 'Impersonate',
-                                        onClick: () => navigateTo(route('impersonate', { id: row.original.id })),
+                                        onClick: () => router.post(route('impersonate', { id: row.original.id })),
                                         variant: ColorVariant.warning_outline,
                                     })
                                   : null;

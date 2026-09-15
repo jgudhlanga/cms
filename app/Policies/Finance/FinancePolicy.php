@@ -18,4 +18,13 @@ class FinancePolicy
         return $user->can('root:manage')
             || $user->can('export-to-pastel:finances');
     }
+
+    /**
+     * Staff payment tools: manual ledger status updates and ledger/status lookups for any user.
+     * Mirrors the sidebar gate for the payments debug tool.
+     */
+    public function managePaymentTools(User $user): bool
+    {
+        return $user->can('root:manage');
+    }
 }

@@ -105,6 +105,10 @@ class StudentApplication extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('offer-letter')->singleFile();
+
+        $proofOfPaymentMimeTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+        $this->addMediaCollection('application-fee')->acceptsMimeTypes($proofOfPaymentMimeTypes);
+        $this->addMediaCollection('tuition-fee')->acceptsMimeTypes($proofOfPaymentMimeTypes);
     }
 
     public function hasPaid(FeeTypeEnum $feeType): bool

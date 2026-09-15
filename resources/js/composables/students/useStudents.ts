@@ -13,6 +13,7 @@ import HttpService from '@/services/http.service';
 
 export const useStudents = () => {
     const { moreActionButton, textLink } = useDataTables();
+    const { navigateTo } = useUtils();
 
     const isLoading = ref(false);
     const isStatsLoading = ref(false);
@@ -72,7 +73,7 @@ export const useStudents = () => {
                     return moreActionButton(false, [
                         {
                             key: 'view',
-                            action: () => {},
+                            action: () => navigateTo(buildStudentShowUrl(row.original?.id, { from: 'students' })),
                         },
                     ]);
                 },

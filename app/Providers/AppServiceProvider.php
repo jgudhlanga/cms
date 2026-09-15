@@ -27,13 +27,17 @@ use App\Services\Students\PdfCardPrinter;
 use App\Services\Students\PhysicalCardPrinter;
 use App\Support\Auth\SyncSessionPasswordHash;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Lab404\Impersonate\Events\LeaveImpersonation;
 use Lab404\Impersonate\Events\TakeImpersonation;
@@ -98,6 +102,8 @@ class AppServiceProvider extends ServiceProvider
 
         $this->registerDataMaintenanceGate();
 
+        $this->registerRateLimiters();
+
         $this->registerLocalMailRedirect();
     }
 
@@ -105,6 +111,36 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::define('accessDataMaintenance', function (User $user): bool {
             return $user->can('root:manage') || $user->can('manage:data-maintenance');
+        });
+    }
+
+    /**
+     * Rate limiters for the API group, credential endpoints and public lookups.
+     */
+    private function registerRateLimiters(): void
+    {
+        // Generous: a single form can fire many combobox lookups at once.
+        RateLimiter::for('api', function (Request $request): Limit {
+            $userId = $request->user()?->getAuthIdentifier();
+
+            return Limit::perMinute(300)->by($userId !== null ? 'user:'.$userId : 'ip:'.$request->ip());
+        });
+
+        // Per-IP limits stay generous: campus users often share one public IP.
+        RateLimiter::for('auth-api', function (Request $request): array {
+            return [
+                Limit::perMinute(5)->by('credentials:'.Str::lower((string) $request->input('email')).'|'.$request->ip()),
+                Limit::perMinute(60)->by('ip:'.$request->ip()),
+            ];
+        });
+
+        // Unauthenticated lookups used by the public website and registration forms.
+        RateLimiter::for('public-lookups', function (Request $request): Limit {
+            $userId = $request->user()?->getAuthIdentifier();
+
+            return $userId !== null
+                ? Limit::perMinute(300)->by('user:'.$userId)
+                : Limit::perMinute(600)->by('ip:'.$request->ip());
         });
     }
 

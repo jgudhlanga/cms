@@ -81,7 +81,7 @@ test('authorized user can impersonate another user', function () {
 
     $response = $this
         ->actingAs($impersonator)
-        ->get(route('impersonate', ['id' => $targetUser->id]));
+        ->post(route('impersonate', ['id' => $targetUser->id]));
 
     $response->assertRedirect(route('dashboard'));
     $this->assertAuthenticatedAs($targetUser);
@@ -95,12 +95,12 @@ test('authorized user can switch impersonation without 403', function () {
 
     $this
         ->actingAs($impersonator)
-        ->get(route('impersonate', ['id' => $firstTarget->id]))
+        ->post(route('impersonate', ['id' => $firstTarget->id]))
         ->assertRedirect(route('dashboard'));
 
     $this->assertAuthenticatedAs($firstTarget);
 
-    $response = $this->get(route('impersonate', ['id' => $secondTarget->id]));
+    $response = $this->post(route('impersonate', ['id' => $secondTarget->id]));
 
     $response->assertRedirect();
     $this->assertAuthenticatedAs($secondTarget);
@@ -111,7 +111,7 @@ test('users cannot impersonate themselves', function () {
 
     $this
         ->actingAs($impersonator)
-        ->get(route('impersonate', ['id' => $impersonator->id]))
+        ->post(route('impersonate', ['id' => $impersonator->id]))
         ->assertForbidden();
 });
 
@@ -121,7 +121,7 @@ test('admin impersonates staff user without redirecting to student portal', func
 
     $this
         ->actingAs($impersonator)
-        ->get(route('impersonate', ['id' => $staffUser->id]))
+        ->post(route('impersonate', ['id' => $staffUser->id]))
         ->assertRedirect(route('dashboard'));
 
     $this->assertAuthenticatedAs($staffUser);
@@ -143,7 +143,7 @@ test('admin impersonates student applicant and redirects to application track ch
 
     $this
         ->actingAs($impersonator)
-        ->get(route('impersonate', ['id' => $applicantUser->id]))
+        ->post(route('impersonate', ['id' => $applicantUser->id]))
         ->assertRedirect(route('portal.application.track'));
 
     $this->assertAuthenticatedAs($applicantUser);
@@ -155,7 +155,7 @@ test('admin impersonates student with profile and redirects to portal dashboard'
 
     $this
         ->actingAs($impersonator)
-        ->get(route('impersonate', ['id' => $studentUser->id]))
+        ->post(route('impersonate', ['id' => $studentUser->id]))
         ->assertRedirect(route('portal.dashboard'));
 
     $this->assertAuthenticatedAs($studentUser);
@@ -168,7 +168,7 @@ test('dashboard stats api works while impersonating a student', function () {
 
     $this
         ->actingAs($impersonator)
-        ->get(route('impersonate', ['id' => $studentUser->id]))
+        ->post(route('impersonate', ['id' => $studentUser->id]))
         ->assertRedirect(route('portal.dashboard'));
 
     $this
@@ -187,7 +187,7 @@ test('portal navigation remains authenticated while impersonating', function () 
 
     $this
         ->actingAs($impersonator)
-        ->get(route('impersonate', ['id' => $studentUser->id]))
+        ->post(route('impersonate', ['id' => $studentUser->id]))
         ->assertRedirect(route('portal.dashboard'));
 
     $this
@@ -209,7 +209,7 @@ test('leaving impersonation restores the admin session', function () {
 
     $this
         ->actingAs($impersonator)
-        ->get(route('impersonate', ['id' => $studentUser->id]))
+        ->post(route('impersonate', ['id' => $studentUser->id]))
         ->assertRedirect(route('portal.dashboard'));
 
     $this
@@ -229,7 +229,7 @@ test('admin users cannot be impersonated', function () {
 
     $this
         ->actingAs($impersonator)
-        ->get(route('impersonate', ['id' => $otherAdmin->id]))
+        ->post(route('impersonate', ['id' => $otherAdmin->id]))
         ->assertRedirect();
 
     $this->assertAuthenticatedAs($impersonator);
@@ -241,7 +241,7 @@ test('credential route is blocked while impersonating', function () {
 
     $this
         ->actingAs($impersonator)
-        ->get(route('impersonate', ['id' => $studentUser->id]))
+        ->post(route('impersonate', ['id' => $studentUser->id]))
         ->assertRedirect(route('portal.dashboard'));
 
     $this
@@ -256,7 +256,7 @@ test('admin routes redirect to portal while impersonating', function () {
 
     $this
         ->actingAs($impersonator)
-        ->get(route('impersonate', ['id' => $studentUser->id]))
+        ->post(route('impersonate', ['id' => $studentUser->id]))
         ->assertRedirect(route('portal.dashboard'));
 
     $this

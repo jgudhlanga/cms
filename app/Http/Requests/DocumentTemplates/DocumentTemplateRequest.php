@@ -6,21 +6,18 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class DocumentTemplateRequest extends FormRequest
 {
-
     public function authorize(): bool
     {
         return true;
     }
 
-
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', 'unique:document_templates,name,' . $this?->document_template?->id],
+            'name' => ['required', 'string', 'max:255', 'unique:document_templates,name,'.$this?->document_template?->id],
             'document_type_id' => ['required', 'integer', 'exists:document_types,id'],
-            'header_logo_1' => ['nullable', 'file', 'max:5009'],
-            'header_logo_2' => ['nullable', 'file', 'max:5009'],
+            'header_logo_1' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5009'],
+            'header_logo_2' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5009'],
         ];
     }
-
 }

@@ -11,10 +11,14 @@ use App\Models\Shared\WorkflowStep;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use Carbon\CarbonInterface;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Spatie\Activitylog\Models\Activity;
 
 class StudentOfferLetterService
 {
+    public const int SIGNED_URL_TTL_DAYS = 30;
+
     public function __construct(
         private readonly IntakePeriodResolver $intakePeriodResolver,
     ) {}
@@ -67,6 +71,40 @@ class StudentOfferLetterService
             ClassListTypeEnum::VERIFIED->value,
             ClassListTypeEnum::FINAL->value,
         ], true);
+    }
+
+    /**
+     * Link for emails: opens without logging in until it expires.
+     */
+    public function signedDownloadUrl(int|string $studentApplicationId): string
+    {
+        return URL::temporarySignedRoute(
+            'documents.offer-letter',
+            now()->addDays(self::SIGNED_URL_TTL_DAYS),
+            ['student_application' => $studentApplicationId],
+        );
+    }
+
+    /**
+     * Signed (emailed) links are allowed; otherwise the viewer must own the application or be allowed to view it.
+     */
+    public function canAccess(StudentApplication $application, ?User $user, Request $request): bool
+    {
+        if ($request->hasValidSignature()) {
+            return true;
+        }
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $studentProfileId = $user->studentProfile?->id;
+
+        if ($studentProfileId !== null && (int) $studentProfileId === (int) $application->student_id) {
+            return true;
+        }
+
+        return $this->canBypassDownloadGates($user) || $user->can('view', $application);
     }
 
     public function canBypassDownloadGates(?User $user): bool

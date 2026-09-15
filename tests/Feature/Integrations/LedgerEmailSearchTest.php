@@ -2,6 +2,7 @@
 
 use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelApplicationTypeEnum;
+use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
 use App\Models\HMS\HostelApplication;
@@ -18,7 +19,10 @@ use Illuminate\Testing\Fluent\AssertableJson;
 
 function ledgerSearchAuthUser(): User
 {
-    return User::factory()->create();
+    $user = User::factory()->create();
+    $user->givePermissionTo('root:manage');
+
+    return $user;
 }
 
 function ledgerSearchFeeType(FeeTypeEnum $feeTypeEnum): FeeType
@@ -35,7 +39,7 @@ function ledgerSearchFeeType(FeeTypeEnum $feeTypeEnum): FeeType
 
 function ledgerSearchIntakePeriod(): IntakePeriod
 {
-    return ensureCurrentIntakeStatus(\App\Enums\Institution\IntakePeriodStatusEnum::Open->value);
+    return ensureCurrentIntakeStatus(IntakePeriodStatusEnum::Open->value);
 }
 
 function ledgerSearchCreateLedgerPair(
@@ -229,6 +233,7 @@ test('ledger search by email with single application fee type prompts type selec
 test('ledger search by email with single hostel type prompts type selection', function () {
     $studentApplication = createStudentReadyForHostelApplication('LEDGER-SEARCH-HOSTEL');
     $authUser = User::factory()->create(['tenant_id' => $studentApplication->tenant_id]);
+    $authUser->givePermissionTo('root:manage');
     $targetUser = $studentApplication->student->user;
     $targetUser->update(['email' => 'hostel-user@example.com']);
 

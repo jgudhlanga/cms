@@ -30,7 +30,8 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // ========================================= ACADEMIC CALENDARS =====================================================
     Route::get('departments/{institution_department}/academic-calendars', [DepartmentAcademicCalendarController::class, 'departmentAcademicCalendar'])->name('v1.departments.academic-calendars');
 });
-Route::prefix('v1')->group(function () {
+// Public read-only lookups (public website, registration forms). Empty write stubs are not routed.
+Route::prefix('v1')->middleware('throttle:public-lookups')->group(function () {
     Route::get('institution-departments', [InstitutionDepartmentController::class, 'index'])->name('v1.institution-departments.index');
     Route::get('institution-departments/{institution_department}/levels', [DepartmentLevelController::class, 'index'])->name('v1.department-levels.index');
     Route::get('institution-departments/levels/{department_level}/courses', [DepartmentLevelCourseController::class, 'index'])->name('v1.department-level-courses.index');
@@ -40,15 +41,15 @@ Route::prefix('v1')->group(function () {
     )->name('v1.department-level-courses.by-institution-department');
     Route::get('institution-departments/levels/{department_level}/requirements', [DepartmentLevelController::class, 'levelRequirements'])->name('v1.department-level-requirements');
     Route::get('institution-departments/{department_level}/courses/{department_course}/requirements', [DepartmentCourseController::class, 'courseRequirements'])->name('v1.department-course-requirements');
-    Route::apiResource('staff', StaffController::class)->names('v1.staff');
+    Route::apiResource('staff', StaffController::class)->only(['index', 'show'])->names('v1.staff');
     Route::get('academic-staff/grouped-by-department', [AcademicStaffController::class, 'groupedByDepartment'])->name('v1.academic-staff.grouped-by-department');
-    Route::apiResource('intake-periods', IntakePeriodController::class)->names('v1.intake-periods');
+    Route::apiResource('intake-periods', IntakePeriodController::class)->only(['index'])->names('v1.intake-periods');
     Route::get('course-modes/{department_course}/course/{department_level}/level', [ModeOfStudyController::class, 'courseModes'])->name('v1.modes-of-study.course-modes');
     Route::get(
         'enrolments/course-modes/{department_course}/course/{department_level}/level',
         [ApplicationOfferingModeController::class, 'courseModes'],
     )->name('v1.enrolments.course-modes');
-    Route::apiResource('modes-of-study', ModeOfStudyController::class)->names('v1.modes-of-study');
+    Route::apiResource('modes-of-study', ModeOfStudyController::class)->only(['index'])->names('v1.modes-of-study');
     Route::get('dropdowns/institution-departments', [StudentApplicationDropdownController::class, 'institutionDepartments'])->name('v1.dropdowns.institution-departments');
     Route::get('dropdowns/institution-departments/{institution_department}/levels', [StudentApplicationDropdownController::class, 'departmentLevels'])->name('v1.dropdowns.institution-departments.levels');
     Route::get('dropdowns/department-levels/{department_level}/courses', [StudentApplicationDropdownController::class, 'departmentCourses'])->name('v1.dropdowns.department-level.courses');

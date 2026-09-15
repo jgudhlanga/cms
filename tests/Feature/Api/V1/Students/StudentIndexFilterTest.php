@@ -58,6 +58,7 @@ it('filters students by institution department id array', function (): void {
     $program = createVerifiedStudentApplication('STU-IDX-'.strtoupper(Str::random(4)));
 
     $user = User::factory()->create(['tenant_id' => $program->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     createStudentEnrolmentForProgram($program);
@@ -120,6 +121,7 @@ it('filters students by gender', function (): void {
     createStudentEnrolmentForProgram($femaleProgram);
 
     $user = User::factory()->create(['tenant_id' => $maleProgram->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $maleResponse = $this->getJson(route('v1.students.index').'?gender=male');
@@ -162,6 +164,7 @@ it('returns the same distinct student count in index meta and stats when a stude
     createStudentEnrolmentForProgram($program);
 
     $user = User::factory()->create(['tenant_id' => $program->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $indexResponse = $this->getJson(route('v1.students.index'));
@@ -192,6 +195,7 @@ it('filters students by apprentice type', function (): void {
     ]);
 
     $user = User::factory()->create(['tenant_id' => $directProgram->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $apprenticeResponse = $this->getJson(route('v1.students.index').'?student_type=apprentice');
@@ -223,6 +227,7 @@ it('matches filtered stats total with index meta total when student type filter 
     ]);
 
     $user = User::factory()->create(['tenant_id' => $directProgram->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $indexResponse = $this->getJson(route('v1.students.index').'?student_type=apprentice');
@@ -249,6 +254,7 @@ it('filters students by sponsored status', function (): void {
     ]);
 
     $user = User::factory()->create(['tenant_id' => $sponsoredProgram->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $sponsoredResponse = $this->getJson(route('v1.students.index').'?sponsored=sponsored');
@@ -281,6 +287,7 @@ it('matches filtered stats total with index meta total when sponsored filter is 
     ]);
 
     $user = User::factory()->create(['tenant_id' => $sponsoredProgram->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $indexResponse = $this->getJson(route('v1.students.index').'?sponsored=sponsored');
@@ -309,6 +316,7 @@ it('filters students by disability status', function (): void {
     createStudentEnrolmentForProgram($nullProgram);
 
     $user = User::factory()->create(['tenant_id' => $yesProgram->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $yesResponse = $this->getJson(route('v1.students.index').'?disability=yes');
@@ -341,6 +349,7 @@ it('matches filtered stats total with index meta total when disability filter is
     createStudentEnrolmentForProgram($noProgram);
 
     $user = User::factory()->create(['tenant_id' => $yesProgram->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $indexResponse = $this->getJson(route('v1.students.index').'?disability=yes');
@@ -392,6 +401,7 @@ it('requires department, level, and mode to match on the same enrolment', functi
         ->update(['mode_of_study_id' => $ojet->id]);
 
     $user = User::factory()->create(['tenant_id' => $matchedProgram->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $query = http_build_query([

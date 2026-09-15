@@ -56,6 +56,7 @@ class UserController extends Controller
     public function store(UserRequest $request)
     {
         $this->authorize('create', User::class);
+        $this->authorize('assignRoles', [User::class, null, (array) $request->input('role_ids')]);
         $tenantId = request()->user()->tenant_id;
         $this->repository->create(UserDto::fromUserRequest($request, $tenantId, StatusEnum::ACTIVE->id()));
     }
@@ -88,6 +89,7 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         $this->authorize('update', $user);
+        $this->authorize('assignRoles', [$user, (array) $request->input('role_ids')]);
         $this->repository->update($user, UpdateUserDto::fromUpdateUserRequest($request));
     }
 
@@ -112,6 +114,8 @@ class UserController extends Controller
 
     public function storeStaffUser(StaffRequest $request)
     {
+        $this->authorize('create', User::class);
+        $this->authorize('assignRoles', [User::class, null, (array) $request->input('role_ids')]);
         $staff = $this->staffRepository->create(CreateStaffDto::fromStaffRequest($request));
 
         return to_route('users.show', ['user' => $staff->user_id]);
@@ -119,6 +123,8 @@ class UserController extends Controller
 
     public function updateStaffUser(StaffRequest $request, User $user)
     {
+        $this->authorize('update', $user);
+        $this->authorize('assignRoles', [$user, (array) $request->input('role_ids')]);
         $staff = $user->staffProfile;
         $this->staffRepository->update(
             $staff,

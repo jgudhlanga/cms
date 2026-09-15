@@ -43,6 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
             EnsureFrontendRequestsAreStateful::class,
             RestorePreviousUrlAfterApiRequest::class,
         ]);
+        $middleware->throttleApi();
         $middleware->alias([
             'redirect.student' => RedirectStudentMiddleware::class,
             'registration.open' => EnsureRegistrationOpen::class,
