@@ -19,16 +19,19 @@ import { InstitutionDepartment, ModeOfStudy } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { errorAlert } from '@/lib/alerts';
+import { errorAlert, openModal } from '@/lib/alerts';
+import { APP_MODULE_KEYS } from '@/lib/constants';
+import { buildDepartmentClassesActionGroups } from '@/lib/classActionMenu';
 import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { hasAbility } from '@/lib/permissions';
-import { Head, Link as InertiaLink, router, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { BaseButton } from '@/components/core/button';
 import BaseAlert from '@/components/core/alert/BaseAlert.vue';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { computed, toRefs } from 'vue';
 import AcademicCalendarClassPreviewCard from './partials/AcademicCalendarClassPreviewCard.vue';
 import AcademicCalendarClassStaffingSummaryCard from './partials/AcademicCalendarClassStaffingSummaryCard.vue';
+import LecturerInChargeAssignModal from './partials/LecturerInChargeAssignModal.vue';
 import AssessmentCalendarWindowsList from '@/components/assessments/AssessmentCalendarWindowsList.vue';
 import type { AssessmentCalendarWindow } from '@/types/assessments';
 
@@ -53,8 +56,14 @@ const props = withDefaults(
         canViewCourseWork?: boolean;
         canExportClassList?: boolean;
         assessmentWindows?: AssessmentCalendarWindow[];
+        lecturerInCharge?: { staffId: number; userId: number | null; name: string } | null;
+        canAssignLecturerInCharge?: boolean;
+        canViewCourseWorkProgress?: boolean;
     }>(),
     {
+        lecturerInCharge: null,
+        canAssignLecturerInCharge: false,
+        canViewCourseWorkProgress: false,
         canAssignStaffing: false,
         canViewCourseWork: false,
         canExportClassList: false,
@@ -74,21 +83,29 @@ const props = withDefaults(
 
 const { department, academicCalendar, level, course, mode, classConfig, previewClasses, generationContext } = toRefs(props);
 
-const canOpenCourseWorkMarksheet = computed(
-    () =>
-        props.canViewCourseWork
-        && classConfig.value != null
-        && (generationContext.value.populatedExistingClassCount > 0
-            || previewClasses.value.some((preview) => preview.academicCalendarClassId != null)),
-);
-
 const exportablePreviewClasses = computed(() =>
     previewClasses.value.filter((preview) => preview.academicCalendarClassId != null),
 );
 
-const canExportClassLists = computed(
-    () => props.canExportClassList && exportablePreviewClasses.value.length > 0,
+/**
+ * Permission and state are kept apart here: the `can*` flags decide whether an
+ * action is offered at all, while `hasGeneratedClasses` only decides whether the
+ * offered action is currently usable. Fusing them would make an action the user
+ * is allowed to take look identical to one they are not.
+ */
+const hasGeneratedClasses = computed(
+    () =>
+        generationContext.value.populatedExistingClassCount > 0
+        || previewClasses.value.some((preview) => preview.academicCalendarClassId != null),
 );
+
+const canOpenCourseWorkMarksheet = computed(() => props.canViewCourseWork && classConfig.value != null);
+
+const canExportClassLists = computed(() => props.canExportClassList);
+
+const openLecturerInChargeModal = (): void => {
+    openModal({ name: APP_MODULE_KEYS.lecturer_in_charge_assign });
+};
 
 const classConfigQuery = computed((): Record<string, string> => {
     const context = generationContext.value;
@@ -113,19 +130,31 @@ const progressionImportUrl = (action: 'complete-level' | 'advance-phase') =>
         ...classConfigQuery.value,
     });
 
-const progressionImportTemplateUrl = (action: 'complete-level' | 'advance-phase') =>
-    route('academic-calendars.department-classes.progression-import.template', {
-        institution_department: String(department.value.id),
-        calendar_year: String(academicCalendar.value.attributes.calendarYear),
-        action,
-        ...classConfigQuery.value,
-    });
-
 const courseWorkMarksheetUrl = computed(() =>
     route('academic-calendars.department-classes.course-work-marksheet', {
         institution_department: String(department.value.id),
         calendar_year: String(academicCalendar.value.attributes.calendarYear),
         ...classConfigQuery.value,
+    }),
+);
+
+const actionGroups = computed(() =>
+    buildDepartmentClassesActionGroups({
+        canManageProgressionImport: canManageProgressionImport.value,
+        canExportClassList: canExportClassLists.value,
+        canViewCourseWork: canOpenCourseWorkMarksheet.value,
+        canViewAssessmentCalendar: hasAbility(['viewAny:department-assessment-calendar', 'view:department-assessment-calendar']),
+        hasGeneratedClasses: hasGeneratedClasses.value,
+        advancePhaseUrl: progressionImportUrl('advance-phase'),
+        completeLevelUrl: progressionImportUrl('complete-level'),
+        courseWorkMarksheetUrl: courseWorkMarksheetUrl.value,
+        canViewCourseWorkProgress: props.canViewCourseWorkProgress,
+        courseWorkProgressUrl: classConfig.value ? route('teaching.course-work-progress.show', { class_config: classConfig.value.id }) : null,
+        assessmentCalendarUrl: route('department-assessment-calendars.index', {
+            department: String(department.value.id),
+            calendar_year: String(academicCalendar.value.attributes.calendarYear),
+        }),
+        onExportClassLists: openClassListExportModal,
     }),
 );
 
@@ -310,6 +339,9 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                 :staffing-summary="staffingSummary"
                 :selected-semester-id="selectedSemesterId"
                 :semester-config-has-syllabi="semesterConfigHasSyllabi"
+                :lecturer-in-charge-name="lecturerInCharge?.name ?? null"
+                :can-assign-lecturer-in-charge="canAssignLecturerInCharge"
+                @assign-lecturer-in-charge="openLecturerInChargeModal"
             />
 
             <div
@@ -329,64 +361,8 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                     :items="enrolmentLegend"
                     :align="'start'"
                 />
-                <div class="flex flex-wrap items-center gap-1.5 sm:justify-end">
-                    <a
-                        v-if="canManageProgressionImport"
-                        :href="progressionImportTemplateUrl('complete-level')"
-                        class="inline-flex"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <BaseButton
-                            type="button"
-                            :title="$t('academic_calendar.progression_import_download_template')"
-                            classes="rounded-full"
-                            :variant="ColorVariant.secondary"
-                            :size="ButtonSize.xs"
-                        />
-                    </a>
-                    <InertiaLink
-                        v-if="canManageProgressionImport"
-                        :href="progressionImportUrl('advance-phase')"
-                    >
-                        <BaseButton
-                            type="button"
-                            :title="$t('academic_calendar.progression_import_action_advance_phase')"
-                            classes="rounded-full"
-                            :variant="ColorVariant.primary_outline"
-                            :size="ButtonSize.xs"
-                        />
-                    </InertiaLink>
-                    <InertiaLink
-                        v-if="canManageProgressionImport"
-                        :href="progressionImportUrl('complete-level')"
-                    >
-                        <BaseButton
-                            type="button"
-                            :title="$t('academic_calendar.progression_import_action_complete_level')"
-                            classes="rounded-full"
-                            :variant="ColorVariant.primary_outline"
-                            :size="ButtonSize.xs"
-                        />
-                    </InertiaLink>
-                    <BaseButton
-                        v-if="canExportClassLists"
-                        type="button"
-                        :title="$t('academic_calendar.export_class_lists')"
-                        classes="rounded-full"
-                        :variant="ColorVariant.primary_outline"
-                        :size="ButtonSize.xs"
-                        @click="openClassListExportModal"
-                    />
-                    <InertiaLink v-if="canOpenCourseWorkMarksheet" :href="courseWorkMarksheetUrl">
-                        <BaseButton
-                            type="button"
-                            :title="$t('academic_calendar.course_work_open_marksheet')"
-                            classes="rounded-full"
-                            :variant="ColorVariant.primary_outline"
-                            :size="ButtonSize.xs"
-                        />
-                    </InertiaLink>
+                <HeaderActionGroup class="shrink-0 self-start sm:self-auto">
+                    <DropdownButton :groups="actionGroups" :size="ButtonSize.xs" :variant="ColorVariant.primary_outline" />
                     <BaseButton
                         :title="$t(classActionTitle)"
                         :disabled="!hasNewStudentsToAssign || form.processing"
@@ -395,7 +371,7 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                         @click="saveClasses"
                         classes="rounded-full"
                     />
-                </div>
+                </HeaderActionGroup>
             </div>
 
             <BaseAlert
@@ -428,5 +404,12 @@ const onRemoveTutor = async (classId: number): Promise<void> => {
                 :classes="exportablePreviewClasses"
             />
         </div>
+        <LecturerInChargeAssignModal
+            v-if="classConfig && canAssignLecturerInCharge"
+            :department-id="department.id!"
+            :calendar-year="String(academicCalendar.attributes.calendarYear)"
+            :class-config-id="classConfig.id"
+            :current="lecturerInCharge ? { staffId: lecturerInCharge.staffId, name: lecturerInCharge.name } : null"
+        />
     </PageContainer>
 </template>

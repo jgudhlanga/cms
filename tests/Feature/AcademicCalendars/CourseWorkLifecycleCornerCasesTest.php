@@ -18,6 +18,7 @@ use App\Services\AcademicCalendars\CourseWorkImportTemplateService;
 use App\Services\Assessments\AssessmentCalendarWindowService;
 use App\Services\Assessments\MissingMarksQueryService;
 use App\Support\AcademicCalendars\CourseWorkGradeBand;
+use App\Support\Rbac\UserAccessScope;
 use Carbon\Carbon;
 use Database\Seeders\AcademicCalendars\ClassMetaDataTypeSeeder;
 use Illuminate\Support\Facades\Cache;
@@ -673,10 +674,16 @@ describe('missing marks corners', function () {
         $rows = app(MissingMarksQueryService::class)->forCalendarForCurrentUser($calendar);
         expect($rows)->toHaveCount(1);
 
-        $otherDepartment = $context['institutionDepartment']->replicate();
-        $otherDepartment->department_code = 'OTHER-'.uniqid();
-        $otherDepartment->save();
+        // Departments are unique per tenant and catalogue department, so the other department needs its own catalogue entry.
+        $otherDepartment = \App\Models\Institution\InstitutionDepartment::query()->create([
+            'tenant_id' => $context['tenant']->id,
+            'department_id' => \App\Models\Institution\Department::factory()->create(['name' => 'Other Department '.uniqid()])->id,
+            'department_code' => 'OTHER-'.uniqid(),
+            'description' => 'Other department',
+        ]);
         $vpStaff->institutionDepartments()->sync([$otherDepartment->id]);
+        // Access scopes are memoized per request; this test changes departments mid-request.
+        UserAccessScope::flush();
 
         $rowsOutside = app(MissingMarksQueryService::class)->forCalendarForCurrentUser($calendar);
         expect($rowsOutside)->toBe([]);
@@ -895,7 +902,7 @@ describe('windows and locks', function () {
         ], ['academic_calendar_id' => $calendarId])->assertCreated();
     });
 
-    test('mark-only modules remain editable after assessment calendars lock', function () {
+    test('mark-only modules lock once every assessment window for the class mode has closed', function () {
         $context = createCourseWorkLifecycleActors(createCourseWorkJsonApiContext());
         $calendarId = prepareLecturerCalendar($context);
         $context['module']->update(['capture_mark_only' => true]);
@@ -909,11 +916,14 @@ describe('windows and locks', function () {
             'end_date' => now()->subDay()->toDateString(),
         ]);
 
-        jsonApiStoreCourseWorkMark($context['lecturerUser'], $context, [
+        $response = jsonApiStoreCourseWorkMark($context['lecturerUser'], $context, [
             'studentEnrolmentId' => $context['studentEnrolment']->id,
             'courseSyllabusModuleId' => $context['module']->id,
             'mark' => 77,
-        ], ['academic_calendar_id' => $calendarId])->assertCreated();
+        ], ['academic_calendar_id' => $calendarId]);
+
+        $response->assertStatus(422);
+        expect(json_encode($response->json()))->toContain('Due date passed');
     });
 });
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Authentication;
 
+use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\StatusEnum;
 use App\Enums\Shared\TenantEnum;
 use App\Http\Controllers\Controller;
@@ -14,13 +15,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
-use App\Enums\Rbac\RoleEnum;
 
 class AuthenticationController extends Controller
 {
     public function login(LoginRequest $request): JsonResponse
     {
-        if (! Auth::guard('web')->attempt($request->only('email', 'password'))) {
+        $request->ensureIsNotRateLimited();
+
+        if (! Auth::guard('web')->validate($request->only('email', 'password'))) {
+            $request->hitLoginRateLimit();
+
             return response()->json([
                 'success' => false,
                 'data' => [
@@ -31,7 +35,22 @@ class AuthenticationController extends Controller
             ]);
         }
 
+        $request->clearLoginRateLimit();
+
         $user = User::where('email', $request->string('email')->toString())->firstOrFail();
+
+        if ((int) $user->status_id === StatusEnum::INACTIVE->id()) {
+            return response()->json([
+                'success' => false,
+                'data' => [
+                    'token' => null,
+                    'invalidCredentials' => false,
+                    'accountInactive' => true,
+                    'user' => null,
+                ],
+            ]);
+        }
+
         $user->load(['tenant', 'status', 'roles', 'studentProfile']);
         Auth::login($user);
 
@@ -63,7 +82,6 @@ class AuthenticationController extends Controller
 
         $user->email_verified_at = now();
         $user->save();
-
 
         $user->load(['tenant', 'status', 'roles', 'studentProfile']);
         Auth::login($user);

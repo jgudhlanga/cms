@@ -37,23 +37,16 @@ export default defineConfig({
                         return;
                     }
 
-                    if (id.includes('@wangeditor') || id.includes('wangeditor')) {
+                    if (id.includes('@wangeditor')) {
                         return 'editor';
                     }
 
-                    if (id.includes('chart.js') || id.includes('vue-chart') || id.includes('apexcharts')) {
+                    if (id.includes('chart.js')) {
                         return 'charts';
                     }
 
-                    if (id.includes('@fullcalendar') || id.includes('fullcalendar')) {
-                        return 'calendar';
-                    }
-
-                    if (id.includes('exceljs') || id.includes('xlsx') || id.includes('file-saver')) {
-                        return 'spreadsheet';
-                    }
-
-                    if (id.includes('@vue') || id.includes('vue/') || id.includes('vue-router') || id.includes('@inertiajs')) {
+                    // Only the framework core. A broad match pulled every vue-* package into this chunk.
+                    if (/node_modules\/(vue|@vue|@inertiajs|pinia)\//.test(id)) {
                         return 'vue-vendor';
                     }
                 },

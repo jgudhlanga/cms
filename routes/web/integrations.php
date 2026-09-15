@@ -4,19 +4,25 @@ use App\Http\Controllers\Integrations\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('integrations/payments/result', [PaymentController::class, 'result'])
+    ->middleware('throttle:60,1')
     ->name('integrations.payments.result');
 
 Route::prefix('integrations')->middleware('auth')->group(function () {
-    # ==================================== PAYMENTS ======================================================
+    // ==================================== PAYMENTS ======================================================
     Route::prefix('payments')->group(function () {
         Route::post('initiate', [PaymentController::class, 'initiatePayment'])->name('integrations.payments.initiate');
         Route::get('feedback', [PaymentController::class, 'feedback'])->name('integrations.payments.feedback');
         Route::get('cancel', [PaymentController::class, 'cancelled'])->name('integrations.payments.cancel');
         Route::get('failure', [PaymentController::class, 'failed'])->name('integrations.payments.failure');
-        Route::post('payment-status/{order_reference}', [PaymentController::class, 'checkStatus'])->name('integrations.payments.check-status');
         Route::post('check-payment-status-for-current-user', [PaymentController::class, 'checkPaymentStatusForCurrenUser'])->name('check-payment-status-for-current-user');
-        Route::post('update-status', [PaymentController::class, 'updateLedgerRecords'])->name('integrations.payments.update-status');
-        Route::get('payment-status', [PaymentController::class, 'createCheckStatus'])->name('integrations.payments.check-status-create');
-        Route::get('ledger-entries/{search}', [PaymentController::class, 'getLedgerEntries'])->name('integrations.payments.ledger-entries');
+
+        // Staff payment tools. Gate on the route, not inside the controller: result() and feedback()
+        // call updateLedgerRecords()/checkStatus() internally without a staff user.
+        Route::middleware('can:managePaymentTools')->group(function () {
+            Route::post('payment-status/{order_reference}', [PaymentController::class, 'checkStatus'])->name('integrations.payments.check-status');
+            Route::post('update-status', [PaymentController::class, 'updateLedgerRecords'])->name('integrations.payments.update-status');
+            Route::get('payment-status', [PaymentController::class, 'createCheckStatus'])->name('integrations.payments.check-status-create');
+            Route::get('ledger-entries/{search}', [PaymentController::class, 'getLedgerEntries'])->name('integrations.payments.ledger-entries');
+        });
     });
 });

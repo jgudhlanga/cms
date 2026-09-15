@@ -2,7 +2,8 @@ import { RadioGroupOption } from '@/types/forms';
 
 const DEFAULT_AVATAR: string = '/assets/images/user.png';
 const DEFAULT_IMAGE: string = '/assets/images/object.svg';
-const LOGO: string = '/assets/images/logo.png';
+// WebP for the browser (87 KB vs 570 KB); PDFs keep using logo.png.
+const LOGO: string = '/assets/images/logo.webp';
 const PAYMENT_METHODS: string = '/assets/images/payment_methods.png';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_VERSION = 'v1';
@@ -53,6 +54,13 @@ const APP_MODULE_KEYS = {
     intake_periods: 'intake_periods',
     assessment_types: 'assessment_types',
     assessment_type_calendars: 'assessment_type_calendars',
+    department_assessment_calendars: 'department_assessment_calendars',
+    course_work_extension_request: 'course_work_extension_request',
+    course_work_extension_decision: 'course_work_extension_decision',
+    missing_marks_escalate: 'missing_marks_escalate',
+    course_work_progress_report: 'course_work_progress_report',
+    course_work_progress_acknowledge: 'course_work_progress_acknowledge',
+    lecturer_in_charge_assign: 'lecturer_in_charge_assign',
     employment_types: 'employment_types',
     id_types: 'id_types',
     role_groups: 'role_groups',

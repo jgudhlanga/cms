@@ -161,10 +161,11 @@ test('lecturer cannot store course work marks for unassigned module', function (
         ->assertForbidden();
 });
 
-test('academic admin course work access is unchanged without lecturer assignment', function () {
+test('academic admin with capture for others permission can store marks without lecturer assignment', function () {
     $context = createCourseWorkJsonApiContext();
     Permission::findOrCreate('create:course-work', 'web');
     $context['user']->givePermissionTo('create:course-work');
+    prepareLecturerCalendar($context);
     Sanctum::actingAs($context['user']);
 
     $this->jsonApi('course-work-marks')
@@ -181,6 +182,37 @@ test('academic admin course work access is unchanged without lecturer assignment
             'filter' => ['academicCalendarClass' => $context['academicCalendarClass']->id],
         ]))
         ->assertCreated();
+});
+
+test('academic admin without capture for others permission can view but not store marks for unassigned modules', function () {
+    $context = createCourseWorkJsonApiContext();
+    Permission::findOrCreate('create:course-work', 'web');
+    Permission::findOrCreate('viewAny:course-work', 'web');
+    $context['user']->givePermissionTo(['create:course-work', 'viewAny:course-work']);
+    $context['user']->revokePermissionTo('captureForOthers:course-work');
+    prepareLecturerCalendar($context);
+    Sanctum::actingAs($context['user']->fresh());
+
+    $this->jsonApi()
+        ->get(route('v1.json.course-work-marks.tree', [
+            'filter' => ['academicCalendarClass' => $context['academicCalendarClass']->id],
+        ]))
+        ->assertSuccessful();
+
+    $this->jsonApi('course-work-marks')
+        ->withData([
+            'type' => 'course-work-marks',
+            'attributes' => [
+                'studentEnrolmentId' => $context['studentEnrolment']->id,
+                'courseSyllabusModuleId' => $context['module']->id,
+                'assessmentTypeId' => $context['assessmentType']->id,
+                'mark' => 77,
+            ],
+        ])
+        ->post(route('v1.json.course-work-marks.store', [
+            'filter' => ['academicCalendarClass' => $context['academicCalendarClass']->id],
+        ]))
+        ->assertForbidden();
 });
 
 test('assigned lecturer can export class list and marksheet', function () {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Actions\Institution\SyncProgrammeSemestersForOfferingAction;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
+use App\Enums\Institution\LevelEnum;
 use App\Enums\Shared\ClassListTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
@@ -180,6 +181,38 @@ if (! function_exists('enrolStudentOnPathwayApplication')) {
     }
 }
 
+if (! function_exists('attachSdpOfferingToPathwayCourse')) {
+    function attachSdpOfferingToPathwayCourse(StudentApplication $application, bool $syncStructure = true): DepartmentLevelCourse
+    {
+        $sdpLevel = Level::factory()->create([
+            'name' => LevelEnum::SDP->value,
+            'position' => 9,
+            'calendar_type' => AcademicCalendarTypeEnum::SEMESTER,
+        ]);
+
+        $sdpDepartmentLevel = DepartmentLevel::query()->create([
+            'tenant_id' => $application->tenant_id,
+            'institution_department_id' => $application->institution_department_id,
+            'level_id' => $sdpLevel->id,
+        ]);
+
+        $sdp = DepartmentLevelCourse::query()->create([
+            'department_course_id' => $application->department_course_id,
+            'department_level_id' => $sdpDepartmentLevel->id,
+            'duration_years' => 2,
+            'taught_semester_count' => 2,
+            'includes_industrial_attachment' => true,
+            'attachment_semester_count' => 2,
+        ]);
+
+        if ($syncStructure) {
+            app(SyncProgrammeSemestersForOfferingAction::class)->execute($sdp);
+        }
+
+        return $sdp->fresh(['programmeSemesters', 'departmentLevel.level']) ?? $sdp;
+    }
+}
+
 it('marks required prior NC as implied complete when the student is only on ND', function (): void {
     $context = createItPathwayContext(ndRequiresNc: true);
     $pathways = app(StudentCoursePathwayProgressService::class)->buildForStudent($context['student']);
@@ -301,4 +334,90 @@ it('includes pathways in the programmes profile payload', function (): void {
 
     expect($payload)->toHaveKeys(['programmes', 'pathways'])
         ->and($payload['pathways'])->toHaveCount(1);
+});
+
+it('does not attach SDP after an NC enrolment of the same course', function (): void {
+    $application = createVerifiedStudentApplication('PATH-NC-'.Str::upper(Str::random(4)));
+    $application->departmentLevel->level->update([
+        'name' => LevelEnum::NC->value,
+        'position' => 5,
+        'calendar_type' => AcademicCalendarTypeEnum::SEMESTER,
+    ]);
+
+    $nc = DepartmentLevelCourse::query()
+        ->where('department_course_id', $application->department_course_id)
+        ->where('department_level_id', $application->department_level_id)
+        ->firstOrFail();
+    $nc->update([
+        'duration_years' => 3,
+        'taught_semester_count' => 4,
+        'includes_industrial_attachment' => true,
+        'attachment_semester_count' => 2,
+    ]);
+    app(SyncProgrammeSemestersForOfferingAction::class)->execute($nc);
+    attachSdpOfferingToPathwayCourse($application);
+    enrolStudentOnPathwayApplication($application);
+
+    $student = $application->student->fresh(['applications', 'enrolments.studentSemesters.studentEnrolmentStatus'])
+        ?? $application->student;
+    $pathways = app(StudentCoursePathwayProgressService::class)->buildForStudent($student);
+
+    expect(collect($pathways[0]['stages'])->pluck('levelName')->all())->toBe(['NC']);
+});
+
+it('keeps HEXCO NC-ND-HND together when the same course is also offered as SDP', function (): void {
+    $context = createItPathwayContext(ndRequiresNc: true);
+    attachSdpOfferingToPathwayCourse($context['ndApplication']);
+
+    $pathways = app(StudentCoursePathwayProgressService::class)->buildForStudent($context['student']);
+
+    expect(collect($pathways[0]['stages'])->pluck('levelName')->all())->toBe(['NC', 'ND', 'HND']);
+});
+
+it('keeps an SDP enrolment on the SDP journey even when the course is also offered as NC', function (): void {
+    $application = createVerifiedStudentApplication('PATH-SDP-'.Str::upper(Str::random(4)));
+    $application->departmentLevel->level->update([
+        'name' => LevelEnum::SDP->value,
+        'position' => 9,
+        'calendar_type' => AcademicCalendarTypeEnum::SEMESTER,
+    ]);
+
+    $sdp = DepartmentLevelCourse::query()
+        ->where('department_course_id', $application->department_course_id)
+        ->where('department_level_id', $application->department_level_id)
+        ->firstOrFail();
+    $sdp->update([
+        'duration_years' => 2,
+        'taught_semester_count' => 2,
+        'includes_industrial_attachment' => true,
+        'attachment_semester_count' => 2,
+    ]);
+    app(SyncProgrammeSemestersForOfferingAction::class)->execute($sdp);
+
+    $ncLevel = Level::factory()->create([
+        'name' => LevelEnum::NC->value,
+        'position' => 5,
+        'calendar_type' => AcademicCalendarTypeEnum::SEMESTER,
+    ]);
+    $ncDepartmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $application->tenant_id,
+        'institution_department_id' => $application->institution_department_id,
+        'level_id' => $ncLevel->id,
+    ]);
+    $nc = DepartmentLevelCourse::query()->create([
+        'department_course_id' => $application->department_course_id,
+        'department_level_id' => $ncDepartmentLevel->id,
+        'duration_years' => 3,
+        'taught_semester_count' => 4,
+        'includes_industrial_attachment' => true,
+        'attachment_semester_count' => 2,
+    ]);
+    app(SyncProgrammeSemestersForOfferingAction::class)->execute($nc);
+    enrolStudentOnPathwayApplication($application);
+
+    $student = $application->student->fresh(['applications', 'enrolments.studentSemesters.studentEnrolmentStatus'])
+        ?? $application->student;
+    $pathways = app(StudentCoursePathwayProgressService::class)->buildForStudent($student);
+
+    expect(collect($pathways[0]['stages'])->pluck('levelName')->all())->toBe(['SDP']);
 });

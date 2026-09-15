@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '@/lib/constants';
+import { forgetCachedPages } from '@/lib/prefetch';
 import customAxios from '@/services/http-init';
 import { AxiosRequestConfig } from 'axios';
 
@@ -18,7 +19,10 @@ class HttpService implements IHttpService {
 
     async delete(url: string, config?: AxiosRequestConfig): Promise<any> {
         try {
-            return await customAxios(this.baseUrl()).delete(url, config);
+            const response = await customAxios(this.baseUrl()).delete(url, config);
+            forgetCachedPages();
+
+            return response;
         } catch (error) {
             throw error;
         }
@@ -36,6 +40,7 @@ class HttpService implements IHttpService {
     async post(url: string, data: any, config?: AxiosRequestConfig): Promise<any> {
         try {
             const response = await customAxios(this.baseUrl()).post(url, data, config);
+            forgetCachedPages();
             return response.data;
         } catch (error) {
             throw error;
@@ -45,6 +50,7 @@ class HttpService implements IHttpService {
     async put(url: string, data: any, config?: AxiosRequestConfig): Promise<any> {
         try {
             const response = await customAxios(this.baseUrl()).put(url, data, config);
+            forgetCachedPages();
             return response.data;
         } catch (error) {
             throw error;
@@ -54,6 +60,7 @@ class HttpService implements IHttpService {
     async patch(url: string, data: any, config?: AxiosRequestConfig): Promise<any> {
         try {
             const response = await customAxios(this.baseUrl()).patch(url, data, config);
+            forgetCachedPages();
             return response.data;
         } catch (error) {
             throw error;

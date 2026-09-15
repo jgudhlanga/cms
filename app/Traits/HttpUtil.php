@@ -54,8 +54,22 @@ trait HttpUtil
         $model->update(['image_id' => $image->id]);
     }
 
+    /**
+     * Uploaded images are served from the public disk, so only real raster images are accepted.
+     */
+    protected function validateImageUpload(Request $request): void
+    {
+        if ($request->has('image') && ! is_null($request->image)) {
+            $request->validate([
+                'image' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            ]);
+        }
+    }
+
     protected function saveRecord(Model $model, Request $request, string $resource, $returnModel = false): JsonResponse|Model
     {
+        $this->validateImageUpload($request);
+
         try {
             DB::beginTransaction();
             $model->fill(self::getRequestData($request, $model::getStaticTableColumns()))->save();
@@ -79,6 +93,8 @@ trait HttpUtil
 
     protected function updateRecord(Model $model, Request $request, string $resource, $returnModel = false): JsonResponse|Model
     {
+        $this->validateImageUpload($request);
+
         try {
             DB::beginTransaction();
             $model->update(self::getRequestData($request, $model::getStaticTableColumns()));

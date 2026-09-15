@@ -17,6 +17,7 @@ use App\Models\Shared\DocumentType;
 use App\Models\Shared\FeeType;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
+use App\Services\Students\StudentOfferLetterService;
 use Carbon\Carbon;
 
 function seedOfferLetterDocumentPrerequisites(StudentApplication $studentApplication): void
@@ -69,9 +70,7 @@ it('allows offer letter download for applications in an active open intake', fun
 
     seedOfferLetterDocumentPrerequisites($studentApplication);
 
-    $response = $this->get(route('documents.offer-letter', [
-        'student_application' => $studentApplication->id,
-    ]));
+    $response = $this->get(app(StudentOfferLetterService::class)->signedDownloadUrl($studentApplication->id));
 
     $response->assertSuccessful();
     expect($response->headers->get('content-type'))->toContain('application/pdf');
@@ -89,9 +88,7 @@ it('allows offer letter download for applications on the latest closed intake', 
 
     seedOfferLetterDocumentPrerequisites($studentApplication);
 
-    $response = $this->get(route('documents.offer-letter', [
-        'student_application' => $studentApplication->id,
-    ]));
+    $response = $this->get(app(StudentOfferLetterService::class)->signedDownloadUrl($studentApplication->id));
 
     $response->assertSuccessful();
     expect($response->headers->get('content-type'))->toContain('application/pdf');
@@ -109,9 +106,7 @@ it('allows offer letter download for applications on the latest suspended intake
 
     seedOfferLetterDocumentPrerequisites($studentApplication);
 
-    $response = $this->get(route('documents.offer-letter', [
-        'student_application' => $studentApplication->id,
-    ]));
+    $response = $this->get(app(StudentOfferLetterService::class)->signedDownloadUrl($studentApplication->id));
 
     $response->assertSuccessful();
     expect($response->headers->get('content-type'))->toContain('application/pdf');
@@ -139,9 +134,7 @@ it('allows offer letter download for applications in a past closed intake that i
 
     seedOfferLetterDocumentPrerequisites($studentApplication);
 
-    $response = $this->get(route('documents.offer-letter', [
-        'student_application' => $studentApplication->id,
-    ]));
+    $response = $this->get(app(StudentOfferLetterService::class)->signedDownloadUrl($studentApplication->id));
 
     $response->assertSuccessful();
     expect($response->headers->get('content-type'))->toContain('application/pdf');
@@ -172,9 +165,7 @@ it('allows offer letter download for OJET applications on a past closed intake t
 
     seedOfferLetterDocumentPrerequisites($studentApplication);
 
-    $response = $this->get(route('documents.offer-letter', [
-        'student_application' => $studentApplication->id,
-    ]));
+    $response = $this->get(app(StudentOfferLetterService::class)->signedDownloadUrl($studentApplication->id));
 
     $response->assertSuccessful();
     expect($response->headers->get('content-type'))->toContain('application/pdf');
@@ -199,7 +190,7 @@ it('allows offer letter download while impersonating a student', function (): vo
     $impersonator->givePermissionTo('root:manage');
 
     $this->actingAs($impersonator)
-        ->get(route('impersonate', ['id' => $studentUser->id]))
+        ->post(route('impersonate', ['id' => $studentUser->id]))
         ->assertRedirect();
 
     $response = $this->get(route('documents.offer-letter', [

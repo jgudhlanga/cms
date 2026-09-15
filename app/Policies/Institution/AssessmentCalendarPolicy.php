@@ -27,6 +27,15 @@ class AssessmentCalendarPolicy
         return $user->can('update:assessment-calendar');
     }
 
+    /**
+     * Changing or removing a calendar whose window has already closed would silently reopen or
+     * unlock coursework capture, so it needs a dedicated permission on top of update/delete.
+     */
+    public function updateClosed(User $user, ?AssessmentCalendar $assessmentCalendar = null): bool
+    {
+        return $user->can('updateClosed:assessment-calendar');
+    }
+
     public function delete(User $user, ?AssessmentCalendar $assessmentCalendar = null): bool
     {
         return $user->can('delete:assessment-calendar');

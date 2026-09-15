@@ -50,8 +50,11 @@ if (! function_exists('createCourseWorkJsonApiContext')) {
         $tenant = Tenant::query()->firstOrFail();
         $user = User::factory()->create(['tenant_id' => $tenant->id]);
 
+        // The context user is a college-wide academic administrator who may capture marks for
+        // classes they are not assigned to (the HOD/VP captureForOthers ability).
         Permission::findOrCreate('viewAny:academic-calendars', 'web');
-        $user->givePermissionTo('viewAny:academic-calendars');
+        Permission::findOrCreate('captureForOthers:course-work', 'web');
+        $user->givePermissionTo(['viewAny:academic-calendars', 'captureForOthers:course-work']);
 
         $department = Department::factory()->create(['name' => 'ICT Course Work '.uniqid()]);
         $institutionDepartment = InstitutionDepartment::query()->create([

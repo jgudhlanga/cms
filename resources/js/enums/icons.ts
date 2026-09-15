@@ -111,4 +111,9 @@ export enum IconName {
     accessibility = "accessibility",
     venus = "venus",
     mars = "mars",
+    clipboard_pen = "clipboard_pen",
+    chart_increasing = "chart_increasing",
+    clipboard_check = "clipboard_check",
+    file_warning = "file_warning",
+    calendar_clock = "calendar_clock",
 }

@@ -257,8 +257,16 @@ class LecturerTeachingListService
             'title' => (string) $module->title,
             'code' => (string) ($module->code ?? ''),
             'departmentName' => (string) ($module->courseSyllabus?->institutionDepartment?->department?->name ?? ''),
-            'classes' => $classes->map(function (AcademicCalendarClass $class): array {
+            'classes' => $classes->map(function (AcademicCalendarClass $class) use ($module, $moduleId): array {
                 $config = $class->classConfig;
+                $lock = $this->courseWorkAssessmentLockService->locksForClassAndModules($class, [$module])[$moduleId] ?? [
+                    'moduleId' => $moduleId,
+                    'hasEditableCourseWork' => true,
+                    'allAssessmentTypesLocked' => false,
+                    'lockedAssessmentTypeIds' => [],
+                    'lockedAssessmentTypeNames' => [],
+                    'readOnlyMessage' => null,
+                ];
 
                 return [
                     'id' => (int) $class->id,
@@ -266,6 +274,7 @@ class LecturerTeachingListService
                     'classConfigId' => (int) ($config?->id ?? 0),
                     'institutionDepartmentId' => (int) ($config?->institution_department_id ?? 0),
                     'calendarYear' => (string) ($config?->calendar_year ?? ''),
+                    'courseWorkLock' => $lock,
                 ];
             })->values()->all(),
         ];

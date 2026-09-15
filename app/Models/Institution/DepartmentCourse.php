@@ -64,6 +64,11 @@ class DepartmentCourse extends Model
 
     public function requirementForLevel(int $departmentLevelId): ?ApplicationCourseRequirement
     {
+        // Enrolment lists eager load requirements; avoid a query per row.
+        if ($this->relationLoaded('requirements')) {
+            return $this->requirements->firstWhere('department_level_id', $departmentLevelId);
+        }
+
         return $this->requirements()
             ->where('department_level_id', $departmentLevelId)
             ->first();

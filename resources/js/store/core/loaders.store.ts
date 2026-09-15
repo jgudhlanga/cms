@@ -10,5 +10,4 @@ export const useLoadersStore = defineStore('loaders', {
             formProcessing: false,
         };
     },
-    persist: true,
 });

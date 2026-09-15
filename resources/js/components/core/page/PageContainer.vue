@@ -13,6 +13,7 @@ import BackNavigationButton from '@/components/core/button/BackNavigationButton.
 import HeaderActionGroup from '@/components/core/page/HeaderActionGroup.vue';
 import AppPreferencesSheet from '@/components/core/preferences/AppPreferencesSheet.vue';
 import EnvironmentBadge from '@/components/core/util/EnvironmentBadge.vue';
+import NotificationBell from '@/components/core/notifications/NotificationBell.vue';
 import { usePage } from '@inertiajs/vue3';
 import { computed, useSlots } from 'vue';
 
@@ -67,13 +68,14 @@ const backNavigationRowJustifyClass = computed((): string => {
         <div class="flex shrink-0 items-center justify-center gap-2 pr-2 sm:pr-4">
             <RemoveImpersonationButton v-if="isItTrue(page.props.auth.impersonating)" />
             <EnvironmentBadge />
+            <NotificationBell v-if="page.props.auth?.user" />
             <HeaderActionGroup>
                 <LogoutButton />
                 <AppPreferencesSheet />
             </HeaderActionGroup>
         </div>
     </header>
-    <div class="flex h-full min-w-0 w-full max-w-full flex-col overflow-x-clip pb-10">
+    <div class="flex h-full min-w-0 w-full max-w-full flex-col overflow-x-auto pb-10">
         <div
             v-if="showBackNavigationRow"
             class="mb-5 flex items-center gap-4"

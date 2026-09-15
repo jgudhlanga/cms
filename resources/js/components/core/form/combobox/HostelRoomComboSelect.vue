@@ -5,7 +5,7 @@ import { clearFormErrors } from '@/lib/forms';
 import type { HostelRoom, HostelRoomFiltersState } from '@/types/hms';
 import type { SelectOption } from '@/types/utils';
 import type { InertiaForm } from '@inertiajs/vue3';
-import { debounce } from 'lodash';
+import { debounce } from '@/lib/debounce';
 import { computed, onMounted, ref, watch } from 'vue';
 
 interface Props {

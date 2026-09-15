@@ -117,9 +117,20 @@ class RoleController extends Controller
         $this->repository->delete($role, true);
     }
 
-    public function syncPermissions(Role $role, Request $request)
+    /**
+     * @throws AuthorizationException
+     */
+    public function syncPermissions(Role $role, Request $request): void
     {
-        $role->syncPermissions(array_values($request->permissions));
+        $validated = $request->validate([
+            'permissions' => ['present', 'array'],
+            'permissions.*' => ['integer', 'exists:permissions,id'],
+        ]);
+        $permissionIds = array_map('intval', array_values($validated['permissions']));
+
+        $this->authorize('syncPermissions', [$role, $permissionIds]);
+
+        $role->syncPermissions($permissionIds);
         app(UserPermissionMapService::class)->flushAll();
         Cache::forget('rbac_all_permissions');
     }

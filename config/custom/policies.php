@@ -89,6 +89,7 @@ return [
     FinancePolicy::class => [
         'viewFinances',
         'exportToPastel',
+        'managePaymentTools',
     ],
 
     FinanceSettingsPolicy::class => [

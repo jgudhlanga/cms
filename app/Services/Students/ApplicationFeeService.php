@@ -12,11 +12,14 @@ use App\Models\Institution\Level;
 use App\Models\Students\ApplicationFee;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
+use ArrayObject;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
 
 class ApplicationFeeService
 {
+    private const string OPEN_PORTAL_INTAKES = 'students.open-portal-intake-periods';
+
     public function resolveIntakePeriod(?int $intakePeriodId = null): IntakePeriod
     {
         return $this->resolvePortalIntakePeriod($intakePeriodId);
@@ -73,14 +76,29 @@ class ApplicationFeeService
      *
      * @return Collection<int, IntakePeriod>
      */
+    /**
+     * Looked up once per request or queue job: returning-student summaries ask for every student on a
+     * page. Flushed after each request and whenever an intake period changes (IntakePeriod::booted).
+     */
     public function openIntakePeriodsForPortal(): Collection
     {
-        return IntakePeriod::query()
+        app()->scopedIf(self::OPEN_PORTAL_INTAKES, fn (): ArrayObject => new ArrayObject);
+
+        /** @var ArrayObject<int|string, Collection> $lookups */
+        $lookups = app(self::OPEN_PORTAL_INTAKES);
+
+        // Intake queries are tenant scoped by the signed-in user, so each viewer keeps its own result.
+        return $lookups[auth()->id() ?? 'guest'] ??= IntakePeriod::query()
             ->where('is_continuous', false)
             ->where('is_active', true)
             ->where('status', IntakePeriodStatusEnum::Open)
             ->orderByDesc('end_date')
             ->get();
+    }
+
+    public static function forgetOpenIntakePeriodsForPortal(): void
+    {
+        app()->forgetInstance(self::OPEN_PORTAL_INTAKES);
     }
 
     public function latestForUser(User $user): ?ApplicationFee

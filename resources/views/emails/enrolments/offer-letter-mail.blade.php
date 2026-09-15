@@ -10,7 +10,7 @@
 
     NB: This is a system-generated email. Please do not reply directly to this message.
 
-    @component('mail::button', ['url' => url('/documents/offer-letter/' . $applicationId)])
+    @component('mail::button', ['url' => $downloadUrl])
         Download Offer Letter
     @endcomponent
 @endcomponent

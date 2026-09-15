@@ -311,6 +311,9 @@ class PortalController extends Controller
 
     public function registrationConfirmation(User $user): Response
     {
+        // Only the newly registered (logged-in) user may see their own confirmation and email.
+        abort_unless((int) auth()->id() === (int) $user->id, 404);
+
         return Inertia::render('portal/guest/RegistrationConfirmation', [
             'email' => $user->email,
         ]);
@@ -721,9 +724,10 @@ class PortalController extends Controller
     public function viewApplication(StudentApplication $studentApplication): Response
     {
         $this->authorize('manageStudentPersonalDetails');
+        $this->assertOwnsStudentApplication($studentApplication);
         $application = StudentApplicationResource::make($studentApplication);
         $student = StudentResource::make($this->getStudent(request()));
-        $audit = AuditTrailResource::collection($studentApplication->activities);
+        $audit = AuditTrailResource::collection($studentApplication->activities()->with('causer')->get());
 
         return Inertia::render('portal/student/ApplicationTrack', compact('application', 'student', 'audit'));
     }

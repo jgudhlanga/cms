@@ -10,6 +10,7 @@ use App\Http\Requests\Assessments\MissingMarksReportIndexRequest;
 use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Services\Assessments\MissingMarksNotificationService;
 use App\Services\Assessments\MissingMarksReportService;
+use App\Support\Rbac\UserAccessScope;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,9 +33,12 @@ class MissingMarksReportController extends Controller
         $rows = $reportService->rows($request->validated());
         $exportRows = [
             [
+                __('trans.department'),
+                trans_choice('trans.level', 1),
+                trans_choice('trans.course', 1),
+                trans_choice('trans.class', 1),
+                trans_choice('trans.module', 1),
                 __('trans.assessment_type'),
-                __('trans.class'),
-                __('trans.module'),
                 __('assessments.missing_marks_lecturer'),
                 __('dashboard.academic_incomplete'),
                 __('assessments.missing_marks_due_date'),
@@ -44,9 +48,12 @@ class MissingMarksReportController extends Controller
 
         foreach ($rows as $row) {
             $exportRows[] = [
-                $row['assessmentTypeName'],
+                $row['departmentName'],
+                $row['levelName'],
+                $row['courseName'],
                 $row['className'],
-                $row['moduleName'],
+                trim($row['moduleCode'].' · '.$row['moduleName'], ' ·'),
+                $row['assessmentTypeName'],
                 $row['lecturerNames'],
                 $row['incompleteCount'],
                 $row['dueDate'],
@@ -61,10 +68,15 @@ class MissingMarksReportController extends Controller
         MissingMarksEscalateRequest $request,
         MissingMarksNotificationService $notificationService,
     ): RedirectResponse {
-        $calendar = AssessmentCalendar::query()->findOrFail($request->integer('assessment_calendar_id'));
+        $calendar = AssessmentCalendar::query()->with('academicCalendar')->findOrFail($request->integer('assessment_calendar_id'));
+
+        // Escalation runs from a dialog, so problems come back as errors the dialog can show.
+        if ($this->isHistorical($calendar)) {
+            return back()->withErrors(['escalation' => __('assessments.missing_marks_historical_read_only')]);
+        }
 
         if ($notificationService->hasEscalated($calendar)) {
-            return back()->with('error', __('assessments.missing_marks_already_escalated'));
+            return back()->withErrors(['escalation' => __('assessments.missing_marks_already_escalated')]);
         }
 
         $sent = $notificationService->escalateToPrincipal(
@@ -74,7 +86,7 @@ class MissingMarksReportController extends Controller
         );
 
         if (! $sent) {
-            return back()->with('error', __('assessments.missing_marks_escalate_failed'));
+            return back()->withErrors(['escalation' => __('assessments.missing_marks_escalate_failed')]);
         }
 
         return back()->with('success', __('assessments.missing_marks_escalated'));
@@ -84,12 +96,28 @@ class MissingMarksReportController extends Controller
         MissingMarksRemindRequest $request,
         MissingMarksNotificationService $notificationService,
     ): RedirectResponse {
-        $calendar = AssessmentCalendar::query()->findOrFail($request->integer('assessment_calendar_id'));
+        $calendar = AssessmentCalendar::query()->with('academicCalendar')->findOrFail($request->integer('assessment_calendar_id'));
+        $departmentIds = UserAccessScope::for($request->user())->departmentIds();
 
-        if (! $notificationService->remindLecturers($calendar)) {
+        if ($this->isHistorical($calendar)) {
+            return back()->with('error', __('assessments.missing_marks_historical_read_only'));
+        }
+
+        // Department-scoped users (e.g. HODs) only remind lecturers with missing marks in their own departments.
+        if (! $notificationService->remindLecturers($calendar, $departmentIds === [] ? [-1] : $departmentIds)) {
             return back()->with('error', __('assessments.missing_marks_remind_failed'));
         }
 
         return back()->with('success', __('assessments.missing_marks_reminded'));
+    }
+
+    /**
+     * Earlier years are kept for reference only: no reminders or escalations.
+     */
+    private function isHistorical(AssessmentCalendar $calendar): bool
+    {
+        $calendarYear = (int) ($calendar->academicCalendar?->calendar_year ?? 0);
+
+        return $calendarYear > 0 && $calendarYear < now()->year;
     }
 }

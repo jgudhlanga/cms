@@ -56,8 +56,8 @@ class RolesTableSeeder extends Seeder
         return match ($roleName) {
             RoleEnum::STUDENT->name() => PermissionHelper::portalPermissions(),
             RoleEnum::LECTURER->name(),
-            RoleEnum::SENIOR_LECTURER->name(),
-            RoleEnum::LECTURER_IN_CHARGE->name() => PermissionHelper::lecturerPermissions(),
+            RoleEnum::SENIOR_LECTURER->name() => PermissionHelper::lecturerPermissions(),
+            RoleEnum::LECTURER_IN_CHARGE->name() => PermissionHelper::lecturerInChargePermissions(),
             RoleEnum::HEAD_OF_DEPARTMENT->name() => PermissionHelper::hodPermissions(),
             RoleEnum::HEAD_OF_DIVISION->name() => PermissionHelper::headOfDivisionPermissions(),
             RoleEnum::VICE_PRINCIPAL->name() => PermissionHelper::vpAcademicsPermissions(),

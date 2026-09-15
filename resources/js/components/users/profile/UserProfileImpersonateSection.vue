@@ -3,7 +3,7 @@ import { BaseButton } from '@/components/core/button';
 import { useUtils } from '@/composables/core/useUtils';
 import { ColorVariant } from '@/enums/colors';
 import type { User } from '@/types/users';
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 interface Props {
@@ -13,7 +13,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const page = usePage();
-const { navigateTo, isItTrue } = useUtils();
+const { isItTrue } = useUtils();
 
 const showSection = computed(() => {
     const canImpersonate = isItTrue(page.props.auth.user?.attributes?.canImpersonate);
@@ -25,7 +25,7 @@ const showSection = computed(() => {
 });
 
 const handleImpersonate = (): void => {
-    navigateTo(route('impersonate', { id: props.user.id }));
+    router.post(route('impersonate', { id: props.user.id }));
 };
 </script>
 

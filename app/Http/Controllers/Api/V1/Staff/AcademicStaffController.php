@@ -24,6 +24,8 @@ class AcademicStaffController extends Controller
     public function groupedByDepartment(Request $request): JsonResponse
     {
         $search = trim((string) $request->query('search', ''));
+        // The public website may search by name only; matching or showing emails is for signed-in users.
+        $signedIn = $request->user() !== null || auth('sanctum')->check();
 
         $staffMembers = Staff::query()
             ->whereNull('deleted_at')
@@ -31,13 +33,13 @@ class AcademicStaffController extends Controller
             ->whereHas('user.roles', function ($query): void {
                 $query->whereIn('slug', self::academicStaffRoleSlugs());
             })
-            ->when($search !== '', function ($query) use ($search): void {
-                $query->whereHas('user', function ($userQuery) use ($search): void {
-                    $userQuery->where(function ($nameQuery) use ($search): void {
+            ->when($search !== '', function ($query) use ($search, $signedIn): void {
+                $query->whereHas('user', function ($userQuery) use ($search, $signedIn): void {
+                    $userQuery->where(function ($nameQuery) use ($search, $signedIn): void {
                         $nameQuery->where('first_name', 'like', "%{$search}%")
                             ->orWhere('middle_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
+                            ->when($signedIn, fn ($emailQuery) => $emailQuery->orWhere('email', 'like', "%{$search}%"));
                     });
                 });
             })
@@ -71,7 +73,7 @@ class AcademicStaffController extends Controller
                 if (! in_array((int) $staff->id, $existingStaffIds, true)) {
                     $grouped[$departmentId]['staff'][] = [
                         'id' => (int) $staff->id,
-                        'name' => $staffName !== '' ? $staffName : (string) ($staff->user?->email ?? ''),
+                        'name' => $staffName !== '' || ! $signedIn ? $staffName : (string) ($staff->user?->email ?? ''),
                     ];
                 }
             }

@@ -3,6 +3,7 @@
 use App\Actions\Institution\SyncProgrammeSemestersForOfferingAction;
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Institution\CourseSyllabusStatusEnum;
+use App\Enums\Institution\ModeOfStudyEnum;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\AcademicCalendars\Semester;
@@ -704,6 +705,98 @@ test('per class size store rejects a duplicate programme semester for the same y
     ])->assertSessionHasErrors(['semester_id']);
 });
 
+test('per class size store rejects an industrial attachment period outside ojet', function () {
+    $context = buildProgrammeClassConfigStoreContext(2, 2, ModeOfStudyEnum::FULL_TIME->value);
+    $yearTwoAttachmentOne = $context['programmeSemesters']->firstWhere('name', 'Year 2 Attachment 1');
+
+    expect($yearTwoAttachmentOne)->toBeInstanceOf(ProgrammeSemester::class);
+
+    $this->actingAs($context['user']);
+
+    $this->from(route('institution-departments.show', $context['institutionDepartment']->id))->post($context['storeUrl'], [
+        'students_per_class' => 30,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'semester_id' => $yearTwoAttachmentOne->id,
+        'course_syllabus_ids' => [],
+    ])->assertSessionHasErrors(['semester_id' => __('academic_calendar.class_config_period_not_offered_in_mode')]);
+
+    expect(ClassConfig::query()->where('department_course_id', $context['departmentCourse']->id)->exists())->toBeFalse();
+});
+
+test('per class size store rejects a taught period under ojet', function () {
+    $context = buildProgrammeClassConfigStoreContext(2, 2, ModeOfStudyEnum::OJET->value);
+    $yearOneSemOne = $context['programmeSemesters']->firstWhere('name', 'Year 1 Sem 1');
+
+    $this->actingAs($context['user']);
+
+    $this->from(route('institution-departments.show', $context['institutionDepartment']->id))->post($context['storeUrl'], [
+        'students_per_class' => 30,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'semester_id' => $yearOneSemOne->id,
+        'course_syllabus_ids' => [],
+    ])->assertSessionHasErrors(['semester_id' => __('academic_calendar.class_config_period_not_offered_in_mode')]);
+});
+
+test('per class size store accepts an industrial attachment period under ojet', function () {
+    $context = buildProgrammeClassConfigStoreContext(2, 2, ModeOfStudyEnum::OJET->value);
+    $yearTwoAttachmentOne = $context['programmeSemesters']->firstWhere('name', 'Year 2 Attachment 1');
+
+    $this->actingAs($context['user']);
+
+    $this->from(route('institution-departments.show', $context['institutionDepartment']->id))->post($context['storeUrl'], [
+        'students_per_class' => 30,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'semester_id' => $yearTwoAttachmentOne->id,
+        'course_syllabus_ids' => [],
+    ])->assertSessionHasNoErrors();
+
+    $saved = ClassConfig::query()
+        ->where('department_course_id', $context['departmentCourse']->id)
+        ->first();
+
+    expect($saved)->not->toBeNull()
+        ->and((int) $saved->programme_semester_id)->toBe((int) $yearTwoAttachmentOne->id)
+        ->and($saved->name)->toBe('Year 2 Attachment 1');
+});
+
+// Configs saved before the mode rule existed must stay editable while they keep their period.
+test('per class size store still updates a config that keeps a period stored before the mode rule', function () {
+    $context = buildProgrammeClassConfigStoreContext(2, 2, ModeOfStudyEnum::FULL_TIME->value);
+    $yearTwoAttachmentOne = $context['programmeSemesters']->firstWhere('name', 'Year 2 Attachment 1');
+
+    $existing = ClassConfig::query()->create([
+        'calendar_year' => '2026',
+        'semester_id' => $context['semesterOne']->id,
+        'programme_semester_id' => $yearTwoAttachmentOne->id,
+        'name' => 'Year 2 Attachment 1',
+        'institution_department_id' => $context['institutionDepartment']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'department_level_id' => $context['departmentLevel']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'students_per_class' => 15,
+    ]);
+
+    $this->actingAs($context['user']);
+
+    $this->from(route('institution-departments.show', $context['institutionDepartment']->id))->post($context['storeUrl'], [
+        'students_per_class' => 25,
+        'department_level_id' => $context['departmentLevel']->id,
+        'department_course_id' => $context['departmentCourse']->id,
+        'mode_of_study_id' => $context['modeOfStudy']->id,
+        'semester_id' => $yearTwoAttachmentOne->id,
+        'class_config_id' => $existing->id,
+        'course_syllabus_ids' => [],
+    ])->assertSessionHasNoErrors();
+
+    expect((int) $existing->fresh()->students_per_class)->toBe(25);
+});
+
 /**
  * @return array{
  *     user: User,
@@ -718,8 +811,11 @@ test('per class size store rejects a duplicate programme semester for the same y
  *     storeUrl: string
  * }
  */
-function buildProgrammeClassConfigStoreContext(int $taughtSemesterCount = 2): array
-{
+function buildProgrammeClassConfigStoreContext(
+    int $taughtSemesterCount = 2,
+    int $attachmentSemesterCount = 0,
+    ?string $modeOfStudyName = null,
+): array {
     $tenant = Tenant::query()->firstOrFail();
     $user = User::factory()->create(['tenant_id' => $tenant->id]);
     $user->givePermissionTo(['viewAny:academic-calendars', 'update:academic-calendars']);
@@ -728,7 +824,7 @@ function buildProgrammeClassConfigStoreContext(int $taughtSemesterCount = 2): ar
     $institutionDepartment = InstitutionDepartment::query()->create([
         'tenant_id' => $tenant->id,
         'department_id' => $department->id,
-        'department_code' => 'pcs-prog-'.$taughtSemesterCount,
+        'department_code' => 'pcs-prog-'.$taughtSemesterCount.'-'.$attachmentSemesterCount,
         'description' => 'Programme semester class config',
     ]);
 
@@ -749,15 +845,17 @@ function buildProgrammeClassConfigStoreContext(int $taughtSemesterCount = 2): ar
     $dlc = DepartmentLevelCourse::query()->create([
         'department_course_id' => $departmentCourse->id,
         'department_level_id' => $departmentLevel->id,
-        'duration_years' => (int) ceil($taughtSemesterCount / 2),
+        'duration_years' => (int) ceil(($taughtSemesterCount + $attachmentSemesterCount) / 2),
         'taught_semester_count' => $taughtSemesterCount,
-        'includes_industrial_attachment' => false,
-        'attachment_semester_count' => 0,
+        'includes_industrial_attachment' => $attachmentSemesterCount > 0,
+        'attachment_semester_count' => $attachmentSemesterCount,
     ]);
 
     $programmeSemesters = app(SyncProgrammeSemestersForOfferingAction::class)->execute($dlc->fresh() ?? $dlc);
 
-    $modeOfStudy = ModeOfStudy::query()->create(['name' => 'Full Time Programme Config '.$taughtSemesterCount]);
+    $modeOfStudy = ModeOfStudy::query()->firstOrCreate([
+        'name' => $modeOfStudyName ?? 'Full Time Programme Config '.$taughtSemesterCount,
+    ]);
     $calendar = AcademicCalendar::query()->create([
         'calendar_year' => '2026',
         'type' => AcademicCalendarTypeEnum::SEMESTER,

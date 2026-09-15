@@ -3,19 +3,16 @@ import '../css/app.css';
 import ConfirmDialog from '@/components/core/modal/ConfirmDialog.vue';
 import ErrorDialog from '@/components/core/modal/ErrorDialog.vue';
 import { initializeTheme } from '@/composables/core/useAppearance';
-import AppLayout from '@/layouts/AppLayout.vue';
-import GuestLayout from '@/layouts/GuestLayout.vue';
-import PortalRegistrationLayout from '@/layouts/PortalRegistrationLayout.vue';
-import PlainLayout from '@/layouts/PlainLayout.vue';
+import { layoutNameForPage, type PageLayoutName } from '@/lib/pageLayouts';
+import { forgetCachedPages } from '@/lib/prefetch';
 import { PageModule } from '@/types';
-import { createInertiaApp } from '@inertiajs/vue3';
-import { MotionPlugin } from '@vueuse/motion';
+import { createInertiaApp, router } from '@inertiajs/vue3';
 import axios from 'axios';
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { i18nVue } from 'laravel-vue-i18n';
 import { createPinia } from 'pinia';
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
-import 'temporal-polyfill/global';
-import type { DefineComponent } from 'vue';
+import type { DefineComponent, VNode } from 'vue';
 import { createApp, h } from 'vue';
 import { createVfm } from 'vue-final-modal';
 import 'vue-final-modal/style.css';
@@ -30,36 +27,67 @@ axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 initializeTheme();
 
+// Form submissions can change any list page or lookup, so prefetched pages and dropdown lists are dropped.
+router.on('finish', (event) => {
+    if (event.detail.visit.method !== 'get') {
+        forgetCachedPages();
+    }
+});
+
+// Mount without translations after this long rather than leave the page blank if they fail to load.
+const TRANSLATIONS_MOUNT_TIMEOUT_MS = 3000;
+
+// Layouts load on demand too: guests never download the app sidebar, and staff never download guest shells.
+const layoutLoaders: Record<PageLayoutName, () => Promise<unknown>> = {
+    guest: async () => {
+        const { default: GuestLayout } = await import('@/layouts/GuestLayout.vue');
+
+        return (render: typeof h, page: VNode) => render(GuestLayout, { showHeader: false }, () => page);
+    },
+    'portal-registration': async () => (await import('@/layouts/PortalRegistrationLayout.vue')).default,
+    plain: async () => (await import('@/layouts/PlainLayout.vue')).default,
+    app: async () => (await import('@/layouts/AppLayout.vue')).default,
+};
+
+// One promise per layout, so every page shares the same layout instance and persistent layouts keep state.
+const loadedLayouts = new Map<PageLayoutName, Promise<unknown>>();
+
+const loadLayout = (name: PageLayoutName): Promise<unknown> => {
+    if (!loadedLayouts.has(name)) {
+        loadedLayouts.set(name, layoutLoaders[name]());
+    }
+
+    return loadedLayouts.get(name) as Promise<unknown>;
+};
+
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
 const vfm = createVfm(); // MODAL PLUGIN
 createInertiaApp({
     title: (title) => `${title ? title.toUpperCase() + ' - ' : ''} ${appName}`,
-    resolve: (name) => {
-        const pages = import.meta.glob<PageModule>('./pages/**/*.vue', { eager: true });
-        const page = pages[`./pages/${name}.vue`];
-        if (name.startsWith('auth/')) {
-            page.default.layout = (h, page) => h(GuestLayout, { showHeader: false }, () => page);
-        } else if (
-            name.startsWith('portal/guest') ||
-            name.startsWith('portal/registration')
-        ) {
-            // Guest registration uses in-page toggles (brand header / guide); disable PublicShell fixed toggle.
-            page.default.layout = PortalRegistrationLayout;
-        } else if (
-            name.startsWith('site/') ||
-            name.startsWith('portal/application') ||
-            name.startsWith('integrations')
-        ) {
-            page.default.layout = PlainLayout;
-        } else {
-            page.default.layout = AppLayout;
-        }
-        return page as { default: DefineComponent };
+    // Each page is its own chunk, fetched on first visit instead of shipping every page in the entry bundle.
+    resolve: async (name) => {
+        const [page, layout] = await Promise.all([
+            resolvePageComponent<PageModule>(`./pages/${name}.vue`, import.meta.glob<PageModule>('./pages/**/*.vue')),
+            loadLayout(layoutNameForPage(name)),
+        ]);
+        page.default.layout = layout;
+
+        // Inertia accepts the module and reads its default export; its types only describe the component.
+        return page as unknown as DefineComponent;
     },
     setup({ el, App, props, plugin }) {
-        const app = createApp({ render: () => h(App, props) })
-            .use(plugin)
+        const app = createApp({ render: () => h(App, props) });
+
+        let mounted = false;
+        const mount = () => {
+            if (!mounted) {
+                mounted = true;
+                app.mount(el);
+            }
+        };
+
+        app.use(plugin)
             .use(ZiggyVue)
             .use(pinia)
             .use(i18nVue, {
@@ -77,17 +105,20 @@ createInertiaApp({
                         return {};
                     }
                 },
+                // Mount once translations are in, so raw translation keys never flash on screen.
+                onLoad: mount,
             })
             .use(vfm)
-            .use(MotionPlugin)
             .use(Vue3Toastify);
         // ✅ Register ConfirmDialog globally
         app.component('ConfirmDialog', ConfirmDialog);
         app.component('errorDialog', ErrorDialog);
-        app.mount(el);
+        window.setTimeout(mount, TRANSLATIONS_MOUNT_TIMEOUT_MS);
     },
     progress: {
         color: '#30A8FF',
+        // Fast (cached or prefetched) visits finish before the bar would show, so it no longer flickers.
+        delay: 250,
         showSpinner: true,
     },
 });

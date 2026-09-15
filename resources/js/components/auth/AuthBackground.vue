@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-
 const AUTH_BACKGROUND_WEBP = '/assets/images/poly.webp';
-const AUTH_BACKGROUND_PNG = '/assets/images/poly.png';
+// JPEG fallback for browsers without WebP (the original PNG is 3 MB).
+const AUTH_BACKGROUND_FALLBACK = '/assets/images/poly.jpg';
 
 withDefaults(
     defineProps<{
@@ -15,16 +14,12 @@ withDefaults(
 </script>
 
 <template>
-    <Head>
-        <link rel="preload" as="image" :href="AUTH_BACKGROUND_WEBP" type="image/webp" fetchpriority="high" />
-    </Head>
-
     <div aria-hidden="true" class="auth-background pointer-events-none inset-0 overflow-hidden" :class="contained ? 'absolute z-0' : 'fixed -z-10'">
         <div class="absolute inset-0 bg-slate-950">
             <picture class="block h-full w-full">
                 <source :srcset="AUTH_BACKGROUND_WEBP" type="image/webp" />
                 <img
-                    :src="AUTH_BACKGROUND_PNG"
+                    :src="AUTH_BACKGROUND_FALLBACK"
                     alt=""
                     class="h-full w-full object-cover object-center"
                     fetchpriority="high"

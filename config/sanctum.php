@@ -49,7 +49,8 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Minutes; null keeps tokens valid until revoked (current mobile app behaviour).
+    'expiration' => env('SANCTUM_EXPIRATION'),
 
     /*
     |--------------------------------------------------------------------------

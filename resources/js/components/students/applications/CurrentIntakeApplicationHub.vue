@@ -179,6 +179,7 @@ const nextLevelName = computed(() => props.applicationHub.nextLevelName ?? '');
                             type="button"
                             :variant="ColorVariant.primary"
                             :disabled="!acknowledgeForm.acknowledged || (applicationHub.requiresIntakeSelection && !selectedIntakeId)"
+                            :processing="acknowledgeForm.processing"
                             :title="
                                 isNextLevelApply
                                     ? $t('trans.returning_student_hub_next_level_start')

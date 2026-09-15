@@ -81,7 +81,7 @@ const isCurrentOffer = (application: Enrolment): boolean =>
 const issuedDate = (application: Enrolment): string => {
     const value = application.attributes?.offerLetterIssuedAt;
 
-    return value ? formatDate(value, 'dd LLL yyyy') : 'Date unavailable';
+    return value ? formatDate(value, 'DD MMM YYYY') : 'Date unavailable';
 };
 
 onMounted(async () => {

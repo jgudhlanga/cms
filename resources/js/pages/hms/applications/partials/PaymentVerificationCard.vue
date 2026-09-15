@@ -13,6 +13,7 @@ import { useCustomConfirmDialog } from '@/composables/core/useCustomConfirmDialo
 import { useUtils } from '@/composables/core/useUtils';
 import { useHms } from '@/composables/hms/useHms';
 import { TypeVariant } from '@/enums/type-variants';
+import { errorAlert } from '@/lib/alerts';
 import { hasAbility } from '@/lib/permissions';
 import { clearFormErrors } from '@/lib/forms';
 import type {
@@ -342,6 +343,9 @@ const validateConfirmations = (): boolean => {
     return true;
 };
 
+// Approval saves through the API rather than the Inertia form, so the button tracks its own request.
+const approving = ref(false);
+
 const approveAndAllocate = async (): Promise<void> => {
     if (!validateConfirmations()) {
         return;
@@ -372,14 +376,22 @@ const approveAndAllocate = async (): Promise<void> => {
         return;
     }
 
-    const ok = await saveApplication(
-        {
-            status: 'approved',
-            ...(form.hostelRoomId ? { hostelRoomId: form.hostelRoomId } : {}),
-            paymentVerification: paymentVerificationPayload(),
-        },
-        props.application.id,
-    );
+    approving.value = true;
+
+    let ok = false;
+
+    try {
+        ok = await saveApplication(
+            {
+                status: 'approved',
+                ...(form.hostelRoomId ? { hostelRoomId: form.hostelRoomId } : {}),
+                paymentVerification: paymentVerificationPayload(),
+            },
+            props.application.id,
+        );
+    } finally {
+        approving.value = false;
+    }
 
     if (ok) {
         emit('approved');
@@ -504,6 +516,7 @@ const approveAndAllocate = async (): Promise<void> => {
                 type="button"
                 :title="$t('hms.button_approve_and_allocate')"
                 :disabled="!canApproveAndAllocate"
+                :processing="approving"
                 @click="approveAndAllocate"
             />
             <BaseButton

@@ -14,6 +14,10 @@ import type { BreadcrumbItemInterface } from '@/types/ui';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
 import { TypeVariant } from '@/enums/type-variants';
+import RequestExtensionModal from '@/components/courseWork/RequestExtensionModal.vue';
+import { openModal } from '@/lib/alerts';
+import { APP_MODULE_KEYS } from '@/lib/constants';
+import type { CourseWorkWindowSummary } from '@/types/course-work-extensions';
 import { Head, Link } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { computed } from 'vue';
@@ -30,6 +34,7 @@ interface ClassModule {
         lockedAssessmentTypeIds: number[];
         lockedAssessmentTypeNames: string[];
         readOnlyMessage: string | null;
+        windows?: CourseWorkWindowSummary[];
     };
 }
 
@@ -71,9 +76,28 @@ interface Props {
     canExportCourseWork: boolean;
     canImportCourseWork: boolean;
     canExportClassList: boolean;
+    canRequestCourseWorkExtension?: boolean;
+    maxExtensionDays?: number;
 }
 
 const props = defineProps<Props>();
+
+const closedWindowsFor = (module: ClassModule): CourseWorkWindowSummary[] =>
+    (module.courseWorkLock.windows ?? []).filter((window) => window.status === 'closed');
+
+const requestExtension = (module: ClassModule) => {
+    openModal({
+        name: APP_MODULE_KEYS.course_work_extension_request,
+        edit: {
+            classId: props.classDetail.id,
+            className: props.classDetail.name,
+            moduleId: module.id,
+            moduleName: module.code ? `${module.code} — ${module.title}` : module.title,
+            maxDays: props.maxExtensionDays ?? 14,
+            closedWindows: closedWindowsFor(module),
+        },
+    });
+};
 
 const breadcrumbs = computed<BreadcrumbItemInterface[]>(() => [
     { title: trans('dashboard.lecturer_dashboard_title'), href: route('dashboard') },
@@ -254,6 +278,17 @@ const sortedStudents = computed(() =>
                                                 {{ $t('academic_calendar.course_work_export_excel') }}
                                             </BaseButton>
                                         </a>
+                                        <BaseButton
+                                            v-if="canRequestCourseWorkExtension && module.canManage && closedWindowsFor(module).length > 0"
+                                            type="button"
+                                            :variant="ColorVariant.primary_outline"
+                                            :size="ButtonSize.xs"
+                                            classes="rounded-full"
+                                            @click="requestExtension(module)"
+                                        >
+                                            {{ $t('academic_calendar.course_work_extension_request_action') }}
+                                            <span class="sr-only">: {{ module.title }}</span>
+                                        </BaseButton>
                                     </div>
                                 </td>
                             </tr>
@@ -324,5 +359,6 @@ const sortedStudents = computed(() =>
                 </BaseAccordionItem>
             </BaseAccordion>
         </div>
+        <RequestExtensionModal />
     </PageContainer>
 </template>

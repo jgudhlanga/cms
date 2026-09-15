@@ -1208,6 +1208,7 @@ test('department academic calendar includes ojet course rows when the offering h
 
     expect($response->json('data'))->not->toBeEmpty()
         ->and($response->json('data.0.levels.0.totalFinalList'))->toBe(1)
+        ->and($response->json('data.0.levels.0.remainingPeriods'))->toBe([])
         ->and(collect($response->json('meta.modeTotals'))->firstWhere('modeOfStudyId', $context['modeOfStudy']->id)['count'] ?? 0)
         ->toBe(1);
 });
@@ -1437,3 +1438,91 @@ test('department academic calendar remaining periods use programme semester ids 
         ],
     ]);
 });
+
+test('department academic calendar remaining periods leave industrial attachment out of non-ojet modes', function () {
+    $this->travelTo('2026-05-15');
+
+    $context = buildAttachmentOfferingCalendarContext(ModeOfStudyEnum::FULL_TIME->value);
+
+    Sanctum::actingAs($context['user']);
+
+    $response = $this->getJson("/api/v1/departments/{$context['institutionDepartment']->id}/academic-calendars?academic_year=2026&mode_of_study_id={$context['modeOfStudy']->id}");
+
+    $response->assertOk();
+    expect(collect($response->json('data.0.levels.0.remainingPeriods'))->pluck('name')->all())
+        ->toBe(['Year 1 Sem 1', 'Year 1 Sem 2']);
+});
+
+test('department academic calendar remaining periods offer only industrial attachment under ojet', function () {
+    $this->travelTo('2026-05-15');
+
+    $context = buildAttachmentOfferingCalendarContext(ModeOfStudyEnum::OJET->value);
+
+    Sanctum::actingAs($context['user']);
+
+    $response = $this->getJson("/api/v1/departments/{$context['institutionDepartment']->id}/academic-calendars?academic_year=2026&mode_of_study_id={$context['modeOfStudy']->id}");
+
+    $response->assertOk();
+    expect(collect($response->json('data.0.levels.0.remainingPeriods'))->pluck('name')->all())
+        ->toBe(['Year 2 Attachment 1', 'Year 2 Attachment 2']);
+});
+
+/**
+ * @return array{user: User, institutionDepartment: InstitutionDepartment, modeOfStudy: ModeOfStudy}
+ */
+function buildAttachmentOfferingCalendarContext(string $modeOfStudyName): array
+{
+    $tenant = Tenant::query()->firstOrFail();
+    $user = User::factory()->create(['tenant_id' => $tenant->id]);
+
+    $department = Department::factory()->create();
+    $institutionDepartment = InstitutionDepartment::query()->create([
+        'tenant_id' => $tenant->id,
+        'department_id' => $department->id,
+        'department_code' => 'cal-api-attachment',
+        'description' => 'Industrial attachment remaining periods',
+    ]);
+
+    $course = Course::factory()->create();
+    $departmentCourse = DepartmentCourse::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'course_id' => $course->id,
+    ]);
+
+    $level = Level::factory()->create([
+        'name' => 'ND Attachment',
+        'calendar_type' => AcademicCalendarTypeEnum::SEMESTER,
+    ]);
+    $departmentLevel = DepartmentLevel::query()->create([
+        'tenant_id' => $tenant->id,
+        'institution_department_id' => $institutionDepartment->id,
+        'level_id' => $level->id,
+    ]);
+    $dlc = DepartmentLevelCourse::query()->create([
+        'department_course_id' => $departmentCourse->id,
+        'department_level_id' => $departmentLevel->id,
+        'duration_years' => 2,
+        'taught_semester_count' => 2,
+        'includes_industrial_attachment' => true,
+        'attachment_semester_count' => 2,
+    ]);
+    app(SyncProgrammeSemestersForOfferingAction::class)->execute($dlc->fresh() ?? $dlc);
+
+    $modeOfStudy = ModeOfStudy::query()->firstOrCreate(['name' => $modeOfStudyName]);
+    AcademicCalendar::query()->create([
+        'calendar_year' => '2026',
+        'type' => AcademicCalendarTypeEnum::SEMESTER,
+        'opening_date' => '2026-01-15',
+        'closing_date' => '2026-06-30',
+    ]);
+
+    // OJET only lists offered levels, so the offering keeps this student-less level in view.
+    seedApplicationOffering($institutionDepartment, $departmentLevel, $departmentCourse, [(int) $modeOfStudy->id]);
+
+    return [
+        'user' => $user,
+        'institutionDepartment' => $institutionDepartment,
+        'modeOfStudy' => $modeOfStudy,
+    ];
+}

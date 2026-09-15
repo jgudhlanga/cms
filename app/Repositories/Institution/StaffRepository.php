@@ -18,6 +18,7 @@ use App\Repositories\Institution\interface\IStaffRepository;
 use App\Repositories\Shared\interface\IAddressRepository;
 use App\Repositories\Shared\interface\IContactRepository;
 use App\Repositories\Users\interface\IUserRepository;
+use App\Support\Rbac\UserAccessScope;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -58,6 +59,8 @@ class StaffRepository extends BaseRepository implements IStaffRepository
             $staff->institutionDepartments()->syncWithoutDetaching($dto->department_ids);
         }
 
+        UserAccessScope::flush();
+
         return $staff;
     }
 
@@ -79,6 +82,7 @@ class StaffRepository extends BaseRepository implements IStaffRepository
             $this->saveImportContact($staff, $dto);
             $this->saveImportAddress($staff, $dto);
             $staff->institutionDepartments()->syncWithoutDetaching([$dto->institutionDepartmentId]);
+            UserAccessScope::flush();
 
             return $staff->refresh();
         });
@@ -96,6 +100,8 @@ class StaffRepository extends BaseRepository implements IStaffRepository
         if (! empty($dto->department_ids) && is_array($dto->department_ids) && count($dto->department_ids) > 0) {
             $staff->institutionDepartments()->sync($dto->department_ids);
         }
+
+        UserAccessScope::flush();
 
         return $staff;
     }

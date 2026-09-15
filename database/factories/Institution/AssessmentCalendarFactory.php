@@ -17,7 +17,9 @@ class AssessmentCalendarFactory extends Factory
 
     public function definition(): array
     {
-        $startDate = fake()->dateTimeBetween('-1 year', 'now');
+        // Default to a window that is open today; tests needing a closed or future window set dates explicitly.
+        $startDate = fake()->dateTimeBetween('-1 month', 'now');
+        $endDate = fake()->dateTimeBetween('+1 week', '+3 months');
 
         return [
             'assessment_type_id' => AssessmentType::factory(),
@@ -25,10 +27,10 @@ class AssessmentCalendarFactory extends Factory
                 'calendar_year' => (string) fake()->year(),
                 'type' => AcademicCalendarTypeEnum::SEMESTER->value,
                 'opening_date' => $startDate->format('Y-m-d'),
-                'closing_date' => fake()->dateTimeBetween($startDate, '+6 months')->format('Y-m-d'),
+                'closing_date' => fake()->dateTimeBetween($endDate, '+6 months')->format('Y-m-d'),
             ])->id,
             'start_date' => $startDate->format('Y-m-d'),
-            'end_date' => fake()->dateTimeBetween($startDate, '+3 months')->format('Y-m-d'),
+            'end_date' => $endDate->format('Y-m-d'),
             'first_notification_days_before' => AssessmentCalendar::DEFAULT_FIRST_NOTIFICATION_DAYS,
             'second_notification_days_before' => AssessmentCalendar::DEFAULT_SECOND_NOTIFICATION_DAYS,
             'due_notification_days_before' => AssessmentCalendar::DEFAULT_DUE_NOTIFICATION_DAYS,

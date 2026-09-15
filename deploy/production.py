@@ -184,7 +184,7 @@ def run_deploy_steps(state: DeployState) -> None:
             "composer",
             "install",
             "--no-dev",
-            "--optimize-autoloader",
+            "--classmap-authoritative",
             "--no-interaction",
         ],
     )

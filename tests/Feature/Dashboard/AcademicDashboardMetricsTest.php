@@ -62,7 +62,7 @@ test('dashboard returns academic metrics for users with academic tab access', fu
     seedDashboardIntakePeriod($context['tenant']->id);
 
     $this->actingAs($user)
-        ->get(dashboardUrlFor($user, $calendarId))
+        ->get(dashboardUrlFor($user, $calendarId).'&tab=academic')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
@@ -116,7 +116,7 @@ test('dashboard reports ojet students as placed on industrial attachment', funct
     seedDashboardIntakePeriod($context['tenant']->id);
 
     $this->actingAs($user)
-        ->get(dashboardUrlFor($user, $calendarId))
+        ->get(dashboardUrlFor($user, $calendarId).'&tab=academic')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
@@ -190,7 +190,7 @@ test('dashboard counts distinct ojet students across calendar year semesters', f
     seedDashboardIntakePeriod($context['tenant']->id);
 
     $this->actingAs($user)
-        ->get(dashboardUrlFor($user, $secondCalendar->id))
+        ->get(dashboardUrlFor($user, $secondCalendar->id).'&tab=academic')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
@@ -223,7 +223,7 @@ test('dashboard reports incomplete and outstanding marks when coursework is not 
     seedDashboardIntakePeriod($context['tenant']->id);
 
     $this->actingAs($user)
-        ->get(dashboardUrlFor($user, $calendarId))
+        ->get(dashboardUrlFor($user, $calendarId).'&tab=academic')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
@@ -295,7 +295,7 @@ test('dashboard attributes incomplete marks to assigned lecturer', function () {
     seedDashboardIntakePeriod($context['tenant']->id);
 
     $this->actingAs($user)
-        ->get(dashboardUrlFor($user, $calendarId))
+        ->get(dashboardUrlFor($user, $calendarId).'&tab=academic')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
@@ -325,7 +325,7 @@ test('dashboard does not return academic metrics when academic tab is disabled',
     seedDashboardAcademicCalendar();
 
     $this->actingAs($user)
-        ->get(dashboardUrlFor($user))
+        ->get(dashboardUrlFor($user).'&tab=academic')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
@@ -338,7 +338,7 @@ test('dashboard academic metrics are empty when no enrolled students exist for c
     seedDashboardAcademicCalendar();
 
     $this->actingAs($user)
-        ->get(dashboardUrlFor($user))
+        ->get(dashboardUrlFor($user).'&tab=academic')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')

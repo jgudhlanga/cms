@@ -48,6 +48,14 @@ class ProgrammeSemester extends Model
         return $this->kind === ProgrammeSemesterKindEnum::INDUSTRIAL_ATTACHMENT;
     }
 
+    /**
+     * Industrial attachment periods belong to OJET alone, and OJET offers nothing but them.
+     */
+    public function isOfferedInMode(bool $isOjetMode): bool
+    {
+        return $isOjetMode ? $this->isIndustrialAttachment() : $this->isTaught();
+    }
+
     public function studentSemesters(): HasMany
     {
         return $this->hasMany(StudentSemester::class, 'programme_semester_id');

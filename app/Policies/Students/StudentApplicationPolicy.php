@@ -3,6 +3,7 @@
 namespace App\Policies\Students;
 
 use App\Helpers\Helper;
+use App\Models\Institution\InstitutionDepartment;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use App\Services\Students\IntakePeriodResolver;
@@ -56,6 +57,58 @@ class StudentApplicationPolicy
         }
 
         return $this->userCanAccessApplicationDepartment($user, $studentApplication);
+    }
+
+    /**
+     * Applicants upload proof of payment for their own application; workflow staff may upload for them.
+     */
+    public function uploadProofOfPayment(User $user, StudentApplication $studentApplication): bool
+    {
+        if ($this->manageWorkflow($user, $studentApplication)) {
+            return true;
+        }
+
+        $studentId = $user->studentProfile?->id;
+
+        return $studentId !== null
+            && (int) $studentApplication->student_id === (int) $studentId
+            && $user->can('manageOwnStudentApplicationDetails:students');
+    }
+
+    /**
+     * Staff workflow actions (moving steps, confirming fees). Unlike update(), this deliberately
+     * skips the active-intake and not-accepted checks so accepted applications can still progress.
+     */
+    public function manageWorkflow(User $user, StudentApplication $studentApplication): bool
+    {
+        if ($user->can('root:manage') || $user->can('manage:data-maintenance')) {
+            return true;
+        }
+
+        return $user->can('update:student-applications')
+            && $this->userCanAccessApplicationDepartment($user, $studentApplication);
+    }
+
+    /**
+     * Bulk workflow actions across a department's applications.
+     */
+    public function manageDepartmentWorkflow(User $user, InstitutionDepartment $institutionDepartment): bool
+    {
+        if ($user->can('root:manage') || $user->can('manage:data-maintenance')) {
+            return true;
+        }
+
+        if (! $user->can('update:student-applications')) {
+            return false;
+        }
+
+        if ($user->can('viewAny:student-applications') || ! Helper::isDepartmentUser()) {
+            return true;
+        }
+
+        $departments = array_map('intval', Helper::resolveUserDepartments() ?? []);
+
+        return in_array((int) $institutionDepartment->id, $departments, true);
     }
 
     public function delete(User $user, StudentApplication $studentApplication): bool

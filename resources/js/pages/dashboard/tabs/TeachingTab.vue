@@ -92,6 +92,37 @@ const alertDotClass = (alert: LecturerPriorityAlert): string => {
     return 'bg-sky-500';
 };
 
+/** Text equivalent of the dot/row colour so urgency is never conveyed by colour alone. */
+const alertUrgencyLabelKey = (alert: LecturerPriorityAlert): string | null => {
+    if (alert.daysRemaining != null) {
+        const urgency = assessmentUrgencyLevel(alert);
+
+        if (urgency >= 4) {
+            return 'academic_calendar.assessment_urgency_due';
+        }
+
+        if (urgency === 3) {
+            return 'academic_calendar.assessment_urgency_final_reminder';
+        }
+
+        if (urgency === 2) {
+            return 'academic_calendar.assessment_urgency_first_reminder';
+        }
+
+        return 'academic_calendar.assessment_urgency_upcoming';
+    }
+
+    if (alert.severity === 'critical') {
+        return 'academic_calendar.assessment_window_severity_critical';
+    }
+
+    if (alert.severity === 'warning') {
+        return 'academic_calendar.assessment_window_severity_warning';
+    }
+
+    return null;
+};
+
 const alertRowClass = (alert: LecturerPriorityAlert): string => {
     if (alert.daysRemaining == null) {
         return 'border-b border-border/60 py-1.5 last:border-0';
@@ -252,8 +283,12 @@ const dashboard = computed(() => props.teachingDashboard);
                         <div
                             class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
                             :class="alertDotClass(alert)"
+                            aria-hidden="true"
                         ></div>
-                        <div :class="alertTextClass(alert)">{{ alert.message }}</div>
+                        <div :class="alertTextClass(alert)">
+                            <span v-if="alertUrgencyLabelKey(alert)" class="font-semibold">{{ $t(alertUrgencyLabelKey(alert)!) }}:</span>
+                            {{ alert.message }}
+                        </div>
                     </div>
                 </div>
             </DashboardCard>

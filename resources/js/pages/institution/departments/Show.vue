@@ -14,7 +14,7 @@ import { AuthObject } from '@/types/data-pagination';
 import { InstitutionDepartment } from '@/types/institution';
 import type { Link } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, Link as InertiaLink, router, useForm } from '@inertiajs/vue3';
 import { storeToRefs } from 'pinia';
 import { computed, ref, watch } from 'vue';
 
@@ -49,6 +49,10 @@ const breadcrumbs: Array<Link> = [
 const { departmentTabs } = useInstitution();
 const { activeTab } = storeToRefs(useDepartmentMetaStore());
 const canViewAnyDepartmentMetaData = hasAbility('viewAny:department-metadata');
+const canViewDepartmentAssessmentCalendar = hasAbility([
+    'viewAny:department-assessment-calendar',
+    'view:department-assessment-calendar',
+]);
 const switchDepartmentForm = useForm({
     department: null,
 });
@@ -107,6 +111,15 @@ const activeTabDescription = computed(() => activeSection.value?.transDescriptio
 
         <div class="space-y-3">
             <DepartmentHero :department="department" />
+
+            <div v-if="canViewDepartmentAssessmentCalendar" class="flex justify-end">
+                <InertiaLink
+                    :href="route('department-assessment-calendars.index', { department: institutionDepartmentId })"
+                    class="inline-flex items-center rounded-full border border-border px-3 py-1 text-xs font-medium text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                    {{ $t('academic_calendar.department_assessment_calendar_title') }}
+                </InertiaLink>
+            </div>
 
             <div>
                 <BaseSectionNav

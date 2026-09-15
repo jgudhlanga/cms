@@ -23,6 +23,7 @@ it('returns aggregated student stats for enrolled students', function (): void {
     createStudentEnrolmentForProgram($femaleProgram);
 
     $user = User::factory()->create(['tenant_id' => $maleProgram->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $response = $this->getJson(route('v1.students.stats'));
@@ -62,6 +63,7 @@ it('returns student type breakdown counts in stats', function (): void {
     ]);
 
     $user = User::factory()->create(['tenant_id' => $directProgram->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $response = $this->getJson(route('v1.students.stats'));
@@ -88,6 +90,7 @@ it('returns sponsored breakdown counts in stats', function (): void {
     ]);
 
     $user = User::factory()->create(['tenant_id' => $sponsoredProgram->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $response = $this->getJson(route('v1.students.stats'));
@@ -116,6 +119,7 @@ it('returns disability breakdown counts treating prefer_not_to_say and null as n
     createStudentEnrolmentForProgram($nullProgram);
 
     $user = User::factory()->create(['tenant_id' => $yesProgram->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $response = $this->getJson(route('v1.students.stats'));
@@ -149,6 +153,7 @@ it('keeps global sponsored and disability chip counts when gender filter is appl
     ]);
 
     $user = User::factory()->create(['tenant_id' => $maleSponsored->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $response = $this->getJson(route('v1.students.stats').'?gender=male');
@@ -176,6 +181,7 @@ it('returns a lower filtered total when gender filter is applied', function (): 
     createStudentEnrolmentForProgram($femaleProgram);
 
     $user = User::factory()->create(['tenant_id' => $maleProgram->tenant_id]);
+    $user->givePermissionTo('viewAny:students');
     Sanctum::actingAs($user);
 
     $response = $this->getJson(route('v1.students.stats').'?gender=male');

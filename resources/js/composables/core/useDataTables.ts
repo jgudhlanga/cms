@@ -23,11 +23,12 @@ import {
     useVueTable,
 } from '@tanstack/vue-table';
 import { trans } from 'laravel-vue-i18n';
-import { debounce } from 'lodash';
+import { debounce } from '@/lib/debounce';
 import { h, Ref, ref } from 'vue';
 import TextEditLink from '@/components/core/util/TextEditLink.vue';
 import BaseAnchor from '@/components/core/util/BaseAnchor.vue';
 import { appendJsonApiTableQueryToUrl } from '@/lib/json-api';
+import { buildTableActionMenuGroups } from '@/lib/tableActionMenu';
 
 /**
  * Provides a set of utilities for managing data tables. This includes
@@ -70,7 +71,7 @@ export function useDataTables() {
      * @param props.columns - An array of objects representing the columns of the data table.
      * @returns A Vue Table instance.
      */
-    const initialize = (props: { data: Array<any>; columns: Array<any> }) =>
+    const initialize = (props: { data: Array<any>; columns: Array<any>; pagination?: unknown }) =>
         useVueTable({
             get data() {
                 return props.data;
@@ -79,7 +80,8 @@ export function useDataTables() {
                 return props.columns;
             },
             getCoreRowModel: getCoreRowModel(),
-            getPaginationRowModel: getPaginationRowModel(),
+            // Tables without a pager have no way to reach a second page, so they show every row.
+            ...(props.pagination ? { getPaginationRowModel: getPaginationRowModel() } : {}),
             getSortedRowModel: getSortedRowModel(),
             getFilteredRowModel: getFilteredRowModel(),
             state: {
@@ -346,21 +348,14 @@ export function useDataTables() {
     };
 
     /**
-     * Returns a rendered DropdownButton component with options filtered based on the archive state.
+     * Returns a rendered DropdownButton for row actions.
      *
-     * @param isArchived - A boolean indicating if the item is archived.
-     * @param params - An array of ButtonDropdownOption objects to filter options from.
-     * @returns A rendered DropdownButton component with appropriate options.
+     * Legacy callers still pass `{ key, action }` options; those are adapted into
+     * the grouped menu shape `DropdownButton` expects after the class-menus rewrite.
      */
     const moreActionButton = (isArchived: boolean, params: Array<ButtonDropdownOption>) => {
-        let options = [];
-        if (isArchived) {
-            options = params?.filter((item: ButtonDropdownOption) => item.key === 'restore');
-        } else {
-            options = params?.filter((item: ButtonDropdownOption) => item.key !== 'restore');
-        }
         return h(DropdownButton, {
-            options: options,
+            groups: buildTableActionMenuGroups(isArchived, params ?? []),
             onlyIcon: true,
         });
     };

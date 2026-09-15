@@ -2,18 +2,17 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\Rbac\RoleEnum;
 use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
 use App\Services\Rbac\RbacModuleStateService;
 use App\Services\Rbac\UserPermissionMapService;
 use App\Services\Students\RegistrationAvailabilityService;
-use App\Services\Students\ReturningStudentContextService;
 use App\Support\AppVersion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Inertia\Middleware;
 use Lab404\Impersonate\Services\ImpersonateManager;
-use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -39,6 +38,9 @@ class HandleInertiaRequests extends Middleware
     /**
      * Define the props that are shared by default.
      *
+     * These run on every navigation, so anything that touches the database or cache is a closure
+     * and is skipped by partial reloads. The route list is not shared: @routes renders it.
+     *
      * @see https://inertiajs.com/shared-data
      *
      * @return array<string, mixed>
@@ -46,13 +48,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-
-        if ($user instanceof User) {
-            $this->eagerLoadAuthRelations($user);
-        }
-
-        $impersonate = app(ImpersonateManager::class);
-        $isImpersonating = $impersonate->isImpersonating();
+        $user = $user instanceof User ? $user : null;
 
         $appearance = $request->cookie('appearance') ?? 'system';
         $systemPrefersDark = strcasecmp((string) $request->header('Sec-CH-Prefers-Color-Scheme', ''), 'dark') === 0;
@@ -72,38 +68,27 @@ class HandleInertiaRequests extends Middleware
                 'preference' => $appearance,
                 'systemPrefersDark' => $systemPrefersDark,
             ],
-            'auth' => [
-                'user' => $user ? new UserResource($user) : null,
-                'can' => $user ? $this->permissions($user) : null,
-                'impersonating' => $isImpersonating,
+            'auth' => fn () => [
+                'user' => $user !== null ? UserResource::forSharedProps($this->loadAuthRelations($user)) : null,
+                'can' => $user !== null ? $this->permissions($user) : null,
+                'impersonating' => app(ImpersonateManager::class)->isImpersonating(),
             ],
             'moduleState' => fn () => app(RbacModuleStateService::class)->all(),
-            'registration' => fn () => app(RegistrationAvailabilityService::class)->sharedProps(),
-            'returningStudent' => fn () => $this->returningStudentProps($user),
+            'notifications' => fn () => $user !== null ? ['unreadCount' => $user->unreadNotifications()->count()] : null,
+            'registration' => fn () => $this->sharesRegistration($user)
+                ? app(RegistrationAvailabilityService::class)->sharedProps()
+                : null,
             'purgeArchiveRetentionDays' => (int) config('purge.archive_retention_days', 30),
-            'ziggy' => [
-                ...(new Ziggy)->filter([
-                    '!*telescope*',
-                    '!*horizon*',
-                    '!*debugbar*',
-                    '!*log-viewer*',
-                    '!sanctum.*',
-                ])->toArray(),
-                'location' => $request->url(),
-            ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
 
-    private function eagerLoadAuthRelations(User $user): void
+    private function loadAuthRelations(User $user): User
     {
-        $user->loadMissing([
+        return $user->loadMissing([
             'roles',
             'permissions',
             'studentProfile',
             'staffProfile',
-            'tenant',
-            'status',
         ]);
     }
 
@@ -116,16 +101,11 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array<string, mixed>|null
+     * Registration availability is only read by guest and applicant/student pages; staff pages fall
+     * back to the client-side default.
      */
-    private function returningStudentProps(?User $user): ?array
+    private function sharesRegistration(?User $user): bool
     {
-        $student = $user?->studentProfile;
-
-        if ($student === null) {
-            return null;
-        }
-
-        return app(ReturningStudentContextService::class)->toInertiaProps($student);
+        return $user === null || $user->hasRole(RoleEnum::STUDENT->name());
     }
 }

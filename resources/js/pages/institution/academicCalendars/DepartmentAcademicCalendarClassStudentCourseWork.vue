@@ -22,6 +22,16 @@ const props = defineProps<{
     canCreateCourseWork?: boolean;
     canUpdateCourseWork?: boolean;
     canViewCourseWorkAuditTrail?: boolean;
+    moduleLocks?: Record<
+        number,
+        {
+            hasEditableCourseWork: boolean;
+            allAssessmentTypesLocked: boolean;
+            lockedAssessmentTypeIds: number[];
+            lockedAssessmentTypeNames: string[];
+            readOnlyMessage: string | null;
+        }
+    >;
 }>();
 
 const { department, academicCalendar, course, level, mode, classConfig, academicCalendarClass, student } = toRefs(props);
@@ -68,6 +78,7 @@ const studentContextLine = computed(() =>
             :can-create="canCreateCourseWork"
             :can-update="canUpdateCourseWork"
             :can-view-audit-trail="canViewCourseWorkAuditTrail"
+            :module-locks="moduleLocks"
         />
     </PageContainer>
 </template>

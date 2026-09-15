@@ -3,7 +3,7 @@ import AcademicCalendarClassTutorBadge from '@/components/academicCalendars/Acad
 import AssessmentCalendarWindowsList from '@/components/assessments/AssessmentCalendarWindowsList.vue';
 import type { TeachingClassCard } from '@/types/lecturer';
 import { UserIcon, UserRoundIcon, Users } from '@lucide/vue';
-import { router } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -14,10 +14,10 @@ const props = defineProps<{
 const isClickable = computed(() => props.showUrl != null && props.showUrl !== '');
 
 const cardClass = computed(() => {
-    const base = 'block overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-200';
+    const base = 'relative block overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-200';
 
     return isClickable.value
-        ? `${base} cursor-pointer hover:-translate-y-px hover:shadow-md`
+        ? `${base} cursor-pointer hover:-translate-y-px hover:shadow-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2`
         : `${base} cursor-default`;
 });
 
@@ -27,26 +27,11 @@ const metaLine = computed(() =>
         .join(' · '),
 );
 
-const onCardClick = (): void => {
-    if (!isClickable.value || props.showUrl == null) {
-        return;
-    }
-
-    router.visit(props.showUrl);
-};
-
 const isAssignedCode = (code: string): boolean => props.classCard.assignedModuleCodes.includes(code);
 </script>
 
 <template>
-    <div
-        :class="cardClass"
-        :role="isClickable ? 'link' : undefined"
-        :tabindex="isClickable ? 0 : undefined"
-        @click="onCardClick"
-        @keydown.enter.prevent="onCardClick"
-        @keydown.space.prevent="onCardClick"
-    >
+    <div :class="cardClass">
         <div class="h-0.5 bg-linear-to-r from-sky-400 to-blue-600" />
 
         <div class="p-3 space-y-3">
@@ -54,7 +39,15 @@ const isAssignedCode = (code: string): boolean => props.classCard.assignedModule
                 <div class="min-w-0 space-y-1">
                     <div class="flex flex-wrap items-center gap-1.5">
                         <h2 class="text-xs font-semibold tracking-tight text-foreground sm:text-sm">
-                            {{ classCard.name }}
+                            <!-- The ::after overlay makes the whole card clickable while keeping one named link for keyboard and screen readers. -->
+                            <Link
+                                v-if="isClickable"
+                                :href="showUrl!"
+                                class="outline-none after:absolute after:inset-0 after:content-['']"
+                            >
+                                {{ classCard.name }}
+                            </Link>
+                            <template v-else>{{ classCard.name }}</template>
                         </h2>
                         <span
                             v-if="classCard.isTutor"
@@ -72,7 +65,7 @@ const isAssignedCode = (code: string): boolean => props.classCard.assignedModule
                 </span>
             </div>
 
-            <div @click.stop.prevent>
+            <div>
                 <AcademicCalendarClassTutorBadge
                     :tutor="classCard.tutor ?? null"
                     :can-assign="false"
@@ -107,17 +100,17 @@ const isAssignedCode = (code: string): boolean => props.classCard.assignedModule
 
             <div class="grid grid-cols-3 gap-1 rounded-lg bg-muted/60 px-2 py-1.5 text-center">
                 <div class="flex min-w-0 flex-1 flex-col items-center gap-0">
-                    <Users class="h-3 w-3 text-muted-foreground" />
+                    <Users class="h-3 w-3 text-muted-foreground" aria-hidden="true" />
                     <span class="text-[10px] leading-tight text-muted-foreground">{{ $t('students.class_total') }}</span>
                     <span class="text-xs font-semibold leading-tight text-foreground">{{ classCard.studentCount }}</span>
                 </div>
                 <div class="flex min-w-0 flex-1 flex-col items-center gap-0">
-                    <UserIcon class="h-3 w-3 text-blue-600" />
+                    <UserIcon class="h-3 w-3 text-blue-600" aria-hidden="true" />
                     <span class="text-[10px] leading-tight text-muted-foreground">{{ $tChoice('general.male', 2) }}</span>
                     <span class="text-xs font-semibold leading-tight text-foreground">{{ classCard.genderCounts?.male ?? 0 }}</span>
                 </div>
                 <div class="flex min-w-0 flex-1 flex-col items-center gap-0">
-                    <UserRoundIcon class="h-3 w-3 text-pink-600" />
+                    <UserRoundIcon class="h-3 w-3 text-pink-600" aria-hidden="true" />
                     <span class="text-[10px] leading-tight text-muted-foreground">{{ $tChoice('general.female', 2) }}</span>
                     <span class="text-xs font-semibold leading-tight text-foreground">{{ classCard.genderCounts?.female ?? 0 }}</span>
                 </div>

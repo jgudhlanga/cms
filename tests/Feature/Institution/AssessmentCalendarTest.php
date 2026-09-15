@@ -708,3 +708,82 @@ test('assessment calendars index includes computed notification dates', function
             )
         );
 });
+
+test('updating or deleting a closed assessment calendar requires the update closed permission', function () {
+    $user = User::factory()->create();
+    $assessmentType = AssessmentType::factory()->create(['tenant_id' => $user->tenant_id]);
+    $academicCalendar = createAcademicCalendarForYear(AcademicCalendarTypeEnum::SEMESTER, 1);
+
+    $closedCalendar = AssessmentCalendar::factory()->create([
+        'tenant_id' => $user->tenant_id,
+        'assessment_type_id' => $assessmentType->id,
+        'academic_calendar_id' => $academicCalendar->id,
+        'type' => AcademicCalendarTypeEnum::SEMESTER->value,
+        'start_date' => now()->subDays(20)->toDateString(),
+        'end_date' => now()->subDay()->toDateString(),
+    ]);
+
+    grantUpdateAssessmentCalendarPermission($user);
+    Permission::findOrCreate('delete:assessment-calendar', 'web');
+    $user->givePermissionTo('delete:assessment-calendar');
+
+    $payload = [
+        'academic_calendar_id' => $academicCalendar->id,
+        'start_date' => Carbon::parse($academicCalendar->opening_date)->addDay()->toDateString(),
+        'end_date' => Carbon::parse($academicCalendar->closing_date)->subDay()->toDateString(),
+        'type' => AcademicCalendarTypeEnum::SEMESTER->value,
+    ];
+
+    $this->actingAs($user)
+        ->put(route('assessment-calendars.update', [
+            'assessment_type' => $assessmentType->id,
+            'calendar' => $closedCalendar->id,
+        ]), $payload)
+        ->assertForbidden();
+
+    $this->actingAs($user)
+        ->delete(route('assessment-calendars.destroy', [
+            'assessment_type' => $assessmentType->id,
+            'calendar' => $closedCalendar->id,
+        ]))
+        ->assertForbidden();
+
+    expect($closedCalendar->fresh()->end_date->toDateString())->toBe(now()->subDay()->toDateString())
+        ->and($closedCalendar->fresh()->deleted_at)->toBeNull();
+
+    Permission::findOrCreate('updateClosed:assessment-calendar', 'web');
+    $user->givePermissionTo('updateClosed:assessment-calendar');
+
+    $this->actingAs($user->fresh())
+        ->put(route('assessment-calendars.update', [
+            'assessment_type' => $assessmentType->id,
+            'calendar' => $closedCalendar->id,
+        ]), $payload)
+        ->assertSuccessful();
+
+    expect($closedCalendar->fresh()->end_date->toDateString())->toBe($payload['end_date']);
+});
+
+test('restoring an assessment calendar through another assessment type returns not found', function () {
+    $user = User::factory()->create();
+    $assessmentType = AssessmentType::factory()->create(['tenant_id' => $user->tenant_id]);
+    $otherAssessmentType = AssessmentType::factory()->create(['tenant_id' => $user->tenant_id]);
+
+    $assessmentCalendar = AssessmentCalendar::factory()->create([
+        'tenant_id' => $user->tenant_id,
+        'assessment_type_id' => $assessmentType->id,
+    ]);
+    $assessmentCalendar->delete();
+
+    Permission::findOrCreate('restore:assessment-calendar', 'web');
+    $user->givePermissionTo('restore:assessment-calendar');
+
+    $this->actingAs($user)
+        ->put(route('assessment-calendars.restore', [
+            'assessment_type' => $otherAssessmentType->id,
+            'calendar' => $assessmentCalendar->id,
+        ]))
+        ->assertNotFound();
+
+    expect($assessmentCalendar->fresh()->deleted_at)->not->toBeNull();
+});

@@ -11,6 +11,7 @@ use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Users\User;
 use App\Services\Lecturer\LecturerCourseWorkAccess;
 use App\Support\AcademicCalendars\CourseWorkMarkValue;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -88,6 +89,10 @@ class CourseWorkMarkService
                 'remark' => array_key_exists('remark', $data) ? $data['remark'] : null,
             ];
 
+            if ($mark !== null && ! $mark->trashed() && $mark->mark !== null && $attributes['mark'] === null) {
+                $this->assertMayClearMark($user);
+            }
+
             if ($mark?->trashed()) {
                 $mark->restore();
 
@@ -135,6 +140,20 @@ class CourseWorkMarkService
 
             return $mark;
         });
+    }
+
+    /**
+     * Blanking a captured mark is equivalent to deleting it, so it needs the delete ability.
+     */
+    private function assertMayClearMark(mixed $user): void
+    {
+        if ($user instanceof User && $user->can('delete:course-work')) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'mark' => [__('academic_calendar.course_work_mark_clear_requires_delete')],
+        ]);
     }
 
     private function assertMarkCaptureMode(CourseSyllabusModule $module, ?int $assessmentTypeId): void
@@ -315,10 +334,10 @@ class CourseWorkMarkService
         $user = Auth::user();
 
         if (! $user instanceof User) {
-            return;
+            throw new AuthorizationException;
         }
 
-        $this->lecturerCourseWorkAccess->assertCanAccessEnrolmentModule(
+        $this->lecturerCourseWorkAccess->assertCanCaptureEnrolmentModule(
             $user,
             $studentEnrolmentId,
             $moduleId,
@@ -335,11 +354,20 @@ class CourseWorkMarkService
     ): void {
         $config = $this->resolveClassConfigForMutation($studentEnrolmentId, $academicCalendarClassId, $classConfigId);
 
+        // Without a class there is no window, toggle or department to check against: fail closed.
         if (! $config instanceof ClassConfig) {
-            return;
+            throw ValidationException::withMessages([
+                'studentEnrolmentId' => [__('academic_calendar.course_work_enrolment_not_in_class')],
+            ]);
         }
 
-        $this->courseWorkAssessmentLockService->assertMutationAllowed($config, $module, $assessmentTypeId);
+        $this->courseWorkAssessmentLockService->assertMutationAllowed(
+            $config,
+            $module,
+            $assessmentTypeId,
+            $studentEnrolmentId,
+            $academicCalendarClassId ?? $this->lecturerCourseWorkAccess->classIdForEnrolment($studentEnrolmentId),
+        );
     }
 
     private function resolveClassConfigForMutation(
@@ -355,15 +383,12 @@ class CourseWorkMarkService
             return $this->assertClassExists($academicCalendarClassId)->classConfig;
         }
 
-        $classId = AcademicCalendarStudentEnrolment::query()
-            ->where('student_enrolment_id', $studentEnrolmentId)
-            ->whereNull('deleted_at')
-            ->value('academic_calendar_class_id');
+        $classId = $this->lecturerCourseWorkAccess->classIdForEnrolment($studentEnrolmentId);
 
         if ($classId === null) {
             return null;
         }
 
-        return $this->assertClassExists((int) $classId)->classConfig;
+        return $this->assertClassExists($classId)->classConfig;
     }
 }

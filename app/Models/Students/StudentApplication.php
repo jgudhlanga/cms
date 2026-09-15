@@ -14,6 +14,7 @@ use App\Models\Institution\ModeOfStudy;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\WorkflowStep;
 use App\Observers\Students\StudentApplicationObserver;
+use App\Support\Media\ProofOfPaymentMedia;
 use App\Traits\BelongsToTenant;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
@@ -105,6 +107,10 @@ class StudentApplication extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('offer-letter')->singleFile();
+
+        $proofOfPaymentMimeTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+        $this->addMediaCollection('application-fee')->acceptsMimeTypes($proofOfPaymentMimeTypes)->useDisk(ProofOfPaymentMedia::DISK);
+        $this->addMediaCollection('tuition-fee')->acceptsMimeTypes($proofOfPaymentMimeTypes)->useDisk(ProofOfPaymentMedia::DISK);
     }
 
     public function hasPaid(FeeTypeEnum $feeType): bool
@@ -123,9 +129,21 @@ class StudentApplication extends Model implements HasMedia
         return $this->student->user->ledgers()->with('feeType')->where('type', 'receipt');
     }
 
+    /**
+     * Receipt ledgers booked against this application, eager loaded by list views.
+     */
+    public function receiptLedgers(): HasMany
+    {
+        return $this->hasMany(Ledger::class, 'student_application_id')->where('type', 'receipt');
+    }
+
     public function receipt(FeeTypeEnum $feeType): ?Ledger
     {
         if ($feeType === FeeTypeEnum::APPLICATION_FEE) {
+            if ($this->relationLoaded('receiptLedgers')) {
+                return $this->latestReceiptFor($this->receiptLedgers->where('payment_status', 'paid'), $feeType);
+            }
+
             return Ledger::query()
                 ->where('student_application_id', $this->id)
                 ->where('type', 'receipt')
@@ -135,7 +153,27 @@ class StudentApplication extends Model implements HasMedia
                 ->first();
         }
 
+        if ($this->relationLoaded('student') && $this->student?->relationLoaded('user') && $this->student->user?->relationLoaded('receiptLedgers')) {
+            return $this->latestReceiptFor($this->student->user->receiptLedgers, $feeType);
+        }
+
         return $this->receipts()->whereRelation('feeType', 'slug', $feeType->slug())->latest()->first();
+    }
+
+    /**
+     * In-memory equivalent of the receipt queries above: newest first, ties broken by id.
+     *
+     * @param  Collection<int, Ledger>  $ledgers
+     */
+    private function latestReceiptFor(Collection $ledgers, FeeTypeEnum $feeType): ?Ledger
+    {
+        return $ledgers
+            ->filter(fn (Ledger $ledger): bool => $ledger->feeType?->slug === $feeType->slug())
+            ->sortBy([
+                fn (Ledger $a, Ledger $b): int => ($b->created_at?->getTimestamp() ?? 0) <=> ($a->created_at?->getTimestamp() ?? 0),
+                fn (Ledger $a, Ledger $b): int => $b->id <=> $a->id,
+            ])
+            ->first();
     }
 
     public function offerLetter(): HasOne

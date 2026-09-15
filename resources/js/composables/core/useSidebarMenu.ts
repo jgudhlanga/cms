@@ -1,10 +1,10 @@
-import AppLogo from '@/components/core/image/AppLogo.vue';
 import {
     isStudentProfileTabVisible,
     portalSidebarProfileTabs,
     type StudentProfileTabValue,
 } from '@/composables/students/useStudentProfileTabs';
 import { IconName } from '@/enums/icons';
+import { grantedAbilitySet } from '@/lib/grantedAbilities';
 import { icons } from '@/lib/icons';
 import { useRbac } from '@/composables/rbac/useRbac';
 import { useSettings } from '@/composables/settings/useSettings';
@@ -18,12 +18,12 @@ import {
     hasStudentProfile,
     isModuleEnabled,
 } from '@/lib/permissions';
+import { tenants } from '@/lib/tenants';
 import { PageProps } from '@/types';
-import { TenantInterface } from '@/types/tenants';
 import { MenuGroupInterface, MenuGroupKey, MenuItemInterface } from '@/types/ui';
-import { trans, trans_choice } from 'laravel-vue-i18n';
+import { getActiveLanguage, trans, trans_choice } from 'laravel-vue-i18n';
 import { usePage } from '@inertiajs/vue3';
-import { computed, markRaw } from 'vue';
+import { computed } from 'vue';
 
 const menuGroupOrder: MenuGroupKey[] = [
     'overview',
@@ -39,26 +39,38 @@ export function getMenuItemKey(item: MenuItemInterface): string {
     return [item.transKey, item.transChoiceKey, item.url, item.title].filter(Boolean).join('|') || 'menu-item';
 }
 
+// The menu calls route() and hasAbility() hundreds of times. Page props are replaced on every visit,
+// but the inputs that decide the menu rarely change, so it is rebuilt only when they do.
+let cachedMenuKey: string | null = null;
+let cachedMenuOptions: MenuItemInterface[] = [];
+
+function menuInputsKey(props: PageProps): string {
+    const attributes = props.auth?.user?.attributes as Record<string, unknown> | undefined;
+
+    return JSON.stringify([
+        [...grantedAbilitySet(props.auth?.can)].sort(),
+        props.moduleState ?? {},
+        attributes?.hasStudentProfile ?? null,
+        attributes?.hasProgram ?? null,
+        attributes?.hasAccessToNonAcademicDepartments ?? null,
+        getActiveLanguage(),
+    ]);
+}
+
 export function useSidebarMenu() {
     const page = usePage<PageProps>();
 
-    const tenants: Array<TenantInterface> = [
-        {
-            id: '1',
-            type: 'tenant',
-            attributes: {
-                name: 'Harare Poly',
-                isDefault: true,
-                logo: markRaw(AppLogo),
-                bio: 'Software',
-            },
-        },
-    ];
-
     const menuOptions = computed<MenuItemInterface[]>(() => {
+        const menuKey = menuInputsKey(page.props);
+
+        if (menuKey === cachedMenuKey) {
+            return cachedMenuOptions;
+        }
+
         const moduleState = page.props.moduleState ?? {};
 
-        return [
+        cachedMenuKey = menuKey;
+        cachedMenuOptions = [
         {
             groupKey: 'overview',
             transChoiceKey: 'trans.dashboard',
@@ -80,6 +92,42 @@ export function useSidebarMenu() {
             url: route('teaching.modules.index'),
             show: canShowMenuItem('view:lecturer-modules', 'institution', moduleState),
         },
+        (() => {
+            const courseWorkChildren: MenuItemInterface[] = [
+                {
+                    transChoiceKey: 'academic_calendar.course_work_nav_progress',
+                    icon: icons[IconName.chart_increasing],
+                    url: route('teaching.course-work-progress.index'),
+                    show: canShowMenuItem('view:course-work-progress', 'institution', moduleState),
+                },
+                {
+                    transChoiceKey: 'academic_calendar.course_work_nav_progress_reports',
+                    icon: icons[IconName.clipboard_check],
+                    url: route('course-work-progress-reports.index'),
+                    show: canShowMenuItem('acknowledge:course-work-progress-reports', 'institution', moduleState),
+                },
+                {
+                    transChoiceKey: 'academic_calendar.course_work_nav_missing_marks',
+                    icon: icons[IconName.file_warning],
+                    url: route('missing-marks-report.index'),
+                    show: canShowMenuItem('view:missing-marks-report', 'institution', moduleState),
+                },
+                {
+                    transChoiceKey: 'academic_calendar.course_work_nav_extensions',
+                    icon: icons[IconName.calendar_clock],
+                    url: route('course-work-extensions.index'),
+                    show: canShowMenuItem('viewAny:course-work-extensions', 'institution', moduleState),
+                },
+            ].filter((child) => child.show);
+
+            return {
+                groupKey: 'lecturer' as const,
+                transChoiceKey: 'academic_calendar.course_work',
+                icon: icons[IconName.clipboard_pen],
+                items: courseWorkChildren,
+                show: courseWorkChildren.length > 0,
+            };
+        })(),
         (() => {
             const canSearchStudents = canShowMenuItem('view:students', 'students', moduleState);
             const canViewApplications = canShowMenuItem('view:student-applications', 'enrolments', moduleState);
@@ -516,6 +564,8 @@ export function useSidebarMenu() {
                     && isStudentProfileTabVisible(tab.value as StudentProfileTabValue, 'portal'),
             })),
     ];
+
+        return cachedMenuOptions;
     });
 
     const menuGroups = computed<MenuGroupInterface[]>(() => {

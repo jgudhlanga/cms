@@ -14,6 +14,7 @@ import { provideSidebarAccordion } from '@/composables/core/useSidebarAccordion'
 import { getMenuItemKey, useSidebarMenu } from '@/composables/core/useSidebarMenu';
 import { useSidebarNavActive } from '@/composables/core/useSidebarNavActive';
 import type { MenuGroupInterface } from '@/types/ui';
+import { PREFETCH_CACHE_FOR } from '@/lib/prefetch';
 import { Link } from '@inertiajs/vue3';
 import MenuIcon from './MenuIcon.vue';
 import NavMainNestedItem from './NavMainNestedItem.vue';
@@ -47,7 +48,7 @@ const siblingUrls = (group: MenuGroupInterface): Array<string | undefined> =>
 							class="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center"
 						>
 							<SidebarMenuButton as-child :is-active="isActive(item.url, siblingUrls(group))" :tooltip="getTranslation(item)">
-								<Link :href="item.url ?? ''" @click="closeMobileSidebar">
+								<Link :href="item.url ?? ''" prefetch :cache-for="PREFETCH_CACHE_FOR" @click="closeMobileSidebar">
 									<MenuIcon :icon="item.icon" />
 									<TransText :item="item" variant="nav" />
 								</Link>

@@ -13,7 +13,7 @@ beforeEach(function () {
 });
 
 test('dashboard returns enrolment summary metrics for selected intake period', function () {
-    $user = userWithDashboardPermission();
+    $user = userWithDashboardPermission('view-enrolment:dashboards');
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
 
     $reviewProgram = createVerifiedStudentApplication('DASH-REVIEW-01');
@@ -84,7 +84,7 @@ test('dashboard returns enrolment summary metrics for selected intake period', f
         ]);
 
     $this->actingAs($user)
-        ->get('/dashboard?intake_period_id='.$intakePeriod->id)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id.'&tab=enrolments')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
@@ -98,7 +98,7 @@ test('dashboard returns enrolment summary metrics for selected intake period', f
 });
 
 test('dashboard enrolment summary metrics are scoped to selected intake period', function () {
-    $user = userWithDashboardPermission();
+    $user = userWithDashboardPermission('view-enrolment:dashboards');
     $selectedIntake = seedDashboardIntakePeriod($user->tenant_id);
 
     $otherIntake = IntakePeriod::withoutGlobalScopes()->create([
@@ -141,7 +141,7 @@ test('dashboard enrolment summary metrics are scoped to selected intake period',
         ->update(['type' => ClassListTypeEnum::FAILED->value]);
 
     $this->actingAs($user)
-        ->get('/dashboard?intake_period_id='.$selectedIntake->id)
+        ->get('/dashboard?intake_period_id='.$selectedIntake->id.'&tab=enrolments')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->where('enrolmentSummary.applications', 2)
@@ -151,7 +151,7 @@ test('dashboard enrolment summary metrics are scoped to selected intake period',
         );
 
     $this->actingAs($user)
-        ->get('/dashboard?intake_period_id='.$otherIntake->id)
+        ->get('/dashboard?intake_period_id='.$otherIntake->id.'&tab=enrolments')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->where('enrolmentSummary.applications', 2)
@@ -162,7 +162,7 @@ test('dashboard enrolment summary metrics are scoped to selected intake period',
 });
 
 test('dashboard enrolment summary metrics ignore soft deleted student programs', function () {
-    $user = userWithDashboardPermission();
+    $user = userWithDashboardPermission('view-enrolment:dashboards');
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
 
     $activeProgram = createVerifiedStudentApplication('DASH-ACTIVE-01');
@@ -179,7 +179,7 @@ test('dashboard enrolment summary metrics ignore soft deleted student programs',
     StudentApplication::query()->whereKey($deletedProgram->id)->delete();
 
     $this->actingAs($user)
-        ->get('/dashboard?intake_period_id='.$intakePeriod->id)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id.'&tab=enrolments')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->where('enrolmentSummary.applications', 1)
@@ -188,7 +188,7 @@ test('dashboard enrolment summary metrics ignore soft deleted student programs',
 });
 
 test('dashboard returns department distribution for academic departments', function () {
-    $user = userWithDashboardPermission();
+    $user = userWithDashboardPermission('view-enrolment:dashboards');
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
 
     $program = createVerifiedStudentApplication('DASH-DEPT-DIST-01');
@@ -200,7 +200,7 @@ test('dashboard returns department distribution for academic departments', funct
     ]);
 
     $this->actingAs($user)
-        ->get('/dashboard?intake_period_id='.$intakePeriod->id)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id.'&tab=enrolments')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('dashboard/Index')
@@ -212,7 +212,7 @@ test('dashboard returns department distribution for academic departments', funct
 });
 
 test('dashboard department distribution totals align with enrolment summary applications', function () {
-    $user = userWithDashboardPermission();
+    $user = userWithDashboardPermission('view-enrolment:dashboards');
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
 
     foreach (['DASH-DEPT-A', 'DASH-DEPT-B', 'DASH-DEPT-C'] as $studentNumber) {
@@ -226,7 +226,7 @@ test('dashboard department distribution totals align with enrolment summary appl
     }
 
     $response = $this->actingAs($user)
-        ->get('/dashboard?intake_period_id='.$intakePeriod->id)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id.'&tab=enrolments')
         ->assertSuccessful();
 
     $props = $response->original->getData()['page']['props'];
@@ -237,7 +237,7 @@ test('dashboard department distribution totals align with enrolment summary appl
 });
 
 test('dashboard department distribution excludes soft deleted applications', function () {
-    $user = userWithDashboardPermission();
+    $user = userWithDashboardPermission('view-enrolment:dashboards');
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
 
     $activeProgram = createVerifiedStudentApplication('DASH-DEPT-ACTIVE');
@@ -258,7 +258,7 @@ test('dashboard department distribution excludes soft deleted applications', fun
     StudentApplication::query()->whereKey($deletedProgram->id)->delete();
 
     $this->actingAs($user)
-        ->get('/dashboard?intake_period_id='.$intakePeriod->id)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id.'&tab=enrolments')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->has('departmentDistribution', 1)
@@ -268,7 +268,7 @@ test('dashboard department distribution excludes soft deleted applications', fun
 });
 
 test('dashboard department distribution excludes non academic departments', function () {
-    $user = userWithDashboardPermission();
+    $user = userWithDashboardPermission('view-enrolment:dashboards');
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
 
     $program = createVerifiedStudentApplication('DASH-NON-ACAD');
@@ -280,7 +280,7 @@ test('dashboard department distribution excludes non academic departments', func
     ]);
 
     $this->actingAs($user)
-        ->get('/dashboard?intake_period_id='.$intakePeriod->id)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id.'&tab=enrolments')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->has('departmentDistribution', 1)
@@ -291,7 +291,7 @@ test('dashboard department distribution excludes non academic departments', func
 });
 
 test('dashboard enrolment metrics ignore academic calendar id in request', function () {
-    $user = userWithDashboardPermission();
+    $user = userWithDashboardPermission('view-enrolment:dashboards');
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
     $calendar = seedDashboardAcademicCalendar();
 
@@ -311,12 +311,12 @@ test('dashboard enrolment metrics ignore academic calendar id in request', funct
     ]);
 
     $withoutCalendar = $this->actingAs($user)
-        ->get('/dashboard?intake_period_id='.$intakePeriod->id)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id.'&tab=enrolments')
         ->assertSuccessful()
         ->original->getData()['page']['props'];
 
     $withOtherCalendar = $this->actingAs($user)
-        ->get('/dashboard?intake_period_id='.$intakePeriod->id.'&academic_calendar_id='.$otherCalendar->id)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id.'&academic_calendar_id='.$otherCalendar->id.'&tab=enrolments')
         ->assertSuccessful()
         ->original->getData()['page']['props'];
 
@@ -325,7 +325,7 @@ test('dashboard enrolment metrics ignore academic calendar id in request', funct
 });
 
 test('dashboard department distribution is scoped to selected intake period', function () {
-    $user = userWithDashboardPermission();
+    $user = userWithDashboardPermission('view-enrolment:dashboards');
     $selectedIntake = seedDashboardIntakePeriod($user->tenant_id);
 
     $otherIntake = IntakePeriod::withoutGlobalScopes()->create([
@@ -362,19 +362,19 @@ test('dashboard department distribution is scoped to selected intake period', fu
     ]);
 
     $this->actingAs($user)
-        ->get('/dashboard?intake_period_id='.$selectedIntake->id)
+        ->get('/dashboard?intake_period_id='.$selectedIntake->id.'&tab=enrolments')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->where('enrolmentSummary.applications', 2)
         );
 
     $selectedProps = $this->actingAs($user)
-        ->get('/dashboard?intake_period_id='.$selectedIntake->id)
+        ->get('/dashboard?intake_period_id='.$selectedIntake->id.'&tab=enrolments')
         ->assertSuccessful()
         ->original->getData()['page']['props'];
 
     $otherProps = $this->actingAs($user)
-        ->get('/dashboard?intake_period_id='.$otherIntake->id)
+        ->get('/dashboard?intake_period_id='.$otherIntake->id.'&tab=enrolments')
         ->assertSuccessful()
         ->original->getData()['page']['props'];
 
@@ -385,7 +385,7 @@ test('dashboard department distribution is scoped to selected intake period', fu
 });
 
 test('dashboard department distribution includes unassigned applications without academic department link', function () {
-    $user = userWithDashboardPermission();
+    $user = userWithDashboardPermission('view-enrolment:dashboards');
     $intakePeriod = seedDashboardIntakePeriod($user->tenant_id);
 
     $linkedProgram = createVerifiedStudentApplication('DASH-LINKED');
@@ -405,7 +405,7 @@ test('dashboard department distribution includes unassigned applications without
     ]);
 
     $this->actingAs($user)
-        ->get('/dashboard?intake_period_id='.$intakePeriod->id)
+        ->get('/dashboard?intake_period_id='.$intakePeriod->id.'&tab=enrolments')
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->has('departmentDistribution', 2)

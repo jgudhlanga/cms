@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Workflows;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class BulkUpdatePaymentStatusRequest extends FormRequest
 {
@@ -18,7 +19,7 @@ class BulkUpdatePaymentStatusRequest extends FormRequest
             'department_level_id' => ['required', 'integer', 'exists:department_levels,id'],
             'current_step_id' => ['required', 'integer', 'exists:workflow_steps,id'],
             'mode_of_study_id' => ['required', 'integer', 'exists:mode_of_studies,id'],
-            'field_to_update' => ['required', 'string'],
+            'field_to_update' => ['required', 'string', Rule::in(['registration_fee_confirmed', 'tuition_fee_confirmed'])],
             'field_value' => ['required', 'bool'],
         ];
     }

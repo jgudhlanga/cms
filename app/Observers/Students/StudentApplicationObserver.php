@@ -9,10 +9,12 @@ class StudentApplicationObserver
 {
     public function creating(StudentApplication $model): void
     {
+        $now = now();
+
         $model->application_tracking_number = Helper::generateModelUniqueNumber(
             $model,
-            config('custom.system.application-tracking-number-prefix'),
-            config('custom.system.application-tracking-number-suffix'),
+            config('custom.system.application-tracking-number-prefix').$now->format('y'),
+            $now->format('hi').config('custom.system.application-tracking-number-suffix'),
         );
     }
 }

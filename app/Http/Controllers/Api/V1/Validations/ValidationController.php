@@ -24,6 +24,14 @@ class ValidationController extends Controller
         'student_number' => [Student::class, 'student_number'],
     ];
 
+    /**
+     * Keys a guest may check while registering. The others reveal whether staff or student records exist,
+     * so they need a signed-in user.
+     *
+     * @var list<string>
+     */
+    protected array $guestKeys = ['user_email', 'student_national_id', 'student_passport_number'];
+
     public function check(Request $request)
     {
         $key = $request->query('key');
@@ -34,6 +42,12 @@ class ValidationController extends Controller
             return response()->json([
                 'error' => 'Invalid key or value missing.',
             ], 422);
+        }
+
+        if (! in_array($key, $this->guestKeys, true) && $request->user() === null && ! auth('sanctum')->check()) {
+            return response()->json([
+                'error' => 'Unauthenticated.',
+            ], 401);
         }
 
         if ($key === 'student_national_id') {

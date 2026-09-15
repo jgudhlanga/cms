@@ -32,6 +32,7 @@ class LecturerAssignmentResolver
                 'moduleIds' => [],
                 'assignmentKeys' => [],
                 'tutorClassIds' => [],
+                'lecturerInChargeClassConfigIds' => [],
             ];
         }
 
@@ -75,7 +76,21 @@ class LecturerAssignmentResolver
             'moduleIds' => $moduleIds,
             'assignmentKeys' => $assignmentKeys,
             'tutorClassIds' => $tutorClassIds,
+            'lecturerInChargeClassConfigIds' => $this->lecturerInChargeClassConfigIds($staffId),
         ];
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function lecturerInChargeClassConfigIds(int $staffId): array
+    {
+        return DB::table('class_config_lecturers_in_charge')
+            ->where('staff_id', $staffId)
+            ->pluck('class_config_id')
+            ->map(fn ($id): int => (int) $id)
+            ->values()
+            ->all();
     }
 
     public function assignmentKey(int $classId, int $moduleId): string

@@ -13,7 +13,7 @@ import type {
 } from '@/types/course-work';
 import { useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 export interface CourseWorkImportResult {
     ingestRunId: number;
@@ -24,8 +24,7 @@ export interface CourseWorkImportResult {
     rowsSkipped: number;
 }
 
-const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.csv'];
-const IMPORT_RESULT_AUTO_DISMISS_MS = 10_000;
+const ACCEPTED_EXTENSIONS = ['.xlsx'];
 
 const props = defineProps<{
     classConfigId?: number;
@@ -71,7 +70,6 @@ const previewLoading = ref(false);
 const preview = ref<CourseWorkImportPreview | null>(null);
 const previewError = ref<string | null>(null);
 const importResultDismissed = ref(false);
-let importResultDismissTimer: ReturnType<typeof setTimeout> | null = null;
 
 const confirmForm = useForm<{
     module: number | null;
@@ -86,29 +84,11 @@ watch(selectedModuleId, (value) => {
     resetPreview();
 });
 
-const clearImportResultDismissTimer = (): void => {
-    if (importResultDismissTimer !== null) {
-        clearTimeout(importResultDismissTimer);
-        importResultDismissTimer = null;
-    }
-};
-
-const scheduleImportResultAutoDismiss = (): void => {
-    clearImportResultDismissTimer();
-    importResultDismissTimer = setTimeout(() => {
-        importResultDismissed.value = true;
-        importResultDismissTimer = null;
-    }, IMPORT_RESULT_AUTO_DISMISS_MS);
-};
-
 watch(
     () => props.courseWorkImportResult,
     (result) => {
         if (result != null) {
             importResultDismissed.value = false;
-            scheduleImportResultAutoDismiss();
-        } else {
-            clearImportResultDismissTimer();
         }
     },
     { immediate: true },
@@ -123,7 +103,6 @@ const hasImportResult = computed(
 );
 
 const dismissImportResult = (): void => {
-    clearImportResultDismissTimer();
     importResultDismissed.value = true;
 };
 
@@ -318,10 +297,6 @@ const markCellActionClass = (action: CourseWorkImportPreviewMarkCell['action']):
 onMounted(() => {
     void loadTree();
 });
-
-onUnmounted(() => {
-    clearImportResultDismissTimer();
-});
 </script>
 
 <template>
@@ -390,16 +365,17 @@ onUnmounted(() => {
                         id="course-work-import-file"
                         ref="fileInput"
                         type="file"
-                        accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+                        accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        aria-describedby="course-work-import-file-hint"
                         :disabled="readOnly"
                         class="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-medium"
                         @change="onFileChange"
                     />
-                    <p class="text-xs text-muted-foreground">
+                    <p id="course-work-import-file-hint" class="text-xs text-muted-foreground">
                         {{ $t('academic_calendar.course_work_import_file_hint') }}
                     </p>
-                    <p v-if="fileError" class="text-sm text-destructive">{{ fileError }}</p>
-                    <p v-if="previewError" class="text-sm text-destructive">{{ previewError }}</p>
+                    <p v-if="fileError" role="alert" class="text-sm text-destructive">{{ fileError }}</p>
+                    <p v-if="previewError" role="alert" class="text-sm text-destructive">{{ previewError }}</p>
                 </div>
 
                 <BaseButton
@@ -423,6 +399,7 @@ onUnmounted(() => {
                     <p
                         class="mt-2 text-sm"
                         :class="canConfirmImport ? 'text-muted-foreground' : 'text-destructive'"
+                        :role="canConfirmImport ? undefined : 'alert'"
                     >
                         {{ confirmBlockedMessage }}
                     </p>
@@ -432,10 +409,10 @@ onUnmounted(() => {
                     <table class="j-table min-w-full">
                         <thead class="j-thead">
                             <tr class="j-th">
-                                <th class="j-th text-left">#</th>
-                                <th class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
-                                <th class="j-th text-left">{{ $tChoice('students.student_number', 1) }}</th>
-                                <th class="j-th text-left">{{ $t('academic_calendar.course_work_class_column') }}</th>
+                                <th scope="col" class="j-th text-left">#</th>
+                                <th scope="col" class="j-th text-left">{{ $tChoice('trans.name', 1) }}</th>
+                                <th scope="col" class="j-th text-left">{{ $tChoice('students.student_number', 1) }}</th>
+                                <th scope="col" class="j-th text-left">{{ $t('academic_calendar.course_work_class_column') }}</th>
                                 <th
                                     v-for="column in preview.assessmentColumns"
                                     :key="column.id"
@@ -505,6 +482,7 @@ onUnmounted(() => {
 
             <div
                 v-if="hasImportResult && courseWorkImportResult"
+                role="status"
                 class="rounded-lg border border-border bg-muted/30 p-4 text-sm"
             >
                 <div class="flex items-start justify-between gap-3">

@@ -6,10 +6,10 @@ use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 
 enum LevelEnum: string
 {
-    case ABMA_LEVEL_3 = "ABMA Level 3";
-    case ABMA_LEVEL_4 = "ABMA Level 4";
-    case ABMA_LEVEL_5 = "ABMA Level 5";
-    case ABMA_LEVEL_6 = "ABMA Level 6";
+    case ABMA_LEVEL_3 = 'ABMA Level 3';
+    case ABMA_LEVEL_4 = 'ABMA Level 4';
+    case ABMA_LEVEL_5 = 'ABMA Level 5';
+    case ABMA_LEVEL_6 = 'ABMA Level 6';
     case NC = 'NC';
     case ND = 'ND';
     case HND = 'HND';
@@ -72,11 +72,30 @@ enum LevelEnum: string
         };
     }
 
+    /**
+     * Academic ladder this level belongs to. SDP is a standalone skills programme,
+     * not a later HEXCO stage, even when the same course is offered at both.
+     */
+    public function pathwayTrack(): string
+    {
+        return match ($this) {
+            self::ABMA_LEVEL_3,
+            self::ABMA_LEVEL_4,
+            self::ABMA_LEVEL_5,
+            self::ABMA_LEVEL_6 => 'abma',
+            self::NC,
+            self::ND,
+            self::HND,
+            self::BTECH => 'hexco',
+            self::SDP => 'sdp',
+        };
+    }
+
     public static function all(): array
     {
         return array_combine(
             array_column(self::cases(), 'value'),
-            array_map(fn($case) => $case->label(), self::cases())
+            array_map(fn ($case) => $case->label(), self::cases())
         );
     }
 }

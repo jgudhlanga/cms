@@ -2,8 +2,6 @@
 import AcademicCalendarClassNavComboSelect from '@/components/academicCalendars/AcademicCalendarClassNavComboSelect.vue';
 import AssignClassTutorModal from '@/components/academicCalendars/AssignClassTutorModal.vue';
 import ClassListExportModal from '@/components/academicCalendars/ClassListExportModal.vue';
-import { BaseButton } from '@/components/core/button';
-import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import Empty from '@/components/core/util/Empty.vue';
 import { openAssignClassTutorModal } from '@/composables/academicCalendars/useAcademicCalendarClassTutor';
@@ -16,12 +14,12 @@ import ReassignProgrammeDialog from '@/components/students/programme/ReassignPro
 import { canReassignProgramme, useReassignProgramme } from '@/composables/students/useReassignProgramme';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
-import { IconName } from '@/enums/icons';
 import { useAcademicCalendarClassStudentFilters } from '@/composables/academicCalendars/useAcademicCalendarClassStudentFilters';
 import { useAcademicCalendarClassStudentSelection } from '@/composables/academicCalendars/useAcademicCalendarClassStudentSelection';
 import { useAcademicCalendarClassStudents } from '@/composables/academicCalendars/useAcademicCalendarClassStudents';
 import { useDepartmentAcademicCalendarClassNavigation } from '@/composables/academicCalendars/useDepartmentAcademicCalendarClassNavigation';
 import { errorAlert, successAlert } from '@/lib/alerts';
+import { buildClassViewActionGroups } from '@/lib/classActionMenu';
 import { firstInertiaErrorMessage } from '@/lib/inertia-errors';
 import { hasAbility } from '@/lib/permissions';
 import { AcademicCalendar, AcademicCalendarClassDetail, AcademicCalendarClassMoveTarget, AcademicCalendarClassPreviewStudent, ClassConfig, ClassSemesterModule } from '@/types/academic-calendar';
@@ -181,24 +179,34 @@ const progressionImportUrl = computed(() => {
     });
 });
 
-const progressionImportTemplateUrl = computed(() => {
-    if (!classConfig.value?.id) {
-        return null;
-    }
+// The trailing "Import" the flat toolbar used to append is dropped: the item's
+// description already says this is the bulk upload route.
+const progressionImportLabel = computed(() =>
+    canCompleteLevel.value
+        ? trans('academic_calendar.progression_import_action_complete_level')
+        : trans('academic_calendar.progression_import_action_advance_phase'),
+);
 
-    const action = canCompleteLevel.value ? 'complete-level' : canAdvancePhase.value ? 'advance-phase' : null;
-    if (!action) {
-        return null;
-    }
-
-    return route('academic-calendars.department-classes.progression-import.template', {
-        institution_department: String(department.value.id),
-        calendar_year: String(academicCalendar.value.attributes.calendarYear),
-        action,
-        ...classConfigQuery.value,
-        academic_calendar_class_id: String(academicCalendarClass.value.id),
-    });
-});
+const actionGroups = computed(() =>
+    buildClassViewActionGroups({
+        canMoveStudents: canMoveStudents.value,
+        canMoveProgramme: canMoveProgramme.value,
+        canAdvancePhase: canAdvancePhase.value,
+        canExportClassList: props.canExportClassList,
+        progressionImportUrl: progressionImportUrl.value,
+        progressionImportLabel: progressionImportLabel.value,
+        eligibleAdvanceCount: eligibleAdvanceStudents.value.length,
+        onProgressionImport: () => {
+            if (progressionImportUrl.value) {
+                router.visit(progressionImportUrl.value);
+            }
+        },
+        onAdvanceAllEligible: onAdvanceAllEligible,
+        onAddStudent: openAddStudentsModal,
+        onReassignProgramme: openProgrammeReassign,
+        onExportClassList: openClassListExportModal,
+    }),
+);
 
 const singleClassExportOption = computed(() => [
     {
@@ -414,81 +422,14 @@ const onRemoveStudent = async (student: AcademicCalendarClassPreviewStudent): Pr
             <div class="mt-4 flex flex-col gap-2">
                 <AcademicCalendarClassStudentFilters class="min-w-0" :filters="filters" @change="onFiltersChange">
                     <template #actions>
-                        <BaseButton
-                            v-if="canMoveProgramme"
-                            type="button"
-                            :size="ButtonSize.xs"
-                            :variant="ColorVariant.primary_outline"
-                            classes="rounded-full"
-                            @click="openProgrammeReassign"
-                        >
-                            {{ $t('students.reassign_programme') }}
-                        </BaseButton>
-                        <a
-                            v-if="canMoveStudents && progressionImportTemplateUrl"
-                            :href="progressionImportTemplateUrl"
-                            class="inline-flex"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <BaseButton
-                                type="button"
+                        <!-- Without this guard a viewer holding none of these abilities gets an empty pill. -->
+                        <HeaderActionGroup v-if="actionGroups.length > 0">
+                            <DropdownButton
+                                :groups="actionGroups"
                                 :size="ButtonSize.xs"
-                                :variant="ColorVariant.secondary"
-                                classes="rounded-full"
-                            >
-                                {{ $t('academic_calendar.progression_import_download_template') }}
-                            </BaseButton>
-                        </a>
-                        <BaseButton
-                            v-if="canMoveStudents && progressionImportUrl"
-                            type="button"
-                            :size="ButtonSize.xs"
-                            :variant="ColorVariant.primary_outline"
-                            classes="rounded-full"
-                            @click="router.visit(progressionImportUrl)"
-                        >
-                            <BaseIcon :name="IconName.import" />
-                            {{
-                                canCompleteLevel
-                                    ? $t('academic_calendar.progression_import_action_complete_level')
-                                    : $t('academic_calendar.progression_import_action_advance_phase')
-                            }}
-                            {{ $t('trans.import') }}
-                        </BaseButton>
-                        <BaseButton
-                            v-if="canAdvancePhase && eligibleAdvanceStudents.length > 0"
-                            type="button"
-                            :size="ButtonSize.xs"
-                            :variant="ColorVariant.primary"
-                            classes="rounded-full"
-                            @click="onAdvanceAllEligible"
-                        >
-                            {{ $t('academic_calendar.advance_all_eligible') }}
-                            ({{ eligibleAdvanceStudents.length }})
-                        </BaseButton>
-                        <BaseButton
-                            v-if="canMoveStudents"
-                            type="button"
-                            :size="ButtonSize.xs"
-                            :variant="ColorVariant.primary"
-                            classes="rounded-full"
-                            @click="openAddStudentsModal"
-                        >
-                            <BaseIcon :name="IconName.add" :color="ColorVariant.white" />
-                            {{ $t('academic_calendar.add_student') }}
-                        </BaseButton>
-                        <BaseButton
-                            v-if="canExportClassList"
-                            type="button"
-                            :size="ButtonSize.xs"
-                            :variant="ColorVariant.primary_outline"
-                            classes="rounded-full"
-                            @click="openClassListExportModal"
-                        >
-                            <BaseIcon :name="IconName.export" />
-                            {{ $t('academic_calendar.export_class_list') }}
-                        </BaseButton>
+                                :variant="ColorVariant.primary_outline"
+                            />
+                        </HeaderActionGroup>
                     </template>
                 </AcademicCalendarClassStudentFilters>
                 <Empty

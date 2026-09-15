@@ -1,6 +1,15 @@
-import axios from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 
-const customAxios = (url: string) => {
+// One configured instance per base URL; creating one per request re-registers interceptors every call.
+const instances = new Map<string, AxiosInstance>();
+
+const customAxios = (url: string): AxiosInstance => {
+    const existing = instances.get(url);
+
+    if (existing) {
+        return existing;
+    }
+
     const instance = axios.create({
         baseURL: url,
         withCredentials: true,
@@ -33,6 +42,8 @@ const customAxios = (url: string) => {
             return Promise.reject(error);
         },
     );
+
+    instances.set(url, instance);
 
     return instance;
 };

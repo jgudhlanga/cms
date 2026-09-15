@@ -112,7 +112,7 @@
     @include('partials.poly-header')
     <div class="content">
         {!!  str_replace(['{date}', '{studentName}', '{studentIdNumber}', '{studentNumber}','{intakePeriod}', '{department}', '{level}', '{course}', '{modeOfStudy}', '{tuition}'],
-        [$offerLetterDate, strtoupper($studentName), $studentIdNumber, $studentNumber, $intakePeriod, $department, $level, $course, $modeOfStudy, $tuition],
+        array_map(fn ($value) => e((string) $value), [$offerLetterDate, strtoupper($studentName), $studentIdNumber, $studentNumber, $intakePeriod, $department, $level, $course, $modeOfStudy, $tuition]),
         $documentTemplate->body) !!}
         <div style="margin-top: 5px;">
             <img src="file://{{ public_path('assets/images/principal.jpeg') }}" alt="signature" >

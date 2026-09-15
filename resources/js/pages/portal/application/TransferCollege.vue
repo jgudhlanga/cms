@@ -107,6 +107,7 @@ const submit = () => {
                             type="submit"
                             :variant="ColorVariant.primary"
                             :disabled="submitting"
+                            :processing="submitting"
                             classes="min-h-10 w-full rounded-xl sm:w-auto"
                         >
                             {{ $t('trans.continue') }}

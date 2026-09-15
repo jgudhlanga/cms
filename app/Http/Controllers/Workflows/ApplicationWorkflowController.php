@@ -21,6 +21,8 @@ class ApplicationWorkflowController extends Controller
      */
     public function uploadProofOfPayment(StudentApplication $studentApplication, UploadProofOfPaymentRequest $request): RedirectResponse
     {
+        $this->authorize('uploadProofOfPayment', $studentApplication);
+
         DB::beginTransaction();
         try {
             $type = $request->type;
@@ -52,6 +54,8 @@ class ApplicationWorkflowController extends Controller
      */
     public function approveApplication(StudentApplication $studentApplication, WorkflowStep $workflowStep): RedirectResponse
     {
+        $this->authorize('manageWorkflow', $studentApplication);
+
         DB::beginTransaction();
         try {
             $studentApplication->update(['workflow_step_id' => $workflowStep->id]);
@@ -72,6 +76,8 @@ class ApplicationWorkflowController extends Controller
      */
     public function bulkApproveApplication(InstitutionDepartment $institutionDepartment, BulkApplicationApproveRequest $request): RedirectResponse
     {
+        $this->authorize('manageDepartmentWorkflow', [StudentApplication::class, $institutionDepartment]);
+
         $intakePeriodId = $request->filled('intake_period_id') ? $request->intake_period_id : null;
         $modeOfStudyId = $request->filled('mode_of_study_id') ? $request->mode_of_study_id : null;
         $departmentLevelId = $request->filled('department_level_id') ? $request->department_level_id : null;
@@ -104,6 +110,8 @@ class ApplicationWorkflowController extends Controller
      */
     public function bulkUpdatePaymentStatuses(InstitutionDepartment $institutionDepartment, BulkUpdatePaymentStatusRequest $request): RedirectResponse
     {
+        $this->authorize('manageDepartmentWorkflow', [StudentApplication::class, $institutionDepartment]);
+
         $intakePeriodId = $request->filled('intake_period_id') ? $request->intake_period_id : null;
         $modeOfStudyId = $request->filled('mode_of_study_id') ? $request->mode_of_study_id : null;
         $departmentLevelId = $request->filled('department_level_id') ? $request->department_level_id : null;
@@ -137,6 +145,8 @@ class ApplicationWorkflowController extends Controller
      */
     public function confirmRegistrationFeePayment(StudentApplication $studentApplication): RedirectResponse
     {
+        $this->authorize('manageWorkflow', $studentApplication);
+
         DB::beginTransaction();
         try {
             $studentApplication->update(['registration_fee_confirmed' => ! $studentApplication->registration_fee_confirmed]);
@@ -157,6 +167,8 @@ class ApplicationWorkflowController extends Controller
      */
     public function confirmTuitionFeePayment(StudentApplication $studentApplication): RedirectResponse
     {
+        $this->authorize('manageWorkflow', $studentApplication);
+
         DB::beginTransaction();
         try {
             $studentApplication->update(['tuition_fee_confirmed' => ! $studentApplication->tuition_fee_confirmed]);

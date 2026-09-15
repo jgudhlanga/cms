@@ -11,6 +11,7 @@ use App\Http\Requests\AcademicCalendars\CourseWorkImportProcessRequest;
 use App\Http\Resources\AcademicCalendars\AcademicCalendarResource;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
+use App\Models\AcademicCalendars\CourseWorkCaptureExtension;
 use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
 use App\Models\Students\StudentEnrolment;
@@ -77,6 +78,8 @@ class ClassesController extends Controller
             'canExportCourseWork' => auth()->user()?->can('export', CourseWorkMark::class) ?? false,
             'canImportCourseWork' => auth()->user()?->can('import', CourseWorkMark::class) ?? false,
             'canExportClassList' => true,
+            'canRequestCourseWorkExtension' => auth()->user()?->can('request', CourseWorkCaptureExtension::class) ?? false,
+            'maxExtensionDays' => (int) config('coursework.extension_max_days', 14),
         ]);
     }
 
@@ -157,7 +160,7 @@ class ClassesController extends Controller
         CourseSyllabusModule $courseSyllabusModule,
     ): Response {
         $this->authorize('import', CourseWorkMark::class);
-        $this->courseWorkAccess->assertCanAccessClassModule(
+        $this->courseWorkAccess->assertCanCaptureClassModule(
             auth()->user(),
             (int) $academicCalendarClass->id,
             (int) $courseSyllabusModule->id,
@@ -177,7 +180,7 @@ class ClassesController extends Controller
             ],
             'academicCalendar' => AcademicCalendarResource::make($academicCalendar),
             'academicContextSubtitle' => $this->academicContextSubtitle($academicCalendar),
-            'canImportCourseWork' => true,
+            'canImportCourseWork' => auth()->user()?->can('import', CourseWorkMark::class) ?? false,
             'courseWorkImportResult' => session('courseWorkImportResult'),
         ]);
     }
@@ -188,7 +191,7 @@ class ClassesController extends Controller
         CourseWorkImportTemplateService $templateService,
     ): BinaryFileResponse {
         $this->authorize('import', CourseWorkMark::class);
-        $this->courseWorkAccess->assertCanAccessClassModule(
+        $this->courseWorkAccess->assertCanCaptureClassModule(
             auth()->user(),
             (int) $academicCalendarClass->id,
             (int) $courseSyllabusModule->id,
@@ -197,7 +200,11 @@ class ClassesController extends Controller
         $academicCalendarClass->loadMissing('classConfig');
         $classConfigId = (int) $academicCalendarClass->class_config_id;
 
-        $data = $templateService->assembleForClassConfig($classConfigId, (int) $courseSyllabusModule->id);
+        $data = $templateService->assembleForClassConfig(
+            $classConfigId,
+            (int) $courseSyllabusModule->id,
+            (int) $academicCalendarClass->id,
+        );
         $fileName = $templateService->downloadFileName($data);
 
         return Excel::download(new CourseWorkImportTemplateExport($data), $fileName);
@@ -210,7 +217,7 @@ class ClassesController extends Controller
         CourseWorkImportService $importService,
     ): JsonResponse {
         $this->authorize('import', CourseWorkMark::class);
-        $this->courseWorkAccess->assertCanAccessClassModule(
+        $this->courseWorkAccess->assertCanCaptureClassModule(
             auth()->user(),
             (int) $academicCalendarClass->id,
             (int) $courseSyllabusModule->id,
@@ -238,7 +245,7 @@ class ClassesController extends Controller
         CourseWorkImportService $importService,
     ): RedirectResponse {
         $this->authorize('import', CourseWorkMark::class);
-        $this->courseWorkAccess->assertCanAccessClassModule(
+        $this->courseWorkAccess->assertCanCaptureClassModule(
             auth()->user(),
             (int) $academicCalendarClass->id,
             (int) $courseSyllabusModule->id,

@@ -74,6 +74,7 @@ class UserController extends ApiDropdownController
     public function store(UserRequest $request)
     {
         $this->authorize('create', User::class);
+        $this->authorize('assignRoles', [User::class, null, (array) $request->input('role_ids')]);
         $user = $this->repository->create(
             UserDto::fromUserRequest($request, TenantEnum::HARARE_POLY->id(), StatusEnum::ACTIVE->id())
         );
@@ -87,6 +88,7 @@ class UserController extends ApiDropdownController
     public function update(UpdateUserRequest $request, User $user)
     {
         $this->authorize('update', $user);
+        $this->authorize('assignRoles', [$user, (array) $request->input('role_ids')]);
         $this->repository->update(
             $user,
             UpdateUserDto::fromUpdateUserRequest($request)

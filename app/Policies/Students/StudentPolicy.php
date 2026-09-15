@@ -18,6 +18,15 @@ class StudentPolicy
         return $user->can('viewAny:students');
     }
 
+    /**
+     * Student list and stats API. Department-scoped staff are allowed too: StudentRepository limits
+     * their results to their own departments.
+     */
+    public function viewIndex(User $user): bool
+    {
+        return $user->can('viewAny:students') || $user->can('viewOnlyOwnDepartment:departments');
+    }
+
     public function view(User $user, Student $student): bool
     {
         if ($user->can('viewAny:students') || $user->can('view:students')) {

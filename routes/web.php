@@ -16,7 +16,8 @@ Route::get('id-cards/verify/{serial}', IdCardVerifyController::class)
     ->name('id-cards.verify');
 
 Route::middleware(['web', 'auth'])->group(function () {
-    Route::get('impersonate/take/{id}/{guardName?}', [ImpersonationController::class, 'take'])->name('impersonate');
+    // POST so another site cannot start an impersonation through a link or image tag.
+    Route::post('impersonate/take/{id}/{guardName?}', [ImpersonationController::class, 'take'])->name('impersonate');
     Route::get('impersonate/leave', [VendorImpersonateController::class, 'leave'])->name('impersonate.leave');
 });
 

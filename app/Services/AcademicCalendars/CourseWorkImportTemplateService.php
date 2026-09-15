@@ -2,8 +2,13 @@
 
 namespace App\Services\AcademicCalendars;
 
+use App\Models\AcademicCalendars\AcademicCalendarClass;
+use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\AcademicCalendars\CourseWorkMark;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
+use App\Models\Users\User;
+use App\Support\AcademicCalendars\CourseWorkTemplateSignature;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -12,6 +17,7 @@ class CourseWorkImportTemplateService
     public function __construct(
         private readonly CourseWorkTreeService $treeService,
         private readonly CourseWorkMarkService $markService,
+        private readonly CourseWorkAssessmentLockService $lockService,
     ) {}
 
     /**
@@ -33,13 +39,19 @@ class CourseWorkImportTemplateService
 
     /**
      * @return array{
+     *     layout: string,
      *     header: array<string, mixed>,
      *     fileName: array{moduleTitle: string, moduleCode: string, level: string, mode: string},
      *     assessmentTypes: list<array{id: int, name: string, weightPercent: int|null}>,
-     *     rows: list<array<string, mixed>>
+     *     rows: list<array<string, mixed>>,
+     *     editableAssessmentTypeIds: list<int>,
+     *     markEditable: bool,
+     *     closedAssessments: list<array{id: int|null, name: string, message: string}>,
+     *     readOnlyMessage: string|null,
+     *     signature: array{payload: string, signature: string}
      * }
      */
-    public function assembleForClassConfig(int $classConfigId, int $courseSyllabusModuleId): array
+    public function assembleForClassConfig(int $classConfigId, int $courseSyllabusModuleId, ?int $academicCalendarClassId = null): array
     {
         $classConfig = $this->markService->assertClassConfigExists($classConfigId);
         $classConfig->loadMissing([
@@ -129,8 +141,18 @@ class CourseWorkImportTemplateService
             ];
         }
 
+        $lock = $this->lockFor($classConfig, $module, $academicCalendarClassId);
+        $lockedAssessmentTypeIds = array_map('intval', $lock['lockedAssessmentTypeIds'] ?? []);
+        $assessmentTypeIds = array_map(static fn (array $type): int => (int) $type['id'], $assessmentTypes);
+        $editableAssessmentTypeIds = array_values(array_filter(
+            $assessmentTypeIds,
+            static fn (int $id): bool => ! in_array($id, $lockedAssessmentTypeIds, true),
+        ));
+        $layout = $captureMarkOnly ? 'mark_only' : 'wide';
+        $user = Auth::user();
+
         return [
-            'layout' => $captureMarkOnly ? 'mark_only' : 'wide',
+            'layout' => $layout,
             'header' => [
                 'moduleCode' => $module->code,
                 'moduleTitle' => $module->title,
@@ -148,7 +170,51 @@ class CourseWorkImportTemplateService
             ],
             'assessmentTypes' => $assessmentTypes,
             'rows' => $rows,
+            'editableAssessmentTypeIds' => $editableAssessmentTypeIds,
+            'markEditable' => (bool) ($lock['hasEditableCourseWork'] ?? true),
+            'closedAssessments' => collect($lock['windows'] ?? [])
+                ->filter(fn (array $window): bool => ! ($window['captureAllowed'] ?? true))
+                ->map(fn (array $window): array => [
+                    'id' => $window['assessmentTypeId'],
+                    'name' => (string) $window['assessmentTypeName'],
+                    'message' => (string) $window['message'],
+                ])
+                ->values()
+                ->all(),
+            'readOnlyMessage' => $lock['readOnlyMessage'] ?? null,
+            'signature' => CourseWorkTemplateSignature::sign([
+                'tenantId' => $user instanceof User && $user->tenant_id !== null ? (int) $user->tenant_id : null,
+                'userId' => $user instanceof User ? (int) $user->id : null,
+                'classConfigId' => $classConfigId,
+                'classId' => $academicCalendarClassId,
+                'moduleId' => $courseSyllabusModuleId,
+                'layout' => $layout,
+                'typeColumnOrder' => $captureMarkOnly ? [] : $assessmentTypeIds,
+                'editableAssessmentTypeIds' => $editableAssessmentTypeIds,
+                'students' => collect($rows)
+                    ->mapWithKeys(fn (array $row): array => [
+                        (string) (int) $row['studentEnrolmentId'] => (string) ($row['studentNumber'] ?? ''),
+                    ])
+                    ->all(),
+                'generatedAt' => now()->toIso8601String(),
+            ]),
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function lockFor(ClassConfig $classConfig, CourseSyllabusModule $module, ?int $academicCalendarClassId): array
+    {
+        if ($academicCalendarClassId !== null) {
+            $class = AcademicCalendarClass::query()->find($academicCalendarClassId);
+
+            if ($class instanceof AcademicCalendarClass) {
+                return $this->lockService->locksForClassAndModules($class, [$module])[(int) $module->id] ?? [];
+            }
+        }
+
+        return $this->lockService->locksForClassConfigAndModules($classConfig, [$module])[(int) $module->id] ?? [];
     }
 
     /**

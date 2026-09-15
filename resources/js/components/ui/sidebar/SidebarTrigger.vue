@@ -13,7 +13,7 @@ const { toggleSidebar } = useSidebar();
 </script>
 
 <template>
-	<Button data-sidebar="trigger" variant="ghost" size="icon" :class="cn('h-7 w-7', props.class)"
+	<Button data-sidebar="trigger" variant="ghost" size="icon" :class="cn('h-7 w-7 cursor-pointer', props.class)"
 	        @click="toggleSidebar">
 		<Menu class="size-5" />
 		<span class="sr-only">{{ $t('trans.ui_toggle_sidebar') }}</span>

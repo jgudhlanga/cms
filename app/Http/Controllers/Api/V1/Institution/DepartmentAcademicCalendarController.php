@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\V1\Institution;
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
-use App\Enums\Institution\ModeOfStudyEnum;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\AcademicCalendarClass;
@@ -175,6 +174,7 @@ class DepartmentAcademicCalendarController extends Controller
 
         $lookup = $this->classConfigLookup($configs);
         $periodLookups = $this->periodLookups($context['calendarYear']);
+        $isOjetMode = $this->isOjetMode($modeOfStudyId);
 
         return [
             'calendarYear' => $context['calendarYear'],
@@ -192,7 +192,8 @@ class DepartmentAcademicCalendarController extends Controller
             'periodsByType' => $periodLookups['periodsByType'],
             'currentSemesterIdByType' => $periodLookups['currentSemesterIdByType'],
             'offeredCourseLevelKeys' => $this->offeredCourseLevelKeys($department, $modeOfStudyId),
-            'restrictToActiveOfferings' => $this->isOjetMode($modeOfStudyId),
+            'restrictToActiveOfferings' => $isOjetMode,
+            'isOjetMode' => $isOjetMode,
         ];
     }
 
@@ -230,9 +231,7 @@ class DepartmentAcademicCalendarController extends Controller
 
     private function isOjetMode(int $modeOfStudyId): bool
     {
-        $name = ModeOfStudy::query()->whereKey($modeOfStudyId)->value('name');
-
-        return is_string($name) && ModeOfStudyEnum::tryFromLabel($name) === ModeOfStudyEnum::OJET;
+        return ModeOfStudy::query()->find($modeOfStudyId)?->isOjet() ?? false;
     }
 
     /**
@@ -582,6 +581,7 @@ class DepartmentAcademicCalendarController extends Controller
         DepartmentLevelCourse $levelCourse,
     ): array {
         $levelCourse->loadMissing('programmeSemesters');
+        $isOjetMode = (bool) ($lookups['isOjetMode'] ?? false);
 
         if ($levelCourse->programmeSemesters !== null && $levelCourse->programmeSemesters->isNotEmpty()) {
             $configured = array_fill_keys($configuredProgrammeSemesterIds, true);
@@ -591,7 +591,7 @@ class DepartmentAcademicCalendarController extends Controller
             foreach ($levelCourse->programmeSemesters as $programmeSemester) {
                 $programmeSemesterId = (int) $programmeSemester->id;
 
-                if (isset($configured[$programmeSemesterId])) {
+                if (isset($configured[$programmeSemesterId]) || ! $programmeSemester->isOfferedInMode($isOjetMode)) {
                     continue;
                 }
 
@@ -608,6 +608,11 @@ class DepartmentAcademicCalendarController extends Controller
             }
 
             return $remaining;
+        }
+
+        // Calendar periods are all taught, and OJET only configures attachment periods.
+        if ($isOjetMode) {
+            return [];
         }
 
         $configured = array_fill_keys($configuredSemesterIds, true);

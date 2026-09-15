@@ -25,6 +25,12 @@ class DocumentController extends Controller
     {
         $actor = $request->user() instanceof User ? $request->user() : null;
 
+        if (! $this->studentOfferLetterService->canAccess($studentApplication, $actor, $request)) {
+            abort_if($actor !== null, Response::HTTP_FORBIDDEN);
+
+            return redirect()->guest(route('login'));
+        }
+
         abort_unless(
             $this->studentOfferLetterService->isDownloadable($studentApplication, $actor),
             Response::HTTP_NOT_FOUND,

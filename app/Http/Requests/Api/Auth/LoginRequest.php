@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests\Api\Auth;
 
+use App\Http\Requests\Auth\Concerns\ThrottlesLogins;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class LoginRequest extends FormRequest
 {
+    use ThrottlesLogins;
+
     public function authorize(): bool
     {
         return true;

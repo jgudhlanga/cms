@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\AcademicCalendars\CourseWorkCaptureExtensionController;
 use App\Http\Controllers\Teaching\ClassesController;
+use App\Http\Controllers\Teaching\CourseWorkProgressController;
 use App\Http\Controllers\Teaching\ModulesController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,15 +29,25 @@ Route::middleware(['auth', 'verified', 'redirect.student'])
         Route::get(
             'classes/{academic_calendar_class}/modules/{course_syllabus_module}/import/template',
             [ClassesController::class, 'importTemplate'],
-        )->name('classes.import.template');
+        )->middleware('throttle:30,1')->name('classes.import.template');
         Route::post(
             'classes/{academic_calendar_class}/modules/{course_syllabus_module}/import/preview',
             [ClassesController::class, 'importPreview'],
-        )->name('classes.import.preview');
+        )->middleware('throttle:10,1')->name('classes.import.preview');
         Route::post(
             'classes/{academic_calendar_class}/modules/{course_syllabus_module}/import/process',
             [ClassesController::class, 'importProcess'],
-        )->name('classes.import.process');
+        )->middleware('throttle:10,1')->name('classes.import.process');
+        Route::post(
+            'classes/{academic_calendar_class}/modules/{course_syllabus_module}/extensions',
+            [CourseWorkCaptureExtensionController::class, 'store'],
+        )->middleware('throttle:10,1')->name('classes.extensions.store');
+
+        Route::get('course-work-progress', [CourseWorkProgressController::class, 'index'])->name('course-work-progress.index');
+        Route::get('course-work-progress/{class_config}', [CourseWorkProgressController::class, 'show'])->name('course-work-progress.show');
+        Route::post('course-work-progress/{class_config}/reports', [CourseWorkProgressController::class, 'submit'])
+            ->middleware('throttle:10,1')
+            ->name('course-work-progress.reports.store');
         Route::get(
             'classes/{academic_calendar_class}/students/{student_enrolment}/course-work',
             [ClassesController::class, 'studentCourseWork'],
