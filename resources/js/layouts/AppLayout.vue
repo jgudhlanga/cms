@@ -3,6 +3,7 @@ import ConfirmDialog from '@/components/core/modal/ConfirmDialog.vue';
 import ErrorDialog from '@/components/core/modal/ErrorDialog.vue';
 import AppPreferencesSheet from '@/components/core/preferences/AppPreferencesSheet.vue';
 import AppSidebar from '@/components/core/sidebar/AppSidebar.vue';
+import StudyPositionPrompt from '@/components/students/study-position/StudyPositionPrompt.vue';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { useFlashAlerts } from '@/composables/core/useFlashAlerts';
 import { useUserPreference } from '@/composables/core/useUserPreference';
@@ -23,6 +24,7 @@ const preferencesStore = usePreferencesStore();
 const { hydratePreferenceOnce, persistSidebarState } = useUserPreference();
 const isMobile = useMediaQuery('(max-width: 768px)');
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
+const hasStudyPosition = computed(() => Boolean(page.props.studyPosition));
 
 const updateSidebarState = (open: boolean): void => {
     if (isMobile.value) {
@@ -55,4 +57,5 @@ onMounted(async () => {
     <ConfirmDialog />
     <ErrorDialog />
     <ModalsContainer />
+    <StudyPositionPrompt v-if="hasStudyPosition" />
 </template>

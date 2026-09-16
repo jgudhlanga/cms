@@ -39,6 +39,7 @@ class StudentController
                 'student_type',
                 'sponsored',
                 'disability',
+                'study_position',
                 'academic_year',
                 'calendar_type',
                 'with_trashed',
@@ -65,6 +66,7 @@ class StudentController
                     'student_type',
                     'sponsored',
                     'disability',
+                    'study_position',
                     'with_trashed',
                 ])
             )

@@ -218,6 +218,7 @@ export const useStudents = () => {
             student_type: filters.student_type,
             sponsored: filters.sponsored,
             disability: filters.disability,
+            study_position: filters.study_position,
         };
 
         return mergeQueryParamsIntoRequestPath(route('students.export'), exportFilters as Record<string, unknown>);

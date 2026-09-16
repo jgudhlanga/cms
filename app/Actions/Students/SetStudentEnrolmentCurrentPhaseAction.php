@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Students;
 
+use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\ProgrammeSemester;
 use App\Models\Students\StudentEnrolment;
@@ -20,8 +21,16 @@ class SetStudentEnrolmentCurrentPhaseAction
         protected StudentEnrolmentProgressionService $progression,
     ) {}
 
-    public function execute(StudentEnrolment $enrolment, ProgrammeSemester $programmeSemester): StudentEnrolment
-    {
+    /**
+     * @param  Semester|null  $slot  Pin this calendar slot's row instead of the phase's usual slot.
+     *                               Study-position confirmations pass the current period's slot, so a
+     *                               mid-year intake's Year 1 Sem 1 lands on semester-2 where they sit it.
+     */
+    public function execute(
+        StudentEnrolment $enrolment,
+        ProgrammeSemester $programmeSemester,
+        ?Semester $slot = null,
+    ): StudentEnrolment {
         $enrolment->loadMissing([
             'studentSemesters.semester',
             'studentSemesters.programmeSemester',
@@ -40,7 +49,18 @@ class SetStudentEnrolmentCurrentPhaseAction
             throw new InvalidArgumentException(__('trans.department_semester_reconciliation_phase_wrong_offering'));
         }
 
-        $globalSemester = $this->programmeSemesterResolver->calendarSemesterForClassConfig($dlc, $programmeSemester);
+        if ($slot instanceof Semester) {
+            $calendarType = $dlc->departmentLevel?->level?->calendar_type;
+            $prefix = ($calendarType instanceof AcademicCalendarTypeEnum ? $calendarType : AcademicCalendarTypeEnum::SEMESTER)->value;
+
+            if (! str_starts_with((string) $slot->slug, $prefix.'-')) {
+                throw new InvalidArgumentException(__('trans.department_semester_reconciliation_phase_unmapped'));
+            }
+
+            $globalSemester = $slot;
+        } else {
+            $globalSemester = $this->programmeSemesterResolver->calendarSemesterForClassConfig($dlc, $programmeSemester);
+        }
 
         if (! $globalSemester instanceof Semester && $programmeSemester->isTaught()) {
             throw new InvalidArgumentException(__('trans.department_semester_reconciliation_phase_unmapped'));
@@ -183,8 +203,13 @@ class SetStudentEnrolmentCurrentPhaseAction
         $targetPosition = (int) $programmeSemester->position;
 
         $later = $enrolment->studentSemesters
-            ->first(function (StudentSemester $row) use ($programmeSemester, $targetPosition): bool {
+            ->first(function (StudentSemester $row) use ($programmeSemester, $targetPosition, $targetSemesterId): bool {
                 if ((int) $row->programme_semester_id === (int) $programmeSemester->id) {
+                    return false;
+                }
+
+                // The row being re-pinned is overwritten, so its current phase cannot outrank the target.
+                if ($targetSemesterId !== null && (int) $row->semester_id === (int) $targetSemesterId) {
                     return false;
                 }
 

@@ -201,6 +201,7 @@ class RedirectStudentMiddleware
         if ($student !== null && $this->returningStudentContext->needsContinueInClassPage($student)) {
             if (! $request->routeIs(
                 'portal.returning-student.continue.*',
+                'portal.study-position.*',
                 'logout',
                 'portal.profile.*',
                 'portal.application.view',

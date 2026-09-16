@@ -22,6 +22,8 @@ interface Props {
     onCloseModal?: () => void;
     form?: InertiaForm<any>;
     stackFooterOnMobile?: boolean;
+    /** When false the modal has no close or cancel control; only the form action can end it. */
+    dismissible?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -32,6 +34,7 @@ const props = withDefaults(defineProps<Props>(), {
     actionBtnText: 'trans.save',
     showActionButton: true,
     stackFooterOnMobile: false,
+    dismissible: true,
 });
 
 const isFullPage = computed(() => props.size === SizeVariant.full);
@@ -69,6 +72,9 @@ const footerButtonClasses = computed(() => (props.stackFooterOnMobile ? 'w-full 
 const { isOpen, closeModal } = useModalStore();
 
 const destroyModal = () => {
+    if (!props.dismissible) {
+        return;
+    }
     if (props.onCloseModal !== undefined) {
         props.onCloseModal!();
     }
@@ -89,7 +95,7 @@ const destroyModal = () => {
                 <!-- Modal Header -->
                 <div class="flex shrink-0 items-center justify-between px-6 pt-6">
                     <h2 class="text-md font-semibold uppercase">{{ title }}</h2>
-                    <button class="hover:bg-accent rounded-full p-2" @click="() => destroyModal()">
+                    <button v-if="dismissible" class="hover:bg-accent rounded-full p-2" @click="() => destroyModal()">
                         <component :is="icons[IconName.close]" color="black" :size="26" />
                     </button>
                 </div>
@@ -102,6 +108,7 @@ const destroyModal = () => {
                     <!-- Modal Footer -->
                     <div :class="footerClasses">
                         <BaseButton
+                            v-if="dismissible"
                             type="button"
                             :variant="ColorVariant.shade"
                             :classes="footerButtonClasses"
@@ -127,7 +134,7 @@ const destroyModal = () => {
                         <slot />
                     </div>
                     <div class="mt-6 flex w-full justify-center space-x-3 border-t-[1px] px-6 py-5">
-                        <BaseButton type="button" :variant="ColorVariant.shade" @click="() => destroyModal()" :size="ButtonSize.lg">
+                        <BaseButton v-if="dismissible" type="button" :variant="ColorVariant.shade" @click="() => destroyModal()" :size="ButtonSize.lg">
                             {{ $t(cancelBtnText) }}
                         </BaseButton>
                     </div>

@@ -80,10 +80,12 @@ class DepartmentSemesterReconciliationController extends Controller
         $validated = $request->validated();
 
         /** @var list<array{rowNumber: int, studentEnrolmentId: int, programmeSemesterId: int}> $rows */
-        $rows = $validated['rows'];
+        $rows = $validated['rows'] ?? [];
+        /** @var list<array{studentEnrolmentId: int, programmeSemesterId: int}> $matchedRows */
+        $matchedRows = $validated['matchedRows'] ?? [];
 
         return response()->json(
-            $importService->process($department, $rows),
+            $importService->process($department, $rows, $matchedRows, $request->user()),
         );
     }
 }

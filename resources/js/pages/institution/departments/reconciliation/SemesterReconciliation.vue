@@ -82,6 +82,8 @@ const {
     runPreview,
     removePreviewRow,
     confirmRectify,
+    confirmAligned,
+    alignedRows,
     checkboxSkipTitle,
     statusLabel,
     statusClass,
@@ -333,6 +335,17 @@ const rowHighlightClass = (status: string): string => {
                                 @click="clearSelection"
                             />
                         </template>
+                        <BaseButton
+                            v-else-if="alignedRows.length > 0"
+                            type="button"
+                            :variant="ColorVariant.success"
+                            :size="ButtonSize.sm"
+                            :processing="processLoading"
+                            :disabled="processLoading"
+                            @click="confirmAligned"
+                        >
+                            {{ $t('trans.department_semester_reconciliation_confirm_aligned', { count: String(alignedRows.length) }) }}
+                        </BaseButton>
                         <BaseButton
                             type="button"
                             :variant="ColorVariant.shade_outline"

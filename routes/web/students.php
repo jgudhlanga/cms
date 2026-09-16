@@ -9,6 +9,7 @@ use App\Http\Controllers\Students\StudentController;
 use App\Http\Controllers\Students\StudentEnrolmentProgressController;
 use App\Http\Controllers\Students\StudentLookupController;
 use App\Http\Controllers\Students\StudentProgrammeReassignmentController;
+use App\Http\Controllers\Students\StudentStudyPositionController;
 use App\Http\Controllers\Students\UserStudentController;
 use Illuminate\Support\Facades\Route;
 
@@ -39,6 +40,10 @@ Route::prefix('students')->middleware('auth')->group(function () {
         ->name('students.status.update');
     Route::patch('{student}/intake-period', [StudentController::class, 'updateIntakePeriod'])
         ->name('students.intake-period.update');
+    Route::get('{student}/study-position', [StudentStudyPositionController::class, 'show'])
+        ->name('students.study-position.show');
+    Route::patch('{student}/study-position', [StudentStudyPositionController::class, 'update'])
+        ->name('students.study-position.update');
     Route::patch('{student}/enrolments/{student_enrolment}/status', [StudentEnrolmentProgressController::class, 'updateStatus'])
         ->name('students.enrolments.status.update');
     Route::patch('{student}/student-semesters/{student_semester}/status', [StudentEnrolmentProgressController::class, 'updateSemesterStatus'])

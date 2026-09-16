@@ -8,6 +8,7 @@ import ChangeStudentStatusModal, {
 } from '@/components/students/profile/ChangeStudentStatusModal.vue';
 import Header from '@/components/students/profile/Header.vue';
 import InvalidIdNumberBanner from '@/components/students/profile/InvalidIdNumberBanner.vue';
+import StudyPositionProfileBanner from '@/components/students/study-position/StudyPositionProfileBanner.vue';
 import { useStudentProfileHeader } from '@/composables/students/useStudentProfileHeader';
 import type { StudentProfileTabValue } from '@/composables/students/useStudentProfile';
 import { APP_MODULE_KEYS } from '@/lib/constants';
@@ -20,9 +21,13 @@ import { computed } from 'vue';
 interface Props {
     student: Student;
     activeTab?: StudentProfileTabValue;
+    context?: 'admin' | 'portal';
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    activeTab: undefined,
+    context: 'admin',
+});
 
 const { headerData } = useStudentProfileHeader(() => props.student);
 
@@ -78,6 +83,7 @@ const canChangeIntakePeriod = computed(
         />
         <div class="px-2 sm:px-3">
             <InvalidIdNumberBanner :student="props.student" />
+            <StudyPositionProfileBanner :context="props.context" :student-id="props.student?.id ?? null" />
         </div>
         <div class="w-full min-w-0 px-2 py-0.5 pb-3 sm:px-3 md:pb-1">
             <slot />

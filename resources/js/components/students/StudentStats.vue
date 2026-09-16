@@ -49,6 +49,7 @@ const stats = ref<StudentStats>({
         byStudentType: [],
         bySponsored: [],
         byDisability: [],
+        byStudyPosition: [],
     },
     filtered: {
         total: 0,
@@ -68,11 +69,20 @@ const normalizeFilters = (filters: StudentFiltersState): string =>
         student_type: filters.student_type || undefined,
         sponsored: filters.sponsored || undefined,
         disability: filters.disability || undefined,
+        study_position: filters.study_position || undefined,
         with_trashed: filters.with_trashed || undefined,
     });
 
 const filterSignature = computed(() => normalizeFilters(props.filters));
 const effectiveLoading = computed(() => props.loading || isLocalLoading.value);
+
+// Programmes still waiting on a confirmation this period (a student can count in more than one state).
+const studyPositionPending = computed(() =>
+    (stats.value.global.byStudyPosition ?? [])
+        .filter((row) => row.id !== 'confirmed')
+        .reduce((total, row) => total + row.count, 0),
+);
+const hasStudyPositionStats = computed(() => (stats.value.global.byStudyPosition ?? []).some((row) => row.count > 0));
 
 const largestMode = computed(() => {
     const modes = stats.value.global.byModeOfStudy;
@@ -128,6 +138,18 @@ watch(() => props.refreshKey, () => loadStats());
                             <span class="text-rose-600">{{ stats.global.female.toLocaleString() }}</span>
                         </p>
                         <p class="mt-0.5 text-[10px] text-muted-foreground">{{ $t('students.male_female') }}</p>
+                    </div>
+                    <div v-if="hasStudyPositionStats" class="min-w-0">
+                        <p class="text-sm leading-none font-bold tabular-nums text-red-700">
+                            {{ studyPositionPending.toLocaleString() }}
+                        </p>
+                        <p class="mt-0.5 text-[10px] text-muted-foreground">
+                            {{
+                                $t('students.study_position_stat_title', {
+                                    period: stats.global.studyPositionPeriodLabel ?? '',
+                                })
+                            }}
+                        </p>
                     </div>
                     <div v-if="largestMode" class="min-w-0">
                         <p class="text-sm leading-none font-bold tabular-nums text-emerald-700">

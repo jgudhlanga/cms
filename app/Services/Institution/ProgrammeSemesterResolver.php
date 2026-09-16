@@ -6,12 +6,14 @@ namespace App\Services\Institution;
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Institution\ProgrammeSemesterKindEnum;
+use App\Models\AcademicCalendars\AcademicCalendar;
 use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\ProgrammeSemester;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentSemester;
 use App\Services\Students\StudentSemesterPhaseResolver;
+use App\Support\AcademicCalendars\AcademicCalendarPeriodResolver;
 use Illuminate\Support\Collection;
 
 class ProgrammeSemesterResolver
@@ -390,6 +392,123 @@ class ProgrammeSemesterResolver
             ->first();
 
         return $lastTaught instanceof ProgrammeSemester ? $lastTaught : null;
+    }
+
+    /**
+     * The calendar slot (1-based) the student first sat this level and course in. A mid-year intake
+     * starts on 2, so every one of their phases sits one slot later than the usual mapping.
+     */
+    public function intakeStartOrdinal(StudentEnrolment $enrolment): int
+    {
+        $firstCalendarId = StudentEnrolment::query()
+            ->join('academic_calendars', 'academic_calendars.id', '=', 'student_enrolments.academic_calendar_id')
+            ->where('student_enrolments.student_id', $enrolment->student_id)
+            ->where('student_enrolments.department_level_id', $enrolment->department_level_id)
+            ->where('student_enrolments.department_course_id', $enrolment->department_course_id)
+            ->whereNull('academic_calendars.deleted_at')
+            ->orderBy('academic_calendars.opening_date')
+            ->orderBy('student_enrolments.id')
+            ->value('student_enrolments.academic_calendar_id');
+
+        $calendar = $firstCalendarId !== null ? AcademicCalendar::query()->find($firstCalendarId) : null;
+
+        if ($calendar instanceof AcademicCalendar) {
+            return max(1, $this->phaseResolver->phaseOrdinal(
+                AcademicCalendarPeriodResolver::semesterSlugForCalendar($calendar),
+            ));
+        }
+
+        return $this->startOrdinalForEnrolment($enrolment);
+    }
+
+    /**
+     * Whether a taught phase can sit in the given calendar slot: either its usual slot, or that slot
+     * shifted by the student's intake offset. Attachment phases have no slot of their own, so any fits.
+     *
+     * Deliberately not built on mapGlobalSemesterToProgrammeSemester(), which only ever yields Year 1.
+     */
+    public function phaseFitsCalendarSlot(
+        DepartmentLevelCourse $dlc,
+        ProgrammeSemester $programmeSemester,
+        Semester $slot,
+        int $startOrdinal = 1,
+    ): bool {
+        $dlc->loadMissing(['departmentLevel.level', 'programmeSemesters']);
+
+        $calendarType = $dlc->departmentLevel?->level?->calendar_type;
+
+        if (! $calendarType instanceof AcademicCalendarTypeEnum) {
+            $calendarType = AcademicCalendarTypeEnum::tryFrom((string) $calendarType)
+                ?? AcademicCalendarTypeEnum::SEMESTER;
+        }
+
+        if (! str_starts_with((string) $slot->slug, $calendarType->value.'-')) {
+            return false;
+        }
+
+        if (! $programmeSemester->isTaught()) {
+            return true;
+        }
+
+        $usual = $this->calendarSemesterForClassConfig($dlc, $programmeSemester);
+
+        if (! $usual instanceof Semester) {
+            return false;
+        }
+
+        $slotOrdinal = $this->phaseResolver->phaseOrdinal((string) $slot->slug);
+        $usualOrdinal = $this->phaseResolver->phaseOrdinal((string) $usual->slug);
+
+        if ($usualOrdinal === $slotOrdinal) {
+            return true;
+        }
+
+        $periodsPerYear = max(1, $calendarType->maxAssessmentCalendarsPerYear());
+        $shifted = (($usualOrdinal - 1) + (max(1, $startOrdinal) - 1)) % $periodsPerYear + 1;
+
+        return $shifted === $slotOrdinal;
+    }
+
+    /**
+     * Phases a student on this enrolment may say they are studying: the enrolment's stage (or the
+     * whole offering when no stage is set), in the delivery the mode offers, plus whatever the
+     * records currently show so the student can confirm it.
+     *
+     * @return Collection<int, ProgrammeSemester>
+     */
+    public function phaseOptionsForEnrolment(StudentEnrolment $enrolment): Collection
+    {
+        $dlc = $this->resolveDepartmentLevelCourse($enrolment);
+
+        if ($dlc === null || $dlc->programmeSemesters->isEmpty()) {
+            return collect();
+        }
+
+        $enrolment->loadMissing('modeOfStudy');
+        $isOjetMode = (bool) $enrolment->modeOfStudy?->isOjet();
+
+        $phases = $dlc->programmeSemesters
+            ->filter(fn (ProgrammeSemester $phase): bool => $phase->isOfferedInMode($isOjetMode));
+
+        if ($enrolment->programme_stage_id !== null) {
+            $inStage = $phases->filter(
+                fn (ProgrammeSemester $phase): bool => (int) $phase->programme_stage_id === (int) $enrolment->programme_stage_id,
+            );
+
+            if ($inStage->isNotEmpty()) {
+                $phases = $inStage;
+            }
+        }
+
+        $current = $enrolment->currentStudentSemester()?->programmeSemester;
+
+        if ($current instanceof ProgrammeSemester
+            && (int) $current->department_level_course_id === (int) $dlc->id
+            && ! $phases->contains(fn (ProgrammeSemester $phase): bool => (int) $phase->id === (int) $current->id)) {
+            $phases = $phases->push($current);
+        }
+
+        return $phases->sortBy('position')->values();
     }
 
     /**

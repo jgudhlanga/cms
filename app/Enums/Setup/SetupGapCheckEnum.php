@@ -26,6 +26,12 @@ enum SetupGapCheckEnum: string
     case DIVISION_WITHOUT_HEAD = 'division_without_head';
     case DEPARTMENTS_WITHOUT_DIVISION = 'departments_without_division';
 
+    // Enrolment setup (online application catalogue) vs department setup — the catalogue can drift out
+    // of step with department configuration after it was created validly.
+    case OFFERING_MODE_NOT_CONFIGURED = 'offering_mode_not_configured';
+    case OFFERING_COURSE_LEVEL_UNLINKED = 'offering_course_level_unlinked';
+    case OFFERING_REFERENCES_DELETED_RECORD = 'offering_references_deleted_record';
+
     // Accommodation
     case HOSTEL_BEDS_VACANT_WITH_WAITING_APPLICANTS = 'hostel_beds_vacant_with_waiting_applicants';
 
@@ -35,6 +41,10 @@ enum SetupGapCheckEnum: string
             self::APPLICATIONS_IN_UNCONFIGURED_MODE,
             self::COURSE_LEVEL_WITHOUT_MODES,
             self::APPLICATIONS_MISSING_MODE_OR_LEVEL => SetupGapSeverityEnum::CRITICAL,
+
+            self::OFFERING_MODE_NOT_CONFIGURED,
+            self::OFFERING_COURSE_LEVEL_UNLINKED,
+            self::OFFERING_REFERENCES_DELETED_RECORD => SetupGapSeverityEnum::CRITICAL,
 
             self::DEPARTMENT_ASSESSMENT_CALENDAR_MISSING,
             self::CLASS_CONFIG_WITHOUT_LECTURER_IN_CHARGE,
@@ -79,6 +89,12 @@ enum SetupGapCheckEnum: string
             self::DEPARTMENTS_WITHOUT_DIVISION => 'update:departments',
 
             self::HOSTEL_BEDS_VACANT_WITH_WAITING_APPLICANTS => 'update:hostels',
+
+            // Applicants only ever see what the online application catalogue exposes, and only people
+            // who manage that catalogue can fix a mismatch between it and department setup.
+            self::OFFERING_MODE_NOT_CONFIGURED,
+            self::OFFERING_COURSE_LEVEL_UNLINKED,
+            self::OFFERING_REFERENCES_DELETED_RECORD => 'manage:online-application-catalogue',
         };
     }
 

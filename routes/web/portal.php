@@ -5,6 +5,7 @@ use App\Http\Controllers\Students\GuestRegistrationController;
 use App\Http\Controllers\Students\IdCardRequestController;
 use App\Http\Controllers\Students\PortalController;
 use App\Http\Controllers\Students\PortalExamResultController;
+use App\Http\Controllers\Students\PortalStudyPositionController;
 use App\Http\Controllers\Students\ReturningStudentController;
 use App\Http\Controllers\Students\StudentGalleryController;
 use App\Http\Controllers\Students\StudentOLevelResultsController;
@@ -75,6 +76,10 @@ Route::prefix('portal')->group(function () {
         Route::put('application/{student_application}/update', [PortalController::class, 'updateApplication'])->name('portal.application.update');
         Route::get('applications', [PortalController::class, 'applications'])->name('portal.applications');
         Route::get('dashboard', [PortalController::class, 'dashboard'])->name('portal.dashboard');
+        Route::get('study-position', [PortalStudyPositionController::class, 'show'])->name('portal.study-position.show');
+        Route::post('study-position', [PortalStudyPositionController::class, 'store'])
+            ->middleware('throttle:20,1')
+            ->name('portal.study-position.store');
         Route::prefix('profile')->name('portal.profile.')->group(function () {
             Route::get('personal-information', [PortalController::class, 'profilePersonalInformation'])->name('personal-information');
             Route::put('personal-information', [PortalController::class, 'updatePersonalDetails'])->name('personal-information.update');

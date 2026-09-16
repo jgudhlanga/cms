@@ -18,4 +18,6 @@ Schedule::command('account-purge-archives:flush-expired')->dailyAt('02:00')->wit
 
 Schedule::command('assessment-calendars:send-missing-marks-notifications')->dailyAt('06:00')->withoutOverlapping();
 
+Schedule::command('students:auto-confirm-study-position')->dailyAt('04:00')->withoutOverlapping();
+
 Schedule::command('setup-gaps:scan')->dailyAt('05:00')->withoutOverlapping();

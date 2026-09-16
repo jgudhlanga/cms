@@ -17,6 +17,25 @@ const counts = ref<DepartmentReconciliationCounts>({
     enrolledThisYear: 0,
     enrolledThisPeriod: 0,
     calendarYear: Number(getQueryParams().academic_year ?? new Date().getFullYear()),
+    studyPosition: null,
+});
+
+const studyPosition = computed(() => counts.value.studyPosition ?? null);
+
+const studyPositionTiles = computed(() => {
+    const summary = studyPosition.value;
+
+    if (!summary) {
+        return [];
+    }
+
+    return [
+        { key: 'in-scope', label: trans('students.study_position_department_in_scope'), value: summary.inScope, tone: 'text-foreground' },
+        { key: 'confirmed', label: trans('students.study_position_state_confirmed'), value: summary.confirmed, tone: 'text-emerald-700 dark:text-emerald-400' },
+        { key: 'unconfirmed', label: trans('students.study_position_state_unconfirmed'), value: summary.unconfirmed, tone: 'text-red-700 dark:text-red-400' },
+        { key: 'follow-up', label: trans('students.study_position_state_follow_up'), value: summary.followUp, tone: 'text-red-700 dark:text-red-400' },
+        { key: 'needs-review', label: trans('students.study_position_state_needs_review'), value: summary.needsReview, tone: 'text-amber-700 dark:text-amber-400' },
+    ];
 });
 
 const departmentId = computed(() => String(props.department.id ?? ''));
@@ -67,6 +86,8 @@ const tools = computed(() => [
         }),
         count: counts.value.enrolledThisYear,
         countLabel: trans('trans.department_reconciliation_enrolled_this_year'),
+        alertCount: 0,
+        alertLabel: '',
     },
     {
         key: 'semester-reconciliation',
@@ -79,6 +100,9 @@ const tools = computed(() => [
         }),
         count: counts.value.enrolledThisPeriod,
         countLabel: trans('trans.department_reconciliation_enrolled_this_period'),
+        // Students still to confirm their study position: the import is the quickest way to settle them.
+        alertCount: studyPosition.value ? studyPosition.value.unconfirmed + studyPosition.value.followUp : 0,
+        alertLabel: trans('students.study_position_state_unconfirmed'),
     },
 ]);
 
@@ -87,6 +111,20 @@ const sectionLabelClass = 'text-[0.63rem] font-semibold uppercase tracking-[0.12
 
 <template>
     <div class="w-full min-w-0 space-y-6 pt-2">
+        <section v-if="studyPosition" class="space-y-2">
+            <h2 :class="sectionLabelClass">
+                {{ trans('students.study_position_department_title', { period: studyPosition.periodLabel }) }}
+            </h2>
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <div v-for="tile in studyPositionTiles" :key="tile.key" class="rounded-lg border border-border bg-card px-3 py-2">
+                    <p :class="['text-lg leading-none font-semibold tabular-nums', tile.tone]">
+                        {{ tile.value.toLocaleString() }}
+                    </p>
+                    <p class="mt-1 text-[11px] text-muted-foreground">{{ tile.label }}</p>
+                </div>
+            </div>
+        </section>
+
         <section class="space-y-2">
             <h2 :class="sectionLabelClass">{{ trans('trans.department_reconciliation_tools') }}</h2>
 
@@ -109,6 +147,13 @@ const sectionLabelClass = 'text-[0.63rem] font-semibold uppercase tracking-[0.12
                     </div>
 
                     <div class="flex shrink-0 items-center gap-3">
+                        <span
+                            v-if="item.alertCount > 0"
+                            class="rounded-full bg-red-500/10 px-2 py-0.5 text-[11px] font-medium text-red-700 dark:text-red-400"
+                            :title="item.alertLabel"
+                        >
+                            {{ item.alertCount }}
+                        </span>
                         <span
                             v-if="item.count > 0"
                             class="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"

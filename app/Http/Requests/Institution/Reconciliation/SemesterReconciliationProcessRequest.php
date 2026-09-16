@@ -27,10 +27,14 @@ class SemesterReconciliationProcessRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rows' => ['required', 'array', 'min:1', 'max:1000'],
+            'rows' => ['required_without:matchedRows', 'array', 'max:1000'],
             'rows.*.rowNumber' => ['required', 'integer', 'min:1'],
             'rows.*.studentEnrolmentId' => ['required', 'integer', 'exists:student_enrolments,id'],
             'rows.*.programmeSemesterId' => ['required', 'integer', 'exists:programme_semesters,id'],
+            // Preview rows already aligned with the records, confirmed as the students' study position.
+            'matchedRows' => ['required_without:rows', 'array', 'max:5000'],
+            'matchedRows.*.studentEnrolmentId' => ['required', 'integer'],
+            'matchedRows.*.programmeSemesterId' => ['required', 'integer'],
         ];
     }
 }

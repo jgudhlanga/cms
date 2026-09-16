@@ -1,7 +1,18 @@
+export type DepartmentStudyPositionCounts = {
+    periodLabel: string;
+    inScope: number;
+    confirmed: number;
+    unconfirmed: number;
+    followUp: number;
+    needsReview: number;
+};
+
 export type DepartmentReconciliationCounts = {
     enrolledThisYear: number;
     enrolledThisPeriod: number;
     calendarYear: number;
+    /** Null unless the selected year is the current calendar year. */
+    studyPosition?: DepartmentStudyPositionCounts | null;
 };
 
 export type EnrolmentVsClassListStatus =
@@ -133,6 +144,8 @@ export interface SemesterReconciliationProcessResult {
         requested: number;
         moved: number;
         skipped: number;
+        /** Students whose study position this run confirmed for the current period. */
+        confirmed?: number;
     };
     rows: Array<{
         rowNumber: number;

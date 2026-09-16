@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Students;
 
+use App\Enums\Students\StudyPositionStateEnum;
 use App\Models\Students\Student;
+use App\Repositories\Students\StudentRepository;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -33,6 +35,10 @@ class ExportStudentListRequest extends FormRequest
             'student_type' => ['nullable', Rule::in(['direct', 'apprentice'])],
             'sponsored' => ['nullable', Rule::in(['sponsored', 'not_sponsored'])],
             'disability' => ['nullable', Rule::in(['yes', 'no'])],
+            'study_position' => [
+                'nullable',
+                Rule::in([...array_column(StudyPositionStateEnum::cases(), 'value'), StudentRepository::STUDY_POSITION_ATTENTION]),
+            ],
             'search' => ['nullable', 'string', 'max:255'],
             'name' => ['nullable', 'string', 'max:255'],
         ];

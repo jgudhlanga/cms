@@ -42,3 +42,4 @@ require __DIR__.'/web/academic-calendars.php';
 require __DIR__.'/web/teaching.php';
 require __DIR__.'/web/maintenance.php';
 require __DIR__.'/web/examinations.php';
+require __DIR__.'/web/errors-preview.php';

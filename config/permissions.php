@@ -309,6 +309,7 @@ return [
             'change-student-number:students',
             'change-student-status:students',
             'change-intake-period:students',
+            'confirm-study-position:students',
             'export:students',
             'crud-settings:students',
             'viewAuditTrail:students',

@@ -55,7 +55,7 @@ const pageTitle = computed(() => tabDefinition.value?.transLabel() ?? '');
     <Head :title="pageTitle" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="w-full min-w-0 pb-24 md:pb-0">
-            <StudentProfileShell :student="student" :active-tab="activeTab">
+            <StudentProfileShell :student="student" :active-tab="activeTab" context="portal">
                 <Info v-if="activeTab === 'basic_info'" :student="student" context="portal" />
                 <Programs v-else-if="activeTab === 'programs'" :student="student" />
                 <Applications
