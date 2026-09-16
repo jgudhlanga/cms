@@ -12,6 +12,7 @@ use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 use App\Enums\Shared\AcademicLevelEnum;
 use App\Enums\Shared\DisabilityStatusEnum;
 use App\Enums\Shared\GenderEnum;
+use App\Enums\Students\StudyPositionStateEnum;
 use App\Helpers\Helper;
 use App\Http\Filters\Students\StudentFilter;
 use App\Models\Shared\AcademicLevel;
@@ -24,6 +25,7 @@ use App\Repositories\Shared\interface\INextOfKinRepository;
 use App\Repositories\Students\interface\IStudentApplicationRepository;
 use App\Repositories\Students\interface\IStudentRepository;
 use App\Services\Enrollment\EnrollmentLookupService;
+use App\Services\Students\StudyPosition\StudyPositionScope;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -33,6 +35,9 @@ use Throwable;
 
 class StudentRepository extends BaseRepository implements IStudentRepository
 {
+    /** Study position filter value for everything short of a settled confirmation. */
+    public const STUDY_POSITION_ATTENTION = 'attention';
+
     public function __construct(
         protected Student $student,
         protected IAddressRepository $addressRepository,
@@ -165,6 +170,29 @@ class StudentRepository extends BaseRepository implements IStudentRepository
         ];
     }
 
+    /**
+     * Current-period study position buckets. A student with programmes in different states counts in each.
+     *
+     * @return list<array{id: string, name: string, count: int}>
+     */
+    private function studyPositionBuckets(Builder $query): array
+    {
+        $scope = app(StudyPositionScope::class);
+
+        // select() replaces the base query's students.id column, which would break ONLY_FULL_GROUP_BY.
+        $counts = $scope->leftJoinConfirmation($scope->constrain(clone $query, 'student_enrolments'), 'student_enrolments')
+            ->select(DB::raw($scope->stateCaseSql().' as study_position_bucket'))
+            ->selectRaw('count(distinct students.id) as aggregate_count')
+            ->groupBy('study_position_bucket')
+            ->pluck('aggregate_count', 'study_position_bucket');
+
+        return array_map(static fn (StudyPositionStateEnum $state): array => [
+            'id' => $state->value,
+            'name' => $state->label(),
+            'count' => (int) ($counts[$state->value] ?? 0),
+        ], StudyPositionStateEnum::cases());
+    }
+
     private function baseStatsQuery(): Builder
     {
         return Student::query()
@@ -242,6 +270,8 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             'total' => $total,
             'male' => $male,
             'female' => $female,
+            'byStudyPosition' => $this->studyPositionBuckets($query),
+            'studyPositionPeriodLabel' => app(StudyPositionScope::class)->periodLabel(),
             'byLevel' => $byLevel,
             'byModeOfStudy' => $byModeOfStudy,
             'byStudentType' => [
@@ -355,24 +385,45 @@ class StudentRepository extends BaseRepository implements IStudentRepository
             || $courseIds !== []
             || $modeIds !== [];
 
+        $constrainProgramme = function ($q) use ($departmentIds, $levelIds, $courseIds, $modeIds): void {
+            if ($departmentIds !== []) {
+                $q->whereIn('student_enrolments.institution_department_id', $departmentIds);
+            }
+
+            if ($levelIds !== []) {
+                $q->whereHas('departmentLevel', function ($levelQuery) use ($levelIds): void {
+                    $levelQuery->whereIn('level_id', $levelIds);
+                });
+            }
+
+            if ($courseIds !== []) {
+                $q->whereIn('student_enrolments.department_course_id', $courseIds);
+            }
+
+            if ($modeIds !== []) {
+                $q->whereIn('student_enrolments.mode_of_study_id', $modeIds);
+            }
+        };
+
         if ($hasProgrammeFilters) {
-            $query->whereHas('enrolments', function ($q) use ($departmentIds, $levelIds, $courseIds, $modeIds): void {
-                if ($departmentIds !== []) {
-                    $q->whereIn('institution_department_id', $departmentIds);
-                }
+            $query->whereHas('enrolments', $constrainProgramme);
+        }
 
-                if ($levelIds !== []) {
-                    $q->whereHas('departmentLevel', function ($levelQuery) use ($levelIds): void {
-                        $levelQuery->whereIn('level_id', $levelIds);
-                    });
-                }
+        // Study position for the current period, on the same enrolment the programme filters matched.
+        $studyPosition = strtolower(trim((string) ($filters['study_position'] ?? '')));
+        $studyPositionState = StudyPositionStateEnum::tryFrom($studyPosition);
 
-                if ($courseIds !== []) {
-                    $q->whereIn('department_course_id', $courseIds);
-                }
+        if ($studyPositionState !== null || $studyPosition === self::STUDY_POSITION_ATTENTION) {
+            $scope = app(StudyPositionScope::class);
 
-                if ($modeIds !== []) {
-                    $q->whereIn('mode_of_study_id', $modeIds);
+            $query->whereHas('enrolments', function ($q) use ($constrainProgramme, $scope, $studyPositionState): void {
+                $constrainProgramme($q);
+                $scope->constrain($q);
+
+                if ($studyPositionState !== null) {
+                    $scope->whereState($q, $studyPositionState);
+                } else {
+                    $scope->whereNeedsAttention($q);
                 }
             });
         }

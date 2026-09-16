@@ -106,6 +106,11 @@ class StudentEnrolment extends Model
         return $this->hasMany(StudentSemester::class, 'student_enrolment_id');
     }
 
+    public function studyPositionConfirmations(): HasMany
+    {
+        return $this->hasMany(StudentStudyPositionConfirmation::class, 'student_enrolment_id');
+    }
+
     public function academicCalendarStudentEnrolment(): HasOne
     {
         return $this->hasOne(

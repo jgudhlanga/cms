@@ -4,11 +4,13 @@ namespace App\Http\Middleware;
 
 use App\Enums\Rbac\RoleEnum;
 use App\Http\Resources\Users\UserResource;
+use App\Models\Students\Student;
 use App\Models\Users\User;
 use App\Services\Rbac\RbacModuleStateService;
 use App\Services\Rbac\UserPermissionMapService;
 use App\Services\Setup\SetupGapVisibility;
 use App\Services\Students\RegistrationAvailabilityService;
+use App\Services\Students\StudyPosition\StudyPositionService;
 use App\Support\AppVersion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -82,8 +84,40 @@ class HandleInertiaRequests extends Middleware
             'registration' => fn () => $this->sharesRegistration($user)
                 ? app(RegistrationAvailabilityService::class)->sharedProps()
                 : null,
+            'studyPosition' => fn () => $this->studyPositionPrompt($request, $user),
             'purgeArchiveRetentionDays' => (int) config('purge.archive_retention_days', 30),
         ];
+    }
+
+    /**
+     * Drives the per-period study position prompt and banner on student pages. Staff get nothing;
+     * an impersonating admin sees the banner but is never forced into the student's prompt.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function studyPositionPrompt(Request $request, ?User $user): ?array
+    {
+        if ($user === null) {
+            return null;
+        }
+
+        $student = $user->loadMissing('studentProfile')->studentProfile;
+
+        if (! $student instanceof Student || ! $user->can('viewOwnDashboard:students')) {
+            return null;
+        }
+
+        $summary = app(StudyPositionService::class)->promptSummary($student);
+
+        if ($summary === null) {
+            return null;
+        }
+
+        if ($user->isImpersonated() || $request->routeIs('portal.returning-student.continue.*')) {
+            $summary['required'] = false;
+        }
+
+        return $summary;
     }
 
     private function loadAuthRelations(User $user): User

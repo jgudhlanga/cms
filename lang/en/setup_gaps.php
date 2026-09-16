@@ -29,6 +29,9 @@ return [
     'check_hostel_beds_vacant_with_waiting_applicants' => 'Vacant beds while applicants wait',
     'check_division_without_head' => 'Division has no head',
     'check_departments_without_division' => 'Departments not linked to a division',
+    'check_offering_mode_not_configured' => 'Online applications offer an unset-up mode',
+    'check_offering_course_level_unlinked' => 'Online applications offer an unlinked course level',
+    'check_offering_references_deleted_record' => 'Online applications offer a deleted course or level',
 
     // Gap titles and detail lines
     'applications_in_unconfigured_mode_title' => ':course :level — :mode is not set up',
@@ -67,6 +70,19 @@ return [
 
     'departments_without_division_title' => ':count department(s) are not linked to a division',
     'departments_without_division_body' => 'Division scoping and division reporting skip these departments: :departments',
+
+    'offering_mode_not_configured_title' => ':course :level — applicants can select :mode, which is not set up',
+    'offering_mode_not_configured_body' => 'The online application catalogue offers :mode for :course :level, but the department has only set up :configured. Anyone who applies in :mode will end up in the same unconfigured state as an application entered directly.',
+    'offering_mode_not_configured_body_none' => 'The online application catalogue offers :mode for :course :level, but the department has not set up any modes for it at all.',
+
+    'offering_course_level_unlinked_title' => ':course :level is offered to applicants but no longer linked',
+    'offering_course_level_unlinked_body' => 'The online application catalogue still lists :course at :level, but the department has since unlinked that course from that level. Applicants can still apply into a combination that no longer exists.',
+
+    'offering_references_deleted_level_title' => 'Online applications offer a level that has been deleted',
+    'offering_references_deleted_level_body' => 'The department level behind this entry in the online application catalogue has been deleted, but the catalogue still offers it to applicants.',
+
+    'offering_references_deleted_course_title' => 'Online applications offer a course that has been deleted',
+    'offering_references_deleted_course_body' => 'The department course behind this entry in the online application catalogue has been deleted, but the catalogue still offers it to applicants.',
 
     // Notification
     'notification_title' => 'New setup issue: :check',

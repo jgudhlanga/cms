@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { BookOpen, Briefcase, GraduationCap, Handshake, HeartPulse, User, UserRound, X } from '@lucide/vue';
+import { BookOpen, Briefcase, ClipboardCheck, GraduationCap, Handshake, HeartPulse, User, UserRound, X } from '@lucide/vue';
 import { computed, toRef } from 'vue';
 
 import BaseCombobox from '@/components/core/form/combobox/BaseCombobox.vue';
 import StudentFilterChip from '@/components/students/filters/StudentFilterChip.vue';
 import { useStudentFilters } from '@/composables/students/useStudentFilters';
 import { IconName } from '@/enums/icons';
+import type { StudyPositionState } from '@/types/study-position';
 import type { StudentFiltersState, StudentStats } from '@/types/students';
 import { trans } from 'laravel-vue-i18n';
 
@@ -62,6 +63,8 @@ const globalStats = computed(
             byStudentType: [],
             bySponsored: [],
             byDisability: [],
+            byStudyPosition: [],
+            studyPositionPeriodLabel: null,
         },
 );
 
@@ -79,6 +82,10 @@ const isModeActive = (id: number) => props.filters.mode_of_study?.includes(id) ?
 const isStudentTypeActive = (type: 'direct' | 'apprentice') => props.filters.student_type === type;
 const isSponsoredActive = (value: 'sponsored' | 'not_sponsored') => props.filters.sponsored === value;
 const isDisabilityActive = (value: 'yes' | 'no') => props.filters.disability === value;
+const isStudyPositionActive = (value: StudyPositionState) => props.filters.study_position === value;
+
+const studyPositionRows = computed(() => globalStats.value.byStudyPosition ?? []);
+const showStudyPositionFilter = computed(() => studyPositionRows.value.some((row) => row.count > 0));
 
 const toggleGender = (gender: 'male' | 'female') => {
     emit('filter', { gender: isGenderActive(gender) ? undefined : gender });
@@ -104,6 +111,10 @@ const toggleSponsored = (value: 'sponsored' | 'not_sponsored') => {
 
 const toggleDisability = (value: 'yes' | 'no') => {
     emit('filter', { disability: isDisabilityActive(value) ? undefined : value });
+};
+
+const toggleStudyPosition = (value: StudyPositionState) => {
+    emit('filter', { study_position: isStudyPositionActive(value) ? undefined : value });
 };
 
 const clearField = (partial: Partial<StudentFiltersState>) => {
@@ -165,6 +176,20 @@ const activeTags = computed<ActiveTag[]>(() => {
             id: `disability-${filters.disability}`,
             label: disabilityRow?.name ?? filters.disability,
             clear: () => clearField({ disability: undefined }),
+        });
+    }
+
+    if (filters.study_position) {
+        const studyPositionRow = studyPositionRows.value.find((row) => row.id === filters.study_position);
+        tags.push({
+            id: `study-position-${filters.study_position}`,
+            label: `${trans('students.study_position_filter')}: ${
+                studyPositionRow?.name ??
+                (filters.study_position === 'attention'
+                    ? trans('students.study_position_state_attention')
+                    : filters.study_position)
+            }`,
+            clear: () => clearField({ study_position: undefined }),
         });
     }
 
@@ -334,6 +359,23 @@ defineExpose({ resetFilters });
                         :active="isDisabilityActive(row.id)"
                         :icon="HeartPulse"
                         @click="toggleDisability(row.id)"
+                    />
+                </div>
+            </div>
+
+            <div v-if="showStudyPositionFilter" class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                <span :class="groupLabelClass" :title="globalStats.studyPositionPeriodLabel ?? undefined">
+                    {{ $t('students.study_position_filter') }}
+                </span>
+                <div class="flex flex-wrap items-center gap-1">
+                    <StudentFilterChip
+                        v-for="row in studyPositionRows"
+                        :key="`study-position-${row.id}`"
+                        :label="row.name"
+                        :count="row.count.toLocaleString()"
+                        :active="isStudyPositionActive(row.id)"
+                        :icon="ClipboardCheck"
+                        @click="toggleStudyPosition(row.id)"
                     />
                 </div>
             </div>

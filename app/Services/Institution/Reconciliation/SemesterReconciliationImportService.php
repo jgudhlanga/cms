@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Institution\Reconciliation;
 
+use App\Actions\Students\ConfirmStudyPositionAction;
 use App\Actions\Students\SetStudentEnrolmentCurrentPhaseAction;
+use App\Enums\Students\StudyPositionAnswerEnum;
+use App\Enums\Students\StudyPositionSourceEnum;
 use App\Importers\Institution\SemesterReconciliationImporter;
 use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
@@ -14,8 +17,11 @@ use App\Models\Institution\ProgrammeSemester;
 use App\Models\Students\Student;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentSemester;
+use App\Models\Users\User;
 use App\Services\Enrollment\EnrollmentLookupService;
 use App\Services\Institution\ProgrammeSemesterResolver;
+use App\Services\Students\StudyPosition\CurrentStudyPeriod;
+use App\Services\Students\StudyPosition\CurrentStudyPeriodResolver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +38,8 @@ class SemesterReconciliationImportService
         private readonly DepartmentReconciliationOfferingMatcher $offeringMatcher,
         private readonly ProgrammeSemesterResolver $programmeSemesterResolver,
         private readonly SetStudentEnrolmentCurrentPhaseAction $setStudentEnrolmentCurrentPhaseAction,
+        private readonly CurrentStudyPeriodResolver $studyPeriods,
+        private readonly ConfirmStudyPositionAction $confirmStudyPosition,
     ) {}
 
     /**
@@ -115,17 +123,26 @@ class SemesterReconciliationImportService
     }
 
     /**
+     * Moves the selected mismatches and, for the current year, records the department's word as the
+     * students' study position. Rows the preview found already aligned can be confirmed as they are.
+     *
      * @param  list<array{rowNumber: int, studentEnrolmentId: int, programmeSemesterId: int}>  $rows
+     * @param  list<array{studentEnrolmentId: int, programmeSemesterId: int}>  $matchedRows
      * @return array{
-     *     summary: array{requested: int, moved: int, skipped: int},
+     *     summary: array{requested: int, moved: int, skipped: int, confirmed: int},
      *     rows: list<array{rowNumber: int, status: string, reason?: string}>,
      * }
      */
-    public function process(InstitutionDepartment $department, array $rows): array
-    {
+    public function process(
+        InstitutionDepartment $department,
+        array $rows,
+        array $matchedRows = [],
+        ?User $actor = null,
+    ): array {
         $results = [];
         $moved = 0;
         $skipped = 0;
+        $confirmed = 0;
 
         foreach ($rows as $row) {
             $outcome = $this->processRow(
@@ -133,8 +150,11 @@ class SemesterReconciliationImportService
                 (int) $row['rowNumber'],
                 (int) $row['studentEnrolmentId'],
                 (int) $row['programmeSemesterId'],
+                $actor,
             );
 
+            $confirmed += (int) ($outcome['confirmed'] ?? false);
+            unset($outcome['confirmed']);
             $results[] = $outcome;
 
             if ($outcome['status'] === 'moved') {
@@ -144,11 +164,21 @@ class SemesterReconciliationImportService
             }
         }
 
+        foreach ($matchedRows as $matched) {
+            $confirmed += (int) $this->confirmAlignedRow(
+                $department,
+                (int) $matched['studentEnrolmentId'],
+                (int) $matched['programmeSemesterId'],
+                $actor,
+            );
+        }
+
         return [
             'summary' => [
                 'requested' => count($rows),
                 'moved' => $moved,
                 'skipped' => $skipped,
+                'confirmed' => $confirmed,
             ],
             'rows' => $results,
         ];
@@ -442,13 +472,14 @@ class SemesterReconciliationImportService
     }
 
     /**
-     * @return array{rowNumber: int, status: string, reason?: string}
+     * @return array{rowNumber: int, status: string, reason?: string, confirmed?: bool}
      */
     private function processRow(
         InstitutionDepartment $department,
         int $rowNumber,
         int $studentEnrolmentId,
         int $programmeSemesterId,
+        ?User $actor,
     ): array {
         try {
             return DB::transaction(function () use (
@@ -456,6 +487,7 @@ class SemesterReconciliationImportService
                 $rowNumber,
                 $studentEnrolmentId,
                 $programmeSemesterId,
+                $actor,
             ): array {
                 $enrolment = StudentEnrolment::query()
                     ->with(['studentSemesters.semester', 'departmentLevel.level', 'departmentCourse'])
@@ -480,11 +512,21 @@ class SemesterReconciliationImportService
                     ];
                 }
 
-                $this->setStudentEnrolmentCurrentPhaseAction->execute($enrolment, $programmeSemester);
+                $currentPeriod = $this->currentPeriodFor($enrolment);
+
+                // A current-year file states where the student is now, so pin this period's slot;
+                // back-year files keep the usual slot mapping.
+                $this->setStudentEnrolmentCurrentPhaseAction->execute(
+                    $enrolment,
+                    $programmeSemester,
+                    $currentPeriod?->slot,
+                );
 
                 return [
                     'rowNumber' => $rowNumber,
                     'status' => 'moved',
+                    'confirmed' => $currentPeriod !== null
+                        && $this->recordDepartmentConfirmation($enrolment, $programmeSemester, $actor, $rowNumber),
                 ];
             });
         } catch (InvalidArgumentException $exception) {
@@ -502,6 +544,71 @@ class SemesterReconciliationImportService
                 'reason' => __('trans.department_semester_reconciliation_process_row_failed'),
             ];
         }
+    }
+
+    private function confirmAlignedRow(
+        InstitutionDepartment $department,
+        int $studentEnrolmentId,
+        int $programmeSemesterId,
+        ?User $actor,
+    ): bool {
+        $enrolment = StudentEnrolment::query()
+            ->with(['studentSemesters.semester', 'studentSemesters.programmeSemester', 'departmentLevel.level'])
+            ->find($studentEnrolmentId);
+
+        if (! $enrolment instanceof StudentEnrolment
+            || (int) $enrolment->institution_department_id !== (int) $department->id
+            || $this->currentPeriodFor($enrolment) === null) {
+            return false;
+        }
+
+        // Re-checked here: the preview is not stored, so a forged "aligned" row must not confirm anything.
+        $systemPhase = $this->resolveCurrentProgrammeSemester($enrolment);
+
+        if (! $systemPhase instanceof ProgrammeSemester || (int) $systemPhase->id !== $programmeSemesterId) {
+            return false;
+        }
+
+        return $this->recordDepartmentConfirmation($enrolment, $systemPhase, $actor);
+    }
+
+    private function recordDepartmentConfirmation(
+        StudentEnrolment $enrolment,
+        ProgrammeSemester $programmeSemester,
+        ?User $actor,
+        ?int $rowNumber = null,
+    ): bool {
+        try {
+            $confirmation = $this->confirmStudyPosition->execute(
+                $enrolment->fresh() ?? $enrolment,
+                StudyPositionAnswerEnum::PHASE,
+                $programmeSemester,
+                StudyPositionSourceEnum::AUTO_DEPARTMENT_RECONCILIATION,
+                $actor,
+                evidence: array_filter(['row_number' => $rowNumber]),
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return false;
+        }
+
+        return $confirmation !== null && $confirmation->source === StudyPositionSourceEnum::AUTO_DEPARTMENT_RECONCILIATION;
+    }
+
+    /**
+     * The period to confirm for, when the enrolment belongs to the current calendar year.
+     */
+    private function currentPeriodFor(StudentEnrolment $enrolment): ?CurrentStudyPeriod
+    {
+        $period = $this->studyPeriods->forEnrolment($enrolment);
+
+        if (! $period instanceof CurrentStudyPeriod
+            || ! in_array((int) $enrolment->academic_calendar_id, $period->yearPeriodIds, true)) {
+            return null;
+        }
+
+        return $period;
     }
 
     private function summaryKeyForStatus(string $status): string

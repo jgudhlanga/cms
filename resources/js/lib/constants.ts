@@ -97,6 +97,8 @@ const APP_MODULE_KEYS = {
     student_number_change: 'student_number_change',
     student_status_change: 'student_status_change',
     student_intake_period_change: 'student_intake_period_change',
+    student_study_position_prompt: 'student_study_position_prompt',
+    student_study_position_confirm: 'student_study_position_confirm',
     reassign_programme: 'reassign_programme',
 };
 const EXAM_SITTINGS = [

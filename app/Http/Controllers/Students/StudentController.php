@@ -32,6 +32,7 @@ use App\Services\Maintenance\Students\FixStudentIdNumberService;
 use App\Services\Students\IntakePeriodResolver;
 use App\Services\Students\StudentIdCardPhotoService;
 use App\Services\Students\StudentListExportService;
+use App\Services\Students\StudyPosition\StudyPositionService;
 use App\Support\Students\StudentApplicationStatusMapper;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -78,6 +79,12 @@ class StudentController extends Controller
     public function show(Student $student)
     {
         $this->authorize('view', $student);
+        $viewer = Auth::user();
+        $studentStudyPosition = app(StudyPositionService::class)->statusFor(
+            $student,
+            $viewer,
+            forAdmin: $viewer->can('viewAny:students') || $viewer->can('view:students'),
+        );
         $student->loadMissing([
             'apprentices',
             'studentSponsors',
@@ -108,6 +115,7 @@ class StudentController extends Controller
             'offerLetterIntakePeriodIds',
             'studentStatusOptions',
             'studentIntakePeriodOptions',
+            'studentStudyPosition',
         ));
     }
 

@@ -42,6 +42,12 @@ class PortalPolicy
         return $user->can('manageOwnStudentAcademicDetails:students');
     }
 
+    public function confirmOwnStudyPosition(User $user): bool
+    {
+        return $user->studentProfile !== null
+            && $user->can('manageOwnStudentAcademicDetails:students');
+    }
+
     public function viewOwnExamResults(User $user): bool
     {
         return $user->can('viewOwnExamResults:students');

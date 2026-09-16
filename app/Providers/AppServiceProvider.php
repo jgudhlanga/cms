@@ -36,10 +36,15 @@ use App\Services\Setup\Checks\DepartmentsWithoutDivisionCheck;
 use App\Services\Setup\Checks\DivisionWithoutHeadCheck;
 use App\Services\Setup\Checks\HostelBedsVacantWithWaitingApplicantsCheck;
 use App\Services\Setup\Checks\ModesOnUnlinkedLevelCheck;
+use App\Services\Setup\Checks\OfferingCourseLevelUnlinkedCheck;
+use App\Services\Setup\Checks\OfferingModeNotConfiguredCheck;
+use App\Services\Setup\Checks\OfferingReferencesDeletedRecordCheck;
 use App\Services\Setup\SetupGapScanner;
 use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\PdfCardPrinter;
 use App\Services\Students\PhysicalCardPrinter;
+use App\Services\Students\StudyPosition\CurrentStudyPeriodResolver;
+use App\Services\Students\StudyPosition\StudyPositionScope;
 use App\Support\Auth\SyncSessionPasswordHash;
 use App\Support\Rbac\UserAccessScope;
 use Illuminate\Auth\Events\Login;
@@ -87,6 +92,9 @@ class AppServiceProvider extends ServiceProvider
             ClassConfigWithoutSyllabusCheck::class,
             DivisionWithoutHeadCheck::class,
             DepartmentsWithoutDivisionCheck::class,
+            OfferingModeNotConfiguredCheck::class,
+            OfferingCourseLevelUnlinkedCheck::class,
+            OfferingReferencesDeletedRecordCheck::class,
             HostelBedsVacantWithWaitingApplicantsCheck::class,
         ], SetupGapCheck::TAG);
 
@@ -94,6 +102,10 @@ class AppServiceProvider extends ServiceProvider
             SetupGapScanner::class,
             fn ($app): SetupGapScanner => new SetupGapScanner($app->tagged(SetupGapCheck::TAG)),
         );
+
+        // One resolution per request: the current periods and scope lists are read on every portal page.
+        $this->app->scoped(CurrentStudyPeriodResolver::class);
+        $this->app->scoped(StudyPositionScope::class);
 
         $this->app->bind(StudentIdCardPrinter::class, function (): StudentIdCardPrinter {
             return match (config('id_cards.printer.driver')) {

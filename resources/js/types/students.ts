@@ -1,3 +1,4 @@
+import type { StudyPositionState } from '@/types/study-position';
 import { DepartmentCourse, DepartmentLevel } from '@/types/department-meta-data';
 import { CourseSyllabus, InstitutionDepartment } from '@/types/institution';
 import { WorkflowStep } from '@/types/settings';
@@ -424,6 +425,7 @@ export type StudentFiltersState = {
     student_type?: 'direct' | 'apprentice';
     sponsored?: 'sponsored' | 'not_sponsored';
     disability?: 'yes' | 'no';
+    study_position?: StudyPositionState | 'attention';
     academic_year?: number[] | null;
     calendar_type?: string[] | null;
     with_trashed?: boolean | null;
@@ -447,6 +449,12 @@ export type StudentSponsoredStatBreakdown = {
     count: number;
 };
 
+export type StudentStudyPositionStatBreakdown = {
+    id: StudyPositionState;
+    name: string;
+    count: number;
+};
+
 export type StudentDisabilityStatBreakdown = {
     id: 'yes' | 'no';
     name: string;
@@ -463,6 +471,8 @@ export type StudentStats = {
         byStudentType: StudentTypeStatBreakdown[];
         bySponsored: StudentSponsoredStatBreakdown[];
         byDisability: StudentDisabilityStatBreakdown[];
+        byStudyPosition?: StudentStudyPositionStatBreakdown[];
+        studyPositionPeriodLabel?: string | null;
     };
     filtered: {
         total: number;

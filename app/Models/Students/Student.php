@@ -160,6 +160,11 @@ class Student extends Model implements HasMedia
         return $this->hasMany(StudentSponsor::class, 'student_id');
     }
 
+    public function studyPositionConfirmations(): HasMany
+    {
+        return $this->hasMany(StudentStudyPositionConfirmation::class, 'student_id');
+    }
+
     public function latestEnrolment(): HasOne
     {
         return $this->hasOne(StudentEnrolment::class)->latestOfMany();

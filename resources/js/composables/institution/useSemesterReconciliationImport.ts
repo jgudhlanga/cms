@@ -88,6 +88,13 @@ export const useSemesterReconciliationImport = (
     );
 
     const previewRows = computed(() => preview.value?.rows ?? []);
+    // Rows already matching the records: sent along so the department's file also confirms these
+    // students' study position for the current period (the server re-checks each one).
+    const alignedRows = computed(() =>
+        previewRows.value.filter(
+            (row) => row.status === 'matched' && row.studentEnrolmentId !== null && row.programmeSemesterId !== null,
+        ),
+    );
     const extrasRows = computed(() => preview.value?.extras ?? []);
 
     const previewSummaryLabel = computed((): string | null => {
@@ -234,7 +241,12 @@ export const useSemesterReconciliationImport = (
     };
 
     const submitRectify = async (rows: SemesterReconciliationPreviewRow[]): Promise<boolean> => {
-        if (rows.length === 0 || processLoading.value) {
+        const matchedRows = alignedRows.value.map((row) => ({
+            studentEnrolmentId: row.studentEnrolmentId as number,
+            programmeSemesterId: row.programmeSemesterId as number,
+        }));
+
+        if ((rows.length === 0 && matchedRows.length === 0) || processLoading.value) {
             return false;
         }
 
@@ -243,24 +255,40 @@ export const useSemesterReconciliationImport = (
         processResult.value = null;
 
         const payload = {
-            rows: rows.map((row) => ({
-                rowNumber: row.rowNumber,
-                studentEnrolmentId: row.studentEnrolmentId as number,
-                programmeSemesterId: row.programmeSemesterId as number,
-            })),
+            ...(rows.length > 0
+                ? {
+                      rows: rows.map((row) => ({
+                          rowNumber: row.rowNumber,
+                          studentEnrolmentId: row.studentEnrolmentId as number,
+                          programmeSemesterId: row.programmeSemesterId as number,
+                      })),
+                  }
+                : {}),
+            ...(matchedRows.length > 0 ? { matchedRows } : {}),
         };
 
         try {
             const response = await customAxios('').post<SemesterReconciliationProcessResult>(processUrl.value, payload);
             processResult.value = response.data;
 
-            const message = trans('trans.department_semester_reconciliation_process_success', {
-                moved: String(response.data.summary.moved),
-                skipped: String(response.data.summary.skipped),
-            });
+            const { moved, skipped, confirmed } = response.data.summary;
+            const parts = [];
 
-            // A run where nothing moved is not a success, however green the toast looks.
-            if (response.data.summary.moved === 0) {
+            if (rows.length > 0) {
+                parts.push(
+                    trans('trans.department_semester_reconciliation_process_success', {
+                        moved: String(moved),
+                        skipped: String(skipped),
+                    }),
+                );
+            }
+
+            parts.push(trans('trans.department_semester_reconciliation_confirmed', { count: String(confirmed ?? 0) }));
+
+            const message = parts.join(' ');
+
+            // A run that changed nothing is not a success, however green the toast looks.
+            if (moved === 0 && (confirmed ?? 0) === 0) {
                 warningAlert(message);
             } else {
                 successAlert(message);
@@ -285,6 +313,27 @@ export const useSemesterReconciliationImport = (
         } finally {
             processLoading.value = false;
         }
+    };
+
+    const confirmAligned = (): void => {
+        if (alignedRows.value.length === 0) {
+            return;
+        }
+
+        warningDialog(
+            () => {
+                void submitRectify([]);
+
+                return true;
+            },
+            trans('trans.department_semester_reconciliation_confirm_aligned_prompt', {
+                count: String(alignedRows.value.length),
+            }),
+            trans('trans.warning'),
+            trans('trans.department_semester_reconciliation_confirm_aligned', {
+                count: String(alignedRows.value.length),
+            }),
+        );
     };
 
     const confirmRectify = (rows: SemesterReconciliationPreviewRow[], onSuccess?: () => void): void => {
@@ -376,6 +425,7 @@ export const useSemesterReconciliationImport = (
         processSkipReasons,
         templateUrl,
         previewRows,
+        alignedRows,
         extrasRows,
         previewSummaryLabel,
         canRunPreview,
@@ -385,6 +435,7 @@ export const useSemesterReconciliationImport = (
         removePreviewRow,
         checkboxSkipTitle,
         confirmRectify,
+        confirmAligned,
         statusLabel,
         statusClass,
     };

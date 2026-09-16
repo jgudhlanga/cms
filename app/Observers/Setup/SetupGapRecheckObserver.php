@@ -8,9 +8,14 @@ use App\Enums\Setup\SetupGapCheckEnum;
 use App\Jobs\Setup\RecheckSetupGapsJob;
 use App\Models\AcademicCalendars\ClassConfig;
 use App\Models\AcademicCalendars\ClassConfigLecturerInCharge;
+use App\Models\Applications\ApplicationOfferingCourse;
+use App\Models\Applications\ApplicationOfferingLevel;
+use App\Models\Applications\ApplicationOfferingMode;
 use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Models\Institution\AssessmentCalendar\DepartmentAssessmentCalendar;
 use App\Models\Institution\CourseLevelMode;
+use App\Models\Institution\DepartmentCourse;
+use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\Division;
 use App\Models\Institution\InstitutionDepartment;
@@ -53,10 +58,30 @@ class SetupGapRecheckObserver
                 SetupGapCheckEnum::APPLICATIONS_IN_UNCONFIGURED_MODE,
                 SetupGapCheckEnum::COURSE_LEVEL_WITHOUT_MODES,
                 SetupGapCheckEnum::MODES_ON_UNLINKED_LEVEL,
+                SetupGapCheckEnum::OFFERING_MODE_NOT_CONFIGURED,
             ],
             DepartmentLevelCourse::class => [
                 SetupGapCheckEnum::MODES_ON_UNLINKED_LEVEL,
                 SetupGapCheckEnum::COURSE_LEVEL_WITHOUT_MODES,
+                SetupGapCheckEnum::OFFERING_COURSE_LEVEL_UNLINKED,
+            ],
+            DepartmentCourse::class => [
+                SetupGapCheckEnum::OFFERING_REFERENCES_DELETED_RECORD,
+            ],
+            DepartmentLevel::class => [
+                SetupGapCheckEnum::OFFERING_REFERENCES_DELETED_RECORD,
+            ],
+            ApplicationOfferingLevel::class => [
+                SetupGapCheckEnum::OFFERING_COURSE_LEVEL_UNLINKED,
+                SetupGapCheckEnum::OFFERING_REFERENCES_DELETED_RECORD,
+            ],
+            ApplicationOfferingCourse::class => [
+                SetupGapCheckEnum::OFFERING_MODE_NOT_CONFIGURED,
+                SetupGapCheckEnum::OFFERING_COURSE_LEVEL_UNLINKED,
+                SetupGapCheckEnum::OFFERING_REFERENCES_DELETED_RECORD,
+            ],
+            ApplicationOfferingMode::class => [
+                SetupGapCheckEnum::OFFERING_MODE_NOT_CONFIGURED,
             ],
             ClassConfig::class => [
                 SetupGapCheckEnum::CLASS_CONFIG_WITHOUT_LECTURER_IN_CHARGE,

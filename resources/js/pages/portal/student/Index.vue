@@ -8,6 +8,7 @@ import StudentDashboardNoticeboard from '@/components/portal/dashboard/StudentDa
 import StudentDashboardQuickActions from '@/components/portal/dashboard/StudentDashboardQuickActions.vue';
 import StudentDashboardTermDetails from '@/components/portal/dashboard/StudentDashboardTermDetails.vue';
 import InvalidIdNumberBanner from '@/components/students/profile/InvalidIdNumberBanner.vue';
+import StudyPositionProfileBanner from '@/components/students/study-position/StudyPositionProfileBanner.vue';
 import { useStudentPortalDashboard, studentPortalDashboardKey } from '@/composables/students/useStudentPortalDashboard';
 import { AuthObject } from '@/types/data-pagination';
 import { Student } from '@/types/students';
@@ -43,6 +44,7 @@ onMounted(() => {
             <StudentDashboardHeader :student="student" />
 
             <InvalidIdNumberBanner :student="student" />
+            <StudyPositionProfileBanner context="portal" />
 
             <div
                 v-if="loadError"

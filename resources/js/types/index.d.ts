@@ -1,3 +1,4 @@
+import type { StudyPositionSummary } from '@/types/study-position';
 import { User } from '@/types/users';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 export interface Auth {
@@ -37,6 +38,7 @@ export type PageProps<T extends Record<string, unknown> = Record<string, unknown
     };
     moduleState?: ModuleState;
     registration?: RegistrationAvailabilityProps;
+    studyPosition?: StudyPositionSummary | null;
     ziggy: Config & { location: string };
 };
 

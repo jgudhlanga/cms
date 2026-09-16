@@ -3,6 +3,7 @@
 namespace App\Models\AcademicCalendars;
 
 use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
+use App\Services\Students\StudyPosition\CurrentStudyPeriodResolver;
 use App\Traits\Paginatable;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -21,6 +22,15 @@ class AcademicCalendar extends Model
     use LogsActivity, Paginatable, SoftDeletes;
 
     protected $fillable = ['calendar_year', 'type', 'opening_date', 'closing_date'];
+
+    protected static function booted(): void
+    {
+        $forgetStudyPeriods = static fn () => app(CurrentStudyPeriodResolver::class)->forget();
+
+        static::saved($forgetStudyPeriods);
+        static::deleted($forgetStudyPeriods);
+        static::restored($forgetStudyPeriods);
+    }
 
     /**
      * @return array<string, string>
@@ -140,6 +150,48 @@ class AcademicCalendar extends Model
         }
 
         return $current;
+    }
+
+    /**
+     * The period of this type that opened most recently. It stays current until the next period
+     * opens, so a holiday between periods still belongs to the period before it.
+     */
+    public static function resolveLatestStartedPeriod(
+        AcademicCalendarTypeEnum $type,
+        ?CarbonInterface $asOf = null,
+    ): ?AcademicCalendar {
+        $today = ($asOf ?? Carbon::now((string) config('app.timezone')))->toDateString();
+
+        return static::query()
+            ->where('type', $type)
+            ->whereDate('opening_date', '<=', $today)
+            ->orderByDesc('opening_date')
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    /**
+     * The period of the same type that opened immediately before this one, across calendar years.
+     */
+    public static function resolvePreviousPeriodBefore(?AcademicCalendar $current): ?AcademicCalendar
+    {
+        if (! $current instanceof AcademicCalendar) {
+            return null;
+        }
+
+        return static::query()
+            ->where('type', $current->type)
+            ->whereKeyNot($current->id)
+            ->where(function (Builder $query) use ($current): void {
+                $query->whereDate('opening_date', '<', $current->opening_date)
+                    ->orWhere(function (Builder $inner) use ($current): void {
+                        $inner->whereDate('opening_date', '=', $current->opening_date)
+                            ->where('id', '<', $current->id);
+                    });
+            })
+            ->orderByDesc('opening_date')
+            ->orderByDesc('id')
+            ->first();
     }
 
     /**

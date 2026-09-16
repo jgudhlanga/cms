@@ -4,8 +4,10 @@ namespace App\Policies\Students;
 
 use App\Enums\Shared\ModuleEnum;
 use App\Models\Students\Student;
+use App\Models\Students\StudentEnrolment;
 use App\Models\Users\User;
 use App\Services\Rbac\RbacModuleStateService;
+use App\Support\Rbac\UserAccessScope;
 
 class StudentPolicy
 {
@@ -74,6 +76,28 @@ class StudentPolicy
     public function changeIntakePeriod(User $user, Student $student): bool
     {
         return $this->view($user, $student) && $user->can('change-intake-period:students');
+    }
+
+    /**
+     * Record a student's study position for the current period. With an enrolment, the user must
+     * also reach that enrolment's department; staff never confirm their own student record.
+     */
+    public function confirmStudyPosition(User $user, Student $student, ?StudentEnrolment $enrolment = null): bool
+    {
+        if (! $this->view($user, $student) || ! $user->can('confirm-study-position:students')) {
+            return false;
+        }
+
+        if ((int) $user->studentProfile?->id === (int) $student->id) {
+            return false;
+        }
+
+        if (! $enrolment instanceof StudentEnrolment) {
+            return true;
+        }
+
+        return (int) $enrolment->student_id === (int) $student->id
+            && UserAccessScope::for($user)->canReachDepartment((int) $enrolment->institution_department_id);
     }
 
     public function manageGallery(User $user, Student $student): bool
