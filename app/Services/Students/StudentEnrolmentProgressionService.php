@@ -156,8 +156,21 @@ class StudentEnrolmentProgressionService
     {
         $slug = $this->statusSlug($enrolment);
 
-        return ($slug === self::STATUS_ACTIVE || $slug === self::STATUS_PROCEED)
-            && ! $this->isLastPhase($enrolment);
+        if ($slug !== self::STATUS_ACTIVE && $slug !== self::STATUS_PROCEED) {
+            return false;
+        }
+
+        $current = $this->currentStudentSemester($enrolment);
+
+        if ($current instanceof StudentSemester) {
+            $dlc = $this->programmeSemesterResolver->resolveDepartmentLevelCourse($enrolment);
+
+            if ($dlc !== null && $dlc->programmeSemesters->isNotEmpty()) {
+                return $this->programmeSemesterResolver->nextProgrammeSemesterInSameStage($current) !== null;
+            }
+        }
+
+        return ! $this->isLastPhase($enrolment);
     }
 
     public function cannotAdvanceToNextPhaseReason(StudentEnrolment $enrolment): ?string
@@ -179,6 +192,14 @@ class StudentEnrolmentProgressionService
             $reasons[] = __('students.enrolment_cannot_advance_last_phase', [
                 'phase' => $this->currentPhaseLabel($enrolment) ?? __('students.enrolment_last_phase_fallback'),
             ]);
+        } else {
+            $current = $this->currentStudentSemester($enrolment);
+            if ($current instanceof StudentSemester
+                && $this->programmeSemesterResolver->isLastProgrammeSemesterOfStage($current)) {
+                $reasons[] = __('students.enrolment_cannot_advance_stage_complete', [
+                    'phase' => $this->currentPhaseLabel($enrolment) ?? __('students.enrolment_last_phase_fallback'),
+                ]);
+            }
         }
 
         if ($reasons === []) {
@@ -517,6 +538,6 @@ class StudentEnrolmentProgressionService
             return null;
         }
 
-        return $this->programmeSemesterResolver->nextProgrammeSemester($current);
+        return $this->programmeSemesterResolver->nextProgrammeSemesterInSameStage($current);
     }
 }

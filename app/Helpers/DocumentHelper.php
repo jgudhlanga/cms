@@ -30,6 +30,7 @@ class DocumentHelper
                 'departmentLevel.level',
                 'departmentCourse.course',
                 'modeOfStudy',
+                'programmeStage',
             ])
             ->where('id', $studentApplication->id);
 
@@ -54,16 +55,28 @@ class DocumentHelper
             ? $student->passport_number
             : $student->id_number;
 
-        // Extract student program info
         $studentName = $user->full_name;
         $studentNumber = $student->student_number;
-        $intakePeriod = $studentApplication->intakePeriod->name ?? '';
-        $department = $studentApplication->institutionDepartment->department->name ?? '';
-        $level = $studentApplication->departmentLevel->level->name ?? '';
+
+        $studentApplication->loadMissing([
+            'departmentLevel.level',
+            'departmentCourse.course',
+            'institutionDepartment.department',
+            'modeOfStudy',
+            'intakePeriod',
+            'programmeStage',
+            'student.user',
+        ]);
+
+        $levelName = $studentApplication->departmentLevel->level->name ?? '';
+        $stageName = trim((string) ($studentApplication->programmeStage?->name ?? ''));
+        $level = $stageName !== '' ? $stageName : $levelName;
         $course = $studentApplication->departmentCourse->course->name ?? '';
         $modeOfStudy = $studentApplication->modeOfStudy->name ?? '';
+        $department = $studentApplication->institutionDepartment->department->name ?? '';
+        $intakePeriod = $studentApplication->intakePeriod->name ?? '';
 
-        // Tuition Lookup
+        // Tuition Lookup — fees stay keyed by qualification level (NC), not stage.
         $tuitionFeeType = FeeType::where('name', FeeTypeEnum::TUITION_FEE->name())->first();
         $feeStructure = FeeStructure::query()
             ->where('tenant_id', $studentApplication->tenant_id)
@@ -92,10 +105,10 @@ class DocumentHelper
         ];
 
         $isUsdOnly =
-            in_array($level, array_map(fn ($l) => $l->name(), $usdOnlyLevels), true)
+            in_array($levelName, array_map(fn ($l) => $l->name(), $usdOnlyLevels), true)
             || in_array($modeOfStudy, array_map(fn ($m) => $m->label(), $usdOnlyModes), true);
 
-        $isSDP = in_array($level, array_map(fn ($l) => $l->name(), $sdpLevels), true);
+        $isSDP = in_array($levelName, array_map(fn ($l) => $l->name(), $sdpLevels), true);
         if ($isSDP && strtolower($department) === strtolower(DepartmentEnum::MECHANICAL_AND_PRODUCTION_ENGINEERING->label())) {
             $tuition = '375.00';
             if (strtolower($modeOfStudy) === strtolower(ModeOfStudyEnum::OJET->label())) {

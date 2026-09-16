@@ -51,8 +51,11 @@ it('returns json api class list summaries filtered by type with mode totals', fu
         ->assertJsonPath('data', [])
         ->assertJsonStructure(['meta' => ['modeTotals']]);
 
-    expect(collect($totals->json('meta.modeTotals'))->firstWhere('modeOfStudyId', $provisional->mode_of_study_id)['count'] ?? 0)
-        ->toBe(1);
+    $modeTotal = collect($totals->json('meta.modeTotals'))->firstWhere('modeOfStudyId', $provisional->mode_of_study_id);
+
+    expect($modeTotal['count'] ?? 0)->toBe(1);
+    expect($modeTotal['modeOfStudyName'] ?? null)
+        ->toBe($provisional->modeOfStudy()->value('name'));
 
     $rows = $this->getJson(route('v1.department-metadata.class-lists', [
         'institution_department' => $provisional->institution_department_id,

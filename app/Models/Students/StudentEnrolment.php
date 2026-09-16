@@ -9,6 +9,7 @@ use App\Models\Institution\DepartmentCourse;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\ModeOfStudy;
+use App\Models\Institution\ProgrammeStage;
 use App\Observers\Students\StudentEnrolmentObserver;
 use App\Traits\Filterable;
 use App\Traits\Paginatable;
@@ -38,6 +39,7 @@ class StudentEnrolment extends Model
         'institution_department_id',
         'department_level_id',
         'department_course_id',
+        'programme_stage_id',
         'semester_id',
         'academic_calendar_id',
         'mode_of_study_id',
@@ -72,6 +74,11 @@ class StudentEnrolment extends Model
     public function departmentCourse(): BelongsTo
     {
         return $this->belongsTo(DepartmentCourse::class, 'department_course_id');
+    }
+
+    public function programmeStage(): BelongsTo
+    {
+        return $this->belongsTo(ProgrammeStage::class, 'programme_stage_id');
     }
 
     public function semester(): BelongsTo

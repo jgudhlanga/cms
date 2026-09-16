@@ -79,6 +79,7 @@ export const useApplicationFormHelper = (isEditing?: boolean) => {
             department_id: storeRefs.department.value?.value ?? null,
             course: storeRefs.course.value,
             course_id: storeRefs.course.value?.value ?? null,
+            programme_stage_id: storeRefs.programme_stage_id?.value ?? null,
             level: storeRefs.level.value,
             level_id: storeRefs.level.value?.value ?? null,
             required_level_completed: storeRefs.required_level_completed?.value ?? null,

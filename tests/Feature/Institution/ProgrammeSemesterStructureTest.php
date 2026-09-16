@@ -46,7 +46,10 @@ function createProgrammeStructureDlc(): DepartmentLevelCourse
         'institution_department_id' => $institutionDepartment->id,
         'course_id' => $course->id,
     ]);
-    $level = Level::factory()->create(['calendar_type' => AcademicCalendarTypeEnum::SEMESTER->value]);
+    $level = Level::factory()->create([
+        'name' => 'NC',
+        'calendar_type' => AcademicCalendarTypeEnum::SEMESTER->value,
+    ]);
     $departmentLevel = DepartmentLevel::query()->create([
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -64,12 +67,12 @@ function createProgrammeStructureDlc(): DepartmentLevelCourse
 }
 
 it('generates taught programme semester names from calendar type', function (): void {
-    expect(ProgrammeSemesterNameFormatter::taughtName(AcademicCalendarTypeEnum::SEMESTER, 1, 1))
-        ->toBe('Year 1 Sem 1')
-        ->and(ProgrammeSemesterNameFormatter::taughtName(AcademicCalendarTypeEnum::TERM, 2, 3))
-        ->toBe('Year 2 Term 3')
-        ->and(ProgrammeSemesterNameFormatter::taughtName(AcademicCalendarTypeEnum::ABMA, 1, 1))
-        ->toBe('Year 1 ABMA 1');
+    expect(ProgrammeSemesterNameFormatter::taughtName(AcademicCalendarTypeEnum::SEMESTER, 1, 1, 'NC'))
+        ->toBe('NC 1 Sem 1')
+        ->and(ProgrammeSemesterNameFormatter::taughtName(AcademicCalendarTypeEnum::TERM, 2, 3, 'NC'))
+        ->toBe('NC 2 Term 3')
+        ->and(ProgrammeSemesterNameFormatter::taughtName(AcademicCalendarTypeEnum::ABMA, 1, 1, 'ABMA Level 3'))
+        ->toBe('ABMA Level 3 1 ABMA 1');
 });
 
 it('creates department level courses with abma calendar defaults and programme semesters', function (): void {
@@ -110,10 +113,10 @@ it('creates department level courses with abma calendar defaults and programme s
         ->and($dlc->taught_semester_count)->toBe(4)
         ->and($dlc->programmeSemesters)->toHaveCount(4)
         ->and($dlc->programmeSemesters->pluck('name')->all())->toBe([
-            'Year 1 ABMA 1',
-            'Year 1 ABMA 2',
-            'Year 1 ABMA 3',
-            'Year 1 ABMA 4',
+            'ABMA Level 3 1 ABMA 1',
+            'ABMA Level 3 1 ABMA 2',
+            'ABMA Level 3 1 ABMA 3',
+            'ABMA Level 3 1 ABMA 4',
         ]);
 });
 
@@ -132,7 +135,10 @@ it('creates department level courses with term calendar defaults and programme s
         'institution_department_id' => $institutionDepartment->id,
         'course_id' => $course->id,
     ]);
-    $level = Level::factory()->create(['calendar_type' => AcademicCalendarTypeEnum::TERM->value]);
+    $level = Level::factory()->create([
+        'name' => 'NC',
+        'calendar_type' => AcademicCalendarTypeEnum::TERM->value,
+    ]);
     $departmentLevel = DepartmentLevel::query()->create([
         'tenant_id' => $tenant->id,
         'institution_department_id' => $institutionDepartment->id,
@@ -152,9 +158,9 @@ it('creates department level courses with term calendar defaults and programme s
         ->and($dlc->taught_semester_count)->toBe(3)
         ->and($dlc->programmeSemesters)->toHaveCount(3)
         ->and($dlc->programmeSemesters->pluck('name')->all())->toBe([
-            'Year 1 Term 1',
-            'Year 1 Term 2',
-            'Year 1 Term 3',
+            'NC 1 Term 1',
+            'NC 1 Term 2',
+            'NC 1 Term 3',
         ]);
 });
 
@@ -180,9 +186,9 @@ it('persists a year-and-a-half programme with three taught semesters', function 
         ->and($dlc->taught_semester_count)->toBe(3)
         ->and($dlc->programmeSemesters)->toHaveCount(3)
         ->and($dlc->programmeSemesters->pluck('name')->all())->toBe([
-            'Year 1 Sem 1',
-            'Year 1 Sem 2',
-            'Year 2 Sem 1',
+            'NC 1 Sem 1',
+            'NC 1 Sem 2',
+            'NC 2 Sem 1',
         ]);
 });
 
@@ -211,7 +217,7 @@ it('reuses a soft-deleted programme semester when its position is needed again',
     $ghost = ProgrammeSemester::query()->create([
         'department_level_course_id' => $dlc->id,
         'position' => 3,
-        'name' => 'Year 2 Sem 1',
+        'name' => 'NC 2 Sem 1',
         'kind' => ProgrammeSemesterKindEnum::TAUGHT,
     ]);
     $ghost->delete();
@@ -226,7 +232,7 @@ it('reuses a soft-deleted programme semester when its position is needed again',
     expect($synced)->toHaveCount(3)
         ->and($synced->last()?->is($ghost))->toBeTrue()
         ->and($synced->last()?->trashed())->toBeFalse()
-        ->and($synced->last()?->name)->toBe('Year 2 Attachment 1')
+        ->and($synced->last()?->name)->toBe('NC 2 Sem 1')
         ->and($synced->last()?->kind)->toBe(ProgrammeSemesterKindEnum::INDUSTRIAL_ATTACHMENT)
         ->and(ProgrammeSemester::withTrashed()->where('department_level_course_id', $dlc->id)->count())->toBe(3);
 });
@@ -278,9 +284,9 @@ it('adds a half-year attachment after shrinking a taught-only structure', functi
         ->and($dlc->attachment_semester_count)->toBe(1)
         ->and($dlc->programmeSemesters)->toHaveCount(3)
         ->and($dlc->programmeSemesters->pluck('name')->all())->toBe([
-            'Year 1 Sem 1',
-            'Year 1 Sem 2',
-            'Year 2 Attachment 1',
+            'NC 1 Sem 1',
+            'NC 1 Sem 2',
+            'NC 2 Sem 1',
         ])
         ->and(ProgrammeSemester::withTrashed()->where('department_level_course_id', $dlc->id)->count())->toBe(3);
 });
@@ -309,10 +315,10 @@ it('includes industrial attachment in duration years without changing taught or 
         ->and($dlc->attachment_semester_count)->toBe(2)
         ->and($dlc->programmeSemesters)->toHaveCount(4)
         ->and($dlc->programmeSemesters->pluck('name')->all())->toBe([
-            'Year 1 Sem 1',
-            'Year 1 Sem 2',
-            'Year 2 Attachment 1',
-            'Year 2 Attachment 2',
+            'NC 1 Sem 1',
+            'NC 1 Sem 2',
+            'NC 2 Sem 1',
+            'NC 2 Sem 2',
         ]);
 });
 
@@ -352,7 +358,7 @@ it('appends industrial attachment programme semesters after taught phases', func
 
     expect($synced)->toHaveCount(4)
         ->and($synced->last()?->kind)->toBe(ProgrammeSemesterKindEnum::INDUSTRIAL_ATTACHMENT)
-        ->and($synced->last()?->name)->toContain('Attachment');
+        ->and($synced->last()?->name)->toContain('NC 2');
 });
 
 it('refuses to delete programme semesters that have student inclusions', function (): void {
@@ -403,6 +409,33 @@ it('refuses to delete programme semesters that have student inclusions', functio
     app(SyncProgrammeSemestersForOfferingAction::class)->execute($dlc->fresh() ?? $dlc);
 
     expect(ProgrammeSemester::query()->whereKey($first?->id)->exists())->toBeTrue();
+});
+
+it('groups a three-year NC offering into NC 1, NC 2 and NC 3 stages', function (): void {
+    $dlc = createProgrammeStructureDlc();
+    $dlc->update([
+        'duration_years' => 3,
+        'taught_semester_count' => 4,
+        'includes_industrial_attachment' => true,
+        'attachment_semester_count' => 2,
+    ]);
+
+    $synced = app(SyncProgrammeSemestersForOfferingAction::class)->execute($dlc->fresh() ?? $dlc);
+    $dlc->refresh()->load(['programmeStages', 'programmeSemesters']);
+
+    expect($dlc->programmeStages)->toHaveCount(3)
+        ->and($dlc->programmeStages->pluck('name')->all())->toBe(['NC 1', 'NC 2', 'NC 3'])
+        ->and($dlc->programmeStages->pluck('code')->all())->toBe(['NC1', 'NC2', 'NC3'])
+        ->and($dlc->programmeStages->last()?->kind)->toBe(ProgrammeSemesterKindEnum::INDUSTRIAL_ATTACHMENT)
+        ->and($synced->pluck('name')->all())->toBe([
+            'NC 1 Sem 1',
+            'NC 1 Sem 2',
+            'NC 2 Sem 1',
+            'NC 2 Sem 2',
+            'NC 3 Sem 1',
+            'NC 3 Sem 2',
+        ])
+        ->and($synced->pluck('year_number')->all())->toBe([1, 1, 2, 2, 3, 3]);
 });
 
 it('dry-runs programme semester backfill without writing', function (): void {

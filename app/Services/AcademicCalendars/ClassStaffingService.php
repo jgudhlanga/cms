@@ -491,6 +491,9 @@ class ClassStaffingService
         return CourseSyllabusModulePeriod::matchesPeriod(
             $module,
             (int) $semesterConfig->semester_id,
+            $semesterConfig->programme_semester_id !== null
+                ? (int) $semesterConfig->programme_semester_id
+                : null,
         );
     }
 

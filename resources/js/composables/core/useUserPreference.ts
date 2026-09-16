@@ -31,6 +31,22 @@ export function useUserPreference() {
         };
     };
 
+    const persistSidebarState = async (sideBarState: boolean): Promise<void> => {
+        try {
+            if (preferencesStore.preferenceId) {
+                await HttpService.put(`api/v1/preferences/${preferencesStore.preferenceId}`, { side_bar_state: sideBarState });
+
+                return;
+            }
+
+            const response = await HttpService.post('api/v1/preferences', { side_bar_state: sideBarState });
+            const parsedResponse = parsePreferenceResponse(response);
+            preferencesStore.preferenceId = parsedResponse.id;
+        } catch {
+            ToastService.error('Failed to save sidebar preference.');
+        }
+    };
+
     const hydratePreferenceOnce = async (): Promise<void> => {
         if (preferencesStore.hydratedFromServer) {
             return;
@@ -47,24 +63,13 @@ export function useUserPreference() {
             }
 
             preferencesStore.hydrateSidebarPreference(parsedResponse.sideBarState, parsedResponse.id, parsedResponse.locale ?? 'en');
+
+            // If the user toggled while this request was in flight, write their choice now that we have an id.
+            if (preferencesStore.sidebarStateTouched) {
+                await persistSidebarState(preferencesStore.sideBarState);
+            }
         } catch {
             preferencesStore.markHydrated();
-        }
-    };
-
-    const persistSidebarState = async (sideBarState: boolean): Promise<void> => {
-        try {
-            if (preferencesStore.preferenceId) {
-                await HttpService.put(`api/v1/preferences/${preferencesStore.preferenceId}`, { side_bar_state: sideBarState });
-
-                return;
-            }
-
-            const response = await HttpService.post('api/v1/preferences', { side_bar_state: sideBarState });
-            const parsedResponse = parsePreferenceResponse(response);
-            preferencesStore.preferenceId = parsedResponse.id;
-        } catch {
-            ToastService.error('Failed to save sidebar preference.');
         }
     };
 

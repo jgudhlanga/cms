@@ -86,6 +86,7 @@ const form = useForm<CreateApplicationParams>({
     department_id: null,
     course: null,
     course_id: null,
+    programme_stage_id: null,
     disability_status: null,
     level: null,
     level_id: null,

@@ -3,7 +3,9 @@
 namespace App\Importers\Institution;
 
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Institution\Syllabus\CourseSyllabusModule;
+use App\Services\Institution\ProgrammeSemesterResolver;
 use App\Services\Institution\ResolveSemesterFromImport;
 use App\Support\Institution\SyllabusImportCode;
 use Illuminate\Support\Facades\Log;
@@ -102,6 +104,45 @@ class CourseSyllabusModuleImporter implements IngestDefinition
                     $this->resolveInstitutionDepartmentId($row),
                     (string) ($row['LEVEL'] ?? ''),
                 )
+            )
+            ->mapAndTransform(
+                'SEMESTER',
+                'programme_semester_id',
+                function (string $semester, array $row): ?int {
+                    $courseSyllabusId = self::tryResolveCourseSyllabusId(
+                        $this->tenantId,
+                        (string) ($row['COURSE_CODE'] ?? ''),
+                    );
+
+                    if ($courseSyllabusId === null) {
+                        return null;
+                    }
+
+                    try {
+                        $semesterId = app(ResolveSemesterFromImport::class)->resolve(
+                            $semester,
+                            $courseSyllabusId,
+                            $this->resolveInstitutionDepartmentId($row),
+                            (string) ($row['LEVEL'] ?? ''),
+                        );
+                    } catch (RuntimeException) {
+                        return null;
+                    }
+
+                    $courseSyllabus = CourseSyllabus::query()
+                        ->with('departmentLevelCourse.programmeSemesters')
+                        ->find($courseSyllabusId);
+
+                    $dlc = $courseSyllabus?->departmentLevelCourse;
+
+                    if ($dlc === null) {
+                        return null;
+                    }
+
+                    return app(ProgrammeSemesterResolver::class)
+                        ->mapGlobalSemesterToProgrammeSemester($dlc, $semesterId)
+                        ?->id;
+                }
             )
             ->validate([
                 'COURSE_CODE' => ['required', 'string'],

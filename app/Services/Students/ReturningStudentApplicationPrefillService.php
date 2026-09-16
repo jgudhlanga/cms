@@ -93,6 +93,7 @@ class ReturningStudentApplicationPrefillService
             ],
             $this->buildOLevelPrefill($student),
             $this->buildNextLevelProgrammePrefill($nextLevelContext),
+            $this->buildNextStageProgrammePrefill($student),
         );
     }
 
@@ -170,6 +171,72 @@ class ReturningStudentApplicationPrefillService
                         (string) ($matchingCourse->course?->name ?? ''),
                     );
                 }
+            }
+        }
+
+        return $prefill;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildNextStageProgrammePrefill(Student $student): array
+    {
+        $context = app(ReturningStudentContextService::class)->nextStageApplicationContext($student);
+
+        if (($context['canApplyToNextStage'] ?? false) !== true) {
+            return [];
+        }
+
+        $departmentLevelId = $context['nextDepartmentLevelId'] ?? null;
+        $institutionDepartmentId = $context['institutionDepartmentId'] ?? null;
+        $courseId = $context['departmentCourseId'] ?? null;
+
+        if (! is_int($departmentLevelId) || $departmentLevelId < 1) {
+            return [];
+        }
+
+        $departmentLevel = DepartmentLevel::query()
+            ->with(['level', 'institutionDepartment.department'])
+            ->find($departmentLevelId);
+
+        if (! $departmentLevel instanceof DepartmentLevel) {
+            return [];
+        }
+
+        $department = $departmentLevel->institutionDepartment;
+        if (! $department instanceof InstitutionDepartment) {
+            return [];
+        }
+
+        $prefill = [
+            'department_id' => (int) $department->id,
+            'level_id' => (int) $departmentLevel->id,
+            'programme_stage_id' => $context['nextStageId'],
+            'department' => $this->comboOption(
+                (int) $department->id,
+                (string) ($department->department?->name ?? $department->department_code ?? ''),
+            ),
+            'level' => $this->comboOption(
+                (int) $departmentLevel->id,
+                (string) ($departmentLevel->level?->name ?? ''),
+            ),
+            'required_level_completed' => true,
+        ];
+
+        if (is_int($courseId) && $courseId > 0) {
+            $matchingCourse = DepartmentCourse::query()
+                ->with('course')
+                ->where('institution_department_id', $institutionDepartmentId ?? $department->id)
+                ->where('id', $courseId)
+                ->first();
+
+            if ($matchingCourse instanceof DepartmentCourse) {
+                $prefill['course_id'] = (int) $matchingCourse->id;
+                $prefill['course'] = $this->comboOption(
+                    (int) $matchingCourse->id,
+                    (string) ($matchingCourse->course?->name ?? ''),
+                );
             }
         }
 

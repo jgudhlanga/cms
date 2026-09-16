@@ -130,9 +130,9 @@ class PerformanceDiagnoseCommand extends Command
 
     private function opcacheEnabled(): bool
     {
-        return function_exists('opcache_get_status')
-            && is_array(opcache_get_status(false))
-            && (bool) (opcache_get_status(false)['opcache_enabled'] ?? false);
+        // artisan runs on the CLI, where opcache.enable_cli is normally off, so the runtime status reports
+        // "disabled" even when PHP-FPM is caching. The ini setting is the one PHP-FPM uses.
+        return filter_var(ini_get('opcache.enable'), FILTER_VALIDATE_BOOLEAN);
     }
 
     private function redisReachable(): bool

@@ -57,6 +57,7 @@ readonly class CreateApplicationDto
         public ?array $o_level_other_years,
         public ?array $o_level_other_sittings,
         public int $intake_period_id,
+        public ?int $programme_stage_id = null,
     ) {}
 
     public static function fromCreateApplicationRequest(CreateApplicationRequest $request, User $user, IntakePeriod $intakePeriod): CreateApplicationDto
@@ -125,6 +126,9 @@ readonly class CreateApplicationDto
             o_level_other_years: $request->o_level_other_years,
             o_level_other_sittings: $request->o_level_other_sittings,
             intake_period_id: $intakePeriod->id,
+            programme_stage_id: $request->filled('programme_stage_id')
+                ? (int) $request->integer('programme_stage_id')
+                : null,
         );
     }
 }

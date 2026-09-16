@@ -11,12 +11,15 @@ use App\Helpers\PaymentHelper;
 use App\Http\Resources\Institution\IntakePeriodResource;
 use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\IntakePeriod;
+use App\Models\Institution\ProgrammeStage;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentApprentice;
 use App\Models\Students\StudentEnrolment;
 use App\Models\Students\StudentSponsor;
 use App\Models\Users\User;
+use App\Services\Institution\ProgrammeSemesterResolver;
+use App\Services\Institution\ProgrammeStageResolver;
 use Illuminate\Support\Collection;
 
 class ReturningStudentContextService
@@ -24,10 +27,17 @@ class ReturningStudentContextService
     public function __construct(
         protected ApplicationFeeService $applicationFeeService,
         protected StudentEnrolmentProgressionService $progression,
+        protected ProgrammeStageCompletionService $stageCompletion,
+        protected ProgrammeStageResolver $programmeStageResolver,
+        protected ProgrammeSemesterResolver $programmeSemesterResolver,
     ) {}
 
     public function canStartApplication(Student $student): bool
     {
+        if ($this->canApplyToNextStage($student)) {
+            return $this->openIntakes()->isNotEmpty();
+        }
+
         if ($this->hasActiveEnrolment($student)) {
             return false;
         }
@@ -214,6 +224,7 @@ class ReturningStudentContextService
         $hasPaid = $intakePeriod !== null
             && PaymentHelper::hasPaidApplicationFeeAndNotApplied($user, $intakePeriod);
         $nextLevelContext = $this->nextLevelApplicationContext($student);
+        $nextStageContext = $this->nextStageApplicationContext($student);
 
         return [
             'openIntakes' => IntakePeriodResource::collection($openIntakes),
@@ -229,14 +240,18 @@ class ReturningStudentContextService
             'nextLevelId' => $nextLevelContext['nextLevelId'],
             'nextLevelName' => $nextLevelContext['nextLevelName'],
             'nextDepartmentLevelId' => $nextLevelContext['nextDepartmentLevelId'],
-            'institutionDepartmentId' => $nextLevelContext['institutionDepartmentId'],
+            'institutionDepartmentId' => $nextStageContext['institutionDepartmentId']
+                ?? $nextLevelContext['institutionDepartmentId'],
+            'canApplyToNextStage' => $nextStageContext['canApplyToNextStage'],
+            'nextStageId' => $nextStageContext['nextStageId'],
+            'nextStageName' => $nextStageContext['nextStageName'],
             'requiresIntakeSelection' => $openIntakes->count() > 1,
         ];
     }
 
     public function needsOnboarding(Student $student): bool
     {
-        if ($this->hasActiveEnrolment($student)) {
+        if ($this->hasActiveEnrolment($student) && ! $this->canApplyToNextStage($student)) {
             return false;
         }
 
@@ -331,12 +346,16 @@ class ReturningStudentContextService
     public function toInertiaProps(Student $student): array
     {
         $openIntakes = $this->openIntakes();
+        $nextStageContext = $this->nextStageApplicationContext($student);
 
         return [
             'needsContinueInClassPage' => $this->needsContinueInClassPage($student),
             'canStartApplication' => $this->canStartApplication($student),
             'canContinueInClass' => $this->canContinueInClass($student),
             'canApplyToNextLevel' => $this->canApplyToNextLevel($student),
+            'canApplyToNextStage' => $nextStageContext['canApplyToNextStage'],
+            'nextStageId' => $nextStageContext['nextStageId'],
+            'nextStageName' => $nextStageContext['nextStageName'],
             'openIntakeIds' => $openIntakes->pluck('id')->values()->all(),
             'openIntakeNames' => $openIntakes->pluck('name')->values()->all(),
             'hasReapplyAcknowledgement' => $openIntakes->contains(
@@ -432,6 +451,121 @@ class ReturningStudentContextService
                 : null,
             'awardedEnrolment' => $latestEnrolment,
         ];
+    }
+
+    public function canApplyToNextStage(Student $student): bool
+    {
+        return $this->nextStageApplicationContext($student)['canApplyToNextStage'];
+    }
+
+    /**
+     * @return array{
+     *     canApplyToNextStage: bool,
+     *     nextStageId: int|null,
+     *     nextStageName: string|null,
+     *     nextStageCode: string|null,
+     *     nextLevelId: int|null,
+     *     nextLevelName: string|null,
+     *     nextDepartmentLevelId: int|null,
+     *     institutionDepartmentId: int|null,
+     *     departmentCourseId: int|null,
+     * }
+     */
+    public function nextStageApplicationContext(Student $student): array
+    {
+        $empty = [
+            'canApplyToNextStage' => false,
+            'nextStageId' => null,
+            'nextStageName' => null,
+            'nextStageCode' => null,
+            'nextLevelId' => null,
+            'nextLevelName' => null,
+            'nextDepartmentLevelId' => null,
+            'institutionDepartmentId' => null,
+            'departmentCourseId' => null,
+        ];
+
+        $latestEnrolment = $student->enrolments()
+            ->with([
+                'studentApplication.programmeStage',
+                'programmeStage',
+                'departmentLevel.level',
+                'departmentCourse',
+            ])
+            ->latest('id')
+            ->first();
+
+        if (! $latestEnrolment instanceof StudentEnrolment) {
+            return $empty;
+        }
+
+        $stage = $this->currentProgrammeStage($latestEnrolment);
+
+        if (! $stage instanceof ProgrammeStage) {
+            return $empty;
+        }
+
+        if (! $this->stageCompletion->isStageComplete($student, $stage)
+            && ! $this->stageCompletion->isRecordedComplete($student, $stage)) {
+            return $empty;
+        }
+
+        $next = $this->programmeStageResolver->nextStage($stage);
+
+        if (! $next instanceof ProgrammeStage) {
+            return $empty;
+        }
+
+        $alreadyApplied = StudentApplication::query()
+            ->where('student_id', $student->id)
+            ->where('programme_stage_id', $next->id)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($alreadyApplied) {
+            return $empty;
+        }
+
+        $departmentLevel = $this->progression->departmentLevelForEnrolment($latestEnrolment);
+        $departmentLevel?->loadMissing('level');
+
+        return [
+            'canApplyToNextStage' => true,
+            'nextStageId' => (int) $next->id,
+            'nextStageName' => $next->name,
+            'nextStageCode' => $next->code,
+            'nextLevelId' => $departmentLevel?->level_id !== null ? (int) $departmentLevel->level_id : null,
+            'nextLevelName' => $departmentLevel?->level?->name,
+            'nextDepartmentLevelId' => $departmentLevel !== null ? (int) $departmentLevel->id : null,
+            'institutionDepartmentId' => $latestEnrolment->institution_department_id !== null
+                ? (int) $latestEnrolment->institution_department_id
+                : null,
+            'departmentCourseId' => $latestEnrolment->department_course_id !== null
+                ? (int) $latestEnrolment->department_course_id
+                : null,
+        ];
+    }
+
+    private function currentProgrammeStage(StudentEnrolment $enrolment): ?ProgrammeStage
+    {
+        if ($enrolment->programmeStage instanceof ProgrammeStage) {
+            return $enrolment->programmeStage;
+        }
+
+        if ($enrolment->studentApplication?->programmeStage instanceof ProgrammeStage) {
+            return $enrolment->studentApplication->programmeStage;
+        }
+
+        $currentSemester = $this->progression->currentStudentSemester($enrolment);
+
+        if ($currentSemester === null) {
+            return null;
+        }
+
+        $programmeSemester = $this->programmeSemesterResolver->programmeSemesterForStudentSemester($currentSemester);
+        $programmeSemester?->loadMissing('programmeStage');
+
+        return $programmeSemester?->programmeStage;
     }
 
     private function hasActiveEnrolment(Student $student): bool

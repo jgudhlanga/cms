@@ -183,20 +183,27 @@ class ProgrammeSemesterResolver
             return null;
         }
 
-        $taughtSemesters = $dlc->programmeSemesters
-            ->filter(fn (ProgrammeSemester $ps): bool => $ps->isTaught())
-            ->sortBy('position')
-            ->values();
+        $periodsPerYear = max(1, $calendarType->maxAssessmentCalendarsPerYear());
+        $ordinal = $programmeSemester->period_in_year !== null
+            ? (int) $programmeSemester->period_in_year
+            : null;
 
-        $index = $taughtSemesters->search(
-            fn (ProgrammeSemester $ps): bool => (int) $ps->id === (int) $programmeSemester->id,
-        );
+        if ($ordinal === null || $ordinal < 1) {
+            $taughtSemesters = $dlc->programmeSemesters
+                ->filter(fn (ProgrammeSemester $ps): bool => $ps->isTaught())
+                ->sortBy('position')
+                ->values();
 
-        if ($index === false) {
-            return null;
+            $index = $taughtSemesters->search(
+                fn (ProgrammeSemester $ps): bool => (int) $ps->id === (int) $programmeSemester->id,
+            );
+
+            if ($index === false) {
+                return null;
+            }
+
+            $ordinal = ((int) $index % $periodsPerYear) + 1;
         }
-
-        $ordinal = (int) $index + 1;
 
         return Semester::query()
             ->where('slug', "{$calendarType->value}-{$ordinal}")
@@ -270,6 +277,44 @@ class ProgrammeSemesterResolver
             ->where('position', '>', $currentProgrammeSemester->position)
             ->sortBy('position')
             ->first();
+    }
+
+    public function nextProgrammeSemesterInSameStage(StudentSemester $current): ?ProgrammeSemester
+    {
+        $next = $this->nextProgrammeSemester($current);
+
+        if ($next === null) {
+            return null;
+        }
+
+        $currentProgrammeSemester = $this->programmeSemesterForStudentSemester($current);
+
+        if ($currentProgrammeSemester === null || $currentProgrammeSemester->programme_stage_id === null) {
+            return $next;
+        }
+
+        if ((int) $next->programme_stage_id !== (int) $currentProgrammeSemester->programme_stage_id) {
+            return null;
+        }
+
+        return $next;
+    }
+
+    public function isLastProgrammeSemesterOfStage(StudentSemester $studentSemester): bool
+    {
+        $programmeSemester = $this->programmeSemesterForStudentSemester($studentSemester);
+
+        if ($programmeSemester === null || $programmeSemester->programme_stage_id === null) {
+            return $this->isLastProgrammeSemester($studentSemester);
+        }
+
+        $lastInStage = ProgrammeSemester::query()
+            ->where('programme_stage_id', $programmeSemester->programme_stage_id)
+            ->orderByDesc('position')
+            ->first();
+
+        return $lastInStage instanceof ProgrammeSemester
+            && (int) $lastInStage->id === (int) $programmeSemester->id;
     }
 
     public function isLastProgrammeSemester(StudentSemester $studentSemester): bool

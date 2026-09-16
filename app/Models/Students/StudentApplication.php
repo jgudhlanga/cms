@@ -11,6 +11,7 @@ use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\InstitutionDepartment;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
+use App\Models\Institution\ProgrammeStage;
 use App\Models\Ledgers\Ledger;
 use App\Models\Shared\WorkflowStep;
 use App\Observers\Students\StudentApplicationObserver;
@@ -52,6 +53,7 @@ class StudentApplication extends Model implements HasMedia
         'institution_department_id',
         'department_level_id',
         'department_course_id',
+        'programme_stage_id',
         'required_level_completed',
         'read_write_acknowledged',
         'application_tracking_number',
@@ -87,6 +89,11 @@ class StudentApplication extends Model implements HasMedia
     public function departmentCourse(): BelongsTo
     {
         return $this->belongsTo(DepartmentCourse::class, 'department_course_id');
+    }
+
+    public function programmeStage(): BelongsTo
+    {
+        return $this->belongsTo(ProgrammeStage::class, 'programme_stage_id');
     }
 
     public function workflowStep(): BelongsTo

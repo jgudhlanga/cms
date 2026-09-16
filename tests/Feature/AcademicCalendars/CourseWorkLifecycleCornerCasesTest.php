@@ -585,7 +585,7 @@ describe('missing marks corners', function () {
                 'assessment_calendar_id' => $calendar->id,
             ])
             ->assertRedirect()
-            ->assertSessionHas('error');
+            ->assertSessionHasErrors('escalation');
     });
 
     test('lecturer cannot view escalate remind or export missing marks', function () {

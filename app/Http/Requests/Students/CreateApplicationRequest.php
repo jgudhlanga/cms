@@ -138,6 +138,7 @@ class CreateApplicationRequest extends FormRequest
             'department_id' => ['required', 'integer'],
             'level_id' => ['required', 'integer'],
             'course_id' => ['required', 'integer'],
+            'programme_stage_id' => ['nullable', 'integer', 'exists:programme_stages,id'],
             'disability_status' => ['required', new Enum(DisabilityStatusEnum::class)],
             'employer' => ['nullable', 'string', 'max:255'],
             'apprentice_number' => ['nullable', 'string', 'max:255'],

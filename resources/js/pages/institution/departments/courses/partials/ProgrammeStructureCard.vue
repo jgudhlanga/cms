@@ -15,6 +15,17 @@ type CalendarType = 'semester' | 'term' | 'abma';
 interface ProgrammeSemester {
     id: number;
     position: number;
+    programmeStageId?: number | null;
+    yearNumber?: number | null;
+    periodInYear?: number | null;
+    name: string;
+    kind: string;
+}
+
+interface ProgrammeStage {
+    id: number;
+    stageNumber: number;
+    code: string;
     name: string;
     kind: string;
 }
@@ -26,6 +37,7 @@ interface Props {
         includesIndustrialAttachment?: boolean;
         attachmentSemesterCount?: number;
         programmeSemesters?: ProgrammeSemester[];
+        programmeStages?: ProgrammeStage[];
     };
 }
 
@@ -97,6 +109,27 @@ const form = useForm({
 });
 
 const programmeSemesters = computed(() => props.levelCourse.programmeSemesters ?? []);
+
+const groupedProgrammeSemesters = computed(() => {
+    const stages = props.levelCourse.programmeStages ?? [];
+    const semesters = programmeSemesters.value;
+
+    if (stages.length === 0) {
+        return [{
+            id: 0,
+            name: '',
+            kind: 'taught',
+            semesters,
+        }];
+    }
+
+    return stages.map((stage) => ({
+        id: stage.id,
+        name: stage.name,
+        kind: stage.kind,
+        semesters: semesters.filter((semester) => Number(semester.programmeStageId) === Number(stage.id)),
+    }));
+});
 
 const countNumber = (value: unknown, fallback: number): number => {
     const parsed = Number(value);
@@ -244,19 +277,26 @@ const saveStructure = () => {
             </div>
         </div>
         <p v-if="canManage" class="text-muted-foreground text-sm leading-relaxed">{{ structureSummary }}</p>
-        <div v-if="programmeSemesters.length" class="flex flex-wrap gap-1.5">
-            <span
-                v-for="semester in programmeSemesters"
-                :key="semester.id"
-                class="rounded-full px-2.5 py-0.5 text-xs"
-                :class="
-                    semester.kind === 'industrial_attachment'
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-muted text-muted-foreground'
-                "
-            >
-                {{ semester.name }}
-            </span>
+        <div v-if="programmeSemesters.length" class="space-y-2">
+            <div v-for="group in groupedProgrammeSemesters" :key="group.id || 'ungrouped'" class="space-y-1">
+                <p v-if="group.name" class="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    {{ group.name }}
+                </p>
+                <div class="flex flex-wrap gap-1.5">
+                    <span
+                        v-for="semester in group.semesters"
+                        :key="semester.id"
+                        class="rounded-full px-2.5 py-0.5 text-xs"
+                        :class="
+                            semester.kind === 'industrial_attachment' || group.kind === 'industrial_attachment'
+                                ? 'bg-primary/10 text-primary'
+                                : 'bg-muted text-muted-foreground'
+                        "
+                    >
+                        {{ semester.name }}
+                    </span>
+                </div>
+            </div>
         </div>
     </BaseCard>
 </template>

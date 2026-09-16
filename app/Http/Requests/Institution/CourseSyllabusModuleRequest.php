@@ -4,6 +4,7 @@ namespace App\Http\Requests\Institution;
 
 use App\Enums\Rbac\RoleEnum;
 use App\Models\AcademicCalendars\CourseWorkMark;
+use App\Models\Institution\ProgrammeSemester;
 use App\Models\Institution\Staff;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Services\Institution\ResolveCalendarTypeSlugPrefixFromCourseSyllabus;
@@ -44,6 +45,11 @@ class CourseSyllabusModuleRequest extends FormRequest
                     $query->where('slug', 'like', $slugPrefix.'-%');
                 }),
             ],
+            'programme_semester_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('programme_semesters', 'id')->whereNull('deleted_at'),
+            ],
             'title' => ['required', 'string', 'max:255'],
             'code' => [
                 'required',
@@ -68,6 +74,31 @@ class CourseSyllabusModuleRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
+            $programmeSemesterId = $this->filled('programme_semester_id')
+                ? (int) $this->integer('programme_semester_id')
+                : null;
+
+            if ($programmeSemesterId !== null) {
+                $courseSyllabusId = (int) $this->input('course_syllabus_id', 0);
+                $departmentLevelCourseId = CourseSyllabus::query()
+                    ->whereKey($courseSyllabusId)
+                    ->value('department_level_course_id');
+
+                $belongsToOffering = $departmentLevelCourseId !== null
+                    && ProgrammeSemester::query()
+                        ->whereKey($programmeSemesterId)
+                        ->where('department_level_course_id', (int) $departmentLevelCourseId)
+                        ->whereNull('deleted_at')
+                        ->exists();
+
+                if (! $belongsToOffering) {
+                    $validator->errors()->add(
+                        'programme_semester_id',
+                        __('validation.exists', ['attribute' => 'programme_semester_id']),
+                    );
+                }
+            }
+
             $module = $this->route('course_syllabus_module');
 
             if ($module !== null && $this->has('capture_mark_only')) {

@@ -9,17 +9,16 @@ readonly class StudentApplicationDto
 {
     public function __construct(
         /** Programs */
-        public int    $student_id,
-        public int    $mode_of_study_id,
-        public int    $institution_department_id,
-        public int    $department_level_id,
-        public int    $department_course_id,
-        public int    $intake_period_id,
-        public ?bool  $required_level_completed,
-        public ?bool  $read_write_acknowledged,
-    )
-    {
-    }
+        public int $student_id,
+        public int $mode_of_study_id,
+        public int $institution_department_id,
+        public int $department_level_id,
+        public int $department_course_id,
+        public int $intake_period_id,
+        public ?bool $required_level_completed,
+        public ?bool $read_write_acknowledged,
+        public ?int $programme_stage_id = null,
+    ) {}
 
     public static function fromStudentApplicationRequest(StudentApplicationRequest $request, Student $student): StudentApplicationDto
     {
@@ -32,6 +31,7 @@ readonly class StudentApplicationDto
             intake_period_id: $request->intake_period_id,
             required_level_completed: $request->required_level_completed,
             read_write_acknowledged: $request->read_write_acknowledged,
+            programme_stage_id: $request->filled('programme_stage_id') ? $request->integer('programme_stage_id') : null,
         );
     }
 }

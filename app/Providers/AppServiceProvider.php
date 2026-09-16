@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contracts\Setup\SetupGapCheck;
 use App\Contracts\Students\StudentIdCardPrinter;
 use App\Enums\Rbac\RoleEnum;
 use App\Importers\Finance\FinanceExchangeRateImporter;
@@ -16,6 +17,7 @@ use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Models\Institution\AssessmentCalendar\DepartmentAssessmentCalendar;
 use App\Models\Institution\Syllabus\CourseSyllabus;
 use App\Models\Users\User;
+use App\Observers\Setup\SetupGapRecheckObserver;
 use App\Policies\AcademicCalendars\CourseWorkCaptureExtensionPolicy;
 use App\Policies\AcademicCalendars\CourseWorkPolicy;
 use App\Policies\AcademicCalendars\CourseWorkProgressReportPolicy;
@@ -23,6 +25,18 @@ use App\Policies\Examinations\ExaminationPolicy;
 use App\Policies\Institution\AssessmentCalendarPolicy;
 use App\Policies\Institution\CourseSyllabusPolicy;
 use App\Policies\Institution\DepartmentAssessmentCalendarPolicy;
+use App\Services\Setup\Checks\ApplicationsInUnconfiguredModeCheck;
+use App\Services\Setup\Checks\ApplicationsMissingModeOrLevelCheck;
+use App\Services\Setup\Checks\AssessmentCalendarDatesMissingCheck;
+use App\Services\Setup\Checks\ClassConfigWithoutLecturerInChargeCheck;
+use App\Services\Setup\Checks\ClassConfigWithoutSyllabusCheck;
+use App\Services\Setup\Checks\CourseLevelWithoutModesCheck;
+use App\Services\Setup\Checks\DepartmentAssessmentCalendarMissingCheck;
+use App\Services\Setup\Checks\DepartmentsWithoutDivisionCheck;
+use App\Services\Setup\Checks\DivisionWithoutHeadCheck;
+use App\Services\Setup\Checks\HostelBedsVacantWithWaitingApplicantsCheck;
+use App\Services\Setup\Checks\ModesOnUnlinkedLevelCheck;
+use App\Services\Setup\SetupGapScanner;
 use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\PdfCardPrinter;
 use App\Services\Students\PhysicalCardPrinter;
@@ -59,6 +73,27 @@ class AppServiceProvider extends ServiceProvider
             CourseSyllabusImporter::class,
             CourseSyllabusModuleImporter::class,
         ], IngestServiceProvider::INGEST_DEFINITION_TAG);
+
+        // Every setup check the nightly scan runs. Adding a check here is all it takes to have it
+        // detected, raised and notified alongside the rest.
+        $this->app->tag([
+            ApplicationsInUnconfiguredModeCheck::class,
+            CourseLevelWithoutModesCheck::class,
+            ModesOnUnlinkedLevelCheck::class,
+            ApplicationsMissingModeOrLevelCheck::class,
+            DepartmentAssessmentCalendarMissingCheck::class,
+            AssessmentCalendarDatesMissingCheck::class,
+            ClassConfigWithoutLecturerInChargeCheck::class,
+            ClassConfigWithoutSyllabusCheck::class,
+            DivisionWithoutHeadCheck::class,
+            DepartmentsWithoutDivisionCheck::class,
+            HostelBedsVacantWithWaitingApplicantsCheck::class,
+        ], SetupGapCheck::TAG);
+
+        $this->app->bind(
+            SetupGapScanner::class,
+            fn ($app): SetupGapScanner => new SetupGapScanner($app->tagged(SetupGapCheck::TAG)),
+        );
 
         $this->app->bind(StudentIdCardPrinter::class, function (): StudentIdCardPrinter {
             return match (config('id_cards.printer.driver')) {
@@ -113,9 +148,22 @@ class AppServiceProvider extends ServiceProvider
             ApplicationFeeService::forgetOpenIntakePeriodsForPortal();
         });
 
+        $this->registerSetupGapRecheckObservers();
+
         $this->registerRateLimiters();
 
         $this->registerLocalMailRedirect();
+    }
+
+    /**
+     * Setup alerts clear themselves: saving the configuration behind an alert re-runs just that alert's
+     * checks, so nobody has to run the nightly scan by hand.
+     */
+    private function registerSetupGapRecheckObservers(): void
+    {
+        foreach (array_keys(SetupGapRecheckObserver::watched()) as $model) {
+            $model::observe(SetupGapRecheckObserver::class);
+        }
     }
 
     /**

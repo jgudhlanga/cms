@@ -8,23 +8,51 @@ use App\Enums\AcademicCalendars\AcademicCalendarTypeEnum;
 
 final class ProgrammeSemesterNameFormatter
 {
+    public static function stageName(string $levelName, int $stageNumber): string
+    {
+        $level = self::normaliseLevelName($levelName);
+
+        return "{$level} {$stageNumber}";
+    }
+
+    public static function stageCode(string $levelName, int $stageNumber): string
+    {
+        $compact = (string) preg_replace('/\s+/', '', self::normaliseLevelName($levelName));
+
+        return $compact.$stageNumber;
+    }
+
     public static function taughtName(
         AcademicCalendarTypeEnum $calendarType,
         int $yearNumber,
         int $periodInYear,
+        string $levelName = '',
     ): string {
-        $periodLabel = match ($calendarType) {
+        $periodLabel = self::periodLabel($calendarType);
+
+        return self::stageName($levelName, $yearNumber).' '.$periodLabel.' '.$periodInYear;
+    }
+
+    public static function attachmentName(
+        int $yearNumber,
+        int $periodInYear,
+        string $levelName = '',
+        ?AcademicCalendarTypeEnum $calendarType = null,
+    ): string {
+        $periodLabel = $calendarType instanceof AcademicCalendarTypeEnum
+            ? self::periodLabel($calendarType)
+            : 'Sem';
+
+        return self::stageName($levelName, $yearNumber).' '.$periodLabel.' '.$periodInYear;
+    }
+
+    public static function periodLabel(AcademicCalendarTypeEnum $calendarType): string
+    {
+        return match ($calendarType) {
             AcademicCalendarTypeEnum::TERM => 'Term',
             AcademicCalendarTypeEnum::ABMA => 'ABMA',
             AcademicCalendarTypeEnum::SEMESTER => 'Sem',
         };
-
-        return "Year {$yearNumber} {$periodLabel} {$periodInYear}";
-    }
-
-    public static function attachmentName(int $yearNumber, int $periodInYear): string
-    {
-        return "Year {$yearNumber} Attachment {$periodInYear}";
     }
 
     public static function periodsPerYear(AcademicCalendarTypeEnum $calendarType): int
@@ -33,8 +61,8 @@ final class ProgrammeSemesterNameFormatter
     }
 
     /**
-     * Compact form for dense listings: "Year 1 Sem 2" -> "Y1 S2",
-     * "Year 2 Attachment 1" -> "Y2 Att 1", "Year 1 Term 3" -> "Y1 T3".
+     * Compact form for dense listings: "NC 1 Sem 2" -> "NC 1 S2",
+     * "Year 2 Attachment 1" -> "Y2 Att 1", "NC 1 Term 3" -> "NC 1 T3".
      */
     public static function shortName(?string $name): string
     {
@@ -54,8 +82,7 @@ final class ProgrammeSemesterNameFormatter
     }
 
     /**
-     * Every level restarts its numbering at Year 1, so a phase name only identifies a phase once
-     * the level is attached to it.
+     * Phase names already include the level (`NC 1 Sem 1`). Prefix only when they do not.
      */
     public static function qualifiedName(?string $levelName, ?string $name, bool $short = false): string
     {
@@ -66,6 +93,17 @@ final class ProgrammeSemesterNameFormatter
             return $levelName;
         }
 
-        return $levelName === '' ? $phase : "{$levelName} {$phase}";
+        if ($levelName === '' || str_starts_with($phase, $levelName)) {
+            return $phase;
+        }
+
+        return "{$levelName} {$phase}";
+    }
+
+    private static function normaliseLevelName(string $levelName): string
+    {
+        $level = trim($levelName);
+
+        return $level === '' ? 'Year' : $level;
     }
 }

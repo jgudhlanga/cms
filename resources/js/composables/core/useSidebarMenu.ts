@@ -27,8 +27,8 @@ import { computed } from 'vue';
 
 const menuGroupOrder: MenuGroupKey[] = [
     'overview',
-    'lecturer',
     'students',
+    'lecturer',
     'operations',
     'institution',
     'system',
@@ -98,25 +98,25 @@ export function useSidebarMenu() {
                     transChoiceKey: 'academic_calendar.course_work_nav_progress',
                     icon: icons[IconName.chart_increasing],
                     url: route('teaching.course-work-progress.index'),
-                    show: canShowMenuItem('view:course-work-progress', 'institution', moduleState),
+                    show: canShowMenuItem('view:course-work-progress', 'course-work', moduleState),
                 },
                 {
                     transChoiceKey: 'academic_calendar.course_work_nav_progress_reports',
                     icon: icons[IconName.clipboard_check],
                     url: route('course-work-progress-reports.index'),
-                    show: canShowMenuItem('acknowledge:course-work-progress-reports', 'institution', moduleState),
+                    show: canShowMenuItem('acknowledge:course-work-progress-reports', 'course-work', moduleState),
                 },
                 {
                     transChoiceKey: 'academic_calendar.course_work_nav_missing_marks',
                     icon: icons[IconName.file_warning],
                     url: route('missing-marks-report.index'),
-                    show: canShowMenuItem('view:missing-marks-report', 'institution', moduleState),
+                    show: canShowMenuItem('view:missing-marks-report', 'course-work', moduleState),
                 },
                 {
                     transChoiceKey: 'academic_calendar.course_work_nav_extensions',
                     icon: icons[IconName.calendar_clock],
                     url: route('course-work-extensions.index'),
-                    show: canShowMenuItem('viewAny:course-work-extensions', 'institution', moduleState),
+                    show: canShowMenuItem('viewAny:course-work-extensions', 'course-work', moduleState),
                 },
             ].filter((child) => child.show);
 

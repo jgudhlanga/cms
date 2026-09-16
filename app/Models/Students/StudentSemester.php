@@ -7,6 +7,8 @@ namespace App\Models\Students;
 use App\Models\AcademicCalendars\AcademicCalendarStudentEnrolment;
 use App\Models\AcademicCalendars\Semester;
 use App\Models\Institution\ProgrammeSemester;
+use App\Observers\Students\StudentSemesterObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+#[ObservedBy([StudentSemesterObserver::class])]
 class StudentSemester extends Model
 {
     use LogsActivity, SoftDeletes;

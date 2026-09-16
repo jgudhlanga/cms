@@ -30,13 +30,19 @@ class EnrolmentHelper
 
     public static function isEntryLevel(StudentApplication $program): bool
     {
+        $program->loadMissing(['departmentLevel.level', 'programmeStage']);
+
+        if ((int) ($program->programmeStage?->stage_number ?? 1) > 1) {
+            return false;
+        }
+
         $entryLevels = [
             strtolower(LevelEnum::NC->name()),
             strtolower(LevelEnum::SDP->name()),
             strtolower(LevelEnum::ABMA_LEVEL_3->name()),
         ];
 
-        $levelName = strtolower(optional($program->departmentLevel->level)->name);
+        $levelName = strtolower((string) ($program->departmentLevel?->level?->name ?? ''));
 
         return in_array($levelName, $entryLevels, true);
     }

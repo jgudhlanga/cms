@@ -471,13 +471,21 @@ class DepartmentEnrolmentService
                 ),
             );
 
-        $modeTotals = (clone $base)
+        $modeTotalRows = (clone $base)
             ->select('mode_of_study_id', DB::raw('COUNT(*) as aggregate'))
             ->whereNotNull('mode_of_study_id')
             ->groupBy('mode_of_study_id')
-            ->get()
+            ->get();
+
+        $modeNames = DB::table('mode_of_studies')
+            ->whereIn('id', $modeTotalRows->pluck('mode_of_study_id')->unique()->values())
+            ->pluck('name', 'id')
+            ->mapWithKeys(fn (?string $name, mixed $id): array => [(int) $id => $name]);
+
+        $modeTotals = $modeTotalRows
             ->map(fn ($row): array => [
                 'modeOfStudyId' => (int) $row->mode_of_study_id,
+                'modeOfStudyName' => $modeNames->get((int) $row->mode_of_study_id),
                 'count' => (int) $row->aggregate,
             ])
             ->values()

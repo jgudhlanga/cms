@@ -187,6 +187,7 @@ export type DepartmentEnrolmentCount = {
 
 export type DepartmentEnrolmentModeTotal = {
     modeOfStudyId: number;
+    modeOfStudyName?: string;
     count: number;
 };
 

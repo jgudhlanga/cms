@@ -290,6 +290,7 @@ export type CourseSyllabusModule = {
     attributes: {
         courseSyllabusId: string | number;
         semesterId?: string | number | null;
+        programmeSemesterId?: string | number | null;
         semesterName?: string | null;
         title: string;
         code: string;
@@ -310,6 +311,7 @@ export type CourseSyllabusModule = {
 export type CourseSyllabusModuleParams = {
     course_syllabus_id: number | null;
     semester_id: string | number | null;
+    programme_semester_id: string | number | null;
     title: string;
     code: string;
     duration_in_hours: number | null;
