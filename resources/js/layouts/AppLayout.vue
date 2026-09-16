@@ -9,6 +9,7 @@ import { useUserPreference } from '@/composables/core/useUserPreference';
 import { usePreferencesStore } from '@/store/core/preferences.store';
 import { BreadcrumbItemType } from '@/types/ui';
 import { usePage } from '@inertiajs/vue3';
+import { useMediaQuery } from '@vueuse/core';
 import { computed, onMounted } from 'vue';
 import { ModalsContainer } from 'vue-final-modal';
 
@@ -19,11 +20,17 @@ defineProps<{
 const page = usePage();
 useFlashAlerts();
 const preferencesStore = usePreferencesStore();
-const { hydratePreferenceOnce } = useUserPreference();
+const { hydratePreferenceOnce, persistSidebarState } = useUserPreference();
+const isMobile = useMediaQuery('(max-width: 768px)');
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
 
 const updateSidebarState = (open: boolean): void => {
+    if (isMobile.value) {
+        return;
+    }
+
     preferencesStore.setSideBarState(open);
+    void persistSidebarState(open);
 };
 
 onMounted(async () => {
