@@ -37,8 +37,17 @@
         '503' => '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"/>',
     ];
 
-    [$toneLight, $toneDark] = $tones[$code] ?? ['79 70 229', '129 140 248'];
-    $glyph = $glyphs[$code] ?? '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>';
+    // Codes without a page of their own arrive through errors::4xx / errors::5xx,
+    // so fall back on the status class before falling back on the generic look.
+    $classTones = ['4' => ['79 70 229', '129 140 248'], '5' => ['220 38 38', '248 113 113']];
+    $classGlyphs = [
+        '4' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+        '5' => '<rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 6h.01"/><path d="M6 18h.01"/>',
+    ];
+    $statusClass = substr($code, 0, 1);
+
+    [$toneLight, $toneDark] = $tones[$code] ?? $classTones[$statusClass] ?? ['79 70 229', '129 140 248'];
+    $glyph = $glyphs[$code] ?? $classGlyphs[$statusClass] ?? '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>';
 
     // The appearance cookie is excluded from encryption, so it is readable even
     // when an exception short circuits the middleware that normally shares it.
