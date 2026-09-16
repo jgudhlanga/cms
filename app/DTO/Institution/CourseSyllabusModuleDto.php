@@ -9,6 +9,7 @@ readonly class CourseSyllabusModuleDto
     public function __construct(
         public int $course_syllabus_id,
         public int $semester_id,
+        public ?int $programme_semester_id,
         public string $title,
         public string $code,
         public ?int $duration_in_hours,
@@ -27,6 +28,9 @@ readonly class CourseSyllabusModuleDto
         return new self(
             course_syllabus_id: (int) $request->integer('course_syllabus_id'),
             semester_id: (int) $request->integer('semester_id'),
+            programme_semester_id: $request->filled('programme_semester_id')
+                ? (int) $request->integer('programme_semester_id')
+                : null,
             title: $request->string('title')->toString(),
             code: $request->string('code')->toString(),
             duration_in_hours: $request->filled('duration_in_hours') ? $request->integer('duration_in_hours') : null,

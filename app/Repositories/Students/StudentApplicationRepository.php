@@ -2,21 +2,21 @@
 
 namespace App\Repositories\Students;
 
-use App\DTO\Students\StudentApplicationDto;
 use App\DTO\Students\ProgramDto;
+use App\DTO\Students\StudentApplicationDto;
 use App\Helpers\Helper;
 use App\Http\Filters\Students\StudentApplicationFilter;
 use App\Models\Students\StudentApplication;
 use App\Repositories\Base\BaseRepository;
+use App\Services\Institution\ProgrammeStageResolver;
 use Illuminate\Database\Eloquent\Model;
 
 class StudentApplicationRepository extends BaseRepository implements interface\IStudentApplicationRepository
 {
-
     public function __construct(
         protected StudentApplication $studentApplication,
-    )
-    {
+        protected ProgrammeStageResolver $programmeStageResolver,
+    ) {
         parent::__construct($this->studentApplication);
     }
 
@@ -38,9 +38,10 @@ class StudentApplicationRepository extends BaseRepository implements interface\I
             return collect();
         }
         $query = $this->studentApplication->select($columns)->filter($filters);
-        if (!empty($userDepartments)) {
+        if (! empty($userDepartments)) {
             $query->whereIn('institution_department_id', $userDepartments);
         }
+
         return $query->orderBy('created_at')
             ->orderBy('deleted_at')
             ->paginate()
@@ -58,6 +59,10 @@ class StudentApplicationRepository extends BaseRepository implements interface\I
             'required_level_completed' => $dto->required_level_completed,
             'read_write_acknowledged' => $dto->read_write_acknowledged,
             'intake_period_id' => $dto->intake_period_id,
+            'programme_stage_id' => $dto->programme_stage_id
+                ?? $this->programmeStageResolver
+                    ->firstStage($dto->department_course_id, $dto->department_level_id)
+                    ?->id,
         ];
     }
 

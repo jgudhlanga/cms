@@ -189,12 +189,26 @@ class CourseSyllabusController extends Controller
         $courseSyllabus->loadMissing([
             'departmentLevelCourse.departmentLevel.level',
             'departmentLevelCourse.departmentCourse.course',
+            'departmentLevelCourse.programmeSemesters',
             'syllabusDocument',
         ]);
+
+        $programmeSemesters = $courseSyllabus->departmentLevelCourse?->programmeSemesters
+            ?->sortBy('position')
+            ->values()
+            ->map(fn ($semester): array => [
+                'id' => (int) $semester->id,
+                'name' => (string) $semester->name,
+                'position' => (int) $semester->position,
+                'periodInYear' => $semester->period_in_year !== null ? (int) $semester->period_in_year : null,
+                'kind' => $semester->kind?->value ?? (string) $semester->kind,
+            ])
+            ->all() ?? [];
 
         return Inertia::render('institution/syllabus/Show', [
             'institutionDepartment' => new InstitutionDepartmentResource($institutionDepartment),
             'courseSyllabus' => new CourseSyllabusResource($courseSyllabus),
+            'programmeSemesters' => $programmeSemesters,
         ]);
     }
 

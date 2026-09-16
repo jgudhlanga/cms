@@ -1,10 +1,15 @@
 <?php
 
+use App\Http\Controllers\Setup\SetupGapController;
 use App\Http\Controllers\Users\NotificationController;
 use App\Http\Controllers\Users\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
+    Route::get('setup-gaps', [SetupGapController::class, 'index'])->name('setup-gaps.index');
+    Route::post('setup-gaps/refresh', [SetupGapController::class, 'refresh'])
+        ->middleware('throttle:20,1')
+        ->name('setup-gaps.refresh');
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
     Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');

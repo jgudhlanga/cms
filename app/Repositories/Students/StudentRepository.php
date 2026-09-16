@@ -454,6 +454,7 @@ class StudentRepository extends BaseRepository implements IStudentRepository
                 intake_period_id: $dto->intake_period_id,
                 required_level_completed: $dto->required_level_completed,
                 read_write_acknowledged: $dto->read_write_acknowledged,
+                programme_stage_id: $dto->programme_stage_id,
             );
 
             return $this->studentApplicationRepository->create($programDto);

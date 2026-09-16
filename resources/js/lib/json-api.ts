@@ -617,6 +617,7 @@ export function parseJsonApiStudentIdCardRequests(
 
 export type DepartmentEnrolmentModeTotal = {
     modeOfStudyId: number;
+    modeOfStudyName?: string;
     count: number;
 };
 
@@ -667,6 +668,7 @@ export function parseDepartmentEnrolmentSummaries(document: DepartmentEnrolmentS
 
     const modeTotals = (document.meta?.modeTotals ?? []).map((row) => ({
         modeOfStudyId: Number(row.modeOfStudyId),
+        modeOfStudyName: row.modeOfStudyName ? String(row.modeOfStudyName) : undefined,
         count: Number(row.count),
     }));
 

@@ -7,6 +7,7 @@ use App\Http\Resources\Users\UserResource;
 use App\Models\Users\User;
 use App\Services\Rbac\RbacModuleStateService;
 use App\Services\Rbac\UserPermissionMapService;
+use App\Services\Setup\SetupGapVisibility;
 use App\Services\Students\RegistrationAvailabilityService;
 use App\Support\AppVersion;
 use Illuminate\Http\Request;
@@ -75,6 +76,9 @@ class HandleInertiaRequests extends Middleware
             ],
             'moduleState' => fn () => app(RbacModuleStateService::class)->all(),
             'notifications' => fn () => $user !== null ? ['unreadCount' => $user->unreadNotifications()->count()] : null,
+            'setupGaps' => fn () => $user !== null
+                ? ['openCount' => app(SetupGapVisibility::class)->openCountFor($user)]
+                : null,
             'registration' => fn () => $this->sharesRegistration($user)
                 ? app(RegistrationAvailabilityService::class)->sharedProps()
                 : null,

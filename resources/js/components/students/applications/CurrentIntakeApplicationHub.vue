@@ -26,6 +26,9 @@ export interface ApplicationHubProps {
     nextLevelName?: string | null;
     nextDepartmentLevelId?: number | null;
     institutionDepartmentId?: number | null;
+    canApplyToNextStage?: boolean;
+    nextStageId?: number | null;
+    nextStageName?: string | null;
     requiresIntakeSelection: boolean;
 }
 
@@ -57,14 +60,20 @@ const intakesWithoutApplication = computed(() => {
     return intakeList.value.filter((intake) => !existingIds.has(String(intake.id)));
 });
 
+const isNextStageApply = computed(() => props.applicationHub.canApplyToNextStage === true);
+const isNextLevelApply = computed(() => props.applicationHub.canApplyToNextLevel === true && !isNextStageApply.value);
+const isLockedProgrammeApply = computed(() => isNextStageApply.value || isNextLevelApply.value);
+
+const hubIntakes = computed(() =>
+    isNextStageApply.value ? intakeList.value : intakesWithoutApplication.value,
+);
+
 const showHub = computed(
-    () => props.applicationHub.canStartApplication && intakesWithoutApplication.value.length > 0,
+    () => props.applicationHub.canStartApplication && hubIntakes.value.length > 0,
 );
 
 const selectedIntakeId = ref<number | null>(
-    intakesWithoutApplication.value.length === 1
-        ? Number(intakesWithoutApplication.value[0].id)
-        : null,
+    hubIntakes.value.length === 1 ? Number(hubIntakes.value[0].id) : null,
 );
 
 const feePaidHighlight = ref(props.highlightFeePaid);
@@ -75,7 +84,7 @@ const acknowledgeForm = useForm({
 });
 
 const submitAcknowledge = () => {
-    const intakeId = selectedIntakeId.value ?? Number(intakesWithoutApplication.value[0]?.id ?? 0);
+    const intakeId = selectedIntakeId.value ?? Number(hubIntakes.value[0]?.id ?? 0);
     acknowledgeForm.intake_period_id = intakeId;
     acknowledgeForm.post(route('portal.profile.applications.acknowledge'), {
         preserveScroll: true,
@@ -90,9 +99,7 @@ const continueApplication = () => {
     navigateTo(route('portal.application.returning'));
 };
 
-const defaultOpenIds = computed(() =>
-    intakesWithoutApplication.value.map((intake) => String(intake.id)),
-);
+const defaultOpenIds = computed(() => hubIntakes.value.map((intake) => String(intake.id)));
 
 const hubStep = computed(() => {
     if (props.applicationHub.hasPaidApplicationFee && props.applicationHub.hasReapplyAcknowledgement) {
@@ -106,30 +113,37 @@ const hubStep = computed(() => {
     return 'acknowledge';
 });
 
-const isNextLevelApply = computed(() => props.applicationHub.canApplyToNextLevel === true);
 const nextLevelName = computed(() => props.applicationHub.nextLevelName ?? '');
+const nextStageName = computed(() => props.applicationHub.nextStageName ?? '');
+const lockedTargetName = computed(() =>
+    isNextStageApply.value ? nextStageName.value : nextLevelName.value,
+);
 </script>
 
 <template>
     <div v-if="showHub" class="mb-6">
         <BaseAccordion class="w-full" :default-value="defaultOpenIds">
             <BaseAccordionItem
-                v-for="intake in intakesWithoutApplication"
+                v-for="intake in hubIntakes"
                 :key="intake.id"
                 :value="String(intake.id)"
                 :title="intake.attributes?.name ?? ''"
                 :description="
-                    isNextLevelApply
-                        ? $t('trans.returning_student_hub_next_level_intake_description', { level: nextLevelName })
-                        : $t('trans.returning_student_hub_intake_description')
+                    isNextStageApply
+                        ? $t('trans.returning_student_hub_next_stage_intake_description', { stage: nextStageName })
+                        : isNextLevelApply
+                          ? $t('trans.returning_student_hub_next_level_intake_description', { level: nextLevelName })
+                          : $t('trans.returning_student_hub_intake_description')
                 "
             >
                 <template #trigger-extra>
                     <BaseTag
                         :title="
-                            isNextLevelApply
-                                ? $t('trans.returning_student_hub_next_level_tag')
-                                : $t('students.current_intake')
+                            isNextStageApply
+                                ? $t('trans.returning_student_hub_next_stage_tag')
+                                : isNextLevelApply
+                                  ? $t('trans.returning_student_hub_next_level_tag')
+                                  : $t('students.current_intake')
                         "
                         :variant="ColorVariant.success"
                         classes="cursor-default"
@@ -138,7 +152,16 @@ const nextLevelName = computed(() => props.applicationHub.nextLevelName ?? '');
 
                 <div class="space-y-4 p-1">
                     <BaseAlert
-                        v-if="isNextLevelApply"
+                        v-if="isNextStageApply"
+                        :type="TypeVariant.info"
+                        :description="
+                            $t('trans.returning_student_hub_next_stage_banner', {
+                                stage: nextStageName,
+                            })
+                        "
+                    />
+                    <BaseAlert
+                        v-else-if="isNextLevelApply"
                         :type="TypeVariant.info"
                         :description="
                             $t('trans.returning_student_hub_next_level_banner', {
@@ -156,18 +179,20 @@ const nextLevelName = computed(() => props.applicationHub.nextLevelName ?? '');
                     <template v-if="hubStep === 'acknowledge'">
                         <p class="text-sm text-muted-foreground">
                             {{
-                                isNextLevelApply
-                                    ? $t('trans.returning_student_hub_next_level_onboarding', { level: nextLevelName })
-                                    : $t('trans.returning_student_onboarding_description')
+                                isNextStageApply
+                                    ? $t('trans.returning_student_hub_next_stage_onboarding', { stage: nextStageName })
+                                    : isNextLevelApply
+                                      ? $t('trans.returning_student_hub_next_level_onboarding', { level: nextLevelName })
+                                      : $t('trans.returning_student_onboarding_description')
                             }}
                         </p>
                         <div
-                            v-if="applicationHub.requiresIntakeSelection && intakesWithoutApplication.length > 1"
+                            v-if="applicationHub.requiresIntakeSelection && hubIntakes.length > 1"
                             class="max-w-md"
                         >
                             <IntakePeriodComboSelect
                                 v-model="selectedIntakeId"
-                                :data="intakesWithoutApplication"
+                                :data="hubIntakes"
                                 :is-required="true"
                             />
                         </div>
@@ -181,9 +206,11 @@ const nextLevelName = computed(() => props.applicationHub.nextLevelName ?? '');
                             :disabled="!acknowledgeForm.acknowledged || (applicationHub.requiresIntakeSelection && !selectedIntakeId)"
                             :processing="acknowledgeForm.processing"
                             :title="
-                                isNextLevelApply
-                                    ? $t('trans.returning_student_hub_next_level_start')
-                                    : $t('trans.returning_student_hub_start')
+                                isNextStageApply
+                                    ? $t('trans.returning_student_hub_next_stage_start')
+                                    : isNextLevelApply
+                                      ? $t('trans.returning_student_hub_next_level_start')
+                                      : $t('trans.returning_student_hub_start')
                             "
                             @click="submitAcknowledge"
                         />
@@ -192,18 +219,22 @@ const nextLevelName = computed(() => props.applicationHub.nextLevelName ?? '');
                     <template v-else-if="hubStep === 'level'">
                         <p class="text-sm text-muted-foreground">
                             {{
-                                isNextLevelApply
-                                    ? $t('trans.returning_student_hub_next_level_select', { level: nextLevelName })
-                                    : $t('trans.returning_student_hub_select_level')
+                                isNextStageApply
+                                    ? $t('trans.returning_student_hub_next_stage_select', { stage: nextStageName })
+                                    : isNextLevelApply
+                                      ? $t('trans.returning_student_hub_next_level_select', { level: nextLevelName })
+                                      : $t('trans.returning_student_hub_select_level')
                             }}
                         </p>
                         <BaseButton
                             type="button"
                             :variant="ColorVariant.primary"
                             :title="
-                                isNextLevelApply
-                                    ? $t('trans.returning_student_hub_next_level_go_select', { level: nextLevelName })
-                                    : $t('trans.returning_student_hub_go_select_level')
+                                isNextStageApply
+                                    ? $t('trans.returning_student_hub_next_stage_go_select', { stage: nextStageName })
+                                    : isNextLevelApply
+                                      ? $t('trans.returning_student_hub_next_level_go_select', { level: nextLevelName })
+                                      : $t('trans.returning_student_hub_go_select_level')
                             "
                             @click="goToLevelSelection"
                         />
@@ -212,28 +243,30 @@ const nextLevelName = computed(() => props.applicationHub.nextLevelName ?? '');
                     <template v-else>
                         <p class="text-sm text-muted-foreground">
                             {{
-                                isNextLevelApply
-                                    ? $t('trans.returning_student_hub_next_level_continue_banner', {
+                                isLockedProgrammeApply
+                                    ? $t('trans.returning_student_hub_next_stage_continue_banner', {
                                           intake: intake.attributes?.name ?? '',
-                                          level: nextLevelName || (applicationHub.paidLevelName ?? ''),
+                                          stage: lockedTargetName || (applicationHub.paidLevelName ?? ''),
                                       })
                                     : $t('trans.returning_student_reapply_banner', {
                                           intake: intake.attributes?.name ?? '',
                                       })
                             }}
                         </p>
-                        <p v-if="applicationHub.paidLevelName || nextLevelName" class="text-sm text-foreground">
+                        <p v-if="applicationHub.paidLevelName || lockedTargetName" class="text-sm text-foreground">
                             {{ $t('trans.returning_student_hub_level') }}:
-                            {{ applicationHub.paidLevelName ?? nextLevelName }}
+                            {{ lockedTargetName || applicationHub.paidLevelName }}
                         </p>
                         <BaseButton
                             type="button"
                             :variant="ColorVariant.primary"
                             :class="{ 'ring-2 ring-primary ring-offset-2': feePaidHighlight }"
                             :title="
-                                isNextLevelApply
-                                    ? $t('trans.returning_student_hub_next_level_continue')
-                                    : $t('trans.returning_student_hub_continue')
+                                isNextStageApply
+                                    ? $t('trans.returning_student_hub_next_stage_continue')
+                                    : isNextLevelApply
+                                      ? $t('trans.returning_student_hub_next_level_continue')
+                                      : $t('trans.returning_student_hub_continue')
                             "
                             @click="continueApplication"
                         />

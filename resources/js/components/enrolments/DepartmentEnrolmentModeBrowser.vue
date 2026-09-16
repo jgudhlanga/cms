@@ -4,7 +4,12 @@ import DepartmentModeTotalsStrip from '@/components/institution/DepartmentModeTo
 import { useModeOfStudy } from '@/composables/institution/useModeOfStudy';
 import { IconName } from '@/enums/icons';
 import { errorAlert } from '@/lib/alerts';
-import { jsonApiRequestConfig, parseDepartmentEnrolmentSummaries } from '@/lib/json-api';
+import { buildOrderedModes, pickPreferredMode } from '@/lib/enrolmentModeBrowser';
+import {
+    DepartmentEnrolmentModeTotal,
+    jsonApiRequestConfig,
+    parseDepartmentEnrolmentSummaries,
+} from '@/lib/json-api';
 import EnrolmentModeAccordionItem from '@/pages/institution/departments/partials/view/EnrolmentModeAccordionItem.vue';
 import HttpService from '@/services/http.service';
 import { ModeOfStudy } from '@/types/institution';
@@ -51,8 +56,6 @@ const emit = defineEmits<{
     'update:modeOfStudyId': [modeId: string];
 }>();
 
-const MODE_ORDER = ['full time', 'part time', 'ojet', 'block release', 'block'];
-
 const MODE_ICONS: Array<{ match: string; icon: IconName }> = [
     { match: 'full time', icon: IconName.graduation_cape },
     { match: 'part time', icon: IconName.briefcase },
@@ -70,7 +73,7 @@ const LEGEND_COLORS = [
 ];
 
 const openModeId = ref<string>('');
-const modeTotals = ref<Record<number, number>>({});
+const modeTotalRows = ref<DepartmentEnrolmentModeTotal[]>([]);
 const coursesByMode = ref<Record<string, CourseEnrolmentSummary[]>>({});
 const loadedModes = ref<Record<string, boolean>>({});
 const loadingPanel = ref(false);
@@ -99,24 +102,19 @@ const summariesParams = (modeId?: string): Record<string, string> => {
     return params;
 };
 
-const orderedModes = computed(() => {
-    const modes = [...(modesOfStudy.value ?? [])];
+const orderedModes = computed(() => buildOrderedModes(modesOfStudy.value, modeTotalRows.value));
 
-    return modes.sort((a, b) => {
-        const aIndex = MODE_ORDER.findIndex((name) => a.attributes.name.toLowerCase().includes(name));
-        const bIndex = MODE_ORDER.findIndex((name) => b.attributes.name.toLowerCase().includes(name));
-        const safeA = aIndex === -1 ? MODE_ORDER.length : aIndex;
-        const safeB = bIndex === -1 ? MODE_ORDER.length : bIndex;
+const countsByModeId = computed(() => {
+    const counts: Record<string, number> = {};
 
-        if (safeA !== safeB) {
-            return safeA - safeB;
-        }
-
-        return a.attributes.name.localeCompare(b.attributes.name);
+    modeTotalRows.value.forEach((row) => {
+        counts[String(row.modeOfStudyId)] = row.count;
     });
+
+    return counts;
 });
 
-const modeCount = (mode: ModeOfStudy): number => modeTotals.value[Number(mode.id)] ?? 0;
+const modeCount = (mode: ModeOfStudy): number => countsByModeId.value[String(mode.id)] ?? 0;
 
 const programmeCount = (modeId: string): number => (coursesByMode.value[modeId] ?? []).length;
 
@@ -162,7 +160,7 @@ const levelBadge = (levelName: string): string => {
 
 const fetchModeTotals = async () => {
     if (!props.intakePeriodId) {
-        modeTotals.value = {};
+        modeTotalRows.value = [];
         return;
     }
 
@@ -173,11 +171,7 @@ const fetchModeTotals = async () => {
             jsonApiRequestConfig(),
         );
         const parsed = parseDepartmentEnrolmentSummaries(document);
-        const totals: Record<number, number> = {};
-        parsed.modeTotals.forEach((row) => {
-            totals[row.modeOfStudyId] = row.count;
-        });
-        modeTotals.value = totals;
+        modeTotalRows.value = parsed.modeTotals;
     } catch {
         errorAlert(trans('trans.load_data_failure', { data: trans_choice('trans.application', 2) }));
     } finally {
@@ -202,11 +196,7 @@ const loadModePanel = async (modeId: string, force = false) => {
             jsonApiRequestConfig(),
         );
         const parsed = parseDepartmentEnrolmentSummaries(document);
-        const totals: Record<number, number> = { ...modeTotals.value };
-        parsed.modeTotals.forEach((row) => {
-            totals[row.modeOfStudyId] = row.count;
-        });
-        modeTotals.value = totals;
+        modeTotalRows.value = parsed.modeTotals;
         coursesByMode.value = {
             ...coursesByMode.value,
             [modeId]: parsed.courses,
@@ -232,15 +222,11 @@ const resetAndReload = async () => {
 };
 
 onMounted(async () => {
-    await listDepartmentModesOfStudy(props.departmentId);
+    // Totals first: they decide which modes exist and which one is worth opening.
+    await Promise.all([listDepartmentModesOfStudy(props.departmentId), fetchModeTotals()]);
 
-    const preferredMode =
-        orderedModes.value.find((row) => String(row.id) === String(props.initialModeOfStudyId)) ??
-        orderedModes.value[0] ??
-        null;
-    openModeId.value = preferredMode ? String(preferredMode.id) : '';
+    openModeId.value = pickPreferredMode(orderedModes.value, props.initialModeOfStudyId, modeTotalRows.value);
 
-    await fetchModeTotals();
     if (openModeId.value) {
         await loadModePanel(openModeId.value);
         emit('update:modeOfStudyId', openModeId.value);

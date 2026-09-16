@@ -16,11 +16,20 @@ import { useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { SizeVariant } from '@/enums/sizes';
 
+type ProgrammeSemesterOption = {
+    id: number;
+    name: string;
+    position: number;
+    periodInYear?: number | null;
+    kind?: string;
+};
+
 interface Props {
     courseSyllabusId: number;
     courseSyllabusTitle: string;
     institutionDepartmentId: number;
     calendarType?: 'term' | 'semester' | 'abma' | null;
+    programmeSemesters?: ProgrammeSemesterOption[];
 }
 
 const props = defineProps<Props>();
@@ -28,6 +37,7 @@ const moduleRecord = ref<CourseSyllabusModule>();
 const form = useForm<CourseSyllabusModuleParams>({
     course_syllabus_id: props.courseSyllabusId || null,
     semester_id: null,
+    programme_semester_id: null,
     title: '',
     code: '',
     duration_in_hours: null,
@@ -45,6 +55,16 @@ const { yearOptions, yearOptionsLoading, loadYearOptions } = useSemestersByCalen
 
 const resolvedCalendarType = computed(() => props.calendarType ?? 'semester');
 
+const programmeSemesterOptions = computed(() =>
+    (props.programmeSemesters ?? []).map((semester) => ({
+        value: String(semester.id),
+        label: semester.name,
+        periodInYear: semester.periodInYear ?? null,
+    })),
+);
+
+const hasProgrammeSemesters = computed(() => programmeSemesterOptions.value.length > 0);
+
 const selectedSyllabusTitle = computed(() => {
     const modalParent = getModalParent(APP_MODULE_KEYS.course_syllabus_modules);
     const parentCourseSyllabusId = Number(modalParent?.courseSyllabusId ?? props.courseSyllabusId);
@@ -55,6 +75,30 @@ const selectedSyllabusTitle = computed(() => {
 
     return props.courseSyllabusTitle;
 });
+
+const syncSemesterFromProgrammeSemester = (programmeSemesterId: string | number | null) => {
+    if (programmeSemesterId === null || programmeSemesterId === '') {
+        return;
+    }
+
+    const selected = programmeSemesterOptions.value.find((option) => option.value === String(programmeSemesterId));
+    if (!selected) {
+        return;
+    }
+
+    const periodInYear = selected.periodInYear ?? 1;
+    const calendarMatch = yearOptions.value.find((option) => {
+        const label = String(option.label ?? '').toLowerCase();
+        return label.includes(String(periodInYear));
+    });
+
+    if (calendarMatch) {
+        form.semester_id = calendarMatch.value;
+    } else if (yearOptions.value.length > 0) {
+        const index = Math.max(0, Math.min(yearOptions.value.length - 1, periodInYear - 1));
+        form.semester_id = yearOptions.value[index]?.value ?? yearOptions.value[0].value;
+    }
+};
 
 watch(modals!, async () => {
     moduleRecord.value = getModalEdit(APP_MODULE_KEYS.course_syllabus_modules);
@@ -74,23 +118,48 @@ watch(modals!, async () => {
 
     await loadYearOptions(resolvedCalendarType.value);
 
-    const preferred =
-        moduleRecord.value?.attributes?.semesterId != null
-            ? String(moduleRecord.value.attributes.semesterId)
-            : null;
-    if (preferred !== null && yearOptions.value.some((o) => o.value === preferred)) {
-        form.semester_id = preferred;
-    } else if (yearOptions.value.length > 0) {
-        form.semester_id = yearOptions.value[0].value;
+    if (hasProgrammeSemesters.value) {
+        const preferredProgramme =
+            moduleRecord.value?.attributes?.programmeSemesterId != null
+                ? String(moduleRecord.value.attributes.programmeSemesterId)
+                : null;
+
+        if (preferredProgramme !== null && programmeSemesterOptions.value.some((o) => o.value === preferredProgramme)) {
+            form.programme_semester_id = preferredProgramme;
+        } else if (programmeSemesterOptions.value.length > 0) {
+            form.programme_semester_id = programmeSemesterOptions.value[0].value;
+        } else {
+            form.programme_semester_id = null;
+        }
+
+        syncSemesterFromProgrammeSemester(form.programme_semester_id);
     } else {
-        form.semester_id = null;
+        form.programme_semester_id = null;
+        const preferred =
+            moduleRecord.value?.attributes?.semesterId != null
+                ? String(moduleRecord.value.attributes.semesterId)
+                : null;
+        if (preferred !== null && yearOptions.value.some((o) => o.value === preferred)) {
+            form.semester_id = preferred;
+        } else if (yearOptions.value.length > 0) {
+            form.semester_id = yearOptions.value[0].value;
+        } else {
+            form.semester_id = null;
+        }
     }
 
     form.defaults();
 });
 
+const onProgrammeSemesterChange = (value: string | number | null) => {
+    form.programme_semester_id = value;
+    clearFormErrors(form, 'programme_semester_id');
+    syncSemesterFromProgrammeSemester(value);
+    clearFormErrors(form, 'semester_id');
+};
+
 const save = () => {
-    const parsed = formSchema().safeParse(form.data());
+    const parsed = formSchema(hasProgrammeSemesters.value).safeParse(form.data());
     if (!parsed.success) {
         const fieldErrors = parsed.error.flatten().fieldErrors;
         Object.entries(fieldErrors).forEach(([field, errors]) => {
@@ -117,6 +186,20 @@ const save = () => {
             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <BaseInput input-id="course_syllabus" :label="$tChoice('syllabus.course_syllabus', 1)" :model-value="selectedSyllabusTitle" :disabled="true" />
                 <BaseSelect
+                    v-if="hasProgrammeSemesters"
+                    class="w-full"
+                    :label="$tChoice('syllabus.semester', 1)"
+                    placeholder=""
+                    :options="programmeSemesterOptions"
+                    :loading="false"
+                    v-model="form.programme_semester_id"
+                    :is-searchable="false"
+                    :is-required="true"
+                    @update:modelValue="onProgrammeSemesterChange"
+                    :error="form.errors.programme_semester_id"
+                />
+                <BaseSelect
+                    v-else
                     class="w-full"
                     :label="$tChoice('syllabus.semester', 1)"
                     placeholder=""

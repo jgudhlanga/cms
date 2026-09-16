@@ -56,6 +56,7 @@ class UpsertYearStudentEnrolmentAction
                     'institution_department_id' => $studentApplication->institution_department_id,
                     'department_level_id' => $studentApplication->department_level_id,
                     'department_course_id' => $studentApplication->department_course_id,
+                    'programme_stage_id' => $studentApplication->programme_stage_id,
                     'semester_id' => $attributes['semester_id'],
                     'academic_calendar_id' => $attributes['academic_calendar_id'],
                     'mode_of_study_id' => $studentApplication->mode_of_study_id,

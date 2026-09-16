@@ -40,14 +40,21 @@ class CourseSyllabusModuleRepository extends BaseRepository implements ICourseSy
     {
         return $this->courseSyllabusModule
             ->query()
-            ->with(['semester', 'lecturers.user'])
+            ->with(['semester', 'programmeSemester', 'lecturers.user'])
             ->where('course_syllabus_modules.course_syllabus_id', $courseSyllabusId)
+            ->leftJoin(
+                'programme_semesters',
+                'programme_semesters.id',
+                '=',
+                'course_syllabus_modules.programme_semester_id',
+            )
             ->join(
                 'semesters',
                 'semesters.id',
                 '=',
                 'course_syllabus_modules.semester_id',
             )
+            ->orderByRaw('COALESCE(programme_semesters.position, 999)')
             ->orderBy('semesters.name')
             ->orderBy('course_syllabus_modules.title')
             ->select('course_syllabus_modules.*')
@@ -60,6 +67,7 @@ class CourseSyllabusModuleRepository extends BaseRepository implements ICourseSy
         return [
             'course_syllabus_id' => $dto->course_syllabus_id,
             'semester_id' => $dto->semester_id,
+            'programme_semester_id' => $dto->programme_semester_id,
             'title' => $dto->title,
             'code' => $dto->code,
             'duration_in_hours' => $dto->duration_in_hours,

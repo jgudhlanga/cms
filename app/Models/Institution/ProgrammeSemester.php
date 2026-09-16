@@ -19,7 +19,10 @@ class ProgrammeSemester extends Model
 
     protected $fillable = [
         'department_level_course_id',
+        'programme_stage_id',
         'position',
+        'year_number',
+        'period_in_year',
         'name',
         'kind',
     ];
@@ -28,6 +31,8 @@ class ProgrammeSemester extends Model
     {
         return [
             'position' => 'integer',
+            'year_number' => 'integer',
+            'period_in_year' => 'integer',
             'kind' => ProgrammeSemesterKindEnum::class,
         ];
     }
@@ -35,6 +40,11 @@ class ProgrammeSemester extends Model
     public function departmentLevelCourse(): BelongsTo
     {
         return $this->belongsTo(DepartmentLevelCourse::class, 'department_level_course_id');
+    }
+
+    public function programmeStage(): BelongsTo
+    {
+        return $this->belongsTo(ProgrammeStage::class, 'programme_stage_id');
     }
 
     public function isTaught(): bool

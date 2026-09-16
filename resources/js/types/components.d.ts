@@ -405,6 +405,7 @@ declare module 'vue' {
     SelectValue: typeof import('./../components/ui/select/SelectValue.vue')['default']
     Separator: typeof import('./../components/ui/separator/Separator.vue')['default']
     SettingsButton: typeof import('./../components/core/button/SettingsButton.vue')['default']
+    SetupAlertBell: typeof import('./../components/core/notifications/SetupAlertBell.vue')['default']
     SharedNumberField: typeof import('./../components/core/form/number/SharedNumberField.vue')['default']
     Sheet: typeof import('./../components/ui/sheet/Sheet.vue')['default']
     SheetClose: typeof import('./../components/ui/sheet/SheetClose.vue')['default']

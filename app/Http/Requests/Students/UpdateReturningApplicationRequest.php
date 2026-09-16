@@ -45,6 +45,7 @@ class UpdateReturningApplicationRequest extends CreateApplicationRequest
 
         $validator->after(function (Validator $validator): void {
             $this->validateNextLevelProgramme($validator);
+            $this->validateNextStageProgramme($validator);
         });
     }
 
@@ -96,6 +97,69 @@ class UpdateReturningApplicationRequest extends CreateApplicationRequest
             $validator->errors()->add(
                 'level_id',
                 __('trans.returning_student_next_level_department_mismatch'),
+            );
+        }
+    }
+
+    protected function validateNextStageProgramme(Validator $validator): void
+    {
+        $student = $this->user()?->studentProfile;
+        if ($student === null) {
+            return;
+        }
+
+        $context = app(ReturningStudentContextService::class)->nextStageApplicationContext($student);
+        if (($context['canApplyToNextStage'] ?? false) !== true) {
+            return;
+        }
+
+        $expectedStageId = $context['nextStageId'] ?? null;
+        $expectedDepartmentLevelId = $context['nextDepartmentLevelId'] ?? null;
+        $expectedDepartmentId = $context['institutionDepartmentId'] ?? null;
+        $expectedCourseId = $context['departmentCourseId'] ?? null;
+        $nextStageName = $context['nextStageName'] ?? '';
+
+        if (! is_int($expectedStageId) || $expectedStageId < 1) {
+            return;
+        }
+
+        if ($this->integer('programme_stage_id') !== $expectedStageId) {
+            $validator->errors()->add(
+                'programme_stage_id',
+                __('trans.returning_student_next_stage_only', ['stage' => $nextStageName]),
+            );
+        }
+
+        if (
+            is_int($expectedDepartmentLevelId)
+            && $expectedDepartmentLevelId > 0
+            && $this->integer('level_id') !== $expectedDepartmentLevelId
+        ) {
+            $validator->errors()->add(
+                'level_id',
+                __('trans.returning_student_next_stage_programme_mismatch', ['stage' => $nextStageName]),
+            );
+        }
+
+        if (
+            is_int($expectedDepartmentId)
+            && $expectedDepartmentId > 0
+            && $this->integer('department_id') !== $expectedDepartmentId
+        ) {
+            $validator->errors()->add(
+                'department_id',
+                __('trans.returning_student_next_stage_programme_mismatch', ['stage' => $nextStageName]),
+            );
+        }
+
+        if (
+            is_int($expectedCourseId)
+            && $expectedCourseId > 0
+            && $this->integer('course_id') !== $expectedCourseId
+        ) {
+            $validator->errors()->add(
+                'course_id',
+                __('trans.returning_student_next_stage_programme_mismatch', ['stage' => $nextStageName]),
             );
         }
     }

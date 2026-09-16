@@ -48,7 +48,7 @@ class UpdateProgrammeStructureAction
 
             $this->syncProgrammeSemesters->execute($departmentLevelCourse->fresh() ?? $departmentLevelCourse);
 
-            return $departmentLevelCourse->fresh(['programmeSemesters', 'departmentLevel.level']) ?? $departmentLevelCourse;
+            return $departmentLevelCourse->fresh(['programmeSemesters', 'programmeStages', 'departmentLevel.level']) ?? $departmentLevelCourse;
         });
     }
 

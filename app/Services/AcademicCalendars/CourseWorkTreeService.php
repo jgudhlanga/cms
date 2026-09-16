@@ -138,13 +138,18 @@ class CourseWorkTreeService
             ? CourseSyllabusModulePeriod::slugPrefixForSyllabus($syllabusIds[0])
             : 'semester';
 
+        $programmeSemesterId = $classConfig->programme_semester_id !== null
+            ? (int) $classConfig->programme_semester_id
+            : null;
+
         $modulesBySyllabusId = CourseSyllabusModule::query()
             ->whereIn('course_syllabus_id', $syllabusIds)
-            ->where(function ($query) use ($classConfig, $slugPrefix): void {
+            ->where(function ($query) use ($classConfig, $slugPrefix, $programmeSemesterId): void {
                 CourseSyllabusModulePeriod::scopeForPeriod(
                     $query,
                     (int) $classConfig->semester_id,
                     $slugPrefix,
+                    $programmeSemesterId,
                 );
             })
             ->orderBy('code')

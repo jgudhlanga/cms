@@ -28,6 +28,7 @@ export function clearProgrammeSelections(storeRefs: StoreRefs): void {
         'department_id',
         'level_id',
         'course_id',
+        'programme_stage_id',
         'required_level_completed',
         'read_write_acknowledged',
     ] as const;
@@ -127,7 +128,7 @@ export function useReturningApplicationPrefill(prefill: ReturningPrefill, storeR
 
         clearProgrammeSelections(storeRefs);
 
-        const programmeScalars = ['department_id', 'level_id', 'course_id', 'required_level_completed'] as const;
+        const programmeScalars = ['department_id', 'level_id', 'course_id', 'programme_stage_id', 'required_level_completed'] as const;
         programmeScalars.forEach((field) => {
             const value = prefill[field];
             if (value !== null && value !== undefined && storeRefs[field]) {

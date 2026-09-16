@@ -62,6 +62,7 @@ export type CreateApplicationParams = {
     level_id: string | number | null;
     course: SelectOption | null;
     course_id: string | number | null;
+    programme_stage_id?: string | number | null;
     levelRequirements?: DepartmentLevelRequirement | null;
     courseRequirements?: CourseRequirement | null;
     o_level_subject_ids?: Record<string, string> | null;

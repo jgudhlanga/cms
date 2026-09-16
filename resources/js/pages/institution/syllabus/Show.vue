@@ -29,10 +29,17 @@ import MoveCourseSyllabusModulesModal from '@/pages/institution/syllabus/partial
 interface Props {
     institutionDepartment: InstitutionDepartment;
     courseSyllabus: CourseSyllabus;
+    programmeSemesters?: Array<{
+        id: number;
+        name: string;
+        position: number;
+        periodInYear?: number | null;
+        kind?: string;
+    }>;
 }
 
 const props = defineProps<Props>();
-const { institutionDepartment, courseSyllabus } = props;
+const { institutionDepartment, courseSyllabus, programmeSemesters = [] } = props;
 const canViewModules = hasAbility(['viewAny:course-syllabus-modules', 'view:course-syllabus-modules']);
 const canCreateModule = hasAbility('create:course-syllabus-modules');
 const canUpdateModule = hasAbility('update:course-syllabus-modules');
@@ -251,6 +258,7 @@ watch([institutionDepartmentId, courseSyllabusId], () => loadSyllabusModules(), 
             :course-syllabus-title="courseSyllabus?.attributes?.title ?? ''"
             :institution-department-id="Number(institutionDepartment?.id ?? 0)"
             :calendar-type="calendarType"
+            :programme-semesters="programmeSemesters"
         />
         <MoveCourseSyllabusModulesModal
             v-if="canMoveModules"

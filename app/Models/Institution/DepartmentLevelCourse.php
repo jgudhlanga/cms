@@ -45,6 +45,12 @@ class DepartmentLevelCourse extends Model
         return $this->hasMany(CourseSyllabus::class, 'department_level_course_id');
     }
 
+    public function programmeStages(): HasMany
+    {
+        return $this->hasMany(ProgrammeStage::class, 'department_level_course_id')
+            ->orderBy('stage_number');
+    }
+
     public function programmeSemesters(): HasMany
     {
         return $this->hasMany(ProgrammeSemester::class, 'department_level_course_id')

@@ -24,10 +24,13 @@ export const useCourseSyllabusModules = () => {
     const isLoading = ref(false);
     const courseSyllabusModules = ref<ApiFilterResponse | null>(null);
 
-    const formSchema = () =>
+    const formSchema = (requireProgrammeSemester = false) =>
         z.object({
             course_syllabus_id: z.number().min(1, trans('trans.select_valid_field', { field: trans_choice('syllabus.course_syllabus', 1) })),
             semester_id: z.coerce.number().min(1, trans('trans.select_valid_field', { field: trans_choice('syllabus.semester', 1) })),
+            programme_semester_id: requireProgrammeSemester
+                ? z.coerce.number().min(1, trans('trans.select_valid_field', { field: trans_choice('syllabus.semester', 1) }))
+                : z.coerce.number().min(1).nullable().optional(),
             title: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.title', 1) })),
             code: z.string().nonempty(trans('trans.enter_required_field', { field: trans_choice('trans.code', 1) })),
             duration_in_hours: z.number().int().positive().nullable(),

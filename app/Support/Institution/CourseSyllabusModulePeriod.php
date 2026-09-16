@@ -13,30 +13,31 @@ final class CourseSyllabusModulePeriod
 {
     public static function matchesPeriod(CourseSyllabusModule $module, int $semesterId, ?int $programmeSemesterId = null): bool
     {
-        if ($programmeSemesterId !== null && (int) $module->programme_semester_id === $programmeSemesterId) {
-            return true;
+        if ($module->all_semesters) {
+            $slugPrefix = app(ResolveCalendarTypeSlugPrefixFromCourseSyllabus::class)
+                ->resolve((int) $module->course_syllabus_id);
+
+            $optionSlug = Semester::query()
+                ->whereKey($semesterId)
+                ->value('slug');
+
+            if (! is_string($optionSlug)) {
+                return false;
+            }
+
+            return str_starts_with($optionSlug, $slugPrefix.'-');
         }
 
-        if ((int) $module->semester_id === $semesterId) {
-            return true;
+        if ($programmeSemesterId !== null) {
+            if ($module->programme_semester_id !== null) {
+                return (int) $module->programme_semester_id === $programmeSemesterId;
+            }
+
+            // Legacy modules without a programme-semester pin match the calendar half only.
+            return (int) $module->semester_id === $semesterId;
         }
 
-        if (! $module->all_semesters) {
-            return false;
-        }
-
-        $slugPrefix = app(ResolveCalendarTypeSlugPrefixFromCourseSyllabus::class)
-            ->resolve((int) $module->course_syllabus_id);
-
-        $optionSlug = Semester::query()
-            ->whereKey($semesterId)
-            ->value('slug');
-
-        if (! is_string($optionSlug)) {
-            return false;
-        }
-
-        return str_starts_with($optionSlug, $slugPrefix.'-');
+        return (int) $module->semester_id === $semesterId;
     }
 
     /**
@@ -50,19 +51,27 @@ final class CourseSyllabusModulePeriod
         ?int $programmeSemesterId = null,
     ): Builder {
         return $query->where(function (Builder $periodQuery) use ($semesterId, $slugPrefix, $programmeSemesterId): void {
+            $periodQuery->where(function (Builder $allSemestersQuery) use ($slugPrefix): void {
+                $allSemestersQuery
+                    ->where('all_semesters', true)
+                    ->whereHas('semester', function (Builder $optionQuery) use ($slugPrefix): void {
+                        $optionQuery->where('slug', 'like', $slugPrefix.'-%');
+                    });
+            });
+
             if ($programmeSemesterId !== null) {
-                $periodQuery->where('programme_semester_id', $programmeSemesterId);
+                $periodQuery
+                    ->orWhere('programme_semester_id', $programmeSemesterId)
+                    ->orWhere(function (Builder $legacyQuery) use ($semesterId): void {
+                        $legacyQuery
+                            ->whereNull('programme_semester_id')
+                            ->where('semester_id', $semesterId);
+                    });
+
+                return;
             }
 
-            $periodQuery
-                ->orWhere('semester_id', $semesterId)
-                ->orWhere(function (Builder $allSemestersQuery) use ($slugPrefix): void {
-                    $allSemestersQuery
-                        ->where('all_semesters', true)
-                        ->whereHas('semester', function (Builder $optionQuery) use ($slugPrefix): void {
-                            $optionQuery->where('slug', 'like', $slugPrefix.'-%');
-                        });
-                });
+            $periodQuery->orWhere('semester_id', $semesterId);
         });
     }
 

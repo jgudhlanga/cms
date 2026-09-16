@@ -3,6 +3,7 @@
 namespace App\Rules\Students;
 
 use App\Models\Institution\Grade;
+use App\Models\Institution\ProgrammeStage;
 use App\Services\Students\OLevelRequirementResolver;
 use Carbon\Carbon;
 use Illuminate\Contracts\Validation\Validator;
@@ -24,6 +25,10 @@ class ValidateOLevelResults
 
     public function validate(Request $request, Validator $validator): void
     {
+        if ($this->isLaterProgrammeStage($request)) {
+            return;
+        }
+
         $departmentLevelId = $request->filled('level_id') ? $request->integer('level_id') : null;
         $departmentCourseId = $request->filled('course_id') ? $request->integer('course_id') : null;
         $requirement = $this->requirementResolver->resolve($departmentLevelId, $departmentCourseId);
@@ -213,5 +218,18 @@ class ValidateOLevelResults
         }
 
         return array_keys($years);
+    }
+
+    private function isLaterProgrammeStage(Request $request): bool
+    {
+        if (! $request->filled('programme_stage_id')) {
+            return false;
+        }
+
+        $stageNumber = ProgrammeStage::query()
+            ->whereKey((int) $request->integer('programme_stage_id'))
+            ->value('stage_number');
+
+        return $stageNumber !== null && (int) $stageNumber > 1;
     }
 }

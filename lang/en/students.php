@@ -294,6 +294,7 @@ return [
     'enrolment_cannot_advance_phase' => 'This enrolment cannot be advanced to the next semester or term.',
     'enrolment_cannot_advance_status' => 'Status is :status, so this student cannot continue to the next semester.',
     'enrolment_cannot_advance_last_phase' => 'This student is already on the last semester for this level (:phase).',
+    'enrolment_cannot_advance_stage_complete' => 'Both semesters of this stage are done (:phase). Apply for the next stage instead of advancing on this application.',
     'enrolment_last_phase_fallback' => 'the last semester',
     'enrolment_cannot_advance_no_application' => 'This enrolment has no student application.',
     'enrolment_cannot_advance_no_next_phase' => 'There is no next semester configured for this programme.',
