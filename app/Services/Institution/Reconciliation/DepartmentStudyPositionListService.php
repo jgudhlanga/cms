@@ -51,6 +51,7 @@ class DepartmentStudyPositionListService
         $enrolments = $query
             ->with([
                 'student.user',
+                'institutionDepartment.department',
                 'departmentLevel.level',
                 'departmentCourse.course',
                 'modeOfStudy',

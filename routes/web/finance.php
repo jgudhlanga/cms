@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Finance\BillingExportController;
 use App\Http\Controllers\Finance\FinanceController;
 use App\Http\Controllers\Finance\FinanceExchangeController;
 use App\Http\Controllers\Finance\PastelExportController;
@@ -14,6 +15,17 @@ Route::prefix('finance')->middleware('auth')->group(function () {
         ->name('finance.pastel-export.linked-students.bulk-destroy');
     Route::delete('pastel-export/linked-students/{pastelLinkedStudent}', [PastelExportController::class, 'destroy'])
         ->name('finance.pastel-export.linked-students.destroy');
+
+    Route::get('billing-export', [BillingExportController::class, 'index'])->name('finance.billing-export.index');
+    Route::post('billing-export/download', [BillingExportController::class, 'download'])->name('finance.billing-export.download');
+    Route::post('billing-export/mark-billed', [BillingExportController::class, 'markBilled'])
+        ->name('finance.billing-export.mark-billed');
+    Route::post('billing-export/mark-failed', [BillingExportController::class, 'markFailed'])
+        ->name('finance.billing-export.mark-failed');
+    Route::delete('billing-export/records', [BillingExportController::class, 'bulkDestroy'])
+        ->name('finance.billing-export.records.bulk-destroy');
+    Route::delete('billing-export/records/{studentBillingRecord}', [BillingExportController::class, 'destroy'])
+        ->name('finance.billing-export.records.destroy');
 
     Route::put('exchange-rates/{exchange_rate}/restore', [FinanceExchangeController::class, 'restore'])
         ->name('finance.exchange-rates.restore');

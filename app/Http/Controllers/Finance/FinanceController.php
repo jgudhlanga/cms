@@ -14,7 +14,11 @@ class FinanceController extends Controller
         $user = $request->user();
 
         abort_unless(
-            $user !== null && ($user->can('viewFinances') || $user->can('exportToPastel')),
+            $user !== null && (
+                $user->can('viewFinances')
+                || $user->can('exportToPastel')
+                || $user->can('exportForBilling')
+            ),
             403,
         );
 

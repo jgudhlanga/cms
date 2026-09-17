@@ -90,6 +90,7 @@ return [
     FinancePolicy::class => [
         'viewFinances',
         'exportToPastel',
+        'exportForBilling',
         'managePaymentTools',
     ],
 

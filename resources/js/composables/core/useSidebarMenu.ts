@@ -206,6 +206,7 @@ export function useSidebarMenu() {
         (() => {
             const canViewFinance = canShowMenuItem('view:finances', 'finance', moduleState);
             const canExportToPastel = canShowMenuItem('export-to-pastel:finances', 'finance', moduleState);
+            const canExportForBilling = canShowMenuItem('export-for-billing:finances', 'finance', moduleState);
             const canViewFinanceChildren = hasAbility(['view:finances', 'view:finance-settings']);
             const financeChildren: MenuItemInterface[] = [
                 {
@@ -223,6 +224,11 @@ export function useSidebarMenu() {
                     url: route('finance.pastel-export.index'),
                     show: canExportToPastel,
                 },
+                {
+                    transChoiceKey: 'finance.billing_export',
+                    url: route('finance.billing-export.index'),
+                    show: canExportForBilling,
+                },
             ].filter((child) => child.show);
 
             return {
@@ -231,7 +237,7 @@ export function useSidebarMenu() {
                 url: route('finance.index'),
                 icon: icons[IconName.dollar],
                 items: financeChildren,
-                show: canViewFinance || canExportToPastel,
+                show: canViewFinance || canExportToPastel || canExportForBilling,
             };
         })(),
         (() => {
