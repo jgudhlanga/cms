@@ -20,6 +20,7 @@ use App\Http\Controllers\Institution\Departments\DepartmentEnrolmentVsClassListC
 use App\Http\Controllers\Institution\Departments\DepartmentLevelController;
 use App\Http\Controllers\Institution\Departments\DepartmentLevelCourseProgrammeStructureController;
 use App\Http\Controllers\Institution\Departments\DepartmentSemesterReconciliationController;
+use App\Http\Controllers\Institution\Departments\DepartmentStudyPositionReconciliationController;
 use App\Http\Controllers\Institution\Departments\InstitutionDepartmentController;
 use App\Http\Controllers\Institution\DocumentTemplates\DocumentTemplateController;
 use App\Http\Controllers\Institution\Dropdowns\CourseController;
@@ -80,6 +81,18 @@ Route::prefix('institution')->middleware('auth')->group(function () {
         'departments/{department}/data-reconciliation/semester-reconciliation/process',
         [DepartmentSemesterReconciliationController::class, 'process']
     )->name('department-data-reconciliation.semester-reconciliation.process');
+    Route::get(
+        'departments/{department}/data-reconciliation/study-position',
+        [DepartmentStudyPositionReconciliationController::class, 'show']
+    )->name('department-data-reconciliation.study-position.show');
+    Route::get(
+        'departments/{department}/data-reconciliation/study-position/list',
+        [DepartmentStudyPositionReconciliationController::class, 'list']
+    )->name('department-data-reconciliation.study-position.list');
+    Route::post(
+        'departments/{department}/data-reconciliation/study-position/confirm',
+        [DepartmentStudyPositionReconciliationController::class, 'confirm']
+    )->name('department-data-reconciliation.study-position.confirm');
     // ==================================== DEPARTMENT LEVELS ===========================================================
     Route::post('departments/{institution_department}/sync-levels', [DepartmentLevelController::class, 'syncDepartmentLevels'])->name('department-levels.sync');
     Route::get('departments/{institution_department}/enrolments/{department_level}', [DepartmentLevelController::class, 'enrolments'])->name('department-levels.enrolments');

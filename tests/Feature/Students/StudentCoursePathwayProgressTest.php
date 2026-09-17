@@ -328,6 +328,54 @@ it('omits courses that have an application but no enrolment', function (): void 
         ->and($pathways[0]['departmentCourseId'])->toBe($context['departmentCourse']->id);
 });
 
+it('marks an earlier active phase completed once a later phase is pinned as current', function (): void {
+    // Reproduces what a study-position confirmation leaves behind for a student who was stuck:
+    // the newly pinned phase is written as Active, but the earlier phase's own status is never
+    // itself advanced to Proceed (nothing ran an award/proceed on it), so two rows in the same
+    // stage both read Active. The later one must still win.
+    $context = createItPathwayContext(ndRequiresNc: true);
+    $activeStatusId = (int) StudentEnrolmentStatus::query()->where('slug', 'active')->value('id');
+    $calendarId = (int) AcademicCalendar::query()->where('calendar_year', '2026')->value('id');
+
+    $hndEnrolment = StudentEnrolment::query()->create([
+        'student_id' => $context['student']->id,
+        'student_application_id' => $context['ndApplication']->id,
+        'institution_department_id' => $context['ndApplication']->institution_department_id,
+        'department_level_id' => $context['hnd']->department_level_id,
+        'department_course_id' => $context['hnd']->department_course_id,
+        'semester_id' => (int) Semester::query()->where('slug', 'semester-1')->value('id'),
+        'academic_calendar_id' => $calendarId,
+        'mode_of_study_id' => $context['ndApplication']->mode_of_study_id,
+        'student_enrolment_status_id' => $activeStatusId,
+    ]);
+
+    // Bypass the observer's auto-sync so the test controls exactly which rows exist.
+    StudentSemester::query()->where('student_enrolment_id', $hndEnrolment->id)->forceDelete();
+
+    $hndPhases = $context['hnd']->programmeSemesters->sortBy('position')->values();
+
+    foreach ([
+        ['slug' => 'semester-1', 'phase' => $hndPhases[0]],
+        ['slug' => 'semester-2', 'phase' => $hndPhases[1]],
+    ] as $row) {
+        StudentSemester::query()->create([
+            'student_enrolment_id' => $hndEnrolment->id,
+            'semester_id' => (int) Semester::query()->where('slug', $row['slug'])->value('id'),
+            'programme_semester_id' => $row['phase']->id,
+            'student_enrolment_status_id' => $activeStatusId,
+            'course_syllabus_ids' => [],
+        ]);
+    }
+
+    $student = $context['student']->fresh(['applications', 'enrolments.studentSemesters.studentEnrolmentStatus']);
+    $pathways = app(StudentCoursePathwayProgressService::class)->buildForStudent($student);
+
+    $steps = collect(collect($pathways[0]['stages'])->firstWhere('levelName', 'HND')['steps']);
+
+    expect($steps->firstWhere('programmeSemesterId', $hndPhases[0]->id)['state'])->toBe('completed')
+        ->and($steps->firstWhere('programmeSemesterId', $hndPhases[1]->id)['state'])->toBe('current');
+});
+
 it('includes pathways in the programmes profile payload', function (): void {
     $context = createItPathwayContext(ndRequiresNc: true);
     $payload = app(StudentProgrammeDataService::class)->buildProfilePayload($context['student']);

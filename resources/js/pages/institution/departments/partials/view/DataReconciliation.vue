@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { useUtils } from '@/composables/core/useUtils';
+import { hasAbility } from '@/lib/permissions';
+import type { StudyPositionState } from '@/types/study-position';
 import HttpService from '@/services/http.service';
 import type { DepartmentReconciliationCounts } from '@/types/department-reconciliation';
 import { InstitutionDepartment } from '@/types/institution';
@@ -30,13 +32,22 @@ const studyPositionTiles = computed(() => {
     }
 
     return [
-        { key: 'in-scope', label: trans('students.study_position_department_in_scope'), value: summary.inScope, tone: 'text-foreground' },
-        { key: 'confirmed', label: trans('students.study_position_state_confirmed'), value: summary.confirmed, tone: 'text-emerald-700 dark:text-emerald-400' },
-        { key: 'unconfirmed', label: trans('students.study_position_state_unconfirmed'), value: summary.unconfirmed, tone: 'text-red-700 dark:text-red-400' },
-        { key: 'follow-up', label: trans('students.study_position_state_follow_up'), value: summary.followUp, tone: 'text-red-700 dark:text-red-400' },
-        { key: 'needs-review', label: trans('students.study_position_state_needs_review'), value: summary.needsReview, tone: 'text-amber-700 dark:text-amber-400' },
+        { key: 'in-scope', label: trans('students.study_position_department_in_scope'), value: summary.inScope, tone: 'text-foreground', state: null },
+        { key: 'confirmed', label: trans('students.study_position_state_confirmed'), value: summary.confirmed, tone: 'text-emerald-700 dark:text-emerald-400', state: null },
+        { key: 'unconfirmed', label: trans('students.study_position_state_unconfirmed'), value: summary.unconfirmed, tone: 'text-red-700 dark:text-red-400', state: 'unconfirmed' as StudyPositionState },
+        { key: 'follow-up', label: trans('students.study_position_state_follow_up'), value: summary.followUp, tone: 'text-red-700 dark:text-red-400', state: 'follow_up' as StudyPositionState },
+        { key: 'needs-review', label: trans('students.study_position_state_needs_review'), value: summary.needsReview, tone: 'text-amber-700 dark:text-amber-400', state: 'needs_review' as StudyPositionState },
     ];
 });
+
+const canManageStudyPosition = computed(() => hasAbility('confirm-study-position:students'));
+
+const studyPositionTileHref = (state: StudyPositionState): string =>
+    route('department-data-reconciliation.study-position.show', {
+        department: departmentId.value,
+        state,
+        ...(queryContext.value.mode_of_study_id ? { mode_of_study_id: queryContext.value.mode_of_study_id } : {}),
+    });
 
 const departmentId = computed(() => String(props.department.id ?? ''));
 
@@ -116,12 +127,20 @@ const sectionLabelClass = 'text-[0.63rem] font-semibold uppercase tracking-[0.12
                 {{ trans('students.study_position_department_title', { period: studyPosition.periodLabel }) }}
             </h2>
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                <div v-for="tile in studyPositionTiles" :key="tile.key" class="rounded-lg border border-border bg-card px-3 py-2">
+                <component
+                    :is="tile.state && canManageStudyPosition ? 'button' : 'div'"
+                    v-for="tile in studyPositionTiles"
+                    :key="tile.key"
+                    :type="tile.state && canManageStudyPosition ? 'button' : undefined"
+                    class="rounded-lg border border-border bg-card px-3 py-2 text-left"
+                    :class="tile.state && canManageStudyPosition ? 'cursor-pointer transition-colors hover:bg-muted/50' : ''"
+                    @click="tile.state && canManageStudyPosition ? navigateTo(studyPositionTileHref(tile.state)) : null"
+                >
                     <p :class="['text-lg leading-none font-semibold tabular-nums', tile.tone]">
                         {{ tile.value.toLocaleString() }}
                     </p>
                     <p class="mt-1 text-[11px] text-muted-foreground">{{ tile.label }}</p>
-                </div>
+                </component>
             </div>
         </section>
 

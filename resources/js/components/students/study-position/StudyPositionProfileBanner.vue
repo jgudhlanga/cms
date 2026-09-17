@@ -55,6 +55,13 @@ const items = computed<StudyPositionBannerItem[]>(() => {
 
 const canConfirm = computed(() => Boolean(adminStatus.value?.items.some((item) => item.canConfirm)));
 
+// Scoped to the student and period, so a new period (or another student) always starts expanded.
+const storageKey = computed(() =>
+    props.context === 'admin' && props.studentId !== null && periodLabel.value
+        ? `${props.studentId}:${periodLabel.value}`
+        : undefined,
+);
+
 const onConfirm = (): void => {
     openModal(props.context === 'admin' ? APP_MODULE_KEYS.student_study_position_confirm : APP_MODULE_KEYS.student_study_position_prompt);
 };
@@ -68,6 +75,7 @@ const onConfirm = (): void => {
         :period-label="periodLabel"
         :items="items"
         :can-confirm="canConfirm"
+        :storage-key="storageKey"
         @confirm="onConfirm"
     />
     <ConfirmStudyPositionModal v-if="context === 'admin' && canConfirm && adminStatus && studentId" :student-id="studentId" :status="adminStatus" />

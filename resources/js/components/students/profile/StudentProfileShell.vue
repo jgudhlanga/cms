@@ -81,7 +81,7 @@ const canChangeIntakePeriod = computed(
             :intake-period-options="intakePeriodOptions"
             :current-intake-period-id="headerData.intakePeriodId"
         />
-        <div class="px-2 sm:px-3">
+        <div class="px-2 pt-3 sm:px-3">
             <InvalidIdNumberBanner :student="props.student" />
             <StudyPositionProfileBanner :context="props.context" :student-id="props.student?.id ?? null" />
         </div>

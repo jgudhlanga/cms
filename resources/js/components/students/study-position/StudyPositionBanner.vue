@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import BaseButton from '@/components/core/button/BaseButton.vue';
+import BaseIcon from '@/components/core/icon/BaseIcon.vue';
 import { ButtonSize } from '@/enums/buttons';
 import { ColorVariant } from '@/enums/colors';
+import { IconName } from '@/enums/icons';
 import type { StudyPositionBannerItem, StudyPositionState } from '@/types/study-position';
 import { trans } from 'laravel-vue-i18n';
-import { AlertTriangle, CheckCircle2, ClipboardCheck } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, ClipboardCheck } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
 
 const props = withDefaults(
     defineProps<{
@@ -14,6 +16,8 @@ const props = withDefaults(
         periodLabel: string | null;
         items: StudyPositionBannerItem[];
         canConfirm?: boolean;
+        /** Remembers, per viewer, whether the confirmed status line is collapsed. Omit to disable collapsing. */
+        storageKey?: string;
     }>(),
     {
         context: 'portal',
@@ -141,16 +145,113 @@ const toneClasses = computed(() => {
     }
 });
 
-const buttonVariant = computed(() =>
-    tone.value === 'danger' ? ColorVariant.danger : tone.value === 'warning' ? ColorVariant.warning : ColorVariant.primary,
-);
+const buttonVariant = computed(() => {
+    switch (tone.value) {
+        case 'danger':
+            return ColorVariant.danger;
+        case 'warning':
+            return ColorVariant.warning;
+        case 'success':
+            return ColorVariant.success;
+        default:
+            return ColorVariant.primary;
+    }
+});
 
 const icon = computed(() => (tone.value === 'success' ? CheckCircle2 : tone.value === 'warning' ? ClipboardCheck : AlertTriangle));
+
+// A confirmed programme is a status line, not something needing attention — one compact row is enough.
+const compact = computed(() => tone.value === 'success');
+
+const compactSummary = computed((): string => itemLines.value.map((line) => `${line.programme}: ${line.text}`).join(' · '));
+
+// Collapsing is a per-viewer convenience, not shared state, so it lives in localStorage only.
+const COLLAPSE_STORAGE_PREFIX = 'study-position-banner-collapsed:';
+
+const readCollapsed = (key: string): boolean => {
+    try {
+        return localStorage.getItem(COLLAPSE_STORAGE_PREFIX + key) === '1';
+    } catch {
+        return false;
+    }
+};
+
+const writeCollapsed = (key: string, value: boolean): void => {
+    try {
+        if (value) {
+            localStorage.setItem(COLLAPSE_STORAGE_PREFIX + key, '1');
+        } else {
+            localStorage.removeItem(COLLAPSE_STORAGE_PREFIX + key);
+        }
+    } catch {
+        // Best-effort convenience only; nothing to fall back to.
+    }
+};
+
+const canCollapse = computed(() => compact.value && Boolean(props.storageKey));
+const collapsed = ref(false);
+
+watch(
+    () => props.storageKey,
+    (key) => {
+        collapsed.value = Boolean(key) && readCollapsed(key!);
+    },
+    { immediate: true },
+);
+
+const toggleCollapsed = (): void => {
+    if (!props.storageKey) {
+        return;
+    }
+
+    collapsed.value = !collapsed.value;
+    writeCollapsed(props.storageKey, collapsed.value);
+};
 </script>
 
 <template>
-    <div v-if="tone !== null" :class="['mb-3 rounded-md border px-3 py-3 text-sm', toneClasses]" :role="tone === 'success' ? 'status' : 'alert'">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div
+        v-if="tone !== null"
+        :class="[
+            'mb-3 rounded-md border text-sm',
+            compact ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-3',
+            toneClasses,
+        ]"
+        :role="tone === 'success' ? 'status' : 'alert'"
+    >
+        <!-- Confirmed: always a single line. Collapsing (title only) needs a storage key; the edit
+             action is an icon, not a full button, since nothing here needs that much weight. -->
+        <div v-if="compact" class="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <component v-if="!canCollapse" :is="icon" class="size-3.5 shrink-0" />
+            <p v-if="!canCollapse" class="font-medium break-words">{{ title }}</p>
+
+            <button
+                v-else
+                type="button"
+                class="flex min-w-0 shrink-0 cursor-pointer items-center gap-1.5"
+                :aria-expanded="!collapsed"
+                @click="toggleCollapsed"
+            >
+                <component :is="icon" class="size-3.5 shrink-0" />
+                <span class="truncate font-medium">{{ title }}</span>
+                <component :is="collapsed ? ChevronDown : ChevronUp" class="size-3.5 shrink-0 opacity-60" />
+            </button>
+
+            <span v-if="compactSummary && !collapsed" class="break-words opacity-80">{{ compactSummary }}</span>
+
+            <button
+                v-if="actionLabel"
+                type="button"
+                class="ml-auto inline-flex size-5 shrink-0 items-center justify-center rounded-full text-current hover:bg-black/10 dark:hover:bg-white/10"
+                :title="actionLabel"
+                :aria-label="actionLabel"
+                @click="emit('confirm')"
+            >
+                <BaseIcon :name="IconName.edit" size="14" class="block" />
+            </button>
+        </div>
+
+        <div v-if="!compact" class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div class="flex min-w-0 items-start gap-2.5">
                 <component :is="icon" class="mt-0.5 size-4 shrink-0" />
                 <div class="min-w-0">

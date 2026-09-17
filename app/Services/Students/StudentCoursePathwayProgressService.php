@@ -392,6 +392,15 @@ class StudentCoursePathwayProgressService
                 continue;
             }
 
+            // A later phase is already pinned (e.g. confirmed as the student's current position),
+            // so this one has been passed even though its own status was never advanced to Proceed —
+            // a phase that predates the study-position confirmation feature is never bumped otherwise.
+            if ($laterInclusionExists((int) $programmeSemester->position)) {
+                $steps[] = $this->stepPayload($programmeSemester, 'completed', $levelName);
+
+                continue;
+            }
+
             $steps[] = $this->stepPayload($programmeSemester, 'current', $levelName);
             $pastCurrent = true;
         }
