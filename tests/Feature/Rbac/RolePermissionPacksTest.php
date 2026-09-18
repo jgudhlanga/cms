@@ -305,6 +305,14 @@ test('roles table seeder grants integrations permissions to the super user', fun
         ->and($superUser->hasPermissionTo('update:payments-debug'))->toBeTrue();
 });
 
+test('roles table seeder grants console permissions to the super user', function () {
+    $superUser = Role::query()->where('name', RoleEnum::SUPER_USER->name())->firstOrFail();
+
+    expect($superUser->hasPermissionTo('view:console'))->toBeTrue()
+        ->and($superUser->hasPermissionTo('run:console-commands'))->toBeTrue()
+        ->and($superUser->hasPermissionTo('run:destructive-console-commands'))->toBeTrue();
+});
+
 test('user access scope reaches only own departments for department scoped users', function () {
     $tenantId = TenantEnum::HARARE_POLY->id();
     $user = User::factory()->create(['tenant_id' => $tenantId]);

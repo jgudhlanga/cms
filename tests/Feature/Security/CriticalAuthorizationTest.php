@@ -211,6 +211,23 @@ describe('payment tools and webhook', function () {
     });
 });
 
+describe('console', function () {
+    it('restricts console dispatch to users who can run console commands', function () {
+        $user = securityUserWith();
+
+        $this->actingAs($user)
+            ->get(route('console.index'))
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->postJson(route('console.dispatch'), [
+                'command' => 'students-audit-phase-data',
+                'password' => 'password',
+            ])
+            ->assertForbidden();
+    });
+});
+
 describe('application workflows', function () {
     it('forbids students from moving applications or confirming fees', function () {
         $application = createVerifiedStudentApplication('SEC-WF-'.Str::upper(Str::random(4)));

@@ -463,6 +463,13 @@ export function useSidebarMenu() {
                     show: integrationsChildren.length > 0,
                 };
             })(),
+            {
+                groupKey: 'system' as const,
+                transKey: 'trans.console',
+                url: route('console.index'),
+                icon: icons[IconName.terminal],
+                show: canShowMenuItem(['view:console', 'run:console-commands'], 'console', moduleState),
+            },
             (() => {
                 const canSearchUsers = canShowMenuItem('view:users', 'users', moduleState);
                 const canViewAuditTrail = isModuleEnabled('dashboards', moduleState) && !hasStudentProfile();

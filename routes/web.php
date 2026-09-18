@@ -24,6 +24,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified', 'redirect.student'])->name('dashboard');
 
 require __DIR__.'/web/integrations.php';
+require __DIR__.'/web/console.php';
 require __DIR__.'/web/auth.php';
 require __DIR__.'/web/users.php';
 require __DIR__.'/web/settings.php';

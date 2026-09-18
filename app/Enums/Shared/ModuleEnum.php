@@ -26,6 +26,7 @@ enum ModuleEnum: string
     case HMS = 'HMS';
     case COURSE_WORK = 'Course Work';
     case INTEGRATIONS = 'Integrations';
+    case CONSOLE = 'Console';
 
     public function label(): string
     {
@@ -50,6 +51,7 @@ enum ModuleEnum: string
             self::HMS => 'HMS',
             self::COURSE_WORK => 'Course Work',
             self::INTEGRATIONS => 'Integrations',
+            self::CONSOLE => 'Console',
         };
     }
 

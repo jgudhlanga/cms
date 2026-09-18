@@ -13,6 +13,7 @@ return [
     'settings' => 'Settings',
     'integrations' => 'Integrations',
     'payment_gateway' => 'Payment Gateway',
+    'console' => 'Console',
     'bank' => 'Bank|Banks',
     'country' => 'Country|Countries',
     'gender' => 'Gender|Genders',

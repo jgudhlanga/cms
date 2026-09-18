@@ -84,6 +84,8 @@ import {
     Users,
     UserSearch,
     Unplug,
+    Terminal,
+    Play,
     WalletCards,
     MonitorCheck,
     X as Close,
@@ -232,6 +234,8 @@ const icons: Record<IconName, Component> = {
     [IconName.calendar_clock]: CalendarClock,
     [IconName.unplug]: Unplug,
     [IconName.landmark]: Landmark,
+    [IconName.terminal]: Terminal,
+    [IconName.play]: Play,
 };
 
 export { IconName, icons };

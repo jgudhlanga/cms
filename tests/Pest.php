@@ -35,6 +35,7 @@ require_once __DIR__.'/Support/IdCardTestHelpers.php';
 require_once __DIR__.'/Support/ProgrammeStageTestHelpers.php';
 require_once __DIR__.'/Support/SetupGapTestHelpers.php';
 require_once __DIR__.'/Support/StudyPositionTestHelpers.php';
+require_once __DIR__.'/Support/ConsoleTestHelpers.php';
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)

@@ -118,4 +118,6 @@ export enum IconName {
     calendar_clock = "calendar_clock",
     unplug = "unplug",
     landmark = "landmark",
+    terminal = "terminal",
+    play = "play",
 }

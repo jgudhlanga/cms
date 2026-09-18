@@ -547,5 +547,10 @@ return [
             'view:payments-debug',
             'update:payments-debug',
         ],
+        'console' => [
+            'view:console',
+            'run:console-commands',
+            'run:destructive-console-commands',
+        ],
     ],
 ];

@@ -23,5 +23,6 @@ describe('layoutNameForPage', () => {
         expect(layoutNameForPage('portal/student/Index')).toBe('app');
         expect(layoutNameForPage('integrations/payment-gateway/Index')).toBe('app');
         expect(layoutNameForPage('integrations/payments-debug/Index')).toBe('app');
+        expect(layoutNameForPage('console/Index')).toBe('app');
     });
 });

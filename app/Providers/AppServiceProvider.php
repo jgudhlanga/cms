@@ -264,6 +264,14 @@ class AppServiceProvider extends ServiceProvider
                 $userId !== null ? 'payment-gateway-unlock:'.$userId : 'ip:'.$request->ip()
             );
         });
+
+        RateLimiter::for('console-dispatch', function (Request $request): Limit {
+            $userId = $request->user()?->getAuthIdentifier();
+
+            return Limit::perMinute(5)->by(
+                $userId !== null ? 'console-dispatch:'.$userId : 'ip:'.$request->ip()
+            );
+        });
     }
 
     private function registerLocalMailRedirect(): void

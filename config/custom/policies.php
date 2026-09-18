@@ -1,5 +1,6 @@
 <?php
 
+use App\Policies\Console\ConsolePolicy;
 use App\Policies\Dashboards\DashboardPolicy;
 use App\Policies\Finance\FinancePolicy;
 use App\Policies\Finance\FinanceSettingsPolicy;
@@ -97,6 +98,12 @@ return [
     PaymentDebugPolicy::class => [
         'viewPaymentsDebug',
         'updatePaymentsDebug',
+    ],
+
+    ConsolePolicy::class => [
+        'viewConsole',
+        'runConsoleCommands',
+        'runDestructiveConsoleCommands',
     ],
 
     FinanceSettingsPolicy::class => [
