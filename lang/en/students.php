@@ -456,6 +456,15 @@ return [
     'study_position_stat_title' => 'Awaiting study position confirmation (:period)',
     'study_position_department_title' => 'Study position confirmations — :period',
     'study_position_department_in_scope' => 'In scope',
+    'study_position_department_title_bare' => 'Study position confirmations',
+    'study_position_department_page_description' => 'Students in this department who have not confirmed their study position for the current period. Select rows and confirm the phase already on record, or open a profile to correct it first.',
+    'study_position_department_list_summary' => ':total student(s) in :period.',
+    'study_position_department_list_empty' => 'No students match this filter.',
+    'study_position_department_list_truncated' => 'Showing the first :shown of :total matching students. Narrow the filters above to see the rest.',
+    'study_position_department_column_answer' => 'Student answer',
+    'study_position_department_confirm_action' => 'Confirm :count on record',
+    'study_position_department_confirm_help' => 'This records the phase already shown in "On record" as the confirmed study position for :count selected student(s). Records are not changed — only their confirmation for this period.',
+    'study_position_department_confirm_result' => ':confirmed confirmed, :skipped skipped.',
 
     // Student lookup drawer
     'find_student' => 'Student Lookup',

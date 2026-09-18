@@ -238,6 +238,11 @@ return [
     'overview_alert_waitlisted' => ':count students are waitlisted for the current intake',
     'overview_alert_applications' => ':count applications received for the current intake',
     'overview_alert_attachment' => ':count students are on industrial attachment',
+    'overview_demographics' => 'Demographics & status',
+    'overview_levels_breakdown' => 'Academic levels breakdown',
+    'overview_mode_of_study' => 'Mode of study',
+    'overview_enrolment_type' => 'Enrolment type',
+    'overview_gender_split_subtext' => ':male male · :female female',
 
     'lecturer_dashboard_title' => 'Lecturer dashboard',
     'lecturer_unknown_student' => 'Unknown student',

@@ -113,6 +113,7 @@ declare module 'vue' {
     BaseText: typeof import('./../components/core/util/BaseText.vue')['default']
     BaseTooltip: typeof import('./../components/core/util/BaseTooltip.vue')['default']
     BasicInfo: typeof import('./../components/staff/BasicInfo.vue')['default']
+    BillingExportFilters: typeof import('./../components/finance/filters/BillingExportFilters.vue')['default']
     Breadcrumb: typeof import('./../components/ui/breadcrumb/Breadcrumb.vue')['default']
     BreadcrumbEllipsis: typeof import('./../components/ui/breadcrumb/BreadcrumbEllipsis.vue')['default']
     BreadcrumbItem: typeof import('./../components/ui/breadcrumb/BreadcrumbItem.vue')['default']

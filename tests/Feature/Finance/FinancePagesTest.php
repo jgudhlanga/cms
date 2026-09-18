@@ -7,6 +7,7 @@ test('guests are redirected when visiting finance pages', function () {
     $this->get(route('finance.index'))->assertRedirect('/login');
     $this->get(route('finance.reconciliation'))->assertRedirect('/login');
     $this->get(route('finance.pastel-export.index'))->assertRedirect('/login');
+    $this->get(route('finance.billing-export.index'))->assertRedirect('/login');
 });
 
 test('authenticated users without finance permissions cannot visit finance pages', function () {
@@ -15,6 +16,7 @@ test('authenticated users without finance permissions cannot visit finance pages
     $this->actingAs($user)->get(route('finance.index'))->assertForbidden();
     $this->actingAs($user)->get(route('finance.reconciliation'))->assertForbidden();
     $this->actingAs($user)->get(route('finance.pastel-export.index'))->assertForbidden();
+    $this->actingAs($user)->get(route('finance.billing-export.index'))->assertForbidden();
 });
 
 test('authenticated users with finance permissions can visit finance pages', function () {
@@ -27,6 +29,7 @@ test('authenticated users with finance permissions can visit finance pages', fun
     $this->actingAs($user)->get(route('finance.index'))->assertSuccessful();
     $this->actingAs($user)->get(route('finance.reconciliation'))->assertSuccessful();
     $this->actingAs($user)->get(route('finance.pastel-export.index'))->assertForbidden();
+    $this->actingAs($user)->get(route('finance.billing-export.index'))->assertForbidden();
 });
 
 test('authenticated users with export-to-pastel permission can visit pastel export', function () {
@@ -39,4 +42,18 @@ test('authenticated users with export-to-pastel permission can visit pastel expo
     $this->actingAs($user)->get(route('finance.index'))->assertSuccessful();
     $this->actingAs($user)->get(route('finance.pastel-export.index'))->assertSuccessful();
     $this->actingAs($user)->get(route('finance.reconciliation'))->assertForbidden();
+    $this->actingAs($user)->get(route('finance.billing-export.index'))->assertForbidden();
+});
+
+test('authenticated users with export-for-billing permission can visit billing export', function () {
+    $user = User::factory()->create();
+
+    Permission::findOrCreate('export-for-billing:finances', 'web');
+
+    $user->givePermissionTo('export-for-billing:finances');
+
+    $this->actingAs($user)->get(route('finance.index'))->assertSuccessful();
+    $this->actingAs($user)->get(route('finance.billing-export.index'))->assertSuccessful();
+    $this->actingAs($user)->get(route('finance.reconciliation'))->assertForbidden();
+    $this->actingAs($user)->get(route('finance.pastel-export.index'))->assertForbidden();
 });

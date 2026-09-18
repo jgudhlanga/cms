@@ -1,27 +1,21 @@
 <script setup lang="ts">
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { computed } from 'vue';
-
-interface Props {
-    title: string;
-    compact?: boolean;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-    compact: true,
-});
-
-const headerClass = computed(() => (props.compact ? 'px-3 pt-2 pb-1' : 'px-4 pt-4 pb-2'));
-const contentClass = computed(() => (props.compact ? 'px-3 pb-2' : 'px-4 pb-4'));
+defineProps<{ title: string }>();
 </script>
 
 <template>
-    <Card class="transition-shadow hover:shadow-md">
-        <CardHeader :class="headerClass">
-            <CardTitle class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{{ title }}</CardTitle>
-        </CardHeader>
-        <CardContent :class="contentClass">
+    <div
+        class="group flex flex-col overflow-hidden rounded-lg border border-border/60 bg-card shadow-xs transition-colors duration-200 hover:border-border"
+    >
+        <div class="flex items-center justify-between gap-2 border-b border-border/50 bg-muted/20 px-2.5 py-1.5">
+            <h3 class="truncate text-[9px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+                {{ title }}
+            </h3>
+            <div v-if="$slots.action" class="shrink-0">
+                <slot name="action"></slot>
+            </div>
+        </div>
+        <div class="flex-1 px-2.5 py-2">
             <slot></slot>
-        </CardContent>
-    </Card>
+        </div>
+    </div>
 </template>

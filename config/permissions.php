@@ -423,6 +423,7 @@ return [
             'import:finances',
             'export:finances',
             'export-to-pastel:finances',
+            'export-for-billing:finances',
             'viewAuditTrail:finances',
             'viewAny:finance-settings',
             'view:finance-settings',

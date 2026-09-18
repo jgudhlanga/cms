@@ -27,6 +27,73 @@ export type PastelExportFiltersState = {
 };
 
 export const PASTEL_EXPORT_DEFAULT_STUDENT_NUMBER_PREFIX = '26';
+export const BILLING_EXPORT_DEFAULT_STUDENT_NUMBER_PREFIX = PASTEL_EXPORT_DEFAULT_STUDENT_NUMBER_PREFIX;
+
+export type BillingExportSelectOption = {
+    value: number | string;
+    label: string;
+};
+
+export type BillingExportPeriodOption = {
+    id: number;
+    label: string;
+    calendarYear: string | null;
+};
+
+export type BillingExportFilterOptions = {
+    phases: BillingExportSelectOption[];
+    sources: BillingExportSelectOption[];
+    syncStatuses: BillingExportSelectOption[];
+    departments: BillingExportSelectOption[];
+    levels: BillingExportSelectOption[];
+    courses: BillingExportSelectOption[];
+    modesOfStudy: BillingExportSelectOption[];
+    pastelLinked: BillingExportSelectOption[];
+};
+
+export type BillingExportFiltersState = {
+    academic_calendar_ids?: number[];
+    student_number_starts_with?: string;
+    programme_semester_ids?: number[];
+    sources?: string[];
+    sync_statuses?: string[];
+    confirmed_from?: string | null;
+    confirmed_to?: string | null;
+    institution_department_id?: number | null;
+    department_level_id?: number | null;
+    department_course_id?: number | null;
+    mode_of_study_id?: number | null;
+    pastel_linked?: string | null;
+    search?: string | null;
+};
+
+export type BillingExportStats = {
+    total: number;
+    billedToday: number;
+    readyToBill: number | null;
+};
+
+export type StudentBillingRecord = {
+    type: string;
+    id: number | string;
+    attributes: {
+        studentId: number;
+        studentNumber: string | null;
+        studentName: string | null;
+        department: string | null;
+        level: string | null;
+        course: string | null;
+        phase: string | null;
+        billingPeriod: string | null;
+        status: string | null;
+        statusLabel: string | null;
+        pastelLinked: boolean;
+        exportedAt: string | null;
+        billedAt: string | null;
+        billedByName: string | null;
+        createdAt: string | null;
+    };
+};
 
 export type PastelLinkedStats = {
     total: number;
