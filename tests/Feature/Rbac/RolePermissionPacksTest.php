@@ -300,7 +300,9 @@ test('roles table seeder grants integrations permissions to the super user', fun
 
     expect($superUser->hasPermissionTo('view:integrations'))->toBeTrue()
         ->and($superUser->hasPermissionTo('view:payment-gateway-settings'))->toBeTrue()
-        ->and($superUser->hasPermissionTo('update:payment-gateway-settings'))->toBeTrue();
+        ->and($superUser->hasPermissionTo('update:payment-gateway-settings'))->toBeTrue()
+        ->and($superUser->hasPermissionTo('view:payments-debug'))->toBeTrue()
+        ->and($superUser->hasPermissionTo('update:payments-debug'))->toBeTrue();
 });
 
 test('user access scope reaches only own departments for department scoped users', function () {

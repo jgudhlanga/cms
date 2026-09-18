@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Integrations\PaymentController;
+use App\Http\Controllers\Integrations\PaymentDebugController;
 use App\Http\Controllers\Integrations\PaymentGatewaySettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +20,21 @@ Route::prefix('integrations')->middleware('auth')->group(function () {
         Route::post('touch', [PaymentGatewaySettingsController::class, 'touch'])->name('integrations.payment-gateway.touch');
     });
 
+    Route::prefix('payments-debug')->group(function () {
+        Route::get('/', [PaymentDebugController::class, 'index'])
+            ->middleware('can:viewPaymentsDebug')
+            ->name('integrations.payments-debug.index');
+        Route::get('ledgers', [PaymentDebugController::class, 'search'])
+            ->middleware('can:viewPaymentsDebug')
+            ->name('integrations.payments-debug.search');
+        Route::post('{order_reference}/check', [PaymentDebugController::class, 'check'])
+            ->middleware('can:viewPaymentsDebug')
+            ->name('integrations.payments-debug.check');
+        Route::post('update-status', [PaymentDebugController::class, 'update'])
+            ->middleware('can:updatePaymentsDebug')
+            ->name('integrations.payments-debug.update');
+    });
+
     // ==================================== PAYMENTS ======================================================
     Route::prefix('payments')->group(function () {
         Route::post('initiate', [PaymentController::class, 'initiatePayment'])->name('integrations.payments.initiate');
@@ -27,13 +43,7 @@ Route::prefix('integrations')->middleware('auth')->group(function () {
         Route::get('failure', [PaymentController::class, 'failed'])->name('integrations.payments.failure');
         Route::post('check-payment-status-for-current-user', [PaymentController::class, 'checkPaymentStatusForCurrenUser'])->name('check-payment-status-for-current-user');
 
-        // Staff payment tools. Gate on the route, not inside the controller: result() and feedback()
-        // call updateLedgerRecords()/checkStatus() internally without a staff user.
-        Route::middleware('can:managePaymentTools')->group(function () {
-            Route::post('payment-status/{order_reference}', [PaymentController::class, 'checkStatus'])->name('integrations.payments.check-status');
-            Route::post('update-status', [PaymentController::class, 'updateLedgerRecords'])->name('integrations.payments.update-status');
-            Route::get('payment-status', [PaymentController::class, 'createCheckStatus'])->name('integrations.payments.check-status-create');
-            Route::get('ledger-entries/{search}', [PaymentController::class, 'getLedgerEntries'])->name('integrations.payments.ledger-entries');
-        });
+        Route::get('payment-status', fn () => redirect()->route('integrations.payments-debug.index'))
+            ->name('integrations.payments.check-status-create');
     });
 });

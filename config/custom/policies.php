@@ -6,6 +6,7 @@ use App\Policies\Finance\FinanceSettingsPolicy;
 use App\Policies\Institution\CourseSyllabusModulePolicy;
 use App\Policies\Institution\CourseSyllabusPolicy;
 use App\Policies\Institution\DepartmentMetaDataPolicy;
+use App\Policies\Integrations\PaymentDebugPolicy;
 use App\Policies\Lecturer\LecturerPortalPolicy;
 use App\Policies\Settings\InstitutionSetupPolicy;
 use App\Policies\Settings\SettingPolicy;
@@ -91,7 +92,11 @@ return [
         'viewFinances',
         'exportToPastel',
         'exportForBilling',
-        'managePaymentTools',
+    ],
+
+    PaymentDebugPolicy::class => [
+        'viewPaymentsDebug',
+        'updatePaymentsDebug',
     ],
 
     FinanceSettingsPolicy::class => [

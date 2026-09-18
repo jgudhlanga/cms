@@ -3,11 +3,7 @@ import SettingsButton from '@/components/core/button/SettingsButton.vue';
 import PageContainer from '@/components/core/page/PageContainer.vue';
 import HeadingSmall from '@/components/core/util/HeadingSmall.vue';
 import { useUtils } from '@/composables/core/useUtils';
-import {
-    canViewAcademicDepartmentsMenu,
-    canViewNonAcademicDepartmentsMenu,
-    hasAbility,
-} from '@/lib/permissions';
+import { canViewAcademicDepartmentsMenu, canViewNonAcademicDepartmentsMenu } from '@/lib/permissions';
 import { AuthObject } from '@/types/data-pagination';
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { Head } from '@inertiajs/vue3';
@@ -42,10 +38,6 @@ const canViewAcademicDepartments = computed(() => canViewAcademicDepartmentsMenu
                 class="mt-6"
             />
             <SettingsButton class="mt-2" @click="gotToDepartments(1)" :title="$t('trans.manage')" />
-        </template>
-        <template v-if="hasAbility('root:manage')">
-            <HeadingSmall :title="$t('trans.ui_payments_debug')" :description="$t('trans.ui_debug_and_check_payment_statuses')" class="mt-6" />
-            <SettingsButton class="mt-2" @click="navigateTo(route('integrations.payments.check-status-create'))" :title="$t('trans.ui_debug')" />
         </template>
     </PageContainer>
 </template>

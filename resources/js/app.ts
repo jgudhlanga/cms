@@ -3,6 +3,7 @@ import '../css/app.css';
 import ConfirmDialog from '@/components/core/modal/ConfirmDialog.vue';
 import ErrorDialog from '@/components/core/modal/ErrorDialog.vue';
 import { initializeTheme } from '@/composables/core/useAppearance';
+import { trackPageHistory } from '@/lib/navigationHistory';
 import { layoutNameForPage, type PageLayoutName } from '@/lib/pageLayouts';
 import { forgetCachedPages } from '@/lib/prefetch';
 import { PageModule } from '@/types';
@@ -33,6 +34,8 @@ router.on('finish', (event) => {
         forgetCachedPages();
     }
 });
+
+trackPageHistory();
 
 // Mount without translations after this long rather than leave the page blank if they fail to load.
 const TRANSLATIONS_MOUNT_TIMEOUT_MS = 3000;

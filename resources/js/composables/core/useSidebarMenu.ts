@@ -1,14 +1,10 @@
-import {
-    isStudentProfileTabVisible,
-    portalSidebarProfileTabs,
-    type StudentProfileTabValue,
-} from '@/composables/students/useStudentProfileTabs';
+import { useUtils } from '@/composables/core/useUtils';
+import { useRbac } from '@/composables/rbac/useRbac';
+import { useSettings } from '@/composables/settings/useSettings';
+import { isStudentProfileTabVisible, portalSidebarProfileTabs, type StudentProfileTabValue } from '@/composables/students/useStudentProfileTabs';
 import { IconName } from '@/enums/icons';
 import { grantedAbilitySet } from '@/lib/grantedAbilities';
 import { icons } from '@/lib/icons';
-import { useRbac } from '@/composables/rbac/useRbac';
-import { useSettings } from '@/composables/settings/useSettings';
-import { useUtils } from '@/composables/core/useUtils';
 import {
     canShowMenuItem,
     canViewInstitutionHubAcademicDepartments,
@@ -21,19 +17,11 @@ import {
 import { tenants } from '@/lib/tenants';
 import { PageProps } from '@/types';
 import { MenuGroupInterface, MenuGroupKey, MenuItemInterface } from '@/types/ui';
-import { getActiveLanguage, trans, trans_choice } from 'laravel-vue-i18n';
 import { usePage } from '@inertiajs/vue3';
+import { getActiveLanguage, trans, trans_choice } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
-const menuGroupOrder: MenuGroupKey[] = [
-    'overview',
-    'students',
-    'lecturer',
-    'operations',
-    'institution',
-    'system',
-    'portal',
-];
+const menuGroupOrder: MenuGroupKey[] = ['overview', 'students', 'lecturer', 'operations', 'institution', 'system', 'portal'];
 
 export function getMenuItemKey(item: MenuItemInterface): string {
     return [item.transKey, item.transChoiceKey, item.url, item.title].filter(Boolean).join('|') || 'menu-item';
@@ -71,528 +59,517 @@ export function useSidebarMenu() {
 
         cachedMenuKey = menuKey;
         cachedMenuOptions = [
-        {
-            groupKey: 'overview',
-            transChoiceKey: 'trans.dashboard',
-            icon: icons[IconName.dashboard],
-            url: route('dashboard'),
-            show: hasDashboardAccess(moduleState),
-        },
-        {
-            groupKey: 'lecturer',
-            transChoiceKey: 'trans.class',
-            icon: icons[IconName.users],
-            url: route('teaching.classes.index'),
-            show: canShowMenuItem('view:lecturer-classes', 'institution', moduleState),
-        },
-        {
-            groupKey: 'lecturer',
-            transChoiceKey: 'trans.module',
-            icon: icons[IconName.book_check],
-            url: route('teaching.modules.index'),
-            show: canShowMenuItem('view:lecturer-modules', 'institution', moduleState),
-        },
-        (() => {
-            const courseWorkChildren: MenuItemInterface[] = [
-                {
-                    transChoiceKey: 'academic_calendar.course_work_nav_progress',
-                    icon: icons[IconName.chart_increasing],
-                    url: route('teaching.course-work-progress.index'),
-                    show: canShowMenuItem('view:course-work-progress', 'course-work', moduleState),
-                },
-                {
-                    transChoiceKey: 'academic_calendar.course_work_nav_progress_reports',
-                    icon: icons[IconName.clipboard_check],
-                    url: route('course-work-progress-reports.index'),
-                    show: canShowMenuItem('acknowledge:course-work-progress-reports', 'course-work', moduleState),
-                },
-                {
-                    transChoiceKey: 'academic_calendar.course_work_nav_missing_marks',
-                    icon: icons[IconName.file_warning],
-                    url: route('missing-marks-report.index'),
-                    show: canShowMenuItem('view:missing-marks-report', 'course-work', moduleState),
-                },
-                {
-                    transChoiceKey: 'academic_calendar.course_work_nav_extensions',
-                    icon: icons[IconName.calendar_clock],
-                    url: route('course-work-extensions.index'),
-                    show: canShowMenuItem('viewAny:course-work-extensions', 'course-work', moduleState),
-                },
-            ].filter((child) => child.show);
-
-            return {
-                groupKey: 'lecturer' as const,
-                transChoiceKey: 'academic_calendar.course_work',
-                icon: icons[IconName.clipboard_pen],
-                items: courseWorkChildren,
-                show: courseWorkChildren.length > 0,
-            };
-        })(),
-        (() => {
-            const canSearchStudents = canShowMenuItem('view:students', 'students', moduleState);
-            const canViewApplications = canShowMenuItem('view:student-applications', 'enrolments', moduleState);
-            const canViewStudentIds = canShowMenuItem(
-                'viewAny:student-id-card-requests',
-                'student-ids',
-                moduleState,
-            );
-            const studentChildren: MenuItemInterface[] = [
-                {
-                    transChoiceKey: 'trans.application',
-                    url: route('enrolments.index'),
-                    show: canViewApplications,
-                },
-                {
-                    transKey: 'trans.nav_search',
-                    url: route('students.index'),
-                    show: canSearchStudents,
-                },
-                {
-                    transChoiceKey: 'trans.student_id',
-                    url: route('admin.students.id-card-requests.index'),
-                    show: canViewStudentIds,
-                },
-            ].filter((child) => child.show);
-
-            return {
-                groupKey: 'students' as const,
-                transChoiceKey: 'trans.student',
-                icon: icons[IconName.user_check],
-                items: studentChildren,
-                show: studentChildren.length > 0,
-            };
-        })(),
-        {
-            groupKey: 'students',
-            transChoiceKey: 'trans.communication',
-            url: '#',
-            icon: icons[IconName.person_chat],
-            show: false /*hasAbility('view:communication')*/,
-        },
-        (() => {
-            const canViewExaminations = canShowMenuItem(
-                ['viewAny:examinations', 'view:examinations'],
-                'examinations',
-                moduleState,
-            );
-            const examinationChildren: MenuItemInterface[] = [
-                {
-                    transKey: 'examinations.search',
-                    url: route('examinations.index'),
-                    show: canViewExaminations,
-                },
-                {
-                    transKey: 'examinations.dashboard',
-                    url: route('examinations.dashboard'),
-                    show: canViewExaminations,
-                },
-            ].filter((child) => child.show);
-
-            return {
-                groupKey: 'operations' as const,
-                transChoiceKey: 'trans.examination',
-                icon: icons[IconName.book_check],
-                items: examinationChildren,
-                show: canViewExaminations,
-            };
-        })(),
-        {
-            groupKey: 'operations',
-            transChoiceKey: 'trans.report',
-            url: '#',
-            icon: icons[IconName.report],
-            show: canShowMenuItem('view:report', 'reports', moduleState),
-        },
-        (() => {
-            const canViewFinance = canShowMenuItem('view:finances', 'finance', moduleState);
-            const canExportToPastel = canShowMenuItem('export-to-pastel:finances', 'finance', moduleState);
-            const canExportForBilling = canShowMenuItem('export-for-billing:finances', 'finance', moduleState);
-            const canViewFinanceChildren = hasAbility(['view:finances', 'view:finance-settings']);
-            const financeChildren: MenuItemInterface[] = [
-                {
-                    transChoiceKey: 'finance.reconciliation',
-                    url: route('finance.reconciliation'),
-                    show: canViewFinanceChildren,
-                },
-                {
-                    transChoiceKey: 'finance.exchange_rate',
-                    url: route('finance.exchange-rates.index'),
-                    show: canViewFinanceChildren,
-                },
-                {
-                    transChoiceKey: 'finance.pastel_export',
-                    url: route('finance.pastel-export.index'),
-                    show: canExportToPastel,
-                },
-                {
-                    transChoiceKey: 'finance.billing_export',
-                    url: route('finance.billing-export.index'),
-                    show: canExportForBilling,
-                },
-            ].filter((child) => child.show);
-
-            return {
-                groupKey: 'operations' as const,
-                transChoiceKey: 'finance.financial',
-                url: route('finance.index'),
-                icon: icons[IconName.dollar],
-                items: financeChildren,
-                show: canViewFinance || canExportToPastel || canExportForBilling,
-            };
-        })(),
-        (() => {
-            const institutionModuleOn = isModuleEnabled('institution', moduleState);
-            const institutionChildren: MenuItemInterface[] = [
-                {
-                    transChoiceKey: 'trans.non_academic_department_sidebar',
-                    transChoiceKeyIndex: 2,
-                    url: route('institution-departments.index', { is_academic: 0 }),
-                    show: institutionModuleOn && canViewNonAcademicDepartmentsMenu(),
-                },
-                {
-                    transChoiceKey: 'trans.academic_department_sidebar',
-                    transChoiceKeyIndex: 2,
-                    url: route('institution-departments.index', { is_academic: 1 }),
-                    show: institutionModuleOn && canViewInstitutionHubAcademicDepartments(),
-                },
-                {
-                    transKey: 'trans.my_departments',
-                    url: route('institution-departments.index', { is_academic: 1 }),
-                    show:
-                        institutionModuleOn
-                        && hasAbility('viewOnlyOwnDepartment:departments')
-                        && !canViewInstitutionHubAcademicDepartments(),
-                },
-                {
-                    transKey: 'trans.ui_payments_debug',
-                    url: route('integrations.payments.check-status-create'),
-                    show: hasAbility('root:manage'),
-                },
-            ].filter((child) => child.show);
-
-            return {
-                groupKey: 'institution' as const,
-                transChoiceKey: 'trans.institution',
-                transChoiceKeyIndex: 1,
-                url: route('institution.index'),
-                icon: icons[IconName.school],
-                items: institutionChildren,
-                show: institutionChildren.length > 0,
-            };
-        })(),
-        (() => {
-            const institutionModuleOn = isModuleEnabled('institution', moduleState);
-            const institutionConfigChildren: MenuItemInterface[] = [
-                {
-                    transChoiceKey: 'trans.intake_period',
-                    url: route('intake-periods.index'),
-                    show: institutionModuleOn && hasAbility(['viewAny:intake-periods', 'view:intake-periods']),
-                },
-                {
-                    transChoiceKey: 'trans.document_template',
-                    url: route('document-templates.index'),
-                    show: institutionModuleOn && hasAbility('viewAny:document-templates'),
-                },
-                {
-                    transChoiceKey: 'trans.fee_levy_structure',
-                    url: route('fee-structures.index'),
-                    show: institutionModuleOn && hasAbility('viewAny:fee-structures'),
-                },
-                {
-                    transChoiceKey: 'application_offerings.menu',
-                    url: route('application-offerings.index'),
-                    show: institutionModuleOn && hasAbility('manage:online-application-catalogue'),
-                },
-                {
-                    transKey: 'trans.institution_features',
-                    url: route('institution-features.index'),
-                    show: institutionModuleOn && hasAbility('manage:institution-features'),
-                },
-                {
-                    transChoiceKey: 'academic_calendar.academic_calendar',
-                    url: route('academic-calendars.index'),
-                    show: institutionModuleOn && hasAbility('viewAny:academic-calendars'),
-                },
-                {
-                    transChoiceKey: 'trans.course',
-                    url: route('courses.index'),
-                    show: institutionModuleOn && hasAbility(['viewAny:courses', 'view:courses']),
-                },
-                {
-                    transChoiceKey: 'trans.department',
-                    url: route('departments.index'),
-                    show: institutionModuleOn && hasAbility(['viewAny:departments', 'view:departments']),
-                },
-                {
-                    transChoiceKey: 'trans.division',
-                    url: route('divisions.index'),
-                    show: institutionModuleOn && hasAbility(['viewAny:divisions', 'view:divisions']),
-                },
-                {
-                    transChoiceKey: 'trans.grade',
-                    url: route('grades.index'),
-                    show: institutionModuleOn && hasAbility(['viewAny:grades', 'view:grades']),
-                },
-                {
-                    transChoiceKey: 'trans.level',
-                    url: route('levels.index'),
-                    show: institutionModuleOn && hasAbility(['viewAny:levels', 'view:levels']),
-                },
-                {
-                    transChoiceKey: 'trans.mode_of_study',
-                    url: route('mode-of-studies.index'),
-                    show: institutionModuleOn && hasAbility(['viewAny:mode-of-studies', 'view:mode-of-studies']),
-                },
-                {
-                    transChoiceKey: 'trans.assessment_type',
-                    url: route('assessment-types.index'),
-                    show: institutionModuleOn && hasAbility(['viewAny:assessment-types', 'view:assessment-types']),
-                },
-                {
-                    transChoiceKey: 'trans.subject',
-                    url: route('subjects.index'),
-                    show: institutionModuleOn && hasAbility(['viewAny:subjects', 'view:subjects']),
-                },
-                {
-                    transChoiceKey: 'students.enrolment_status',
-                    url: route('student-enrolment-statuses.index'),
-                    show: institutionModuleOn && hasAbility(['viewAny:student-enrolment-statuses', 'view:student-enrolment-statuses']),
-                },
-                {
-                    transChoiceKey: 'academic_years.semester',
-                    url: route('semesters.index'),
-                    show: institutionModuleOn && hasAbility(['viewAny:semesters', 'view:semesters']),
-                },
-            ].filter((child) => child.show);
-
-            return {
-                groupKey: 'institution' as const,
-                transKey: 'trans.institution_config',
-                url: route('institution.setup'),
-                icon: icons[IconName.scheme],
-                items: institutionConfigChildren,
-                show: institutionModuleOn && institutionConfigChildren.length > 0,
-            };
-        })(),
-        (() => {
-            const hmsChildren: MenuItemInterface[] = [
-                {
-                    transChoiceKey: 'hms.hostel',
-                    transChoiceKeyIndex: 2,
-                    url: route('hostels.index', { tab: 'hostels' }),
-                    show: true,
-                },
-                {
-                    transChoiceKey: 'hms.room',
-                    transChoiceKeyIndex: 2,
-                    url: route('hostels.index', { tab: 'rooms' }),
-                    show: true,
-                },
-                {
-                    transChoiceKey: 'trans.student',
-                    transChoiceKeyIndex: 2,
-                    url: route('hostels.index', { tab: 'students' }),
-                    show: true,
-                },
-                {
-                    transChoiceKey: 'hms.application',
-                    transChoiceKeyIndex: 2,
-                    url: route('hostels.index', { tab: 'applications' }),
-                    show: hasAbility('viewAny:hostel-applications'),
-                },
-                {
-                    transChoiceKey: 'hms.amenity',
-                    transChoiceKeyIndex: 2,
-                    url: route('hostels.index', { tab: 'amenities' }),
-                    show: hasAbility(['viewAny:hostel-amenities', 'view:hostel-amenities']),
-                },
-                {
-                    transChoiceKey: 'hms.settings',
-                    transChoiceKeyIndex: 2,
-                    url: route('hostels.index', { tab: 'settings' }),
-                    show: hasAbility(['view:hms-settings', 'update:hms-settings', 'crud-settings:hms-settings']),
-                },
-            ].filter((child) => child.show);
-
-            return {
-                groupKey: 'institution' as const,
-                transChoiceKey: 'hms.title',
-                icon: icons[IconName.bed],
-                url: route('hostels.index'),
-                items: hmsChildren,
-                show: canShowMenuItem('view:hostels', 'hms', moduleState),
-            };
-        })(),
-        (() => {
-            const canManageRbac = canShowMenuItem('root:manage', 'root', moduleState);
-            const rbacChildren: MenuItemInterface[] = useRbac().tabs.map((tab) => ({
-                transChoiceKey: tab.transChoiceKey,
-                url: tab.url,
-                show: canManageRbac,
-            })).filter((child) => child.show);
-
-            return {
-                groupKey: 'system' as const,
-                transKey: 'trans.rbac',
-                url: route('rbac.index'),
-                icon: icons[IconName.shield],
-                items: rbacChildren,
-                show: canManageRbac,
-            };
-        })(),
-        (() => {
-            const canViewSettings = canShowMenuItem('view:settings', 'settings', moduleState);
-            const settingsChildren: MenuItemInterface[] = useSettings().tabs.map((tab) => ({
-                transChoiceKey: tab.transChoiceKey,
-                url: tab.url,
-                show: canViewSettings,
-            })).filter((child) => child.show);
-
-            return {
-                groupKey: 'system' as const,
-                transKey: 'trans.settings',
-                url: route('settings.index'),
-                icon: icons[IconName.cogs],
-                items: settingsChildren,
-                show: canViewSettings,
-            };
-        })(),
-        (() => {
-            const canViewPaymentGateway = canShowMenuItem(
-                ['view:payment-gateway-settings', 'update:payment-gateway-settings'],
-                'integrations',
-                moduleState,
-            );
-            const integrationsChildren: MenuItemInterface[] = [
-                {
-                    transKey: 'trans.payment_gateway',
-                    url: route('integrations.payment-gateway.index'),
-                    icon: icons[IconName.wallet_cards],
-                    show: canViewPaymentGateway,
-                },
-            ].filter((child) => child.show);
-
-            return {
-                groupKey: 'system' as const,
-                transKey: 'trans.integrations',
-                icon: icons[IconName.unplug],
-                items: integrationsChildren,
-                show: integrationsChildren.length > 0,
-            };
-        })(),
-        (() => {
-            const canSearchUsers = canShowMenuItem('view:users', 'users', moduleState);
-            const canViewAuditTrail = isModuleEnabled('dashboards', moduleState) && !hasStudentProfile();
-            const userChildren: MenuItemInterface[] = [
-                {
-                    transKey: 'trans.nav_search',
-                    url: route('users.index'),
-                    show: canSearchUsers,
-                },
-                {
-                    transKey: 'trans.audit_trail',
-                    url: route('users.audit-trail'),
-                    show: canViewAuditTrail,
-                },
-            ].filter((child) => child.show);
-
-            return {
-                groupKey: 'system' as const,
-                transChoiceKey: 'trans.user',
+            {
+                groupKey: 'overview',
+                transChoiceKey: 'trans.dashboard',
+                icon: icons[IconName.dashboard],
+                url: route('dashboard'),
+                show: hasDashboardAccess(moduleState),
+            },
+            {
+                groupKey: 'lecturer',
+                transChoiceKey: 'trans.class',
                 icon: icons[IconName.users],
-                items: userChildren,
-                show: userChildren.length > 0,
-            };
-        })(),
-        (() => {
-            const canMaintain = canShowMenuItem(['root:manage', 'manage:data-maintenance'], 'root', moduleState);
-            const maintenanceChildren: MenuItemInterface[] = [
-                {
-                    transChoiceKey: 'trans.user',
-                    transChoiceKeyIndex: 2,
-                    url: route('maintenance.index', { tab: 'users' }),
-                    show: canMaintain,
-                },
-                {
-                    transKey: 'trans.staff',
-                    url: route('maintenance.index', { tab: 'staff' }),
-                    show: canMaintain,
-                },
-                {
-                    transChoiceKey: 'trans.student',
-                    transChoiceKeyIndex: 2,
-                    url: route('maintenance.index', { tab: 'students' }),
-                    show: canMaintain,
-                },
-                {
-                    transKey: 'trans.maintenance_archives',
-                    url: route('maintenance.index', { tab: 'archives' }),
-                    show: canMaintain,
-                },
-            ].filter((child) => child.show);
+                url: route('teaching.classes.index'),
+                show: canShowMenuItem('view:lecturer-classes', 'institution', moduleState),
+            },
+            {
+                groupKey: 'lecturer',
+                transChoiceKey: 'trans.module',
+                icon: icons[IconName.book_check],
+                url: route('teaching.modules.index'),
+                show: canShowMenuItem('view:lecturer-modules', 'institution', moduleState),
+            },
+            (() => {
+                const courseWorkChildren: MenuItemInterface[] = [
+                    {
+                        transChoiceKey: 'academic_calendar.course_work_nav_progress',
+                        icon: icons[IconName.chart_increasing],
+                        url: route('teaching.course-work-progress.index'),
+                        show: canShowMenuItem('view:course-work-progress', 'course-work', moduleState),
+                    },
+                    {
+                        transChoiceKey: 'academic_calendar.course_work_nav_progress_reports',
+                        icon: icons[IconName.clipboard_check],
+                        url: route('course-work-progress-reports.index'),
+                        show: canShowMenuItem('acknowledge:course-work-progress-reports', 'course-work', moduleState),
+                    },
+                    {
+                        transChoiceKey: 'academic_calendar.course_work_nav_missing_marks',
+                        icon: icons[IconName.file_warning],
+                        url: route('missing-marks-report.index'),
+                        show: canShowMenuItem('view:missing-marks-report', 'course-work', moduleState),
+                    },
+                    {
+                        transChoiceKey: 'academic_calendar.course_work_nav_extensions',
+                        icon: icons[IconName.calendar_clock],
+                        url: route('course-work-extensions.index'),
+                        show: canShowMenuItem('viewAny:course-work-extensions', 'course-work', moduleState),
+                    },
+                ].filter((child) => child.show);
 
-            return {
-                groupKey: 'system' as const,
-                transKey: 'trans.maintenance',
-                url: route('maintenance.index'),
-                icon: icons[IconName.maintenance],
-                items: maintenanceChildren,
-                show: canMaintain,
-            };
-        })(),
-        {
-            groupKey: 'portal',
-            transChoiceKey: 'trans.dashboard',
-            icon: icons[IconName.dashboard],
-            url: route('portal.dashboard'),
-            show: hasAbility('viewOwnDashboard:students') && hasStudentProfile(),
-        },
-        ...portalSidebarProfileTabs()
-            .filter((tab) => tab.value !== 'authentication')
-            .map((tab) => ({
-                groupKey: 'portal' as const,
-                title: tab.transLabel(),
-                icon: icons[tab.icon],
-                url: route(tab.routeName!),
-                show:
-                    hasStudentProfile()
-                    && isStudentProfileTabVisible(tab.value as StudentProfileTabValue, 'portal'),
-            })),
-        {
-            groupKey: 'portal',
-            title: 'O Levels',
-            icon: icons[IconName.award],
-            url: route('portal.list-o-levels'),
-            show: hasStudentProfile() && hasAbility('manageOwnStudentAcademicDetails:students'),
-        },
-        {
-            groupKey: 'portal',
-            transKey: 'trans.exam_results',
-            icon: icons[IconName.file_search],
-            url: route('portal.exam-results'),
-            show: hasStudentProfile() && hasAbility('viewOwnExamResults:students'),
-        },
-        {
-            groupKey: 'portal',
-            transKey: 'trans.student_id_card',
-            icon: icons[IconName.card],
-            url: route('portal.id-card.index'),
-            show: hasStudentProfile()
-                && isModuleEnabled('student-ids', moduleState)
-                && hasAbility('manageOwnStudentPersonalDetails:students'),
-        },
-        ...portalSidebarProfileTabs()
-            .filter((tab) => tab.value === 'authentication')
-            .map((tab) => ({
-                groupKey: 'portal' as const,
-                title: tab.transLabel(),
-                icon: icons[tab.icon],
-                url: route(tab.routeName!),
-                show:
-                    hasStudentProfile()
-                    && isStudentProfileTabVisible(tab.value as StudentProfileTabValue, 'portal'),
-            })),
-    ];
+                return {
+                    groupKey: 'lecturer' as const,
+                    transChoiceKey: 'academic_calendar.course_work',
+                    icon: icons[IconName.clipboard_pen],
+                    items: courseWorkChildren,
+                    show: courseWorkChildren.length > 0,
+                };
+            })(),
+            (() => {
+                const canSearchStudents = canShowMenuItem('view:students', 'students', moduleState);
+                const canViewApplications = canShowMenuItem('view:student-applications', 'enrolments', moduleState);
+                const canViewStudentIds = canShowMenuItem('viewAny:student-id-card-requests', 'student-ids', moduleState);
+                const studentChildren: MenuItemInterface[] = [
+                    {
+                        transChoiceKey: 'trans.application',
+                        url: route('enrolments.index'),
+                        show: canViewApplications,
+                    },
+                    {
+                        transKey: 'trans.nav_search',
+                        url: route('students.index'),
+                        show: canSearchStudents,
+                    },
+                    {
+                        transChoiceKey: 'trans.student_id',
+                        url: route('admin.students.id-card-requests.index'),
+                        show: canViewStudentIds,
+                    },
+                ].filter((child) => child.show);
+
+                return {
+                    groupKey: 'students' as const,
+                    transChoiceKey: 'trans.student',
+                    icon: icons[IconName.user_check],
+                    items: studentChildren,
+                    show: studentChildren.length > 0,
+                };
+            })(),
+            {
+                groupKey: 'students',
+                transChoiceKey: 'trans.communication',
+                url: '#',
+                icon: icons[IconName.person_chat],
+                show: false /*hasAbility('view:communication')*/,
+            },
+            (() => {
+                const canViewExaminations = canShowMenuItem(['viewAny:examinations', 'view:examinations'], 'examinations', moduleState);
+                const examinationChildren: MenuItemInterface[] = [
+                    {
+                        transKey: 'examinations.search',
+                        url: route('examinations.index'),
+                        show: canViewExaminations,
+                    },
+                    {
+                        transKey: 'examinations.dashboard',
+                        url: route('examinations.dashboard'),
+                        show: canViewExaminations,
+                    },
+                ].filter((child) => child.show);
+
+                return {
+                    groupKey: 'operations' as const,
+                    transChoiceKey: 'trans.examination',
+                    icon: icons[IconName.book_check],
+                    items: examinationChildren,
+                    show: canViewExaminations,
+                };
+            })(),
+            {
+                groupKey: 'operations',
+                transChoiceKey: 'trans.report',
+                url: '#',
+                icon: icons[IconName.report],
+                show: canShowMenuItem('view:report', 'reports', moduleState),
+            },
+            (() => {
+                const canViewFinance = canShowMenuItem('view:finances', 'finance', moduleState);
+                const canExportToPastel = canShowMenuItem('export-to-pastel:finances', 'finance', moduleState);
+                const canExportForBilling = canShowMenuItem('export-for-billing:finances', 'finance', moduleState);
+                const canViewFinanceChildren = hasAbility(['view:finances', 'view:finance-settings']);
+                const financeChildren: MenuItemInterface[] = [
+                    {
+                        transChoiceKey: 'finance.reconciliation',
+                        url: route('finance.reconciliation'),
+                        show: canViewFinanceChildren,
+                    },
+                    {
+                        transChoiceKey: 'finance.exchange_rate',
+                        url: route('finance.exchange-rates.index'),
+                        show: canViewFinanceChildren,
+                    },
+                    {
+                        transChoiceKey: 'finance.pastel_export',
+                        url: route('finance.pastel-export.index'),
+                        show: canExportToPastel,
+                    },
+                    {
+                        transChoiceKey: 'finance.billing_export',
+                        url: route('finance.billing-export.index'),
+                        show: canExportForBilling,
+                    },
+                ].filter((child) => child.show);
+
+                return {
+                    groupKey: 'operations' as const,
+                    transChoiceKey: 'finance.financial',
+                    url: route('finance.index'),
+                    icon: icons[IconName.dollar],
+                    items: financeChildren,
+                    show: canViewFinance || canExportToPastel || canExportForBilling,
+                };
+            })(),
+            (() => {
+                const institutionModuleOn = isModuleEnabled('institution', moduleState);
+                const institutionChildren: MenuItemInterface[] = [
+                    {
+                        transChoiceKey: 'trans.non_academic_department_sidebar',
+                        transChoiceKeyIndex: 2,
+                        url: route('institution-departments.index', { is_academic: 0 }),
+                        show: institutionModuleOn && canViewNonAcademicDepartmentsMenu(),
+                    },
+                    {
+                        transChoiceKey: 'trans.academic_department_sidebar',
+                        transChoiceKeyIndex: 2,
+                        url: route('institution-departments.index', { is_academic: 1 }),
+                        show: institutionModuleOn && canViewInstitutionHubAcademicDepartments(),
+                    },
+                    {
+                        transKey: 'trans.my_departments',
+                        url: route('institution-departments.index', { is_academic: 1 }),
+                        show: institutionModuleOn && hasAbility('viewOnlyOwnDepartment:departments') && !canViewInstitutionHubAcademicDepartments(),
+                    },
+                ].filter((child) => child.show);
+
+                return {
+                    groupKey: 'institution' as const,
+                    transChoiceKey: 'trans.institution',
+                    transChoiceKeyIndex: 1,
+                    url: route('institution.index'),
+                    icon: icons[IconName.school],
+                    items: institutionChildren,
+                    show: institutionChildren.length > 0,
+                };
+            })(),
+            (() => {
+                const institutionModuleOn = isModuleEnabled('institution', moduleState);
+                const institutionConfigChildren: MenuItemInterface[] = [
+                    {
+                        transChoiceKey: 'trans.intake_period',
+                        url: route('intake-periods.index'),
+                        show: institutionModuleOn && hasAbility(['viewAny:intake-periods', 'view:intake-periods']),
+                    },
+                    {
+                        transChoiceKey: 'trans.document_template',
+                        url: route('document-templates.index'),
+                        show: institutionModuleOn && hasAbility('viewAny:document-templates'),
+                    },
+                    {
+                        transChoiceKey: 'trans.fee_levy_structure',
+                        url: route('fee-structures.index'),
+                        show: institutionModuleOn && hasAbility('viewAny:fee-structures'),
+                    },
+                    {
+                        transChoiceKey: 'application_offerings.menu',
+                        url: route('application-offerings.index'),
+                        show: institutionModuleOn && hasAbility('manage:online-application-catalogue'),
+                    },
+                    {
+                        transKey: 'trans.institution_features',
+                        url: route('institution-features.index'),
+                        show: institutionModuleOn && hasAbility('manage:institution-features'),
+                    },
+                    {
+                        transChoiceKey: 'academic_calendar.academic_calendar',
+                        url: route('academic-calendars.index'),
+                        show: institutionModuleOn && hasAbility('viewAny:academic-calendars'),
+                    },
+                    {
+                        transChoiceKey: 'trans.course',
+                        url: route('courses.index'),
+                        show: institutionModuleOn && hasAbility(['viewAny:courses', 'view:courses']),
+                    },
+                    {
+                        transChoiceKey: 'trans.department',
+                        url: route('departments.index'),
+                        show: institutionModuleOn && hasAbility(['viewAny:departments', 'view:departments']),
+                    },
+                    {
+                        transChoiceKey: 'trans.division',
+                        url: route('divisions.index'),
+                        show: institutionModuleOn && hasAbility(['viewAny:divisions', 'view:divisions']),
+                    },
+                    {
+                        transChoiceKey: 'trans.grade',
+                        url: route('grades.index'),
+                        show: institutionModuleOn && hasAbility(['viewAny:grades', 'view:grades']),
+                    },
+                    {
+                        transChoiceKey: 'trans.level',
+                        url: route('levels.index'),
+                        show: institutionModuleOn && hasAbility(['viewAny:levels', 'view:levels']),
+                    },
+                    {
+                        transChoiceKey: 'trans.mode_of_study',
+                        url: route('mode-of-studies.index'),
+                        show: institutionModuleOn && hasAbility(['viewAny:mode-of-studies', 'view:mode-of-studies']),
+                    },
+                    {
+                        transChoiceKey: 'trans.assessment_type',
+                        url: route('assessment-types.index'),
+                        show: institutionModuleOn && hasAbility(['viewAny:assessment-types', 'view:assessment-types']),
+                    },
+                    {
+                        transChoiceKey: 'trans.subject',
+                        url: route('subjects.index'),
+                        show: institutionModuleOn && hasAbility(['viewAny:subjects', 'view:subjects']),
+                    },
+                    {
+                        transChoiceKey: 'students.enrolment_status',
+                        url: route('student-enrolment-statuses.index'),
+                        show: institutionModuleOn && hasAbility(['viewAny:student-enrolment-statuses', 'view:student-enrolment-statuses']),
+                    },
+                    {
+                        transChoiceKey: 'academic_years.semester',
+                        url: route('semesters.index'),
+                        show: institutionModuleOn && hasAbility(['viewAny:semesters', 'view:semesters']),
+                    },
+                ].filter((child) => child.show);
+
+                return {
+                    groupKey: 'institution' as const,
+                    transKey: 'trans.institution_config',
+                    url: route('institution.setup'),
+                    icon: icons[IconName.scheme],
+                    items: institutionConfigChildren,
+                    show: institutionModuleOn && institutionConfigChildren.length > 0,
+                };
+            })(),
+            (() => {
+                const hmsChildren: MenuItemInterface[] = [
+                    {
+                        transChoiceKey: 'hms.hostel',
+                        transChoiceKeyIndex: 2,
+                        url: route('hostels.index', { tab: 'hostels' }),
+                        show: true,
+                    },
+                    {
+                        transChoiceKey: 'hms.room',
+                        transChoiceKeyIndex: 2,
+                        url: route('hostels.index', { tab: 'rooms' }),
+                        show: true,
+                    },
+                    {
+                        transChoiceKey: 'trans.student',
+                        transChoiceKeyIndex: 2,
+                        url: route('hostels.index', { tab: 'students' }),
+                        show: true,
+                    },
+                    {
+                        transChoiceKey: 'hms.application',
+                        transChoiceKeyIndex: 2,
+                        url: route('hostels.index', { tab: 'applications' }),
+                        show: hasAbility('viewAny:hostel-applications'),
+                    },
+                    {
+                        transChoiceKey: 'hms.amenity',
+                        transChoiceKeyIndex: 2,
+                        url: route('hostels.index', { tab: 'amenities' }),
+                        show: hasAbility(['viewAny:hostel-amenities', 'view:hostel-amenities']),
+                    },
+                    {
+                        transChoiceKey: 'hms.settings',
+                        transChoiceKeyIndex: 2,
+                        url: route('hostels.index', { tab: 'settings' }),
+                        show: hasAbility(['view:hms-settings', 'update:hms-settings', 'crud-settings:hms-settings']),
+                    },
+                ].filter((child) => child.show);
+
+                return {
+                    groupKey: 'institution' as const,
+                    transChoiceKey: 'hms.title',
+                    icon: icons[IconName.bed],
+                    url: route('hostels.index'),
+                    items: hmsChildren,
+                    show: canShowMenuItem('view:hostels', 'hms', moduleState),
+                };
+            })(),
+            (() => {
+                const canManageRbac = canShowMenuItem('root:manage', 'root', moduleState);
+                const rbacChildren: MenuItemInterface[] = useRbac()
+                    .tabs.map((tab) => ({
+                        transChoiceKey: tab.transChoiceKey,
+                        url: tab.url,
+                        show: canManageRbac,
+                    }))
+                    .filter((child) => child.show);
+
+                return {
+                    groupKey: 'system' as const,
+                    transKey: 'trans.rbac',
+                    url: route('rbac.index'),
+                    icon: icons[IconName.shield],
+                    items: rbacChildren,
+                    show: canManageRbac,
+                };
+            })(),
+            (() => {
+                const canViewSettings = canShowMenuItem('view:settings', 'settings', moduleState);
+                const settingsChildren: MenuItemInterface[] = useSettings()
+                    .tabs.map((tab) => ({
+                        transChoiceKey: tab.transChoiceKey,
+                        url: tab.url,
+                        show: canViewSettings,
+                    }))
+                    .filter((child) => child.show);
+
+                return {
+                    groupKey: 'system' as const,
+                    transKey: 'trans.settings',
+                    url: route('settings.index'),
+                    icon: icons[IconName.cogs],
+                    items: settingsChildren,
+                    show: canViewSettings,
+                };
+            })(),
+            (() => {
+                const canViewPaymentGateway = canShowMenuItem(
+                    ['view:payment-gateway-settings', 'update:payment-gateway-settings'],
+                    'integrations',
+                    moduleState,
+                );
+                const canViewPaymentsDebug = canShowMenuItem(['view:payments-debug', 'update:payments-debug'], 'integrations', moduleState);
+                const integrationsChildren: MenuItemInterface[] = [
+                    {
+                        transKey: 'trans.payment_gateway',
+                        url: route('integrations.payment-gateway.index'),
+                        icon: icons[IconName.wallet_cards],
+                        show: canViewPaymentGateway,
+                    },
+                    {
+                        transKey: 'trans.ui_payments_debug',
+                        url: route('integrations.payments-debug.index'),
+                        icon: icons[IconName.search],
+                        show: canViewPaymentsDebug,
+                    },
+                ].filter((child) => child.show);
+
+                return {
+                    groupKey: 'system' as const,
+                    transKey: 'trans.integrations',
+                    icon: icons[IconName.unplug],
+                    items: integrationsChildren,
+                    show: integrationsChildren.length > 0,
+                };
+            })(),
+            (() => {
+                const canSearchUsers = canShowMenuItem('view:users', 'users', moduleState);
+                const canViewAuditTrail = isModuleEnabled('dashboards', moduleState) && !hasStudentProfile();
+                const userChildren: MenuItemInterface[] = [
+                    {
+                        transKey: 'trans.nav_search',
+                        url: route('users.index'),
+                        show: canSearchUsers,
+                    },
+                    {
+                        transKey: 'trans.audit_trail',
+                        url: route('users.audit-trail'),
+                        show: canViewAuditTrail,
+                    },
+                ].filter((child) => child.show);
+
+                return {
+                    groupKey: 'system' as const,
+                    transChoiceKey: 'trans.user',
+                    icon: icons[IconName.users],
+                    items: userChildren,
+                    show: userChildren.length > 0,
+                };
+            })(),
+            (() => {
+                const canMaintain = canShowMenuItem(['root:manage', 'manage:data-maintenance'], 'root', moduleState);
+                const maintenanceChildren: MenuItemInterface[] = [
+                    {
+                        transChoiceKey: 'trans.user',
+                        transChoiceKeyIndex: 2,
+                        url: route('maintenance.index', { tab: 'users' }),
+                        show: canMaintain,
+                    },
+                    {
+                        transKey: 'trans.staff',
+                        url: route('maintenance.index', { tab: 'staff' }),
+                        show: canMaintain,
+                    },
+                    {
+                        transChoiceKey: 'trans.student',
+                        transChoiceKeyIndex: 2,
+                        url: route('maintenance.index', { tab: 'students' }),
+                        show: canMaintain,
+                    },
+                    {
+                        transKey: 'trans.maintenance_archives',
+                        url: route('maintenance.index', { tab: 'archives' }),
+                        show: canMaintain,
+                    },
+                ].filter((child) => child.show);
+
+                return {
+                    groupKey: 'system' as const,
+                    transKey: 'trans.maintenance',
+                    url: route('maintenance.index'),
+                    icon: icons[IconName.maintenance],
+                    items: maintenanceChildren,
+                    show: canMaintain,
+                };
+            })(),
+            {
+                groupKey: 'portal',
+                transChoiceKey: 'trans.dashboard',
+                icon: icons[IconName.dashboard],
+                url: route('portal.dashboard'),
+                show: hasAbility('viewOwnDashboard:students') && hasStudentProfile(),
+            },
+            ...portalSidebarProfileTabs()
+                .filter((tab) => tab.value !== 'authentication')
+                .map((tab) => ({
+                    groupKey: 'portal' as const,
+                    title: tab.transLabel(),
+                    icon: icons[tab.icon],
+                    url: route(tab.routeName!),
+                    show: hasStudentProfile() && isStudentProfileTabVisible(tab.value as StudentProfileTabValue, 'portal'),
+                })),
+            {
+                groupKey: 'portal',
+                title: 'O Levels',
+                icon: icons[IconName.award],
+                url: route('portal.list-o-levels'),
+                show: hasStudentProfile() && hasAbility('manageOwnStudentAcademicDetails:students'),
+            },
+            {
+                groupKey: 'portal',
+                transKey: 'trans.exam_results',
+                icon: icons[IconName.file_search],
+                url: route('portal.exam-results'),
+                show: hasStudentProfile() && hasAbility('viewOwnExamResults:students'),
+            },
+            {
+                groupKey: 'portal',
+                transKey: 'trans.student_id_card',
+                icon: icons[IconName.card],
+                url: route('portal.id-card.index'),
+                show: hasStudentProfile() && isModuleEnabled('student-ids', moduleState) && hasAbility('manageOwnStudentPersonalDetails:students'),
+            },
+            ...portalSidebarProfileTabs()
+                .filter((tab) => tab.value === 'authentication')
+                .map((tab) => ({
+                    groupKey: 'portal' as const,
+                    title: tab.transLabel(),
+                    icon: icons[tab.icon],
+                    url: route(tab.routeName!),
+                    show: hasStudentProfile() && isStudentProfileTabVisible(tab.value as StudentProfileTabValue, 'portal'),
+                })),
+        ];
 
         return cachedMenuOptions;
     });

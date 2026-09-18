@@ -13,7 +13,7 @@ export function layoutNameForPage(name: string): PageLayoutName {
         return 'portal-registration';
     }
 
-    if (name.startsWith('site/') || name.startsWith('portal/application') || name.startsWith('integrations/payments')) {
+    if (name.startsWith('site/') || name.startsWith('portal/application') || name.startsWith('integrations/payments/')) {
         return 'plain';
     }
 

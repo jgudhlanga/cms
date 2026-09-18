@@ -26,14 +26,29 @@ export type Ledger = {
     };
 };
 
-export type LedgerEmailSearchTypeOption = {
-    value: string;
-    label: string;
+export type PaymentDebugMatchedBy = 'reference' | 'email' | 'student_number';
+
+export type PaymentDebugPerson = {
+    name: string;
+    email: string | null;
+    phone: string | null;
+    studentNumber: string | null;
+    department: string | null;
+    course: string | null;
+    level: string | null;
+    modeOfStudy: string | null;
 };
 
-export type LedgerEmailSearchTypeSelectionResponse = {
-    requiresTypeSelection: true;
-    types: LedgerEmailSearchTypeOption[];
+export type PaymentDebugLedgerGroup = {
+    type: string;
+    label: string;
+    ledgers: Ledger[];
+};
+
+export type PaymentDebugSearchResponse = {
+    matchedBy: PaymentDebugMatchedBy;
+    person: PaymentDebugPerson | null;
+    groups: PaymentDebugLedgerGroup[];
 };
 
 export type PaymentGatewayFieldSource = 'database' | 'env' | 'missing';
@@ -62,4 +77,3 @@ export type PaymentGatewayDisplay = {
     income_gen_password: PaymentGatewaySecretField;
     updated_at: string | null;
 };
-

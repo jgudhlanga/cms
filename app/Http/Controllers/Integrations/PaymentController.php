@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Integrations;
 
-use App\Enums\Integrations\LedgerEmailSearchTypeEnum;
 use App\Enums\Integrations\PaymentCurrencyCodeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Helpers\PaymentHelper;
@@ -187,84 +186,18 @@ class PaymentController extends Controller
      */
     public function checkStatus(string $orderReference, ?Request $request = null): array
     {
-        $this->paymentGatewayConfig->applyToRuntimeConfig();
         $request ??= request();
 
-        $reference = $this->ledgerEmailSearchService->findByReference($orderReference);
+        $reference = $this->ledgerEmailSearchService->resolveLedgerForStatusCheck(
+            $orderReference,
+            $request->input('feeType') ?? $request->query('feeType'),
+        );
 
-        if ($reference === null) {
-            $user = $this->ledgerEmailSearchService->findUserByEmail($orderReference);
-
-            if ($user !== null) {
-                $requestedType = LedgerEmailSearchTypeEnum::tryFromRequest(
-                    $request->input('ledgerableType') ?? $request->query('ledgerableType'),
-                );
-
-                $reference = $this->ledgerEmailSearchService->resolveReferenceLedgerByEmailPriority(
-                    $user,
-                    $requestedType,
-                );
-            }
-        }
-
-        if ($reference === null) {
+        if ($reference === null || blank($reference->system_reference)) {
             return ['status' => 'not_found'];
         }
 
-        $response = Http::withHeaders([
-            'Accept' => 'application/json',
-            'Content-Type' => 'application/json',
-        ])->get(config('custom.payments.payment-gateway.base_url').'/payments/transaction/'.trim($reference->system_reference).'/status/check');
-
-        return $response->json() ?? [];
-    }
-
-    public function getLedgerEntries(string $search, Request $request)
-    {
-        $reference = $this->ledgerEmailSearchService->findByReference($search, withTrashed: true);
-
-        if ($reference !== null) {
-            return LedgerResource::collection(
-                $this->ledgerEmailSearchService->invoicesForReferenceLedger($reference),
-            );
-        }
-
-        $user = $this->ledgerEmailSearchService->findUserByEmail($search);
-
-        if ($user === null) {
-            return response()->json([
-                'message' => "No ledger entries found for the provided search {$search}",
-            ], 404);
-        }
-
-        $discoveredTypes = $this->ledgerEmailSearchService->discoverTypes($user);
-
-        if ($discoveredTypes->isEmpty()) {
-            return response()->json([
-                'message' => "No ledger entries found for the provided search {$search}",
-            ], 404);
-        }
-
-        $requestedType = LedgerEmailSearchTypeEnum::tryFromRequest($request->query('ledgerableType'));
-
-        if ($requestedType !== null && ! $discoveredTypes->contains($requestedType)) {
-            return response()->json([
-                'message' => 'Invalid ledgerable type for the provided search.',
-            ], 422);
-        }
-
-        if ($requestedType === null) {
-            return response()->json([
-                'requiresTypeSelection' => true,
-                'types' => $this->ledgerEmailSearchService->formatTypeOptions($discoveredTypes),
-            ]);
-        }
-
-        $type = $requestedType;
-
-        return LedgerResource::collection(
-            $this->ledgerEmailSearchService->resolveInvoices($user, $type),
-        );
+        return PaymentHelper::checkTransactionStatus($reference->system_reference);
     }
 
     /**
@@ -395,11 +328,6 @@ class PaymentController extends Controller
                 PaymentHelper::deleteNotPaidLedgerEntries($orderReference);
             }
         }
-    }
-
-    public function createCheckStatus(): Response
-    {
-        return Inertia::render('institution/tools/CheckPaymentStatus');
     }
 
     public function checkUserIntakePeriodApplicationFeePaymentStatus(User $user, IntakePeriod $intakePeriod)

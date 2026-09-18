@@ -544,6 +544,8 @@ return [
             'view:integrations',
             'view:payment-gateway-settings',
             'update:payment-gateway-settings',
+            'view:payments-debug',
+            'update:payments-debug',
         ],
     ],
 ];

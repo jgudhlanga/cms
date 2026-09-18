@@ -174,15 +174,15 @@ describe('user and staff role assignment', function () {
 });
 
 describe('payment tools and webhook', function () {
-    it('restricts payment status tools to root users', function () {
+    it('restricts payment status tools to payments-debug users', function () {
         $user = securityUserWith();
 
         $this->actingAs($user)
-            ->postJson(route('integrations.payments.update-status'), ['orderReference' => 'ORDER-SEC-1', 'paymentStatus' => 'paid'])
+            ->postJson(route('integrations.payments-debug.update'), ['orderReference' => 'ORDER-SEC-1', 'paymentStatus' => 'paid'])
             ->assertForbidden();
 
         $this->actingAs($user)
-            ->getJson(route('integrations.payments.ledger-entries', ['search' => 'someone@example.test']))
+            ->getJson(route('integrations.payments-debug.search', ['q' => 'someone@example.test']))
             ->assertForbidden();
     });
 

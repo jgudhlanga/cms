@@ -4,23 +4,35 @@ use App\Enums\HMS\HostelApplicationStatusEnum;
 use App\Enums\HMS\HostelApplicationTypeEnum;
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Shared\FeeTypeEnum;
+use App\Enums\Shared\ModuleEnum;
 use App\Enums\Students\ApplicationFeeStatusEnum;
+use App\Enums\Students\IdCardRequestReasonEnum;
+use App\Enums\Students\IdCardRequestStatusEnum;
 use App\Models\HMS\HostelApplication;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\Level;
 use App\Models\Ledgers\Ledger;
+use App\Models\Rbac\Module;
+use App\Models\Rbac\Permission;
 use App\Models\Shared\FeeType;
 use App\Models\Students\ApplicationFee;
 use App\Models\Students\StudentApplication;
 use App\Models\Students\StudentEnrolment;
+use App\Models\Students\StudentIdCardRequest;
 use App\Models\Users\User;
+use App\Services\Rbac\RbacModuleStateService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\Fluent\AssertableJson;
 
-function ledgerSearchAuthUser(): User
+function ledgerSearchAuthUser(array $permissions = ['view:payments-debug']): User
 {
     $user = User::factory()->create();
-    $user->givePermissionTo('root:manage');
+
+    foreach ($permissions as $permission) {
+        Permission::findOrCreate($permission, 'web');
+        $user->givePermissionTo($permission);
+    }
 
     return $user;
 }
@@ -139,6 +151,52 @@ function createHostelApplicationInvoiceLedger(StudentApplication $studentApplica
     return $invoice;
 }
 
+function createTuitionInvoiceLedger(StudentApplication $studentApplication, string $orderReference): Ledger
+{
+    $feeType = ledgerSearchFeeType(FeeTypeEnum::TUITION_FEE);
+
+    [$invoice] = ledgerSearchCreateLedgerPair(
+        $studentApplication,
+        $feeType,
+        $orderReference,
+        $studentApplication->intake_period_id,
+        $studentApplication->tenant_id,
+    );
+
+    return $invoice;
+}
+
+function createStudentIdCardInvoiceLedger(StudentApplication $studentApplication, string $orderReference): Ledger
+{
+    $request = StudentIdCardRequest::withoutEvents(fn () => StudentIdCardRequest::query()->create([
+        'tenant_id' => $studentApplication->tenant_id,
+        'student_id' => $studentApplication->student_id,
+        'status' => IdCardRequestStatusEnum::AWAITING_PAYMENT,
+        'reason' => IdCardRequestReasonEnum::NEW,
+    ]));
+
+    $feeType = ledgerSearchFeeType(FeeTypeEnum::STUDENT_ID_FEE);
+
+    [$invoice] = ledgerSearchCreateLedgerPair(
+        $request,
+        $feeType,
+        $orderReference,
+        $studentApplication->intake_period_id,
+        $studentApplication->tenant_id,
+    );
+
+    return $invoice;
+}
+
+function ledgerSearchStaffUserFor(StudentApplication $studentApplication): User
+{
+    $user = User::factory()->create(['tenant_id' => $studentApplication->tenant_id]);
+    Permission::findOrCreate('view:payments-debug', 'web');
+    $user->givePermissionTo('view:payments-debug');
+
+    return $user;
+}
+
 function configureLedgerSearchPaymentGateway(): void
 {
     config([
@@ -153,22 +211,87 @@ function configureLedgerSearchPaymentGateway(): void
     ]);
 }
 
+test('payments debug index is a cheap inertia shell without ledger search', function () {
+    $authUser = ledgerSearchAuthUser(['view:payments-debug', 'update:payments-debug']);
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+
+    $this->actingAs($authUser)
+        ->get(route('integrations.payments-debug.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('integrations/payments-debug/Index')
+            ->where('canUpdate', true)
+        );
+
+    $ledgerQueries = collect(DB::getQueryLog())
+        ->filter(fn (array $query): bool => str_contains(strtolower($query['query']), 'ledgers'));
+
+    expect($ledgerQueries)->toBeEmpty();
+});
+
+test('old payments debug page url redirects to integrations', function () {
+    $authUser = ledgerSearchAuthUser();
+
+    $this->actingAs($authUser)
+        ->get(route('integrations.payments.check-status-create'))
+        ->assertRedirect(route('integrations.payments-debug.index'));
+});
+
+test('unauthorized users cannot open payments debug', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('integrations.payments-debug.index'))
+        ->assertForbidden();
+});
+
+test('staff cannot open payments debug when the integrations module is disabled', function () {
+    $user = ledgerSearchAuthUser();
+
+    Module::query()
+        ->where('slug', ModuleEnum::INTEGRATIONS->slug())
+        ->firstOrFail()
+        ->update(['status' => false]);
+
+    app(RbacModuleStateService::class)->clearCache();
+
+    $this->actingAs($user)
+        ->get(route('integrations.payments-debug.index'))
+        ->assertForbidden();
+});
+
+test('view-only users cannot update payment status', function () {
+    $user = ledgerSearchAuthUser(['view:payments-debug']);
+
+    $this->actingAs($user)
+        ->postJson(route('integrations.payments-debug.update'), [
+            'orderReference' => 'ORDER-SEC-1',
+            'paymentStatus' => 'paid',
+        ])
+        ->assertForbidden();
+});
+
 test('ledger search by system reference returns invoices', function () {
     $authUser = ledgerSearchAuthUser();
     $targetUser = User::factory()->create(['tenant_id' => $authUser->tenant_id]);
     createLegacyUserInvoiceLedger($targetUser, 'ORDER-REF-001');
 
     $this->actingAs($authUser)
-        ->getJson(route('integrations.payments.ledger-entries', ['search' => 'ORDER-REF-001']))
+        ->getJson(route('integrations.payments-debug.search', ['q' => 'ORDER-REF-001']))
         ->assertOk()
         ->assertJson(fn (AssertableJson $json) => $json
-            ->has('0.id')
-            ->where('0.attributes.systemReference', 'ORDER-REF-001')
+            ->where('matchedBy', 'reference')
+            ->where('person.email', $targetUser->email)
+            ->has('groups', 1)
+            ->where('groups.0.type', 'application-fee')
+            ->where('groups.0.ledgers.0.attributes.systemReference', 'ORDER-REF-001')
             ->etc()
         );
 });
 
-test('ledger search by email with single legacy type prompts type selection', function () {
+test('ledger search by email with a single type returns invoices immediately', function () {
     $authUser = ledgerSearchAuthUser();
     $targetUser = User::factory()->create([
         'tenant_id' => $authUser->tenant_id,
@@ -178,39 +301,58 @@ test('ledger search by email with single legacy type prompts type selection', fu
     createLegacyUserInvoiceLedger($targetUser, 'ORDER-LEGACY-001');
 
     $this->actingAs($authUser)
-        ->getJson(route('integrations.payments.ledger-entries', ['search' => 'legacy-user@example.com']))
+        ->getJson(route('integrations.payments-debug.search', ['q' => 'legacy-user@example.com']))
         ->assertOk()
         ->assertJson(fn (AssertableJson $json) => $json
-            ->where('requiresTypeSelection', true)
-            ->has('types', 1)
-            ->where('types.0.value', 'legacy')
+            ->where('matchedBy', 'email')
+            ->where('person.email', 'legacy-user@example.com')
+            ->has('groups', 1)
+            ->where('groups.0.type', 'application-fee')
+            ->where('groups.0.ledgers.0.attributes.systemReference', 'ORDER-LEGACY-001')
+            ->missing('requiresTypeSelection')
             ->etc()
         );
 });
 
-test('ledger search by email with legacy type param returns invoices', function () {
+test('ledger search by email is case insensitive', function () {
     $authUser = ledgerSearchAuthUser();
     $targetUser = User::factory()->create([
         'tenant_id' => $authUser->tenant_id,
-        'email' => 'legacy-user-typed@example.com',
+        'email' => 'Case.User@example.com',
     ]);
 
-    createLegacyUserInvoiceLedger($targetUser, 'ORDER-LEGACY-TYPED-001');
+    createLegacyUserInvoiceLedger($targetUser, 'ORDER-CASE-EMAIL');
 
     $this->actingAs($authUser)
-        ->getJson(route('integrations.payments.ledger-entries', [
-            'search' => 'legacy-user-typed@example.com',
-            'ledgerableType' => 'legacy',
+        ->getJson(route('integrations.payments-debug.search', ['q' => 'case.user@example.com']))
+        ->assertOk()
+        ->assertJsonPath('matchedBy', 'email')
+        ->assertJsonPath('groups.0.ledgers.0.attributes.systemReference', 'ORDER-CASE-EMAIL');
+});
+
+test('ledger search by email with a fee type filter returns only that fee type', function () {
+    $studentApplication = createStudentReadyForHostelApplication('H25FILTER01');
+    $authUser = ledgerSearchStaffUserFor($studentApplication);
+    $studentApplication->student->user->update(['email' => 'fee-filter-user@example.com']);
+
+    createTuitionInvoiceLedger($studentApplication, 'ORDER-FILTER-TUITION');
+    createHostelApplicationInvoiceLedger($studentApplication, 'ORDER-FILTER-HOSTEL');
+
+    $this->actingAs($authUser)
+        ->getJson(route('integrations.payments-debug.search', [
+            'q' => 'fee-filter-user@example.com',
+            'feeType' => FeeTypeEnum::TUITION_FEE->slug(),
         ]))
         ->assertOk()
         ->assertJson(fn (AssertableJson $json) => $json
-            ->has('0.id')
-            ->where('0.attributes.systemReference', 'ORDER-LEGACY-TYPED-001')
+            ->has('groups', 1)
+            ->where('groups.0.type', 'tuition-fee')
+            ->where('groups.0.ledgers.0.attributes.systemReference', 'ORDER-FILTER-TUITION')
             ->etc()
         );
 });
 
-test('ledger search by email with single application fee type prompts type selection', function () {
+test('ledger search by email with a single application fee type returns invoices immediately', function () {
     $authUser = ledgerSearchAuthUser();
     $targetUser = User::factory()->create([
         'tenant_id' => $authUser->tenant_id,
@@ -220,82 +362,71 @@ test('ledger search by email with single application fee type prompts type selec
     createApplicationFeeInvoiceLedger($targetUser, 'ORDER-APP-FEE-001');
 
     $this->actingAs($authUser)
-        ->getJson(route('integrations.payments.ledger-entries', ['search' => 'app-fee-user@example.com']))
+        ->getJson(route('integrations.payments-debug.search', ['q' => 'app-fee-user@example.com']))
         ->assertOk()
-        ->assertJson(fn (AssertableJson $json) => $json
-            ->where('requiresTypeSelection', true)
-            ->has('types', 1)
-            ->where('types.0.value', 'application_fee')
-            ->etc()
-        );
+        ->assertJsonPath('matchedBy', 'email')
+        ->assertJsonPath('groups.0.type', 'application-fee')
+        ->assertJsonPath('groups.0.ledgers.0.attributes.systemReference', 'ORDER-APP-FEE-001');
 });
 
-test('ledger search by email with single hostel type prompts type selection', function () {
+test('ledger search by email with a single hostel type returns invoices immediately', function () {
     $studentApplication = createStudentReadyForHostelApplication('LEDGER-SEARCH-HOSTEL');
-    $authUser = User::factory()->create(['tenant_id' => $studentApplication->tenant_id]);
-    $authUser->givePermissionTo('root:manage');
-    $targetUser = $studentApplication->student->user;
-    $targetUser->update(['email' => 'hostel-user@example.com']);
+    $authUser = ledgerSearchStaffUserFor($studentApplication);
+    $studentApplication->student->user->update(['email' => 'hostel-user@example.com']);
 
     createHostelApplicationInvoiceLedger($studentApplication, 'ORDER-HOSTEL-001');
 
     $this->actingAs($authUser)
-        ->getJson(route('integrations.payments.ledger-entries', ['search' => 'hostel-user@example.com']))
+        ->getJson(route('integrations.payments-debug.search', ['q' => 'hostel-user@example.com']))
         ->assertOk()
-        ->assertJson(fn (AssertableJson $json) => $json
-            ->where('requiresTypeSelection', true)
-            ->has('types', 1)
-            ->where('types.0.value', 'hostel_application')
-            ->etc()
-        );
+        ->assertJsonPath('matchedBy', 'email')
+        ->assertJsonPath('groups.0.type', 'student-accommodation-fee')
+        ->assertJsonPath('groups.0.ledgers.0.attributes.systemReference', 'ORDER-HOSTEL-001');
 });
 
-test('ledger search by email requires type selection when multiple ledgerable types exist', function () {
-    $authUser = ledgerSearchAuthUser();
-    $targetUser = User::factory()->create([
-        'tenant_id' => $authUser->tenant_id,
-        'email' => 'multi-type-user@example.com',
-    ]);
+test('ledger search returns every fee type a person has paid, grouped by fee type', function () {
+    $studentApplication = createStudentReadyForHostelApplication('H25ALLFEES');
+    $authUser = ledgerSearchStaffUserFor($studentApplication);
 
-    createLegacyUserInvoiceLedger($targetUser, 'ORDER-MULTI-LEGACY');
-    createApplicationFeeInvoiceLedger($targetUser, 'ORDER-MULTI-APP');
+    createTuitionInvoiceLedger($studentApplication, 'ORDER-ALL-TUITION');
+    createApplicationFeeInvoiceLedger($studentApplication->student->user, 'ORDER-ALL-APP-FEE');
+    createStudentIdCardInvoiceLedger($studentApplication, 'ORDER-ALL-ID-CARD');
+    createHostelApplicationInvoiceLedger($studentApplication, 'ORDER-ALL-HOSTEL');
 
     $this->actingAs($authUser)
-        ->getJson(route('integrations.payments.ledger-entries', ['search' => 'multi-type-user@example.com']))
+        ->getJson(route('integrations.payments-debug.search', ['q' => 'H25ALLFEES']))
         ->assertOk()
         ->assertJson(fn (AssertableJson $json) => $json
-            ->where('requiresTypeSelection', true)
-            ->has('types', 2)
-            ->where('types.0.value', 'legacy')
-            ->where('types.1.value', 'application_fee')
+            ->where('matchedBy', 'student_number')
+            ->has('groups', 4)
+            ->where('groups.0.type', 'tuition-fee')
+            ->where('groups.1.type', 'application-fee')
+            ->where('groups.2.type', 'student-id-fee')
+            ->where('groups.3.type', 'student-accommodation-fee')
             ->etc()
         );
 });
 
-test('ledger search by email with ledgerable type returns only selected invoices', function () {
-    $authUser = ledgerSearchAuthUser();
-    $targetUser = User::factory()->create([
-        'tenant_id' => $authUser->tenant_id,
-        'email' => 'typed-search-user@example.com',
-    ]);
+test('ledger search returns payer programme details and newest invoices first', function () {
+    $studentApplication = createStudentReadyForHostelApplication('H25CARD01');
+    $authUser = ledgerSearchStaffUserFor($studentApplication);
 
-    createLegacyUserInvoiceLedger($targetUser, 'ORDER-TYPED-LEGACY');
-    createApplicationFeeInvoiceLedger($targetUser, 'ORDER-TYPED-APP');
+    $older = createTuitionInvoiceLedger($studentApplication, 'ORDER-CARD-OLD');
+    Ledger::query()->whereKey($older->id)->update(['created_at' => now()->subMonths(2)]);
+    createTuitionInvoiceLedger($studentApplication, 'ORDER-CARD-NEW');
 
     $this->actingAs($authUser)
-        ->getJson(route('integrations.payments.ledger-entries', [
-            'search' => 'typed-search-user@example.com',
-            'ledgerableType' => 'application_fee',
-        ]))
+        ->getJson(route('integrations.payments-debug.search', ['q' => 'H25CARD01']))
         ->assertOk()
-        ->assertJson(fn (AssertableJson $json) => $json
-            ->has('0.id')
-            ->where('0.attributes.systemReference', 'ORDER-TYPED-APP')
-            ->etc()
-        );
+        ->assertJsonPath('person.studentNumber', 'H25CARD01')
+        ->assertJsonPath('person.department', $studentApplication->institutionDepartment->department->name)
+        ->assertJsonPath('person.course', $studentApplication->departmentCourse->course->name)
+        ->assertJsonPath('person.level', $studentApplication->departmentLevel->level->name)
+        ->assertJsonPath('groups.0.ledgers.0.attributes.systemReference', 'ORDER-CARD-NEW')
+        ->assertJsonPath('groups.0.ledgers.1.attributes.systemReference', 'ORDER-CARD-OLD');
 });
 
-test('ledger search rejects invalid ledgerable type for email', function () {
+test('ledger search rejects an unknown fee type filter', function () {
     $authUser = ledgerSearchAuthUser();
     $targetUser = User::factory()->create([
         'tenant_id' => $authUser->tenant_id,
@@ -305,21 +436,65 @@ test('ledger search rejects invalid ledgerable type for email', function () {
     createApplicationFeeInvoiceLedger($targetUser, 'ORDER-INVALID-TYPE');
 
     $this->actingAs($authUser)
-        ->getJson(route('integrations.payments.ledger-entries', [
-            'search' => 'invalid-type-user@example.com',
-            'ledgerableType' => 'hostel_application',
+        ->getJson(route('integrations.payments-debug.search', [
+            'q' => 'invalid-type-user@example.com',
+            'feeType' => 'not-a-fee-type',
         ]))
         ->assertUnprocessable()
-        ->assertJsonPath('message', 'Invalid ledgerable type for the provided search.');
+        ->assertJsonValidationErrors('feeType');
+});
+
+test('ledger search returns not found when the fee type filter has no invoices', function () {
+    $authUser = ledgerSearchAuthUser();
+    $targetUser = User::factory()->create([
+        'tenant_id' => $authUser->tenant_id,
+        'email' => 'no-tuition-user@example.com',
+    ]);
+
+    createApplicationFeeInvoiceLedger($targetUser, 'ORDER-NO-TUITION');
+    ledgerSearchFeeType(FeeTypeEnum::TUITION_FEE);
+
+    $this->actingAs($authUser)
+        ->getJson(route('integrations.payments-debug.search', [
+            'q' => 'no-tuition-user@example.com',
+            'feeType' => FeeTypeEnum::TUITION_FEE->slug(),
+        ]))
+        ->assertNotFound()
+        ->assertJsonPath('message', __('integrations.payments_debug_not_found'));
 });
 
 test('ledger search returns not found for unknown email', function () {
     $authUser = ledgerSearchAuthUser();
 
     $this->actingAs($authUser)
-        ->getJson(route('integrations.payments.ledger-entries', ['search' => 'missing-user@example.com']))
+        ->getJson(route('integrations.payments-debug.search', ['q' => 'missing-user@example.com']))
         ->assertNotFound()
-        ->assertJsonPath('message', 'No ledger entries found for the provided search missing-user@example.com');
+        ->assertJsonPath('message', __('integrations.payments_debug_not_found'));
+});
+
+test('ledger search by student number returns invoices', function () {
+    $studentApplication = createStudentReadyForHostelApplication('H25DEBUG01');
+    $authUser = User::factory()->create(['tenant_id' => $studentApplication->tenant_id]);
+    Permission::findOrCreate('view:payments-debug', 'web');
+    $authUser->givePermissionTo('view:payments-debug');
+
+    createHostelApplicationInvoiceLedger($studentApplication, 'ORDER-STUDENT-NUM');
+
+    $this->actingAs($authUser)
+        ->getJson(route('integrations.payments-debug.search', ['q' => 'h25debug01']))
+        ->assertOk()
+        ->assertJsonPath('matchedBy', 'student_number')
+        ->assertJsonPath('person.studentNumber', 'H25DEBUG01')
+        ->assertJsonPath('groups.0.ledgers.0.attributes.systemReference', 'ORDER-STUDENT-NUM');
+});
+
+test('ledger search returns not found for unknown student number', function () {
+    $authUser = ledgerSearchAuthUser();
+
+    $this->actingAs($authUser)
+        ->getJson(route('integrations.payments-debug.search', ['q' => 'H00MISSING']))
+        ->assertNotFound()
+        ->assertJsonPath('message', __('integrations.payments_debug_not_found'));
 });
 
 test('check status resolves application fee ledger by email', function () {
@@ -340,7 +515,7 @@ test('check status resolves application fee ledger by email', function () {
     createApplicationFeeInvoiceLedger($targetUser, 'ORDER-CHECK-APP');
 
     $this->actingAs($authUser)
-        ->postJson(route('integrations.payments.check-status', ['order_reference' => 'check-status-app@example.com']))
+        ->postJson(route('integrations.payments-debug.check', ['order_reference' => 'check-status-app@example.com']))
         ->assertOk()
         ->assertJsonPath('status', 'paid');
 });

@@ -7,6 +7,7 @@ import { ColorVariant } from '@/enums/colors';
 import { IconName } from '@/enums/icons';
 import { formatDate } from '@/lib/dates';
 import { icons } from '@/lib/icons';
+import { previousPageUrl } from '@/lib/navigationHistory';
 import { cn } from '@/lib/utils';
 import customAxios from '@/services/http-init';
 import type { PaymentGatewayDisplay, PaymentGatewayFieldSource } from '@/types/integrations';
@@ -249,7 +250,7 @@ const leaveWithoutUnlocking = async () => {
         // Still leave the locked page so the user can go elsewhere.
     }
 
-    router.visit(route('dashboard'));
+    router.visit(previousPageUrl(route('dashboard'), route('integrations.payment-gateway.index')));
 };
 
 const unlock = async (password: string) => {

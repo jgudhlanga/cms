@@ -152,13 +152,15 @@ class PaymentHelper
     {
         app(PaymentGatewayConfig::class)->applyToRuntimeConfig();
 
-        return Http::withHeaders([
+        $payload = Http::withHeaders([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
         ])->get(
             config('custom.payments.payment-gateway.base_url').
-            "/payments/transaction/{$orderReference}/status/check"
+            '/payments/transaction/'.trim($orderReference).'/status/check'
         )->json();
+
+        return is_array($payload) ? $payload : [];
     }
 
     /* -----------------------------------------------------------------
