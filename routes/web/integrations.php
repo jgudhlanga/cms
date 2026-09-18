@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Integrations\PaymentController;
+use App\Http\Controllers\Integrations\PaymentGatewaySettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('integrations/payments/result', [PaymentController::class, 'result'])
@@ -8,6 +9,16 @@ Route::post('integrations/payments/result', [PaymentController::class, 'result']
     ->name('integrations.payments.result');
 
 Route::prefix('integrations')->middleware('auth')->group(function () {
+    Route::prefix('payment-gateway')->group(function () {
+        Route::get('/', [PaymentGatewaySettingsController::class, 'index'])->name('integrations.payment-gateway.index');
+        Route::put('/', [PaymentGatewaySettingsController::class, 'update'])->name('integrations.payment-gateway.update');
+        Route::post('unlock', [PaymentGatewaySettingsController::class, 'unlock'])
+            ->middleware('throttle:payment-gateway-unlock')
+            ->name('integrations.payment-gateway.unlock');
+        Route::post('lock', [PaymentGatewaySettingsController::class, 'lock'])->name('integrations.payment-gateway.lock');
+        Route::post('touch', [PaymentGatewaySettingsController::class, 'touch'])->name('integrations.payment-gateway.touch');
+    });
+
     // ==================================== PAYMENTS ======================================================
     Route::prefix('payments')->group(function () {
         Route::post('initiate', [PaymentController::class, 'initiatePayment'])->name('integrations.payments.initiate');

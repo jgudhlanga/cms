@@ -540,5 +540,10 @@ return [
             'crud-settings:hostel-notices',
             'viewAuditTrail:hostel-notices',
         ],
+        'integrations' => [
+            'view:integrations',
+            'view:payment-gateway-settings',
+            'update:payment-gateway-settings',
+        ],
     ],
 ];

@@ -3,6 +3,7 @@
 namespace App\Services\Integrations\Banks\ZB;
 
 use App\Models\Integrations\Banks\ZBBankStatement;
+use App\Services\Integrations\PaymentGatewayConfig;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
@@ -29,6 +30,8 @@ class FetchBankStatementService
      */
     public function executeWithResult(string $rawAccountType, string $startDate, string $endDate, ?callable $info = null, ?callable $warn = null, ?callable $error = null): FetchBankStatementExecuteResult
     {
+        app(PaymentGatewayConfig::class)->applyToRuntimeConfig();
+
         $accountType = $this->normalizeAccountType($rawAccountType, $warn);
 
         $baseUrl = rtrim(trim((string) config('custom.bank-statements.base_url')), '/');

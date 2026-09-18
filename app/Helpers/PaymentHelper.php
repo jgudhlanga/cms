@@ -14,6 +14,7 @@ use App\Models\Ledgers\Ledger;
 use App\Models\Shared\FeeType;
 use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
+use App\Services\Integrations\PaymentGatewayConfig;
 use App\Services\Students\ApplicationFeeService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -149,6 +150,8 @@ class PaymentHelper
      */
     public static function checkTransactionStatus(string $orderReference): array
     {
+        app(PaymentGatewayConfig::class)->applyToRuntimeConfig();
+
         return Http::withHeaders([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
@@ -476,6 +479,11 @@ class PaymentHelper
 
         $attributes['tenant_id'] ??= $ledgerable->tenant_id ?? self::resolveUser()->tenant_id;
         $attributes['intake_period_id'] = $intakePeriod->id;
+
+        if ($hasPaymentGateway) {
+            app(PaymentGatewayConfig::class)->applyToRuntimeConfig();
+        }
+
         $attributes['payment_gateway'] = $hasPaymentGateway
             ? config('custom.payments.payment-gateway.name')
             : null;

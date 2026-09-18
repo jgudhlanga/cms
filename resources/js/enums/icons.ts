@@ -116,4 +116,6 @@ export enum IconName {
     clipboard_check = "clipboard_check",
     file_warning = "file_warning",
     calendar_clock = "calendar_clock",
+    unplug = "unplug",
+    landmark = "landmark",
 }

@@ -52,6 +52,7 @@ import {
     History,
     Info,
     LayoutDashboard as Dashboard,
+    Landmark,
     List,
     ListFilter as Filter,
     LoaderCircle as Loader,
@@ -82,6 +83,7 @@ import {
     UserPlus,
     Users,
     UserSearch,
+    Unplug,
     WalletCards,
     MonitorCheck,
     X as Close,
@@ -228,6 +230,8 @@ const icons: Record<IconName, Component> = {
     [IconName.clipboard_check]: ClipboardCheck,
     [IconName.file_warning]: FileWarning,
     [IconName.calendar_clock]: CalendarClock,
+    [IconName.unplug]: Unplug,
+    [IconName.landmark]: Landmark,
 };
 
 export { IconName, icons };

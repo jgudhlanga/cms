@@ -458,6 +458,29 @@ export function useSidebarMenu() {
             };
         })(),
         (() => {
+            const canViewPaymentGateway = canShowMenuItem(
+                ['view:payment-gateway-settings', 'update:payment-gateway-settings'],
+                'integrations',
+                moduleState,
+            );
+            const integrationsChildren: MenuItemInterface[] = [
+                {
+                    transKey: 'trans.payment_gateway',
+                    url: route('integrations.payment-gateway.index'),
+                    icon: icons[IconName.wallet_cards],
+                    show: canViewPaymentGateway,
+                },
+            ].filter((child) => child.show);
+
+            return {
+                groupKey: 'system' as const,
+                transKey: 'trans.integrations',
+                icon: icons[IconName.unplug],
+                items: integrationsChildren,
+                show: integrationsChildren.length > 0,
+            };
+        })(),
+        (() => {
             const canSearchUsers = canShowMenuItem('view:users', 'users', moduleState);
             const canViewAuditTrail = isModuleEnabled('dashboards', moduleState) && !hasStudentProfile();
             const userChildren: MenuItemInterface[] = [

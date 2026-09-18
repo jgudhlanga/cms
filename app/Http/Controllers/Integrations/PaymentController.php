@@ -25,6 +25,7 @@ use App\Services\HMS\AccommodationPaymentQuoteService;
 use App\Services\HMS\StudentAccommodationFeeService;
 use App\Services\Integrations\LedgerEmailSearchService;
 use App\Services\Integrations\OnlinePaymentContextResolver;
+use App\Services\Integrations\PaymentGatewayConfig;
 use App\Services\Students\ApplicationFeeService;
 use App\Services\Students\StudentExamResultAccessService;
 use App\Services\Students\StudentFeeClearanceService;
@@ -47,6 +48,7 @@ class PaymentController extends Controller
         protected OnlinePaymentContextResolver $paymentContextResolver,
         protected ApplicationFeeService $applicationFeeService,
         protected LedgerEmailSearchService $ledgerEmailSearchService,
+        protected PaymentGatewayConfig $paymentGatewayConfig,
     ) {}
 
     /**
@@ -54,6 +56,7 @@ class PaymentController extends Controller
      */
     public function initiatePayment(InitiatePaymentRequest $request): array|JsonResponse
     {
+        $this->paymentGatewayConfig->applyToRuntimeConfig();
         $context = $this->paymentContextResolver->resolveForInitiate($request);
         $orderReference = $request->orderReference;
 
@@ -184,6 +187,7 @@ class PaymentController extends Controller
      */
     public function checkStatus(string $orderReference, ?Request $request = null): array
     {
+        $this->paymentGatewayConfig->applyToRuntimeConfig();
         $request ??= request();
 
         $reference = $this->ledgerEmailSearchService->findByReference($orderReference);
@@ -749,6 +753,7 @@ class PaymentController extends Controller
 
     private function assertValidPaymentWebhook(Request $request): void
     {
+        $this->paymentGatewayConfig->applyToRuntimeConfig();
         $apiKey = (string) config('custom.payments.payment-gateway.api_key');
         $secret = (string) config('custom.payments.payment-gateway.secret');
 

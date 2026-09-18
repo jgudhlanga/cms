@@ -11,6 +11,7 @@
 |
 */
 
+use App\Services\Integrations\PaymentGatewayConfig;
 use Database\Seeders\Rbac\ModulesTableSeeder;
 use Database\Seeders\Rbac\PermissionsTableSeeder;
 use Database\Seeders\Statuses\StatusSeeder;
@@ -43,6 +44,7 @@ pest()->extend(TestCase::class)
             (new StatusSeeder)->run();
             (new ModulesTableSeeder)->run();
             (new PermissionsTableSeeder)->run();
+            app(PaymentGatewayConfig::class)->forget();
         }
     })
     ->in('Feature');

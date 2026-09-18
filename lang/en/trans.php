@@ -11,6 +11,8 @@ return [
     'create' => 'Create',
     'update' => 'Update',
     'settings' => 'Settings',
+    'integrations' => 'Integrations',
+    'payment_gateway' => 'Payment Gateway',
     'bank' => 'Bank|Banks',
     'country' => 'Country|Countries',
     'gender' => 'Gender|Genders',

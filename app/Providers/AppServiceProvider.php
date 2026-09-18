@@ -16,6 +16,7 @@ use App\Models\Examinations\ExaminationResult;
 use App\Models\Institution\AssessmentCalendar\AssessmentCalendar;
 use App\Models\Institution\AssessmentCalendar\DepartmentAssessmentCalendar;
 use App\Models\Institution\Syllabus\CourseSyllabus;
+use App\Models\Integrations\PaymentGatewaySetting;
 use App\Models\Users\User;
 use App\Observers\Setup\SetupGapRecheckObserver;
 use App\Policies\AcademicCalendars\CourseWorkCaptureExtensionPolicy;
@@ -25,6 +26,8 @@ use App\Policies\Examinations\ExaminationPolicy;
 use App\Policies\Institution\AssessmentCalendarPolicy;
 use App\Policies\Institution\CourseSyllabusPolicy;
 use App\Policies\Institution\DepartmentAssessmentCalendarPolicy;
+use App\Policies\Integrations\PaymentGatewaySettingPolicy;
+use App\Services\Integrations\PaymentGatewayConfig;
 use App\Services\Setup\Checks\ApplicationsInUnconfiguredModeCheck;
 use App\Services\Setup\Checks\ApplicationsMissingModeOrLevelCheck;
 use App\Services\Setup\Checks\AssessmentCalendarDatesMissingCheck;
@@ -136,6 +139,7 @@ class AppServiceProvider extends ServiceProvider
         // Dynamically register all Gate policies from config/custom.php
         $this->registerPoliciesFromConfig();
         Gate::policy(CourseSyllabus::class, CourseSyllabusPolicy::class);
+        Gate::policy(PaymentGatewaySetting::class, PaymentGatewaySettingPolicy::class);
         Gate::policy(CourseWorkMark::class, CourseWorkPolicy::class);
         Gate::policy(AssessmentCalendar::class, AssessmentCalendarPolicy::class);
         Gate::policy(DepartmentAssessmentCalendar::class, DepartmentAssessmentCalendarPolicy::class);
@@ -158,6 +162,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(RequestHandled::class, function (): void {
             UserAccessScope::flush();
             ApplicationFeeService::forgetOpenIntakePeriodsForPortal();
+            PaymentGatewayConfig::flushMemo();
         });
 
         $this->registerSetupGapRecheckObservers();
@@ -250,6 +255,14 @@ class AppServiceProvider extends ServiceProvider
             return $userId !== null
                 ? Limit::perMinute(300)->by('user:'.$userId)
                 : Limit::perMinute(600)->by('ip:'.$request->ip());
+        });
+
+        RateLimiter::for('payment-gateway-unlock', function (Request $request): Limit {
+            $userId = $request->user()?->getAuthIdentifier();
+
+            return Limit::perMinute(5)->by(
+                $userId !== null ? 'payment-gateway-unlock:'.$userId : 'ip:'.$request->ip()
+            );
         });
     }
 

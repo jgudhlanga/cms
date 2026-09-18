@@ -22,6 +22,7 @@ use App\Support\Rbac\UserAccessScope;
 use Database\Seeders\Rbac\PermissionsTableSeeder;
 use Database\Seeders\Rbac\RoleGroupSeeder;
 use Database\Seeders\Rbac\RolesTableSeeder;
+use Spatie\Permission\PermissionRegistrar;
 
 beforeEach(function () {
     (new RoleGroupSeeder)->run();
@@ -282,7 +283,7 @@ test('coursework window permission migration grants every new permission to the 
 
     $superUser = Role::query()->where('name', RoleEnum::SUPER_USER->name())->firstOrFail();
     $superUser->revokePermissionTo($newPermissions);
-    app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
 
     $migration = require database_path('migrations/2026_09_14_090000_grant_coursework_window_permissions.php');
     $migration->up();
@@ -292,6 +293,14 @@ test('coursework window permission migration grants every new permission to the 
     foreach ($newPermissions as $permission) {
         expect($superUser->hasPermissionTo($permission))->toBeTrue();
     }
+});
+
+test('roles table seeder grants integrations permissions to the super user', function () {
+    $superUser = Role::query()->where('name', RoleEnum::SUPER_USER->name())->firstOrFail();
+
+    expect($superUser->hasPermissionTo('view:integrations'))->toBeTrue()
+        ->and($superUser->hasPermissionTo('view:payment-gateway-settings'))->toBeTrue()
+        ->and($superUser->hasPermissionTo('update:payment-gateway-settings'))->toBeTrue();
 });
 
 test('user access scope reaches only own departments for department scoped users', function () {

@@ -12,14 +12,15 @@ describe('layoutNameForPage', () => {
         expect(layoutNameForPage('portal/registration/Maintenance')).toBe('portal-registration');
     });
 
-    it('uses the plain layout for site, application and integration pages', () => {
+    it('uses the plain layout for site, application and public payment pages', () => {
         expect(layoutNameForPage('site/IdCardVerify')).toBe('plain');
         expect(layoutNameForPage('portal/application/CreateApplication')).toBe('plain');
         expect(layoutNameForPage('integrations/payments/Feedback')).toBe('plain');
     });
 
-    it('uses the app layout for everything else, including other portal pages', () => {
+    it('uses the app layout for staff integration settings and other portal pages', () => {
         expect(layoutNameForPage('dashboard/Index')).toBe('app');
         expect(layoutNameForPage('portal/student/Index')).toBe('app');
+        expect(layoutNameForPage('integrations/payment-gateway/Index')).toBe('app');
     });
 });
