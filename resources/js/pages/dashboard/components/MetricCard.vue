@@ -1,71 +1,63 @@
 <script setup lang="ts">
-import { Card, CardContent } from '@/components/ui/card';
 import { computed } from 'vue';
+import { type Tone, toneChip, toneGradient } from './tones';
 
 interface Props {
     title: string;
     value: string | number;
     subtext: string;
     trend?: 'up' | 'down' | 'neutral' | 'warning';
-    compact?: boolean;
-    accent?: string;
+    tone?: Tone;
+    badge?: string | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    compact: false,
-    accent: 'bg-muted text-muted-foreground',
+    badge: null,
 });
 
-const cardClass = computed(() =>
-    props.compact
-        ? 'border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md hover:border-border'
-        : 'bg-muted/50 transition-shadow hover:shadow-sm',
-);
+const chipClass = computed(() => (props.tone ? toneChip[props.tone] : 'bg-muted text-muted-foreground'));
 
-const contentClass = computed(() => (props.compact ? 'p-2' : 'p-3.5'));
+const trendClass = computed(() => {
+    if (props.trend === 'up') return 'text-emerald-600 dark:text-emerald-400';
+    if (props.trend === 'down') return 'text-rose-600 dark:text-rose-400';
+    if (props.trend === 'warning') return 'text-amber-600 dark:text-amber-400';
 
-const titleClass = computed(() =>
-    props.compact ? 'text-[11px] font-medium text-muted-foreground' : 'text-sm text-muted-foreground',
-);
-
-const valueClass = computed(() =>
-    props.compact
-        ? 'text-base leading-none font-semibold tabular-nums text-foreground'
-        : 'text-xl leading-none font-semibold tabular-nums text-foreground',
-);
-
-const iconWrapperClass = computed(() =>
-    props.compact ? `shrink-0 rounded-md p-1 ${props.accent}` : '',
-);
+    return 'text-muted-foreground';
+});
 </script>
 
 <template>
-    <Card :class="cardClass">
-        <CardContent :class="contentClass">
-            <div :class="[compact ? 'mb-0.5' : 'mb-1', 'flex items-center', titleClass]">
-                <div v-if="compact" :class="iconWrapperClass">
+    <div
+        class="group relative flex flex-col overflow-hidden rounded-lg border border-border/60 bg-card p-2 shadow-xs transition-colors duration-200 hover:border-border"
+    >
+        <div v-if="tone" class="absolute inset-x-0 top-0 h-0.5" :class="toneGradient[tone]" aria-hidden="true" />
+
+        <div class="flex items-start justify-between gap-1">
+            <div class="flex min-w-0 items-center gap-1.5">
+                <div v-if="$slots.icon" class="shrink-0 rounded p-0.5" :class="chipClass">
                     <slot name="icon"></slot>
                 </div>
-                <template v-else>
-                    <slot name="icon"></slot>
-                </template>
-                <span :class="compact ? 'ml-2 truncate' : 'ml-2'">{{ title }}</span>
+                <span
+                    class="truncate text-[9px] leading-tight font-semibold tracking-[0.06em] text-muted-foreground uppercase"
+                >
+                    {{ title }}
+                </span>
             </div>
-            <div :class="[compact ? 'mb-0.5' : 'mb-1', valueClass]">{{ value }}</div>
-            <div
-                class="text-xs"
-                :class="{
-                    'text-emerald-600': trend === 'up',
-                    'text-rose-600': trend === 'down',
-                    'text-amber-600': trend === 'warning',
-                    'text-muted-foreground': trend === 'neutral' || !trend,
-                }"
+            <span
+                v-if="badge"
+                class="shrink-0 rounded-full bg-muted px-1 py-0.5 text-[9px] leading-none font-medium tabular-nums text-muted-foreground"
             >
-                <div class="flex items-center">
-                    <slot name="trendIcon"></slot>
-                    <span :class="{ 'ml-1': !!$slots.trendIcon }">{{ subtext }}</span>
-                </div>
-            </div>
-        </CardContent>
-    </Card>
+                {{ badge }}
+            </span>
+        </div>
+
+        <div class="mt-1 text-base leading-none font-semibold tracking-tight tabular-nums text-foreground">
+            {{ value }}
+        </div>
+
+        <div class="mt-0.5 flex items-center gap-1 text-[10px] leading-tight" :class="trendClass">
+            <slot name="trendIcon"></slot>
+            <span class="truncate">{{ subtext }}</span>
+        </div>
+    </div>
 </template>

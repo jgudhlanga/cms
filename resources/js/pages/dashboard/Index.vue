@@ -16,7 +16,7 @@ import type {
 import { BreadcrumbItemInterface } from '@/types/ui';
 import { SelectOption } from '@/types/utils';
 import { useDashboardStore } from '@/store/dashboard/useDashboardStore';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { School } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
@@ -74,17 +74,33 @@ const props = defineProps<Props>();
 
 const { activeTab: storedActiveTab } = storeToRefs(useDashboardStore());
 const intakePeriodModel = ref<SelectOption | null>(null);
-
-const defaultTab = computed(() => props.activeTab ?? props.visibleTabs[0] ?? 'overview');
-
-const resolvedActiveTab = computed({
-    get: () => (props.visibleTabs.includes(storedActiveTab.value) ? storedActiveTab.value : defaultTab.value),
-    set: (value: string) => {
-        storedActiveTab.value = value;
-    },
-});
+const page = usePage();
 
 const showTab = (tab: string) => props.visibleTabs.includes(tab);
+
+/** The ?tab= value, when it names a tab this user is allowed to see. */
+const tabFromUrl = (): string | null => {
+    const tab = new URLSearchParams(page.url.split('?')[1] ?? '').get('tab');
+
+    return tab !== null && showTab(tab) ? tab : null;
+};
+
+/** Keeps every other query param (intake period, exam filters) intact while swapping the tab. */
+const urlForTab = (tab: string): string => {
+    const [path, query] = page.url.split('?');
+    const params = new URLSearchParams(query ?? '');
+    params.set('tab', tab);
+
+    return `${path}?${params.toString()}`;
+};
+
+// An explicit ?tab= wins so shared links and refreshes open the right tab; otherwise resume the last one used.
+const activeTab = ref(
+    tabFromUrl()
+        ?? (showTab(storedActiveTab.value)
+            ? storedActiveTab.value
+            : (props.activeTab ?? props.visibleTabs[0] ?? 'overview')),
+);
 
 // The server sends only the active tab's data with the page; other tabs load the first time they open.
 const TAB_PROP_KEYS: Record<string, Array<keyof Props>> = {
@@ -113,24 +129,49 @@ const isTabLoaded = (tab: string): boolean => (TAB_PROP_KEYS[tab] ?? []).every((
 const loadingTab = ref<string | null>(null);
 
 watch(
-    resolvedActiveTab,
+    activeTab,
     (tab) => {
-        if (isTabLoaded(tab) || loadingTab.value === tab) {
+        storedActiveTab.value = tab;
+
+        if (!isTabLoaded(tab) && loadingTab.value !== tab) {
+            // Requesting ?tab= fetches this tab's props and moves the address bar in one go.
+            loadingTab.value = tab;
+            router.get(
+                urlForTab(tab),
+                {},
+                {
+                    // activeTab rides along so the server-resolved tab never goes stale behind a partial load.
+                    only: [...(TAB_PROP_KEYS[tab] ?? []), 'activeTab'] as string[],
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                    onFinish: () => {
+                        if (loadingTab.value === tab) {
+                            loadingTab.value = null;
+                        }
+                    },
+                },
+            );
+
             return;
         }
 
-        loadingTab.value = tab;
-        router.reload({
-            only: TAB_PROP_KEYS[tab] as string[],
-            data: { tab },
-            onFinish: () => {
-                if (loadingTab.value === tab) {
-                    loadingTab.value = null;
-                }
-            },
-        });
+        if (tabFromUrl() !== tab) {
+            // Props are already client-side, so keep the URL shareable without a round trip.
+            router.replace({ url: urlForTab(tab), preserveState: true, preserveScroll: true });
+        }
     },
     { immediate: true },
+);
+
+// A filter change or browser back/forward can land on a different tab server-side; follow it.
+watch(
+    () => props.activeTab,
+    (tab) => {
+        if (tab !== null && showTab(tab) && tab !== activeTab.value) {
+            activeTab.value = tab;
+        }
+    },
 );
 
 const examinationExtraQuery = computed(() => ({
@@ -163,7 +204,7 @@ const handleFilterChange = (option: SelectOption) => {
     router.get(
         window.location.pathname,
         {
-            tab: resolvedActiveTab.value,
+            tab: activeTab.value,
             intake_period_id: String(option.value),
             academic_calendar_id: String(props.academicCalendar.id),
             session: props.filters?.session ?? undefined,
@@ -183,71 +224,79 @@ const handleFilterChange = (option: SelectOption) => {
     <Head :title="$tChoice('trans.dashboard', 2)" />
     <PageContainer :breadcrumbs="breadcrumbs">
         <div class="flex w-full flex-col">
-            <div class="mb-4 border-b border-border pb-4">
-                <h1 class="flex items-center gap-2 text-base font-medium text-foreground">
-                    <School class="h-5 w-5 text-muted-foreground" />
-                    {{ dashboardTitle }}
-                </h1>
-                <p class="mt-0.5 text-[11px] text-muted-foreground">
-                    {{ academicContextSubtitle }}
-                </p>
+            <div
+                class="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/60 bg-linear-to-r from-muted/60 via-muted/25 to-transparent px-3 py-2.5"
+            >
+                <div class="flex items-center gap-2.5">
+                    <div class="rounded-lg bg-primary/10 p-1.5 text-primary">
+                        <School class="h-4 w-4" />
+                    </div>
+                    <div class="min-w-0">
+                        <h1 class="truncate text-sm font-semibold tracking-tight text-foreground">
+                            {{ dashboardTitle }}
+                        </h1>
+                        <p class="mt-0.5 truncate text-[11px] text-muted-foreground">
+                            {{ academicContextSubtitle }}
+                        </p>
+                    </div>
+                </div>
             </div>
 
-            <Tabs v-model="resolvedActiveTab" class="w-full">
-                <TabsList class="flex h-auto w-fit flex-wrap justify-start rounded-md bg-muted/80 p-1">
+            <Tabs v-model="activeTab" class="w-full">
+                <TabsList class="flex h-auto w-fit flex-wrap justify-start rounded-lg bg-muted/80 p-0.5">
                     <TabsTrigger
                         v-if="showTab('overview')"
                         value="overview"
-                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
+                        class="rounded-md px-2.5 py-1 text-[11px] font-medium tracking-tight data-[state=active]:bg-card data-[state=active]:shadow-sm"
                     >
                         {{ $t('dashboard.overview') }}
                     </TabsTrigger>
                     <TabsTrigger
                         v-if="showTab('academic')"
                         value="academic"
-                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
+                        class="rounded-md px-2.5 py-1 text-[11px] font-medium tracking-tight data-[state=active]:bg-card data-[state=active]:shadow-sm"
                     >
                         {{ $t('trans.academic') }}
                     </TabsTrigger>
                     <TabsTrigger
                         v-if="showTab('enrolments')"
                         value="enrolments"
-                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
+                        class="rounded-md px-2.5 py-1 text-[11px] font-medium tracking-tight data-[state=active]:bg-card data-[state=active]:shadow-sm"
                     >
                         {{ $tChoice('trans.enrolment', 2) }}
                     </TabsTrigger>
                     <TabsTrigger
                         v-if="showTab('attendance')"
                         value="attendance"
-                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
+                        class="rounded-md px-2.5 py-1 text-[11px] font-medium tracking-tight data-[state=active]:bg-card data-[state=active]:shadow-sm"
                     >
                         {{ $t('dashboard.attendance') }}
                     </TabsTrigger>
                     <TabsTrigger
                         v-if="showTab('staff')"
                         value="staff"
-                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
+                        class="rounded-md px-2.5 py-1 text-[11px] font-medium tracking-tight data-[state=active]:bg-card data-[state=active]:shadow-sm"
                     >
                         {{ $t('trans.staff') }}
                     </TabsTrigger>
                     <TabsTrigger
                         v-if="showTab('finance')"
                         value="finance"
-                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
+                        class="rounded-md px-2.5 py-1 text-[11px] font-medium tracking-tight data-[state=active]:bg-card data-[state=active]:shadow-sm"
                     >
                         {{ $tChoice('trans.finance', 2) }}
                     </TabsTrigger>
                     <TabsTrigger
                         v-if="showTab('hostel')"
                         value="hostel"
-                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
+                        class="rounded-md px-2.5 py-1 text-[11px] font-medium tracking-tight data-[state=active]:bg-card data-[state=active]:shadow-sm"
                     >
                         {{ $t('dashboard.hostel') }}
                     </TabsTrigger>
                     <TabsTrigger
                         v-if="showTab('examinations')"
                         value="examinations"
-                        class="px-3 py-1.5 text-xs data-[state=active]:shadow-sm"
+                        class="rounded-md px-2.5 py-1 text-[11px] font-medium tracking-tight data-[state=active]:bg-card data-[state=active]:shadow-sm"
                     >
                         {{ $t('dashboard.exams') }}
                     </TabsTrigger>
@@ -259,6 +308,7 @@ const handleFilterChange = (option: SelectOption) => {
                         v-else-if="overviewDashboard"
                         :overview-dashboard="overviewDashboard"
                         :visible-tabs="visibleTabs"
+                        :intake-period-name="intakePeriod?.attributes?.name ?? null"
                     />
                 </TabsContent>
 

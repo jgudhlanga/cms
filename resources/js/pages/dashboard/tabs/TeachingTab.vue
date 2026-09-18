@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Empty from '@/components/core/util/Empty.vue';
+import CardEmpty from '../components/CardEmpty.vue';
 import MetricCard from '@/pages/dashboard/components/MetricCard.vue';
 import DashboardCard from '@/pages/dashboard/components/DashboardCard.vue';
 import type { LecturerDashboard, LecturerPriorityAlert } from '@/types/lecturer';
@@ -187,16 +187,16 @@ const dashboard = computed(() => props.teachingDashboard);
 </script>
 
 <template>
-    <div class="mt-4 space-y-3">
-        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div class="mt-3 space-y-2.5">
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
             <MetricCard
                 :title="$t('dashboard.lecturer_attendance')"
                 :value="notAvailable"
                 :subtext="$t('dashboard.lecturer_attendance_unavailable')"
                 trend="neutral"
-                compact
+                tone="slate"
             >
-                <template #icon><Users class="h-4 w-4" /></template>
+                <template #icon><Users class="h-3.5 w-3.5" /></template>
             </MetricCard>
             <MetricCard
                 :title="$t('dashboard.lecturer_pass_rate')"
@@ -209,9 +209,9 @@ const dashboard = computed(() => props.teachingDashboard);
                           })
                 "
                 trend="neutral"
-                compact
+                tone="emerald"
             >
-                <template #icon><GraduationCap class="h-4 w-4" /></template>
+                <template #icon><GraduationCap class="h-3.5 w-3.5" /></template>
             </MetricCard>
             <MetricCard
                 :title="$t('dashboard.lecturer_average')"
@@ -224,9 +224,9 @@ const dashboard = computed(() => props.teachingDashboard);
                           })
                 "
                 trend="neutral"
-                compact
+                tone="sky"
             >
-                <template #icon><TrendingUp class="h-4 w-4" /></template>
+                <template #icon><TrendingUp class="h-3.5 w-3.5" /></template>
             </MetricCard>
             <MetricCard
                 :title="$t('dashboard.lecturer_modules')"
@@ -237,18 +237,18 @@ const dashboard = computed(() => props.teachingDashboard);
                     })
                 "
                 trend="neutral"
-                compact
+                tone="indigo"
             >
-                <template #icon><BookOpen class="h-4 w-4" /></template>
+                <template #icon><BookOpen class="h-3.5 w-3.5" /></template>
             </MetricCard>
             <MetricCard
                 :title="$t('dashboard.lecturer_at_risk')"
                 :value="formatCount(dashboard.summary.atRiskStudentCount)"
                 :subtext="$t('dashboard.overview_at_risk_subtext')"
                 trend="warning"
-                compact
+                tone="amber"
             >
-                <template #icon><AlertTriangle class="h-4 w-4" /></template>
+                <template #icon><AlertTriangle class="h-3.5 w-3.5" /></template>
             </MetricCard>
             <MetricCard
                 :title="$t('dashboard.lecturer_missing_coursework')"
@@ -261,15 +261,15 @@ const dashboard = computed(() => props.teachingDashboard);
                           })
                 "
                 trend="warning"
-                compact
+                tone="rose"
             >
-                <template #icon><ClipboardList class="h-4 w-4" /></template>
+                <template #icon><ClipboardList class="h-3.5 w-3.5" /></template>
             </MetricCard>
         </div>
 
-        <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <div class="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
             <DashboardCard :title="$t('dashboard.lecturer_priority_alerts')">
-                <Empty
+                <CardEmpty
                     v-if="dashboard.priorityAlerts.length === 0"
                     :message="$t('dashboard.lecturer_no_alerts')"
                 />
@@ -294,16 +294,16 @@ const dashboard = computed(() => props.teachingDashboard);
             </DashboardCard>
 
             <DashboardCard :title="$t('dashboard.lecturer_quick_actions')">
-                <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div class="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
                     <button
                         v-for="action in dashboard.quickActions"
                         :key="action.key"
                         type="button"
-                        class="rounded-lg border border-border px-3 py-2.5 text-left text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                        class="rounded-lg border px-2.5 py-2 text-left text-[11px] font-medium transition-all focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                         :class="
                             action.enabled
-                                ? 'bg-card hover:bg-muted/40'
-                                : 'cursor-not-allowed bg-muted/30 text-muted-foreground'
+                                ? 'border-border/60 bg-card hover:-translate-y-px hover:border-primary/40 hover:text-primary hover:shadow-sm'
+                                : 'cursor-not-allowed border-border/40 bg-muted/30 text-muted-foreground'
                         "
                         :disabled="!action.enabled"
                         @click="openAction(action.url, action.enabled)"
@@ -314,17 +314,17 @@ const dashboard = computed(() => props.teachingDashboard);
             </DashboardCard>
         </div>
 
-        <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <div class="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
             <DashboardCard :title="$t('dashboard.lecturer_top_performing')">
-                <Empty
+                <CardEmpty
                     v-if="dashboard.topPerformingStudents.length === 0"
                     :message="$t('dashboard.lecturer_no_students')"
                 />
-                <ul v-else class="divide-y divide-border">
+                <ul v-else class="flex flex-col gap-0.5">
                     <li
                         v-for="student in dashboard.topPerformingStudents"
                         :key="student.studentEnrolmentId"
-                        class="flex items-center justify-between py-1.5 text-sm"
+                        class="flex items-center justify-between gap-2 rounded-md px-1.5 py-1 text-[11px] transition-colors hover:bg-muted/40"
                     >
                         <span class="text-foreground">{{ student.studentName }}</span>
                         <span class="font-medium tabular-nums text-emerald-600">{{
@@ -335,15 +335,15 @@ const dashboard = computed(() => props.teachingDashboard);
             </DashboardCard>
 
             <DashboardCard :title="$t('dashboard.lecturer_low_performing')">
-                <Empty
+                <CardEmpty
                     v-if="dashboard.lowPerformingStudents.length === 0"
                     :message="$t('dashboard.lecturer_no_students')"
                 />
-                <ul v-else class="divide-y divide-border">
+                <ul v-else class="flex flex-col gap-0.5">
                     <li
                         v-for="student in dashboard.lowPerformingStudents"
                         :key="student.studentEnrolmentId"
-                        class="flex items-center justify-between py-1.5 text-sm"
+                        class="flex items-center justify-between gap-2 rounded-md px-1.5 py-1 text-[11px] transition-colors hover:bg-muted/40"
                     >
                         <span class="text-foreground">{{ student.studentName }}</span>
                         <span class="inline-flex items-center gap-1 font-medium tabular-nums text-rose-600">
@@ -355,17 +355,17 @@ const dashboard = computed(() => props.teachingDashboard);
             </DashboardCard>
         </div>
 
-        <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <div class="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
             <DashboardCard :title="$t('dashboard.lecturer_risky_students')">
-                <Empty
+                <CardEmpty
                     v-if="dashboard.riskyStudents.length === 0"
                     :message="$t('dashboard.lecturer_no_students')"
                 />
-                <ul v-else class="divide-y divide-border">
+                <ul v-else class="flex flex-col gap-0.5">
                     <li
                         v-for="student in dashboard.riskyStudents"
                         :key="student.studentEnrolmentId"
-                        class="flex items-center justify-between py-1.5 text-sm"
+                        class="flex items-center justify-between gap-2 rounded-md px-1.5 py-1 text-[11px] transition-colors hover:bg-muted/40"
                     >
                         <span class="text-foreground">{{ student.studentName }}</span>
                         <span class="text-amber-600">{{
@@ -378,15 +378,15 @@ const dashboard = computed(() => props.teachingDashboard);
             </DashboardCard>
 
             <DashboardCard :title="$t('dashboard.lecturer_missing_coursework')">
-                <Empty
+                <CardEmpty
                     v-if="dashboard.missingCourseWork.length === 0"
                     :message="$t('dashboard.lecturer_no_missing')"
                 />
-                <ul v-else class="divide-y divide-border">
+                <ul v-else class="flex flex-col gap-0.5">
                     <li
                         v-for="row in dashboard.missingCourseWork"
                         :key="`${row.academicCalendarClassId}-${row.moduleId}`"
-                        class="flex items-start justify-between gap-3 py-1.5 text-sm"
+                        class="flex items-start justify-between gap-2 rounded-md px-1.5 py-1 text-[11px] transition-colors hover:bg-muted/40"
                     >
                         <div>
                             <div class="font-medium text-foreground">{{ row.moduleName }}</div>
@@ -403,7 +403,7 @@ const dashboard = computed(() => props.teachingDashboard);
         </div>
 
         <DashboardCard :title="$t('dashboard.lecturer_my_modules')">
-            <Empty
+            <CardEmpty
                 v-if="dashboard.modules.length === 0"
                 :message="$t('dashboard.lecturer_no_modules')"
             />
@@ -421,7 +421,7 @@ const dashboard = computed(() => props.teachingDashboard);
                         <tr
                             v-for="module in dashboard.modules"
                             :key="module.moduleId"
-                            class="border-b border-border/60 last:border-0"
+                            class="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/40"
                         >
                             <td class="py-1.5 pr-3">
                                 <div class="font-medium text-foreground">{{ module.moduleName }}</div>

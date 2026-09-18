@@ -21,6 +21,14 @@ import {
     UserX,
 } from '@lucide/vue';
 import { Chart, registerables } from 'chart.js';
+import DashboardCard from '@/pages/dashboard/components/DashboardCard.vue';
+import {
+    baseAxisOptions,
+    baseTooltip,
+    chartPalette,
+    doughnutOptions,
+    legendOptions,
+} from '@/pages/dashboard/components/chartTheme';
 import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 
 Chart.register(...registerables);
@@ -123,14 +131,7 @@ const onlineViewedRateDisplay = computed(() =>
     props.onlineViewedRate === null ? '—' : `${props.onlineViewedRate}%`,
 );
 
-const statusColors = [
-    'rgba(100, 116, 139, 0.8)',
-    'rgba(16, 185, 129, 0.8)',
-    'rgba(245, 158, 11, 0.8)',
-    'rgba(244, 63, 94, 0.8)',
-    'rgba(79, 70, 229, 0.8)',
-    'rgba(249, 115, 22, 0.8)',
-];
+const statusColors = chartPalette;
 
 const destroyCharts = (): void => {
     statusChartInstance?.destroy();
@@ -163,18 +164,12 @@ const initStatusChart = (): void => {
                 {
                     data,
                     backgroundColor: statusColors,
-                    borderWidth: 1,
+                    borderWidth: 0,
+                    hoverOffset: 4,
                 },
             ],
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'right', align: 'center' },
-            },
-            cutout: '55%',
-        },
+        options: doughnutOptions('right'),
     });
 };
 
@@ -200,21 +195,22 @@ const initPassRateChart = (): void => {
                         props.comparison.primaryPassRate ?? 0,
                         props.comparison.comparePassRate ?? 0,
                     ],
-                    backgroundColor: ['rgba(79, 70, 229, 0.7)', 'rgba(16, 185, 129, 0.7)'],
-                    borderRadius: 8,
+                    backgroundColor: [chartPalette[0], chartPalette[1]],
+                    borderRadius: 6,
+                    maxBarThickness: 56,
                 },
             ],
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            plugins: {
+                legend: { display: false },
+                tooltip: baseTooltip(),
+            },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: { callback: (value) => `${value}%` },
-                },
+                ...baseAxisOptions(),
+                y: { ...baseAxisOptions().y, max: 100, ticks: { ...baseAxisOptions().y.ticks, callback: (value) => `${value}%` } },
             },
         },
     });
@@ -241,25 +237,27 @@ const initModuleChart = (): void => {
                 {
                     label: props.chartLabels.modulePassPrimary,
                     data: modules.map((module) => module.primaryPassRate ?? 0),
-                    backgroundColor: 'rgba(79, 70, 229, 0.7)',
+                    backgroundColor: chartPalette[0],
+                    borderRadius: 4,
                 },
                 {
                     label: props.chartLabels.modulePassCompare,
                     data: modules.map((module) => module.comparePassRate ?? 0),
-                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    backgroundColor: chartPalette[1],
+                    borderRadius: 4,
                 },
             ],
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } },
+            plugins: {
+                legend: legendOptions('bottom'),
+                tooltip: baseTooltip(),
+            },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: { callback: (value) => `${value}%` },
-                },
+                ...baseAxisOptions(),
+                y: { ...baseAxisOptions().y, max: 100, ticks: { ...baseAxisOptions().y.ticks, callback: (value) => `${value}%` } },
             },
         },
     });
@@ -343,7 +341,7 @@ const trendClass = (trend: 'improved' | 'declined' | 'unchanged'): string => {
 </script>
 
 <template>
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-2.5">
         <ExaminationDashboardFilters
             :filters="filters"
             :filter-options="filterOptions"
@@ -404,51 +402,42 @@ const trendClass = (trend: 'improved' | 'declined' | 'unchanged'): string => {
         </div>
 
         <template v-else>
-            <div class="rounded-xl border border-border bg-card p-4 shadow-sm">
-                <h2 class="mb-4 text-sm font-semibold text-foreground">
-                    {{ $t('examinations.status_distribution') }}
-                </h2>
-                <div class="relative h-72">
+            <DashboardCard :title="$t('examinations.status_distribution')">
+                <div class="relative h-56">
                     <canvas ref="statusChartCanvas" />
                 </div>
-            </div>
+            </DashboardCard>
 
             <div
                 v-if="!comparison"
-                class="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground"
+                class="rounded-lg border border-dashed border-border/70 bg-muted/20 p-6 text-center text-[11px] text-muted-foreground"
             >
                 {{ $t('examinations.select_compare_session_hint') }}
             </div>
 
             <template v-else>
-                <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                    <div class="rounded-xl border border-border bg-card p-4 shadow-sm">
-                        <h2 class="mb-4 text-sm font-semibold text-foreground">
-                            {{ $t('examinations.session_pass_rate_comparison') }}
-                        </h2>
-                        <div class="relative h-64">
+                <div class="grid grid-cols-1 gap-2.5 xl:grid-cols-2">
+                    <DashboardCard :title="$t('examinations.session_pass_rate_comparison')">
+                        <div class="relative h-52">
                             <canvas ref="passRateChartCanvas" />
                         </div>
-                    </div>
-                    <div class="rounded-xl border border-border bg-card p-4 shadow-sm">
-                        <h2 class="mb-4 text-sm font-semibold text-foreground">
-                            {{ $t('examinations.module_pass_improvement') }}
-                        </h2>
-                        <div class="relative h-64">
+                    </DashboardCard>
+                    <DashboardCard :title="$t('examinations.module_pass_improvement')">
+                        <div class="relative h-52">
                             <canvas ref="moduleChartCanvas" />
                         </div>
-                    </div>
+                    </DashboardCard>
                 </div>
 
-                <div class="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+                <div class="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
                     <table class="min-w-full text-sm">
                         <thead class="border-b border-border bg-muted/40 text-left text-muted-foreground">
                             <tr>
-                                <th class="px-4 py-3 font-medium">{{ $t('examinations.subject_code') }}</th>
-                                <th class="px-4 py-3 font-medium">{{ $t('examinations.subject') }}</th>
-                                <th class="px-4 py-3 font-medium">{{ $t('examinations.module_pass_primary') }}</th>
-                                <th class="px-4 py-3 font-medium">{{ $t('examinations.module_pass_compare') }}</th>
-                                <th class="px-4 py-3 font-medium">{{ $t('examinations.module_pass_delta') }}</th>
+                                <th class="px-3 py-2 text-xs font-medium">{{ $t('examinations.subject_code') }}</th>
+                                <th class="px-3 py-2 text-xs font-medium">{{ $t('examinations.subject') }}</th>
+                                <th class="px-3 py-2 text-xs font-medium">{{ $t('examinations.module_pass_primary') }}</th>
+                                <th class="px-3 py-2 text-xs font-medium">{{ $t('examinations.module_pass_compare') }}</th>
+                                <th class="px-3 py-2 text-xs font-medium">{{ $t('examinations.module_pass_delta') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -457,17 +446,17 @@ const trendClass = (trend: 'improved' | 'declined' | 'unchanged'): string => {
                                 :key="module.subjectCode"
                                 class="border-b border-border/60 last:border-0"
                             >
-                                <td class="px-4 py-3 font-medium">{{ module.subjectCode }}</td>
-                                <td class="px-4 py-3">{{ module.subject ?? '—' }}</td>
-                                <td class="px-4 py-3">{{ formatRate(module.primaryPassRate) }}</td>
-                                <td class="px-4 py-3">{{ formatRate(module.comparePassRate) }}</td>
-                                <td class="px-4 py-3" :class="trendClass(module.trend)">
+                                <td class="px-3 py-1.5 font-medium">{{ module.subjectCode }}</td>
+                                <td class="px-3 py-1.5">{{ module.subject ?? '—' }}</td>
+                                <td class="px-3 py-1.5">{{ formatRate(module.primaryPassRate) }}</td>
+                                <td class="px-3 py-1.5">{{ formatRate(module.comparePassRate) }}</td>
+                                <td class="px-3 py-1.5" :class="trendClass(module.trend)">
                                     {{ formatRate(module.delta) }}
                                     <span class="ml-1 text-xs">({{ trendLabel(module.trend) }})</span>
                                 </td>
                             </tr>
                             <tr v-if="comparison.modules.length === 0">
-                                <td colspan="5" class="px-4 py-6 text-center text-muted-foreground">
+                                <td colspan="5" class="px-3 py-6 text-center text-muted-foreground">
                                     {{ $t('examinations.no_dashboard_data') }}
                                 </td>
                             </tr>

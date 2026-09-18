@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import IntakePeriodComboSelect from '@/components/core/form/combobox/IntakePeriodComboSelect.vue';
-import { useUtils } from '@/composables/core/useUtils';
 import { IconName, icons } from '@/lib/icons';
 import { DailyDistribution, DepartmentDistribution, EnrolmentSummary, LevelDistribution } from '@/types/dashboard';
 import { IntakePeriod } from '@/types/institution';
@@ -11,6 +10,7 @@ import { Check, Clock, FileText, ListChecks, UserPlus, XCircle } from 'lucide-vu
 import { computed, onMounted, ref, watch } from 'vue';
 import DashboardCard from '../components/DashboardCard.vue';
 import MetricCard from '../components/MetricCard.vue';
+import { baseAxisOptions, baseTooltip, chartPalette, doughnutOptions } from '../components/chartTheme';
 
 Chart.register(...registerables);
 
@@ -60,34 +60,18 @@ const yieldRateSubtext = computed(() => {
 const levelChart = ref<HTMLCanvasElement | null>(null);
 const enrollmentChart = ref<HTMLCanvasElement | null>(null);
 
-const { generateRandomCode } = useUtils();
-const normalizeColor = (value: number) => Math.min(255, Math.max(80, value));
-
-const colorFromLevel = (name: string, alpha = 0.7): string => {
-    const randomName = generateRandomCode(name);
-    let hash = 0;
-    for (let i = 0; i < randomName.length; i++) {
-        hash = randomName.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const r = normalizeColor((hash >> 16) & 255);
-    const g = normalizeColor((hash >> 8) & 255);
-    const b = normalizeColor(hash & 255);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
-
 const levelChartData = computed(() => {
     const labels = props.levelDistribution?.map((d) => d.levelName) ?? [];
     const data = props.levelDistribution?.map((d) => d.levelCount) ?? [];
-    const backgroundColors = labels.map((name) => colorFromLevel(name, 0.7));
-    const borderColors = backgroundColors.map((c) => c.replace('0.7', '1'));
+
     return {
         labels,
         datasets: [
             {
                 data,
-                backgroundColor: backgroundColors,
-                borderColor: borderColors,
-                borderWidth: 1,
+                backgroundColor: labels.map((_, index) => chartPalette[index % chartPalette.length]),
+                borderWidth: 0,
+                hoverOffset: 4,
             },
         ],
     };
@@ -96,17 +80,21 @@ const levelChartData = computed(() => {
 const enrollmentData = computed(() => {
     const labels = props.dailyDistribution?.map((d) => d.date) ?? [];
     const data = props.dailyDistribution?.map((d) => d.count) ?? [];
+
     return {
         labels,
         datasets: [
             {
-                label: 'Applications',
+                label: trans('dashboard.applications'),
                 data,
-                backgroundColor: 'rgba(79, 70, 229, 0.2)',
-                borderColor: 'rgba(79, 70, 229, 1)',
+                backgroundColor: 'rgba(99, 102, 241, 0.12)',
+                borderColor: 'rgba(99, 102, 241, 1)',
                 borderWidth: 2,
                 tension: 0.4,
                 fill: true,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                pointHoverBackgroundColor: 'rgba(99, 102, 241, 1)',
             },
         ],
     };
@@ -115,32 +103,13 @@ const enrollmentData = computed(() => {
 let levelChartInstance: Chart | null = null;
 let enrollmentChartInstance: Chart | null = null;
 
-const getThemeColor = (token: string, fallback: string): string => {
-    if (typeof window === 'undefined') {
-        return fallback;
-    }
-    const value = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
-    return value ? `hsl(${value})` : fallback;
-};
-
 const initCharts = () => {
     if (levelChart.value) {
         if (levelChartInstance) levelChartInstance.destroy();
         levelChartInstance = new Chart(levelChart.value, {
             type: 'doughnut',
             data: { ...levelChartData.value },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'left',
-                        align: 'center',
-                        labels: { color: getThemeColor('--muted-foreground', '#64748B') },
-                    },
-                },
-                cutout: '60%',
-            },
+            options: doughnutOptions('right'),
         });
     }
 
@@ -152,21 +121,12 @@ const initCharts = () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
                 plugins: {
                     legend: { display: false },
-                    tooltip: { mode: 'index', intersect: false },
+                    tooltip: baseTooltip(),
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { color: getThemeColor('--muted-foreground', '#64748B') },
-                        grid: { color: getThemeColor('--border', '#F1F5F9'), drawBorder: false },
-                    },
-                    x: {
-                        ticks: { color: getThemeColor('--muted-foreground', '#64748B') },
-                        grid: { display: false },
-                    },
-                },
+                scales: baseAxisOptions(),
             },
         });
     }
@@ -186,13 +146,17 @@ watch(
 </script>
 
 <template>
-    <div class="mt-4 flex flex-col gap-3">
+    <div class="mt-3 flex flex-col gap-2.5">
         <div class="flex items-center justify-end gap-2">
             <div
-                class="flex min-w-0 shrink-0 items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2 sm:min-w-[280px] sm:max-w-md"
+                class="flex min-w-0 shrink-0 items-center gap-2 rounded-lg border border-border/60 bg-card px-2.5 py-1.5 shadow-xs sm:min-w-[280px] sm:max-w-md"
             >
-                <component :is="icons[IconName.calendar]" class="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                <span class="shrink-0 text-sm font-medium text-muted-foreground">{{ $tChoice('trans.intake_period', 1) }}</span>
+                <component :is="icons[IconName.calendar]" class="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
+                <span
+                    class="shrink-0 text-[10px] font-semibold tracking-[0.06em] text-muted-foreground uppercase"
+                >
+                    {{ $tChoice('trans.intake_period', 1) }}
+                </span>
                 <IntakePeriodComboSelect
                     :data="intakePeriods"
                     label=""
@@ -206,10 +170,9 @@ watch(
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
             <MetricCard
-                compact
-                accent="bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                tone="indigo"
                 :title="applicationsTitle"
                 :value="enrolmentSummary.applications"
                 :subtext="$t('dashboard.total_applications')"
@@ -218,8 +181,7 @@ watch(
                 <template #icon><FileText class="h-3.5 w-3.5" /></template>
             </MetricCard>
             <MetricCard
-                compact
-                accent="bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+                tone="sky"
                 :title="$t('dashboard.offers_made')"
                 :value="enrolmentSummary.offersMade"
                 :subtext="acceptanceRateSubtext"
@@ -228,8 +190,7 @@ watch(
                 <template #icon><Check class="h-3.5 w-3.5" /></template>
             </MetricCard>
             <MetricCard
-                compact
-                accent="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                tone="emerald"
                 :title="$t('dashboard.confirmed')"
                 :value="enrolmentSummary.confirmed"
                 :subtext="yieldRateSubtext"
@@ -238,8 +199,7 @@ watch(
                 <template #icon><UserPlus class="h-3.5 w-3.5" /></template>
             </MetricCard>
             <MetricCard
-                compact
-                accent="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                tone="amber"
                 :title="$t('dashboard.waitlisted')"
                 :value="enrolmentSummary.waitlisted"
                 :subtext="$t('dashboard.waitlisted_applications')"
@@ -248,8 +208,7 @@ watch(
                 <template #icon><ListChecks class="h-3.5 w-3.5" /></template>
             </MetricCard>
             <MetricCard
-                compact
-                accent="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+                tone="violet"
                 :title="$t('dashboard.provisional')"
                 :value="enrolmentSummary.provisional"
                 :subtext="$t('dashboard.provisional_applications')"
@@ -258,8 +217,7 @@ watch(
                 <template #icon><Clock class="h-3.5 w-3.5" /></template>
             </MetricCard>
             <MetricCard
-                compact
-                accent="bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
+                tone="rose"
                 :title="$t('dashboard.failed_rejected')"
                 :value="enrolmentSummary.failedRejected"
                 :subtext="$t('dashboard.failed_rejected_applications')"
@@ -269,7 +227,7 @@ watch(
             </MetricCard>
         </div>
 
-        <div class="flex flex-col gap-3">
+        <div class="flex flex-col gap-2.5">
             <DistributionByDepartment
                 :department-distribution="departmentDistribution"
                 :show-actions-column="true"
@@ -277,21 +235,23 @@ watch(
                 origin="dashboard"
                 v-model:intakePeriodModel="intakePeriodModel"
             />
-            <DashboardCard :title="$t('dashboard.distribution_by_level')">
-                <div class="mt-2 h-64">
-                    <canvas ref="levelChart"></canvas>
-                </div>
-            </DashboardCard>
-            <DashboardCard :title="$t('dashboard.daily_applications')">
-                <div class="mt-2 h-64">
-                    <canvas ref="enrollmentChart"></canvas>
-                </div>
-            </DashboardCard>
+            <div class="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
+                <DashboardCard :title="$t('dashboard.distribution_by_level')">
+                    <div class="h-52">
+                        <canvas ref="levelChart"></canvas>
+                    </div>
+                </DashboardCard>
+                <DashboardCard :title="$t('dashboard.daily_applications')">
+                    <div class="h-52">
+                        <canvas ref="enrollmentChart"></canvas>
+                    </div>
+                </DashboardCard>
+            </div>
         </div>
 
         <DashboardCard :title="$t('dashboard.retention_rate')">
             <div
-                class="flex h-[185px] w-full items-center justify-center rounded border border-dashed border-border bg-muted/40 text-sm text-muted-foreground"
+                class="flex h-32 w-full items-center justify-center rounded-lg border border-dashed border-border/70 bg-muted/20 text-[11px] text-muted-foreground"
             >
                 {{ $t('dashboard.line_chart_placeholder') }}
             </div>
