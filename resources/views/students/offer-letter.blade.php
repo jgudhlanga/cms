@@ -5,10 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Harare Polytechnic</title>
     <style>
-        @page {
-            margin: 12mm 14mm 16mm 14mm;
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -18,16 +14,17 @@
         body {
             font-family: system-ui, -apple-system, sans-serif;
             background-color: #ffffff;
-            font-size: 11px;
-            line-height: 1.35;
-            color: #111;
         }
 
         .container {
-            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
             background: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
+        /* Header styles */
         .header {
             width: 100%;
         }
@@ -45,11 +42,11 @@
         .header-top td {
             vertical-align: middle;
             text-align: center;
-            padding: 0 6px;
+            padding: 0 10px;
         }
 
         .header-logo {
-            height: 48px;
+            height: 64px;
             width: auto;
             max-width: 100%;
             display: block;
@@ -58,38 +55,38 @@
 
         .header-center {
             text-align: center;
-            width: 70%;
+            width: 70%; /* Center column takes more space */
         }
 
         .header-center h4 {
-            font-size: 7px;
+            font-size: 8px;
             font-weight: bold;
             text-transform: uppercase;
-            line-height: 1.15;
+            line-height: 1.2;
         }
 
         .header-center h3 {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 800;
             text-transform: uppercase;
-            margin: 2px 0;
-            line-height: 1.15;
+            margin: 4px 0;
+            line-height: 1.2;
         }
 
         .header-center p {
-            font-size: 10px;
-            line-height: 1.15;
+            font-size: 12px;
+            line-height: 1.2;
         }
 
         .header-center .text-small {
-            font-size: 9px;
-            line-height: 1.15;
+            font-size: 10px;
+            line-height: 1.2;
         }
 
         .header-center .contact-line {
             display: flex;
             justify-content: center;
-            gap: 6px;
+            gap: 8px;
         }
 
         .header-center .contact-line span:first-child {
@@ -100,37 +97,40 @@
             width: 100%;
             height: 1px;
             background-color: #000;
-            margin: 8px 0 10px;
+            margin: 12px 0;
         }
 
+        /* Content area */
         .content {
-            padding: 8px 4px 28px;
+            padding: 30px 20px;
         }
 
-        .content p {
-            margin: 0 0 6px;
-            line-height: 1.35;
+        .signature-block {
+            margin-top: 5px;
+            page-break-before: avoid;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
-        .content p:last-child {
-            margin-bottom: 0;
-        }
-
-        .signature {
-            margin-top: 8px;
-            max-height: 56px;
+        .signature-block img {
+            display: block;
+            max-height: 64px;
             width: auto;
         }
 
-        /* DomPDF: fixed footer stays on page 1 and does not push body onto page 2. */
+        /*
+         * DomPDF: fixed footer stays on the page and does not push the signature
+         * onto a second page when it was part of the content flow.
+         */
         .document-footer {
             position: fixed;
             left: 0;
             right: 0;
-            bottom: 0;
-            font-size: 9px;
+            bottom: 12px;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
             color: #4b5563;
-            line-height: 1.2;
         }
     </style>
 </head>
@@ -141,12 +141,8 @@
         {!!  str_replace(['{date}', '{studentName}', '{studentIdNumber}', '{studentNumber}','{intakePeriod}', '{department}', '{level}', '{course}', '{modeOfStudy}', '{tuition}'],
         array_map(fn ($value) => e((string) $value), ['', strtoupper($studentName), $studentIdNumber, $studentNumber, $intakePeriod, $department, $level, $course, $modeOfStudy, $tuition]),
         $documentTemplate->body) !!}
-        <div>
-            <img
-                class="signature"
-                src="file://{{ public_path('assets/images/principal.jpeg') }}"
-                alt="signature"
-            >
+        <div class="signature-block">
+            <img src="file://{{ public_path('assets/images/principal.jpeg') }}" alt="signature">
         </div>
     </div>
 </div>
