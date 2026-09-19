@@ -19,6 +19,8 @@ use App\Models\Institution\DepartmentLevel;
 use App\Models\Institution\DepartmentLevelCourse;
 use App\Models\Institution\Division;
 use App\Models\Institution\InstitutionDepartment;
+use App\Models\Institution\IntakePeriod;
+use App\Models\Institution\OfferLetterTemplate;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -97,6 +99,12 @@ class SetupGapRecheckObserver
             ],
             InstitutionDepartment::class => [
                 SetupGapCheckEnum::DEPARTMENTS_WITHOUT_DIVISION,
+            ],
+            IntakePeriod::class => [
+                SetupGapCheckEnum::INTAKE_PERIOD_MISSING_OFFER_LETTERS,
+            ],
+            OfferLetterTemplate::class => [
+                SetupGapCheckEnum::INTAKE_PERIOD_MISSING_OFFER_LETTERS,
             ],
             AssessmentCalendar::class => [
                 SetupGapCheckEnum::ASSESSMENT_CALENDAR_DATES_MISSING,

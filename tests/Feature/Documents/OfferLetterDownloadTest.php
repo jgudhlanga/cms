@@ -4,61 +4,22 @@ use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Enums\Institution\ModeOfStudyEnum;
 use App\Enums\Rbac\RoleEnum;
 use App\Enums\Shared\ClassListTypeEnum;
-use App\Enums\Shared\DocumentTypeEnum;
 use App\Enums\Shared\FeeTypeEnum;
 use App\Enums\Shared\WorkflowStepEnum;
 use App\Helpers\DocumentHelper;
-use App\Models\Institution\DocumentTemplate;
 use App\Models\Institution\FeeStructure;
 use App\Models\Institution\IntakePeriod;
 use App\Models\Institution\ModeOfStudy;
 use App\Models\Rbac\Role;
-use App\Models\Shared\DocumentType;
 use App\Models\Shared\FeeType;
-use App\Models\Students\StudentApplication;
 use App\Models\Users\User;
 use App\Services\Students\StudentOfferLetterService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Queue;
 
-function seedOfferLetterDocumentPrerequisites(StudentApplication $studentApplication): void
-{
-    FeeType::query()->firstOrCreate(
-        ['name' => FeeTypeEnum::TUITION_FEE->name()],
-        ['description' => FeeTypeEnum::TUITION_FEE->description()],
-    );
-
-    $documentType = DocumentType::query()->firstOrCreate(
-        ['name' => DocumentTypeEnum::OFFER_LETTER->name()],
-        ['description' => DocumentTypeEnum::OFFER_LETTER->description()],
-    );
-
-    DocumentTemplate::query()->firstOrCreate(
-        [
-            'tenant_id' => $studentApplication->tenant_id,
-            'document_type_id' => $documentType->id,
-            'name' => 'Standard Offer Letter',
-        ],
-        [
-            'body' => '<p>Congratulations {{ $studentName }}</p>',
-            'header_line_1' => 'Republic of Zimbabwe',
-            'header_line_2' => 'Harare Polytechnic',
-        ],
-    );
-}
-
-function makeIntakeLatest(IntakePeriod $intakePeriod): void
-{
-    IntakePeriod::query()
-        ->whereKeyNot($intakePeriod->id)
-        ->update([
-            'end_date' => now()->subYears(2)->toDateString(),
-        ]);
-
-    $intakePeriod->update([
-        'start_date' => now()->startOfMonth()->toDateString(),
-        'end_date' => now()->addYear()->toDateString(),
-    ]);
-}
+beforeEach(function (): void {
+    Queue::fake();
+});
 
 it('allows offer letter download for applications in an active open intake', function (): void {
     $studentApplication = createVerifiedStudentApplication('OFFER-ACTIVE-'.strtoupper(str()->random(4)));
@@ -310,11 +271,6 @@ it('assembles offer letters using the accepted date, application tuition, and in
         ['description' => FeeTypeEnum::TUITION_FEE->description()],
     );
 
-    $documentType = DocumentType::query()->firstOrCreate(
-        ['name' => DocumentTypeEnum::OFFER_LETTER->name()],
-        ['description' => DocumentTypeEnum::OFFER_LETTER->description()],
-    );
-
     FeeStructure::query()->create([
         'tenant_id' => $studentApplication->tenant_id,
         'fee_type_id' => $tuitionFeeType->id,
@@ -324,23 +280,9 @@ it('assembles offer letters using the accepted date, application tuition, and in
         'local_fca_amount' => 456.78,
     ]);
 
-    DocumentTemplate::query()->create([
-        'tenant_id' => $studentApplication->tenant_id,
-        'document_type_id' => $documentType->id,
-        'name' => 'Generic Offer Letter',
-        'body' => '<p>Generic</p>',
-        'header_line_1' => 'Republic of Zimbabwe',
-        'header_line_2' => 'Harare Polytechnic',
-    ]);
-
-    $intakeTemplate = DocumentTemplate::query()->create([
-        'tenant_id' => $studentApplication->tenant_id,
-        'document_type_id' => $documentType->id,
-        'intake_period_id' => $studentApplication->intake_period_id,
+    $intakeTemplate = createOfferLetterTemplate($studentApplication, [
         'name' => 'Intake Offer Letter',
         'body' => '<p>Intake specific</p>',
-        'header_line_1' => 'Republic of Zimbabwe',
-        'header_line_2' => 'Harare Polytechnic',
     ]);
 
     [

@@ -9,7 +9,7 @@ import { trans, trans_choice } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 export const useDocumentTemplates = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore, anchorTag } = useDataTables();
+    const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
     const { navigateTo } = useUtils();
     const isLoading = ref(false);
     const documentTemplates = ref<DocumentTemplate[]>([]);
@@ -19,20 +19,6 @@ export const useDocumentTemplates = () => {
         return [
             { header: trans_choice('trans.name', 1), accessorKey: 'attributes.name' },
             { header: trans_choice('trans.document_type', 1), accessorKey: 'attributes.documentType' },
-            {
-                header: trans('trans.preview'),
-                accessorKey: 'preview',
-                enableSorting: false,
-                meta: { align: 'center' },
-                cell: ({ row }: { row: { original: DocumentTemplate } }) => {
-                    const id = getIdParams(row.original.id?.toString() ?? '');
-                    return anchorTag({
-                        title: trans('trans.preview'),
-                        href: route('document-templates.preview', id),
-                        classes: 'btn btn-sm btn-primary',
-                    });
-                },
-            },
             {
                 header: trans_choice('trans.action', 2),
                 accessorKey: 'actions',

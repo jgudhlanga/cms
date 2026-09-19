@@ -26,10 +26,16 @@ const { documentTemplate } = props;
 const documentType = ref<SelectOption | null>(null);
 
 const { navigateTo } = useUtils();
-
 const { saveDocumentTemplate } = useDocumentTemplates();
-
 const body = ref<string>('');
+
+const optionFrom = (value?: string | number | null, label?: string | null): SelectOption | null => {
+    if (value === null || value === undefined || value === '' || Number(value) < 1) {
+        return null;
+    }
+
+    return { value: Number(value), label: label ?? '' };
+};
 
 const form = useForm<DocumentTemplateParams>({
     document_type_id: null,
@@ -59,11 +65,7 @@ const handleLogo1FileChange = (event: any) => {
         URL.revokeObjectURL(logon1Preview.value);
     }
     logo1FileType.value = upload.type;
-    if (upload.type.startsWith('image/') || upload.type === 'application/pdf') {
-        logon1Preview.value = URL.createObjectURL(upload);
-    } else {
-        logon1Preview.value = null;
-    }
+    logon1Preview.value = upload.type.startsWith('image/') ? URL.createObjectURL(upload) : null;
 };
 
 const handleLogo2FileChange = (event: any) => {
@@ -74,11 +76,7 @@ const handleLogo2FileChange = (event: any) => {
         URL.revokeObjectURL(logon2Preview.value);
     }
     logo2FileType.value = upload.type;
-    if (upload.type.startsWith('image/') || upload.type === 'application/pdf') {
-        logon2Preview.value = URL.createObjectURL(upload);
-    } else {
-        logon2Preview.value = null;
-    }
+    logon2Preview.value = upload.type.startsWith('image/') ? URL.createObjectURL(upload) : null;
 };
 
 onMounted(() => {
@@ -93,20 +91,7 @@ onMounted(() => {
         form.header_telephone = documentTemplate?.attributes?.headerTelephone ?? '';
         form.header_website = documentTemplate?.attributes?.headerWebsite ?? '';
         form.name = documentTemplate?.attributes?.name ?? '';
-        if (documentTemplate?.attributes?.documentType) {
-            documentType.value = {
-                label: documentTemplate.attributes?.documentType,
-                value: Number(documentTemplate?.attributes?.documentTypeId ?? null),
-            };
-        }
-        /*if (documentTemplate.header_logo_1_url) {
-            logon1Preview.value = documentTemplate.header_logo_1_url;
-            logo1FileType.value = 'image/!*';
-        }
-        if (documentTemplate.header_logo_2_url) {
-            logon2Preview.value = documentTemplate.header_logo_2_url;
-            logo2FileType.value = 'image/!*';
-        }*/
+        documentType.value = optionFrom(documentTemplate?.attributes?.documentTypeId, documentTemplate?.attributes?.documentType);
     }
 });
 

@@ -19,6 +19,7 @@ use Database\Seeders\Tenants\TenantsTableSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+require_once __DIR__.'/Support/OfferLetterTestHelpers.php';
 require_once __DIR__.'/Support/BulkFinaliseTestHelpers.php';
 require_once __DIR__.'/Support/FinanceTestHelpers.php';
 require_once __DIR__.'/Support/HmsIndexTestHelpers.php';

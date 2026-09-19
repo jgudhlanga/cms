@@ -2,8 +2,6 @@
 
 namespace App\Console\Commands\Data;
 
-use App\Helpers\Helper;
-use App\Models\Institution\DocumentTemplate;
 use Illuminate\Console\Command;
 
 class FixDataIssuesCommand extends Command
@@ -25,10 +23,10 @@ class FixDataIssuesCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): void
+    public function handle(): int
     {
-        $intakePeriod = Helper::resolveIntakePeriod();
-        $documentTemplate = DocumentTemplate::find(1);
-        $documentTemplate->update(['intake_period_id' => $intakePeriod->id]);
+        $this->info('No pending data fixes.');
+
+        return self::SUCCESS;
     }
 }

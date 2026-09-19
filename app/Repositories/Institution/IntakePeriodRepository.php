@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Institution;
 
+use App\Actions\Institution\CopyOfferLetterTemplatesToIntakeAction;
 use App\DTO\Institution\IntakePeriodDto;
 use App\Enums\Institution\IntakePeriodStatusEnum;
 use App\Http\Filters\Shared\SharedNameFilter;
@@ -23,6 +24,7 @@ class IntakePeriodRepository extends BaseRepository implements IIntakePeriodRepo
         return DB::transaction(function () use ($dto): IntakePeriod {
             $intakePeriod = $this->intakePeriod->create($this->getFields($dto))->refresh();
             $this->suspendOpenContinuousWhenRegularOpened($dto);
+            app(CopyOfferLetterTemplatesToIntakeAction::class)->execute($intakePeriod);
 
             return $intakePeriod;
         });
@@ -52,6 +54,7 @@ class IntakePeriodRepository extends BaseRepository implements IIntakePeriodRepo
 
         return $this->intakePeriod
             ->select($columns)
+            ->withCount('offerLetterTemplates')
             ->filter($filters)
             ->where('is_active', 1)
             ->orderByRaw(

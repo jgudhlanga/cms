@@ -52,6 +52,10 @@ const TABLE_ACTION_DEFINITIONS: Record<string, TableActionDefinition> = {
         label: () => trans('hms.reassign_room'),
         icon: IconName.edit,
     },
+    copy: {
+        label: () => trans('trans.copy'),
+        icon: IconName.file,
+    },
 };
 
 export const filterTableActionOptions = (

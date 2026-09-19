@@ -32,6 +32,7 @@ return [
     'check_offering_mode_not_configured' => 'Online applications offer an unset-up mode',
     'check_offering_course_level_unlinked' => 'Online applications offer an unlinked course level',
     'check_offering_references_deleted_record' => 'Online applications offer a deleted course or level',
+    'check_intake_period_missing_offer_letters' => 'Intake period has no offer letters',
 
     // Gap titles and detail lines
     'applications_in_unconfigured_mode_title' => ':course :level — :mode is not set up',
@@ -83,6 +84,9 @@ return [
 
     'offering_references_deleted_course_title' => 'Online applications offer a course that has been deleted',
     'offering_references_deleted_course_body' => 'The department course behind this entry in the online application catalogue has been deleted, but the catalogue still offers it to applicants.',
+
+    'intake_period_missing_offer_letters_title' => ':intake has no offer letters',
+    'intake_period_missing_offer_letters_body' => 'Each intake needs its own offer letters before students can be accepted. Open the intake and add or copy the working set (HEXCO, ABMA, Block Release, SDP).',
 
     // Notification
     'notification_title' => 'New setup issue: :check',

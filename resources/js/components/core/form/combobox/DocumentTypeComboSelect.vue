@@ -19,13 +19,15 @@ onMounted(async () => {
 });
 const props = defineProps<Props>();
 const options = computed(() => {
-    return documentTypes.value.map(
-        (documentType: DocumentType) =>
-            <SelectOption>{
-                value: Number(documentType.id),
-                label: documentType?.attributes?.name,
-            },
-    );
+    return documentTypes.value
+        .filter((documentType: DocumentType) => documentType?.attributes?.name !== 'Offer Letter')
+        .map(
+            (documentType: DocumentType) =>
+                <SelectOption>{
+                    value: Number(documentType.id),
+                    label: documentType?.attributes?.name,
+                },
+        );
 });
 
 const whenSearch = debounce(async (search: string) => {

@@ -34,6 +34,7 @@ enum SetupGapCheckEnum: string
 
     // Accommodation
     case HOSTEL_BEDS_VACANT_WITH_WAITING_APPLICANTS = 'hostel_beds_vacant_with_waiting_applicants';
+    case INTAKE_PERIOD_MISSING_OFFER_LETTERS = 'intake_period_missing_offer_letters';
 
     public function severity(): SetupGapSeverityEnum
     {
@@ -55,6 +56,8 @@ enum SetupGapCheckEnum: string
             self::MODES_ON_UNLINKED_LEVEL,
             self::DEPARTMENTS_WITHOUT_DIVISION,
             self::HOSTEL_BEDS_VACANT_WITH_WAITING_APPLICANTS => SetupGapSeverityEnum::INFO,
+
+            self::INTAKE_PERIOD_MISSING_OFFER_LETTERS => SetupGapSeverityEnum::WARNING,
         };
     }
 
@@ -95,6 +98,8 @@ enum SetupGapCheckEnum: string
             self::OFFERING_MODE_NOT_CONFIGURED,
             self::OFFERING_COURSE_LEVEL_UNLINKED,
             self::OFFERING_REFERENCES_DELETED_RECORD => 'manage:online-application-catalogue',
+
+            self::INTAKE_PERIOD_MISSING_OFFER_LETTERS => 'update:intake-periods',
         };
     }
 

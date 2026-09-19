@@ -2,19 +2,11 @@
 
 namespace App\Helpers;
 
-use App\Enums\Institution\DepartmentEnum;
-use App\Enums\Institution\LevelEnum;
-use App\Enums\Institution\ModeOfStudyEnum;
-use App\Enums\Shared\ClassListTypeEnum;
-use App\Enums\Shared\DocumentTypeEnum;
-use App\Enums\Shared\FeeTypeEnum;
-use App\Enums\Shared\IdTypeEnum;
-use App\Models\Institution\DocumentTemplate;
-use App\Models\Institution\FeeStructure;
-use App\Models\Shared\DocumentType;
-use App\Models\Shared\FeeType;
+use App\Models\Institution\IntakePeriod;
+use App\Models\Institution\OfferLetterTemplate;
 use App\Models\Students\StudentApplication;
-use App\Services\Students\StudentOfferLetterService;
+use App\Services\Documents\OfferLetterAssembler;
+use Illuminate\Database\Eloquent\Builder;
 
 class DocumentHelper
 {
@@ -22,158 +14,46 @@ class DocumentHelper
         StudentApplication $studentApplication,
         bool $requireVerifiedClassList = true,
     ): array {
-        $query = StudentApplication::query()
-            ->with([
-                'student.user',
-                'intakePeriod',
-                'institutionDepartment.department',
-                'departmentLevel.level',
-                'departmentCourse.course',
-                'modeOfStudy',
-                'programmeStage',
-            ])
-            ->where('id', $studentApplication->id);
-
-        if ($requireVerifiedClassList) {
-            $query->whereHas(
-                'classList',
-                fn ($q) => $q->whereIn('type', [
-                    ClassListTypeEnum::VERIFIED->value,
-                    ClassListTypeEnum::FINAL->value,
-                ]),
-            );
-        }
-
-        $studentApplication = $query->firstOrFail();
-
-        $student = $studentApplication->student;
-        $user = $student->user;
-        $offerLetterService = app(StudentOfferLetterService::class);
-
-        // Determine correct ID number (national vs passport)
-        $studentIdNumber = $student->id_type_id == IdTypeEnum::FOREIGN_PASSPORT_NUMBER->id()
-            ? $student->passport_number
-            : $student->id_number;
-
-        $studentName = $user->full_name;
-        $studentNumber = $student->student_number;
-
-        $studentApplication->loadMissing([
-            'departmentLevel.level',
-            'departmentCourse.course',
-            'institutionDepartment.department',
-            'modeOfStudy',
-            'intakePeriod',
-            'programmeStage',
-            'student.user',
-        ]);
-
-        $levelName = $studentApplication->departmentLevel->level->name ?? '';
-        $stageName = trim((string) ($studentApplication->programmeStage?->name ?? ''));
-        $level = $stageName !== '' ? $stageName : $levelName;
-        $course = $studentApplication->departmentCourse->course->name ?? '';
-        $modeOfStudy = $studentApplication->modeOfStudy->name ?? '';
-        $department = $studentApplication->institutionDepartment->department->name ?? '';
-        $intakePeriod = $studentApplication->intakePeriod->name ?? '';
-
-        // Tuition Lookup — fees stay keyed by qualification level (NC), not stage.
-        $tuitionFeeType = FeeType::where('name', FeeTypeEnum::TUITION_FEE->name())->first();
-        $feeStructure = FeeStructure::query()
-            ->where('tenant_id', $studentApplication->tenant_id)
-            ->where('level_id', $studentApplication->departmentLevel->level->id ?? null)
-            ->where('mode_of_study_id', $studentApplication->modeOfStudy->id ?? null)
-            ->where('fee_type_id', $tuitionFeeType->id)
-            ->first();
-
-        $tuition = number_format((float) ($feeStructure?->local_fca_amount ?? 0), 2, '.', '');
-
-        // Document type
-        $documentType = DocumentType::where('name', DocumentTypeEnum::OFFER_LETTER->name())->firstOrFail();
-
-        // USD-only rules
-        $usdOnlyLevels = [
-            LevelEnum::ABMA_LEVEL_3,
-            LevelEnum::ABMA_LEVEL_4,
-            LevelEnum::ABMA_LEVEL_5,
-            LevelEnum::ABMA_LEVEL_6,
-        ];
-
-        $sdpLevels = [LevelEnum::SDP];
-
-        $usdOnlyModes = [
-            ModeOfStudyEnum::BLOCK_RELEASE,
-        ];
-
-        $isUsdOnly =
-            in_array($levelName, array_map(fn ($l) => $l->name(), $usdOnlyLevels), true)
-            || in_array($modeOfStudy, array_map(fn ($m) => $m->label(), $usdOnlyModes), true);
-
-        $isSDP = in_array($levelName, array_map(fn ($l) => $l->name(), $sdpLevels), true);
-        if ($isSDP && strtolower($department) === strtolower(DepartmentEnum::MECHANICAL_AND_PRODUCTION_ENGINEERING->label())) {
-            $tuition = '375.00';
-            if (strtolower($modeOfStudy) === strtolower(ModeOfStudyEnum::OJET->label())) {
-                $tuition = '237.00';
-            }
-        }
-
-        $templateQuery = DocumentTemplate::query()
-            ->where('document_type_id', $documentType->id)
-            ->when($isUsdOnly, fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%usd only%']))
-            ->when($isSDP, fn ($q) => $q->whereRaw('LOWER(name) LIKE ?', ['%sdp%']));
-
-        $documentTemplate = (clone $templateQuery)
-            ->where('intake_period_id', $studentApplication->intake_period_id)
-            ->first()
-            ?? (clone $templateQuery)
-                ->whereNull('intake_period_id')
-                ->first()
-            ?? $templateQuery->firstOrFail();
-
-        $offerLetterDate = $offerLetterService->issuedAt($studentApplication)?->format('d M Y')
-            ?? now()->format('d M Y');
-
-        return [
-            $documentTemplate,
-            $studentName,
-            $studentIdNumber,
-            $studentNumber,
-            $intakePeriod,
-            $department,
-            $level,
-            $course,
-            $modeOfStudy,
-            $tuition,
-            $offerLetterDate,
-        ];
+        return app(OfferLetterAssembler::class)
+            ->assemble($studentApplication, $requireVerifiedClassList)
+            ->toLegacyList();
     }
 
-    public static function resolvePdfHeaderTemplate(?int $tenantId = null): DocumentTemplate
+    public static function resolvePdfHeaderTemplate(?int $tenantId = null): OfferLetterTemplate
     {
-        $documentType = DocumentType::query()
-            ->where('name', DocumentTypeEnum::OFFER_LETTER->name())
-            ->first();
+        $latestIntakeId = IntakePeriod::query()
+            ->when($tenantId !== null, fn (Builder $query) => $query->where('tenant_id', $tenantId))
+            ->orderByDesc('start_date')
+            ->orderByDesc('id')
+            ->value('id');
 
-        $query = DocumentTemplate::query()->whereNotNull('header_line_1');
+        if ($latestIntakeId !== null) {
+            $wildcard = self::wildcardHeaderQuery($tenantId)
+                ->where('intake_period_id', $latestIntakeId)
+                ->first();
+            if ($wildcard instanceof OfferLetterTemplate) {
+                return $wildcard;
+            }
 
-        if ($tenantId !== null) {
-            $query->where('tenant_id', $tenantId);
-        }
-
-        if ($documentType !== null) {
-            $offerLetterTemplate = (clone $query)->where('document_type_id', $documentType->id)->first();
-
-            if ($offerLetterTemplate instanceof DocumentTemplate) {
-                return $offerLetterTemplate;
+            $anyOnLatest = self::anyHeaderQuery($tenantId)
+                ->where('intake_period_id', $latestIntakeId)
+                ->first();
+            if ($anyOnLatest instanceof OfferLetterTemplate) {
+                return $anyOnLatest;
             }
         }
 
-        $template = $query->first();
-
-        if ($template instanceof DocumentTemplate) {
-            return $template;
+        $wildcard = self::wildcardHeaderQuery($tenantId)->first();
+        if ($wildcard instanceof OfferLetterTemplate) {
+            return $wildcard;
         }
 
-        return new DocumentTemplate([
+        $any = self::anyHeaderQuery($tenantId)->first();
+        if ($any instanceof OfferLetterTemplate) {
+            return $any;
+        }
+
+        return new OfferLetterTemplate([
             'header_line_1' => 'Republic of Zimbabwe',
             'header_line_2' => 'Harare Polytechnic',
             'header_address_line_1' => 'Harare',
@@ -182,5 +62,30 @@ class DocumentHelper
             'header_email' => '',
             'header_website' => '',
         ]);
+    }
+
+    private static function wildcardHeaderQuery(?int $tenantId): Builder
+    {
+        return self::anyHeaderQuery($tenantId)
+            ->whereDoesntHave('institutionDepartments')
+            ->whereDoesntHave('levels')
+            ->where(function (Builder $scopeQuery): void {
+                $scopeQuery
+                    ->whereNull('course_id')
+                    ->orWhere('course_id', 0);
+            })
+            ->where(function (Builder $scopeQuery): void {
+                $scopeQuery
+                    ->whereNull('mode_of_study_id')
+                    ->orWhere('mode_of_study_id', 0);
+            });
+    }
+
+    private static function anyHeaderQuery(?int $tenantId): Builder
+    {
+        return OfferLetterTemplate::query()
+            ->whereNotNull('header_line_1')
+            ->when($tenantId !== null, fn (Builder $query) => $query->where('tenant_id', $tenantId))
+            ->orderByDesc('id');
     }
 }

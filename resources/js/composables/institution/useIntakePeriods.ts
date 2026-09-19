@@ -7,7 +7,7 @@ import HttpService from '@/services/http.service';
 import { Auth } from '@/types';
 import { ApiFilterResponse } from '@/types/data-pagination';
 import { IntakePeriod, IntakePeriodStatus } from '@/types/institution';
-import { InertiaForm, usePage } from '@inertiajs/vue3';
+import { InertiaForm, router, usePage } from '@inertiajs/vue3';
 import { trans, trans_choice } from 'laravel-vue-i18n';
 import { h, ref } from 'vue';
 import { z } from 'zod';
@@ -35,7 +35,7 @@ const intakePeriodStatusBadgeClass = (status: IntakePeriodStatus | undefined): s
 };
 
 export const useIntakePeriods = () => {
-    const { moreActionButton, onDelete, onForceDelete, onRestore } = useDataTables();
+    const { moreActionButton, onDelete, onForceDelete, onRestore, countActionButton } = useDataTables();
     const createIntakePeriodColumns = () => {
         const { props } = usePage();
         const { can } = props?.auth as Auth;
@@ -61,6 +61,7 @@ export const useIntakePeriods = () => {
             {
                 header: trans('trans.intake_period_continuous_badge'),
                 accessorKey: 'attributes.isContinuous',
+                meta: { align: 'center' },
                 cell: ({ row }: { row: { original: IntakePeriod } }) => {
                     const isContinuous = row.original.attributes?.isContinuous ?? false;
 
@@ -78,6 +79,7 @@ export const useIntakePeriods = () => {
             {
                 header: trans('trans.intake_period_show_transfer_path'),
                 accessorKey: 'attributes.showTransferPath',
+                meta: { align: 'center' },
                 cell: ({ row }: { row: { original: IntakePeriod } }) => {
                     const showTransferPath = row.original.attributes?.showTransferPath ?? false;
 
@@ -90,6 +92,20 @@ export const useIntakePeriods = () => {
                         },
                         showTransferPath ? trans('trans.yes') : trans('trans.no'),
                     );
+                },
+            },
+            {
+                header: trans('trans.offer_letter_templates'),
+                accessorKey: 'attributes.offerLetterTemplateCount',
+                meta: { align: 'center' },
+                cell: ({ row }: { row: { original: IntakePeriod } }) => {
+                    const id = getIdParams(row.original.id?.toString() ?? '');
+                    const count = row.original.attributes?.offerLetterTemplateCount ?? 0;
+
+                    return countActionButton({
+                        title: String(count),
+                        onClick: () => router.get(route('intake-periods.offer-letter-templates.index', id)),
+                    });
                 },
             },
             {

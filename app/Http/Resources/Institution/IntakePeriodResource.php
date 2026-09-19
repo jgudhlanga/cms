@@ -26,6 +26,7 @@ class IntakePeriodResource extends JsonResource
                 'showTransferPath' => (bool) data_get($this->resource, 'show_transfer_path', false),
                 'description' => data_get($this->resource, 'description'),
                 'calendarYear' => data_get($this->resource, 'calendar_year'),
+                'offerLetterTemplateCount' => (int) data_get($this->resource, 'offer_letter_templates_count', 0),
                 $this->mergeWhen($request->routeIs('intake-periods.*'), [
                     'createdAt' => data_get($this->resource, 'created_at'),
                     'updatedAt' => data_get($this->resource, 'updated_at'),

@@ -12,6 +12,7 @@ use App\Traits\Paginatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -35,6 +36,13 @@ class IntakePeriod extends Model
         static::saved($forgetIntakeLookups);
         static::deleted($forgetIntakeLookups);
         static::restored($forgetIntakeLookups);
+
+        static::forceDeleting(function (IntakePeriod $intakePeriod): void {
+            $intakePeriod->offerLetterTemplates()
+                ->withTrashed()
+                ->get()
+                ->each(fn (OfferLetterTemplate $template) => $template->forceDelete());
+        });
     }
 
     protected $fillable = [
@@ -84,6 +92,11 @@ class IntakePeriod extends Model
     public function scopeRegular($query)
     {
         return $query->where('is_continuous', false);
+    }
+
+    public function offerLetterTemplates(): HasMany
+    {
+        return $this->hasMany(OfferLetterTemplate::class);
     }
 
     public function getActivitylogOptions(): LogOptions

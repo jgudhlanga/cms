@@ -177,6 +177,7 @@ declare module 'vue' {
     ContactsForm: typeof import('./../components/shared/contacts/ContactsForm.vue')['default']
     CountButton: typeof import('./../components/core/button/CountButton.vue')['default']
     CountryComboSelect: typeof import('./../components/core/form/combobox/CountryComboSelect.vue')['default']
+    CourseComboSelect: typeof import('./../components/core/form/combobox/CourseComboSelect.vue')['default']
     CreateButton: typeof import('./../components/core/button/CreateButton.vue')['default']
     CreateEdit: typeof import('./../components/students/oLevels/modals/CreateEdit.vue')['default']
     CrumbTitle: typeof import('./../components/core/util/CrumbTitle.vue')['default']

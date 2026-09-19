@@ -3,15 +3,12 @@
 namespace App\Http\Controllers\Institution\DocumentTemplates;
 
 use App\DTO\DocumentTemplates\DocumentTemplateDto;
-use App\Enums\Shared\FeeTypeEnum;
-use App\Enums\Shared\IdTypeEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Filters\Shared\SharedNameFilter;
+use App\Http\Requests\DocumentTemplates\DocumentTemplateRequest;
+use App\Http\Resources\DocumentTemplates\DocumentTemplateResource;
 use App\Models\Institution\DocumentTemplate;
-use App\Models\Institution\FeeStructure;
-use App\Models\Shared\FeeType;
-use App\Models\Students\StudentApplication;
 use App\Repositories\Institution\interface\IDocumentTemplateRepository;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -22,7 +19,9 @@ use Throwable;
 
 class DocumentTemplateController extends Controller
 {
-    public function __construct(protected IDocumentTemplateRepository $repository) {}
+    public function __construct(
+        protected IDocumentTemplateRepository $repository,
+    ) {}
 
     /**
      * @throws AuthorizationException
@@ -70,13 +69,16 @@ class DocumentTemplateController extends Controller
     public function show(DocumentTemplate $documentTemplate): void
     {
         $this->authorize('view', $documentTemplate);
-        //
     }
 
     public function edit(DocumentTemplate $documentTemplate): Response
     {
         $this->authorize('update', $documentTemplate);
-        $documentTemplate->loadMissing(['documentType', 'headerLogoOne', 'headerLogoTwo']);
+        $documentTemplate->loadMissing([
+            'documentType',
+            'headerLogoOne',
+            'headerLogoTwo',
+        ]);
         $documentTemplate = DocumentTemplateResource::make($documentTemplate);
 
         return Inertia::render('institution/document-templates/Edit', compact('documentTemplate'));
@@ -87,7 +89,6 @@ class DocumentTemplateController extends Controller
      */
     public function update(DocumentTemplateRequest $request, DocumentTemplate $documentTemplate)
     {
-
         $this->authorize('update', $documentTemplate);
         DB::transaction(function () use ($request, $documentTemplate) {
             $template = $this->repository->update($documentTemplate, DocumentTemplateDto::fromDocumentTemplateRequest($request));
@@ -123,42 +124,6 @@ class DocumentTemplateController extends Controller
     {
         $this->authorize('forceDelete', $documentTemplate);
         $this->repository->delete($documentTemplate, true);
-    }
-
-    public function preview(DocumentTemplate $documentTemplate)
-    {
-        $this->authorize('view', $documentTemplate);
-
-        $studentApplication = StudentApplication::join('class_lists', 'student_applications.id', '=', 'class_lists.student_application_id')
-            ->where('class_lists.type', 'verified')
-            ->select('student_applications.*')
-            ->first();
-        $student = $studentApplication->student;
-        $user = $student->user;
-
-        $studentName = $user->full_name;
-        $studentIdNumber = $student->id_number;
-        if ($student->id_type_id == IdTypeEnum::FOREIGN_PASSPORT_NUMBER->id()) {
-            $studentIdNumber = $student->passport_number;
-        }
-        $studentNumber = $student->student_number;
-        $intakePeriod = $studentApplication?->intakePeriod?->name;
-        $department = $studentApplication?->institutionDepartment?->department?->name;
-        $level = $studentApplication?->departmentLevel?->level?->name;
-        $course = $studentApplication?->departmentCourse?->course?->name;
-        $modeOfStudy = $studentApplication?->modeOfStudy?->name;
-
-        $tuitionFeeType = FeeType::where('name', FeeTypeEnum::TUITION_FEE->name())->first();
-        $feeStructure = FeeStructure::where('tenant_id', $studentApplication->tenant_id)->where('level_id', $studentApplication?->departmentLevel?->level?->id)
-            ->where('mode_of_study_id', $studentApplication?->modeOfStudy->id)->where('fee_type_id', $tuitionFeeType?->id)->first();
-        $tuition = $feeStructure?->local_fca_amount ?? 0;
-        $nameParts = array_filter([$user->first_name, $user->middle_name, $user->last_name]);
-        $fileName = implode('_', $nameParts).'_offer_letter_'.time().'.pdf';
-        $pdf = Pdf::loadView('students.offer-letter',
-            compact('documentTemplate', 'studentName', 'studentIdNumber', 'studentNumber',
-                'intakePeriod', 'department', 'level', 'course', 'modeOfStudy', 'tuition'));
-
-        return $pdf->stream($fileName);
     }
 
     /**

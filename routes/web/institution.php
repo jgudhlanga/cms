@@ -10,6 +10,7 @@ use App\Http\Controllers\Institution\Config\FeeStructureController;
 use App\Http\Controllers\Institution\Config\InstitutionConfigController;
 use App\Http\Controllers\Institution\Config\InstitutionFeatureController;
 use App\Http\Controllers\Institution\Config\IntakePeriodController;
+use App\Http\Controllers\Institution\Config\OfferLetterTemplateController;
 use App\Http\Controllers\Institution\Departments\CourseSyllabusController;
 use App\Http\Controllers\Institution\Departments\CourseSyllabusModuleController;
 use App\Http\Controllers\Institution\Departments\DepartmentAssessmentCalendarController;
@@ -135,6 +136,22 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     // ==================================== INTAKE PERIODS ==============================================================
     Route::put('intake-periods/{intake_period}/restore', [IntakePeriodController::class, 'restore'])->name('intake-periods.restore');
     Route::delete('intake-periods/{intake_period}/force-delete', [IntakePeriodController::class, 'forceDelete'])->name('intake-periods.force-delete');
+    Route::get(
+        'intake-periods/{intake_period}/offer-letter-templates/{offer_letter_template}/preview',
+        [OfferLetterTemplateController::class, 'preview'],
+    )->name('intake-periods.offer-letter-templates.preview');
+    Route::put(
+        'intake-periods/{intake_period}/offer-letter-templates/{offer_letter_template}/restore',
+        [OfferLetterTemplateController::class, 'restore'],
+    )->name('intake-periods.offer-letter-templates.restore');
+    Route::delete(
+        'intake-periods/{intake_period}/offer-letter-templates/{offer_letter_template}/force-delete',
+        [OfferLetterTemplateController::class, 'forceDelete'],
+    )->name('intake-periods.offer-letter-templates.force-delete');
+    Route::resource('intake-periods.offer-letter-templates', OfferLetterTemplateController::class)
+        ->scoped()
+        ->except(['show'])
+        ->names('intake-periods.offer-letter-templates');
     Route::resource('intake-periods', IntakePeriodController::class)->names('intake-periods');
     // ==================================== ASSESSMENT TYPES ==============================================================
     Route::put('assessment-types/{assessment_type}/restore', [AssessmentTypeController::class, 'restore'])->name('assessment-types.restore');
@@ -163,7 +180,6 @@ Route::prefix('institution')->middleware('auth')->group(function () {
     Route::get('course-work-progress-reports', [CourseWorkProgressReportController::class, 'index'])->name('course-work-progress-reports.index');
     Route::post('course-work-progress-reports/{course_work_progress_report}/acknowledge', [CourseWorkProgressReportController::class, 'acknowledge'])->name('course-work-progress-reports.acknowledge');
     // ==================================== DOCUMENT TEMPLATES ==============================================================
-    Route::get('document-templates/{document_template}/preview', [DocumentTemplateController::class, 'preview'])->name('document-templates.preview');
     Route::put('document-templates/{document_template}/restore', [DocumentTemplateController::class, 'restore'])->name('document-templates.restore');
     Route::delete('document-templates/{document_template}/force-delete', [DocumentTemplateController::class, 'forceDelete'])->name('document-templates.force-delete');
     Route::resource('document-templates', DocumentTemplateController::class)->names('document-templates');

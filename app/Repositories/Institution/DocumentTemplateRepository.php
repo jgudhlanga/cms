@@ -3,8 +3,10 @@
 namespace App\Repositories\Institution;
 
 use App\DTO\DocumentTemplates\DocumentTemplateDto;
+use App\Enums\Shared\DocumentTypeEnum;
 use App\Http\Filters\Shared\SharedNameFilter;
 use App\Models\Institution\DocumentTemplate;
+use App\Models\Shared\DocumentType;
 use App\Repositories\Base\BaseRepository;
 use App\Repositories\Institution\interface\IDocumentTemplateRepository;
 use Illuminate\Database\Eloquent\Model;
@@ -26,11 +28,23 @@ class DocumentTemplateRepository extends BaseRepository implements IDocumentTemp
         return tap($documentTemplate)->update($this->getFields($dto))->refresh();
     }
 
-    public function allFilter($columns = ['*'], SharedNameFilter $filters = null)
+    public function allFilter($columns = ['*'], ?SharedNameFilter $filters = null)
     {
+        $offerLetterTypeId = DocumentType::query()
+            ->where('name', DocumentTypeEnum::OFFER_LETTER->name())
+            ->value('id');
+
         return $this->documentTemplate
             ->select($columns)
-            ->with(['documentType', 'headerLogoOne', 'headerLogoTwo'])
+            ->with([
+                'documentType',
+                'headerLogoOne',
+                'headerLogoTwo',
+            ])
+            ->when(
+                $offerLetterTypeId,
+                fn ($query) => $query->where('document_type_id', '!=', $offerLetterTypeId),
+            )
             ->filter($filters)
             ->orderBy('name')
             ->orderBy('deleted_at')
@@ -43,14 +57,14 @@ class DocumentTemplateRepository extends BaseRepository implements IDocumentTemp
         return [
             'document_type_id' => $dto->document_type_id,
             'name' => $dto->name,
-            'header_line_1' =>  $dto->header_line_1,
-            'header_line_2' =>  $dto->header_line_2,
-            'header_address_line_1' =>  $dto->header_address_line_1,
-            'header_address_line_2' =>  $dto->header_address_line_2,
-            'header_telephone' =>  $dto->header_telephone,
-            'header_email' =>  $dto->header_email,
-            'header_website' =>  $dto->header_website,
-            'body' =>  $dto->body,
+            'header_line_1' => $dto->header_line_1,
+            'header_line_2' => $dto->header_line_2,
+            'header_address_line_1' => $dto->header_address_line_1,
+            'header_address_line_2' => $dto->header_address_line_2,
+            'header_telephone' => $dto->header_telephone,
+            'header_email' => $dto->header_email,
+            'header_website' => $dto->header_website,
+            'body' => $dto->body,
         ];
     }
 }

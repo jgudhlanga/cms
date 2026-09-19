@@ -38,6 +38,7 @@ use App\Services\Setup\Checks\DepartmentAssessmentCalendarMissingCheck;
 use App\Services\Setup\Checks\DepartmentsWithoutDivisionCheck;
 use App\Services\Setup\Checks\DivisionWithoutHeadCheck;
 use App\Services\Setup\Checks\HostelBedsVacantWithWaitingApplicantsCheck;
+use App\Services\Setup\Checks\IntakePeriodMissingOfferLettersCheck;
 use App\Services\Setup\Checks\ModesOnUnlinkedLevelCheck;
 use App\Services\Setup\Checks\OfferingCourseLevelUnlinkedCheck;
 use App\Services\Setup\Checks\OfferingModeNotConfiguredCheck;
@@ -99,6 +100,7 @@ class AppServiceProvider extends ServiceProvider
             OfferingCourseLevelUnlinkedCheck::class,
             OfferingReferencesDeletedRecordCheck::class,
             HostelBedsVacantWithWaitingApplicantsCheck::class,
+            IntakePeriodMissingOfferLettersCheck::class,
         ], SetupGapCheck::TAG);
 
         $this->app->bind(

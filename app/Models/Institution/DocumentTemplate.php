@@ -20,33 +20,50 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
- *
  * @mixin Builder
+ *
  * @method static filter(SharedNameFilter $filters)
  */
 class DocumentTemplate extends Model implements HasMedia
 {
-   use HasFactory, SoftDeletes, Filterable, BelongsToTenant,Paginatable, LogsActivity, InteractsWithMedia;
+    use BelongsToTenant, Filterable, HasFactory, InteractsWithMedia, LogsActivity, Paginatable, SoftDeletes;
 
+    protected $fillable = [
+        'tenant_id',
+        'document_type_id',
+        'name',
+        'header_line_1',
+        'header_line_2',
+        'header_address_line_1',
+        'header_address_line_2',
+        'header_telephone',
+        'header_email',
+        'header_website',
+        'header_logo_1',
+        'header_logo_2',
+        'body',
+    ];
 
-   protected $fillable = ['tenant_id','document_type_id', 'intake_period_id', 'name', 'document_type_id', 'header_line_1', 'header_line_2', 'header_address_line_1',
-       'header_address_line_2', 'header_telephone', 'header_email', 'header_website', 'header_logo_1', 'header_logo_2',
-       'body'
-   ];
+    protected function casts(): array
+    {
+        return [
+            'document_type_id' => 'integer',
+        ];
+    }
 
-   public function documentType(): BelongsTo
-   {
-       return $this->belongsTo(DocumentType::class, 'document_type_id');
-   }
+    public function documentType(): BelongsTo
+    {
+        return $this->belongsTo(DocumentType::class, 'document_type_id');
+    }
 
-   	public function getActivitylogOptions(): LogOptions
-   	{
-   		return LogOptions::defaults()
-   			->logFillable()
-   			->useLogName('DocumentTemplate')
-   			->logOnlyDirty()
-   			->dontSubmitEmptyLogs();
-   	}
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->useLogName('DocumentTemplate')
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     public function headerLogoOne(): HasOne
     {

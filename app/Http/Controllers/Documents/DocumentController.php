@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Documents;
 
-use App\Helpers\DocumentHelper;
+use App\Actions\Documents\GenerateAndStoreOfferLetterAction;
 use App\Http\Controllers\Controller;
 use App\Models\Students\Student;
 use App\Models\Students\StudentApplication;
@@ -10,18 +10,21 @@ use App\Models\Users\User;
 use App\Services\Finance\StudentFinancialStatementPdfService;
 use App\Services\Students\StudentOfferLetterService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DocumentController extends Controller
 {
     public function __construct(
         private readonly StudentFinancialStatementPdfService $studentFinancialStatementPdfService,
         private readonly StudentOfferLetterService $studentOfferLetterService,
+        private readonly GenerateAndStoreOfferLetterAction $generateAndStoreOfferLetterAction,
     ) {}
 
-    public function previewOfferLetter(Request $request, StudentApplication $studentApplication)
+    public function previewOfferLetter(Request $request, StudentApplication $studentApplication): BinaryFileResponse|Response|RedirectResponse
     {
         $actor = $request->user() instanceof User ? $request->user() : null;
 
@@ -36,29 +39,19 @@ class DocumentController extends Controller
             Response::HTTP_NOT_FOUND,
         );
 
-        [$documentTemplate, $studentName, $studentIdNumber, $studentNumber, $intakePeriod, $department,
-            $level, $course, $modeOfStudy, $tuition, $offerLetterDate] = DocumentHelper::assembleOfferLetter(
-                $studentApplication,
-                ! $this->studentOfferLetterService->canBypassDownloadGates($actor),
-            );
-        // PDF Filename
-        $fileName = Str::slug($studentName).'-offer-letter-'.time().'.pdf';
-        // Generate PDF
-        $pdf = Pdf::loadView('students.offer-letter', compact(
-            'documentTemplate',
-            'studentName',
-            'studentIdNumber',
-            'studentNumber',
-            'intakePeriod',
-            'department',
-            'level',
-            'course',
-            'modeOfStudy',
-            'tuition',
-            'offerLetterDate',
-        ));
+        $media = $this->generateAndStoreOfferLetterAction->execute(
+            $studentApplication,
+            ! $this->studentOfferLetterService->canBypassDownloadGates($actor),
+        );
 
-        return $pdf->download($fileName);
+        $studentApplication->loadMissing('student.user');
+        $studentName = (string) ($studentApplication->student?->user?->full_name ?? 'student');
+        $studentNumber = (string) ($studentApplication->student?->student_number ?? '');
+        $fileName = ($studentNumber !== '' ? Str::slug($studentNumber) : Str::slug($studentName)).'-offer-letter.pdf';
+
+        return response()->download($media->getPath(), $fileName, [
+            'Content-Type' => 'application/pdf',
+        ]);
     }
 
     public function exportTransactionStatement(Request $request, Student $student)

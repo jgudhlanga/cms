@@ -396,6 +396,30 @@ export function useSidebarMenu() {
                 };
             })(),
             (() => {
+                const canSearchUsers = canShowMenuItem('view:users', 'users', moduleState);
+                const canViewAuditTrail = isModuleEnabled('dashboards', moduleState) && !hasStudentProfile();
+                const userChildren: MenuItemInterface[] = [
+                    {
+                        transKey: 'trans.nav_search',
+                        url: route('users.index'),
+                        show: canSearchUsers,
+                    },
+                    {
+                        transKey: 'trans.audit_trail',
+                        url: route('users.audit-trail'),
+                        show: canViewAuditTrail,
+                    },
+                ].filter((child) => child.show);
+
+                return {
+                    groupKey: 'system' as const,
+                    transChoiceKey: 'trans.user',
+                    icon: icons[IconName.users],
+                    items: userChildren,
+                    show: userChildren.length > 0,
+                };
+            })(),
+            (() => {
                 const canManageRbac = canShowMenuItem('root:manage', 'root', moduleState);
                 const rbacChildren: MenuItemInterface[] = useRbac()
                     .tabs.map((tab) => ({
@@ -470,30 +494,6 @@ export function useSidebarMenu() {
                 icon: icons[IconName.terminal],
                 show: canShowMenuItem(['view:console', 'run:console-commands'], 'console', moduleState),
             },
-            (() => {
-                const canSearchUsers = canShowMenuItem('view:users', 'users', moduleState);
-                const canViewAuditTrail = isModuleEnabled('dashboards', moduleState) && !hasStudentProfile();
-                const userChildren: MenuItemInterface[] = [
-                    {
-                        transKey: 'trans.nav_search',
-                        url: route('users.index'),
-                        show: canSearchUsers,
-                    },
-                    {
-                        transKey: 'trans.audit_trail',
-                        url: route('users.audit-trail'),
-                        show: canViewAuditTrail,
-                    },
-                ].filter((child) => child.show);
-
-                return {
-                    groupKey: 'system' as const,
-                    transChoiceKey: 'trans.user',
-                    icon: icons[IconName.users],
-                    items: userChildren,
-                    show: userChildren.length > 0,
-                };
-            })(),
             (() => {
                 const canMaintain = canShowMenuItem(['root:manage', 'manage:data-maintenance'], 'root', moduleState);
                 const maintenanceChildren: MenuItemInterface[] = [
